@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prueba</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 20px 16px 60px; max-width: 640px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 26px 0 6px; }
+  p.n { margin: 0 0 10px; opacity: .7; font-size: 14px; }
+  button { font: inherit; padding: 9px 16px; border: 1px solid currentColor; background: transparent;
+           color: inherit; border-radius: 6px; cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; }
+  input { font: inherit; padding: 8px 10px; border: 1px solid; border-radius: 6px;
+          background: transparent; color: inherit; width: 150px; }
+  pre { font: 13px/1.45 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
+        border-left: 3px solid; padding: 8px 12px; margin: 10px 0 0; }
+  .ok::before { content: "OK · "; font-weight: 700; }
+  .no::before { content: "FALLA · "; font-weight: 700; }
+</style>
+
+<h1>Prueba de viabilidad</h1>
+<p class="n">Dos preguntas. Corré las dos y mandá el resultado.</p>
+
+<h2>1 · Partidas de chess.com</h2>
+<p class="n">Probá con tu usuario y con el de algún conocido.</p>
+<input id="user" value="MewoneX" spellcheck="false" autocapitalize="off">
+<button id="b1">Buscar</button>
+<pre id="r1">—</pre>
+
+<h2>2 · Motor de ajedrez</h2>
+<p class="n">Baja 1,5 MB y analiza dos posiciones reales. Puede tardar.</p>
+<button id="b2">Analizar</button>
+<pre id="r2">—</pre>
+
+<h2>3 · Entorno</h2>
+<pre id="r3">—</pre>
+
+<script>
+const $ = id => document.getElementById(id);
+const ms = t => Math.round(performance.now() - t);
+
+$("r3").textContent = [
+  "origen: " + location.origin,
+  "núcleos: " + (navigator.hardwareConcurrency ?? "?"),
+  "SharedArrayBuffer: " + (typeof SharedArrayBuffer !== "undefined"),
+  "crossOriginIsolated: " + (self.crossOriginIsolated === true)
+].join("\n");
+
+/* ---------- 1 ---------- */
+$("b1").onclick = async () => {
+  const u = $("user").value.trim();
+  if (!u) return;
+  $("b1").disabled = true;
+  const log = [];
+  const pintar = c => { $("r1").textContent = log.join("\n"); $("r1").className = c || ""; };
+  log.push("consultando…"); pintar();
+
+  try {
+    let t = performance.now();
+    const res = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`);
+    log[0] = `archives → HTTP ${res.status} (${ms(t)} ms)`;
+    if (!res.ok) throw new Error("el usuario no existe o no tiene partidas públicas");
+    const meses = (await res.json()).archives || [];
+    log.push(`meses con partidas: ${meses.length}`);
+    if (!meses.length) throw new Error("sin partidas");
+    const ultimo = meses[meses.length - 1];
+    log.push(`último mes: ${ultimo.slice(-7).replace("/", "-")}`);
+    pintar();
+
+    t = performance.now();
+    const j = await (await fetch(ultimo)).json();
+    const games = j.games || [];
+    log.push(`partidas ese mes: ${games.length} (${ms(t)} ms)`);
+
+    const conReloj = games.filter(g => (g.pgn || "").includes("%clk")).length;
+    const cadencias = {};
+    games.forEach(g => { cadencias[g.time_class || "?"] = (cadencias[g.time_class || "?"] || 0) + 1; });
+    log.push("cadencias: " + Object.entries(cadencias).map(([k, v]) => `${k} ${v}`).join(", "));
+    log.push(`traen reloj por jugada: ${conReloj} de ${games.length}`);
+
+    t = performance.now();
+    const pgn = await (await fetch(ultimo + "/pgn")).text();
+    log.push(`PGN crudo: ${(pgn.length / 1024).toFixed(0)} KB (${ms(t)} ms)`);
+    log.push("", "La carga automática funciona.");
+    pintar("ok");
+  } catch (e) {
+    log.push("error: " + e.message);
+    log.push("(si dice 'Failed to fetch', chess.com no autoriza al navegador y hace falta un intermediario)");
+    pintar("no");
+  }
+  $("b1").disabled = false;
+};
+
+/* ---------- 2 ---------- */
+const MOTOR = [
+  "https://cdnjs.cloudflare.com/ajax/libs/stockfish.js/10.0.2/stockfish.js",
+  "https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/stockfish.js"
+];
+const CASOS = [
+  ["medio juego", "r2qk2r/pppb1ppp/2n1pn2/2bp4/3P4/1QN1P2N/PP2BPPP/R1B1K2R w KQkq - 0 9", null],
+  ["táctica",     "2krr3/ppp2pp1/2n2n2/P4q2/QbPp2p1/5N1P/1P3KP1/R4BR1 b - - 1 20", "f6e4"]
+];
+
+function abrirMotor(texto) {
+  const w = new Worker(URL.createObjectURL(new Blob([texto], { type: "application/javascript" })));
+  const cola = [];
+  w.onmessage = ev => {
+    const s = typeof ev.data === "string" ? ev.data : String(ev.data);
+    cola.forEach(c => c(s));
+  };
+  return {
+    enviar: c => w.postMessage(c),
+    esperar: (prefijo, tope) => new Promise((ok, no) => {
+      const id = setTimeout(() => { quitar(); no(new Error(`sin "${prefijo}" en ${tope / 1000} s`)); }, tope);
+      const fn = s => { if (s.startsWith(prefijo)) { clearTimeout(id); quitar(); ok(s); } };
+      const quitar = () => { const i = cola.indexOf(fn); if (i >= 0) cola.splice(i, 1); };
+      cola.push(fn);
+    }),
+    ultima: null,
+    cerrar: () => w.terminate(),
+    espiar: fn => cola.push(fn)
+  };
+}
+
+$("b2").onclick = async () => {
+  $("b2").disabled = true;
+  const log = [];
+  const pintar = c => { $("r2").textContent = log.join("\n"); $("r2").className = c || ""; };
+  log.push("bajando motor…"); pintar();
+  let sf = null;
+
+  try {
+    let texto = null;
+    for (const url of MOTOR) {
+      try {
+        const t = performance.now();
+        const r = await fetch(url);
+        if (!r.ok) { log.push(`✗ ${url.split("/")[2]} HTTP ${r.status}`); continue; }
+        texto = await r.text();
+        log[0] = `motor bajado de ${url.split("/")[2]}: ${(texto.length / 1048576).toFixed(2)} MB (${ms(t)} ms)`;
+        break;
+      } catch (e) { log.push(`✗ ${url.split("/")[2]} — ${e.message}`); }
+    }
+    if (!texto) throw new Error("no se pudo bajar el motor");
+    pintar();
+
+    const t0 = performance.now();
+    sf = abrirMotor(texto);
+    sf.enviar("uci");
+    const idLinea = [];
+    sf.espiar(s => { if (s.startsWith("id name")) idLinea.push(s); });
+    await sf.esperar("uciok", 60000);
+    log.push(`motor listo en ${ms(t0)} ms`);
+    if (idLinea[0]) log.push(idLinea[0]);
+    pintar();
+
+    for (const [nombre, fen, esperado] of CASOS) {
+      for (const prof of [13, 18]) {
+        sf.enviar("ucinewgame");
+        sf.enviar("position fen " + fen);
+        const t = performance.now();
+        const espera = sf.esperar("bestmove", 180000);
+        sf.enviar("go depth " + prof);
+        const best = await espera;
+        const dur = ms(t);
+        const jugada = best.split(" ")[1];
+        const marca = esperado ? (jugada === esperado ? "  ✓ coincide" : `  ✗ esperado ${esperado}`) : "";
+        log.push(`${nombre}, prof. ${prof}: ${dur} ms → ${jugada}${prof === 13 ? marca : ""}`);
+        pintar();
+        if (dur > 60000) { log.push("(muy lento, corto acá)"); break; }
+      }
+    }
+
+    log.push("");
+    log.push("Listo. El motor corre en este navegador.");
+    pintar("ok");
+  } catch (e) {
+    log.push("error: " + e.message);
+    pintar("no");
+  }
+  if (sf) sf.cerrar();
+  $("b2").disabled = false;
+};
+</script>
+</html>
