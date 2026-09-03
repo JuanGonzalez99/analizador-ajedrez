@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motores</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 20px 16px 60px; max-width: 640px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  p.n { margin: 0 0 14px; opacity: .7; font-size: 14px; }
+  button { font: inherit; padding: 9px 16px; border: 1px solid currentColor; background: transparent;
+           color: inherit; border-radius: 6px; cursor: pointer; margin: 0 8px 8px 0; }
+  button:disabled { opacity: .4; cursor: default; }
+  #estado { font: 14px/1.4 system-ui, sans-serif; margin: 14px 0 0; min-height: 22px; font-weight: 600; }
+  pre { font: 12.5px/1.45 ui-monospace, monospace; white-space: pre; overflow-x: auto;
+        border-left: 3px solid; padding: 8px 12px; margin: 8px 0 0; }
+  pre#detalle { white-space: pre-wrap; word-break: break-word; opacity: .8; font-size: 12px; }
+</style>
+
+<h1>Tres motores</h1>
+<p class="n">Misma posición de medio juego en todos. La referencia a batir es 6238 ms a profundidad 13.</p>
+
+<button id="go">Probar los tres</button>
+<button id="local">Probar copia propia</button>
+
+<p id="estado">Listo para empezar.</p>
+<pre id="tabla">—</pre>
+<pre id="detalle"></pre>
+
+<script>
+const $ = id => document.getElementById(id);
+const ms = t => Math.round(performance.now() - t);
+const detalle = [];
+const verDetalle = () => { $("detalle").textContent = detalle.join("\n"); };
+
+let baseEstado = "", desde = 0, reloj = null;
+function estado(txt, conReloj) {
+  baseEstado = txt;
+  clearInterval(reloj);
+  $("estado").textContent = txt;
+  if (conReloj) {
+    desde = performance.now();
+    reloj = setInterval(() => {
+      $("estado").textContent = baseEstado + " (" + Math.round(ms(desde) / 1000) + " s)";
+    }, 500);
+  }
+}
+
+const FEN = "r2qk2r/pppb1ppp/2n1pn2/2bp4/3P4/1QN1P2N/PP2BPPP/R1B1K2R w KQkq - 0 9";
+const ESPERADO = "d4c5";
+const REFERENCIA = 6238;
+const PROFUNDIDADES = [13, 16, 18];
+
+const MOTORES = [
+  { nombre: "SF 18 lite", base: "https://unpkg.com/stockfish@18.0.8/bin/",
+    archivo: "stockfish-18-lite-single.js", peso: "7,3 MB" },
+  { nombre: "SF 10 wasm", base: "https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/",
+    archivo: "stockfish.wasm.js", peso: "0,6 MB" },
+  { nombre: "SF 10 asm", base: "https://cdn.jsdelivr.net/npm/stockfish.js@10.0.2/",
+    archivo: "stockfish.js", peso: "1,5 MB" }
+];
+
+function fuente(base, archivo) {
+  return [
+    'var BASE=' + JSON.stringify(base) + ';',
+    'var Module={locateFile:function(f){return BASE+f;}};',
+    'try{importScripts(BASE+' + JSON.stringify(archivo) + ');}',
+    'catch(e){postMessage("FATAL no cargó: "+e.message);}',
+    'var fab=self.Stockfish||self.STOCKFISH;',
+    'if(typeof fab==="function"){',
+    '  try{Promise.resolve(fab()).then(function(sf){',
+    '    if(sf.addMessageListener)sf.addMessageListener(function(m){postMessage(m);});',
+    '    else sf.onmessage=function(m){postMessage(m.data||m);};',
+    '    self.onmessage=function(e){sf.postMessage(e.data);};',
+    '    postMessage("IMPORTADO fábrica");',
+    '  }).catch(function(e){postMessage("FATAL init: "+e.message);});}',
+    '  catch(e){postMessage("FATAL fábrica: "+e.message);}',
+    '}else if(typeof self.onmessage==="function"){postMessage("IMPORTADO directo");}',
+    'else{postMessage("FATAL el script no expuso nada usable");}'
+  ].join("\n");
+}
+
+function abrir(base, archivo) {
+  const w = new Worker(URL.createObjectURL(
+    new Blob([fuente(base, archivo)], { type: "application/javascript" })));
+  const oyentes = [];
+  w.onmessage = ev => {
+    const d = ev.data;
+    const s = typeof d === "string" ? d : String((d && d.data) || d);
+    oyentes.slice().forEach(f => f(s));
+  };
+  w.onerror = e => oyentes.slice().forEach(f => f("FATAL worker: " + (e.message || "?")));
+  return {
+    enviar: c => w.postMessage(c),
+    esperar: (pref, tope) => new Promise((ok, no) => {
+      const id = setTimeout(() => { sacar(); no(new Error("agotó los " + tope / 1000 + " s esperando " + pref)); }, tope);
+      const fn = s => {
+        if (s.startsWith("FATAL")) { clearTimeout(id); sacar(); no(new Error(s.slice(6))); }
+        else if (s.startsWith(pref)) { clearTimeout(id); sacar(); ok(s); }
+      };
+      const sacar = () => { const i = oyentes.indexOf(fn); if (i >= 0) oyentes.splice(i, 1); };
+      oyentes.push(fn);
+    }),
+    espiar: fn => oyentes.push(fn),
+    cerrar: () => w.terminate()
+  };
+}
+
+/* El WebAssembly termina de compilar después del import, y lo que se le mande
+   mientras tanto se pierde. Así que se repite "uci" hasta que conteste. */
+function despertar(sf, tope) {
+  return new Promise((ok, no) => {
+    const t0 = performance.now();
+    let vivo = true;
+    const fin = r => { vivo = false; clearInterval(pulso); sf_quitar(); r === "ok" ? ok(ms(t0)) : no(r); };
+    const fn = s => {
+      if (!vivo) return;
+      if (s.startsWith("uciok")) fin("ok");
+      else if (s.startsWith("FATAL")) fin(new Error(s.slice(6)));
+    };
+    sf.espiar(fn);
+    const sf_quitar = () => {};
+    sf.enviar("uci");
+    const pulso = setInterval(() => {
+      if (!vivo) return;
+      if (ms(t0) > tope) fin(new Error("el motor nunca contestó (" + tope / 1000 + " s)"));
+      else sf.enviar("uci");
+    }, 750);
+  });
+}
+
+async function probar(m) {
+  const fila = { nombre: m.nombre, carga: null, tiempos: {}, jugada: "", error: null };
+  let sf = null;
+  try {
+    estado(`${m.nombre}: bajando ${m.peso}`, true);
+    const t0 = performance.now();
+    sf = abrir(m.base, m.archivo);
+    let nombreMotor = "";
+    sf.espiar(s => { if (s.startsWith("id name") && !nombreMotor) nombreMotor = s.slice(8); });
+
+    const via = await sf.esperar("IMPORTADO", 60000);
+    detalle.push(`${m.nombre}: importado en ${ms(t0)} ms (${via.replace("IMPORTADO ", "vía ")})`);
+    verDetalle();
+
+    estado(`${m.nombre}: compilando y despertando el motor`, true);
+    await despertar(sf, 90000);
+    fila.carga = ms(t0);
+    detalle.push(`  motor despierto a los ${fila.carga} ms — ${nombreMotor || "sin nombre"}`);
+    verDetalle();
+    pintarTabla();
+
+    for (const prof of PROFUNDIDADES) {
+      estado(`${m.nombre}: analizando a profundidad ${prof}`, true);
+      sf.enviar("ucinewgame");
+      sf.enviar("position fen " + FEN);
+      const t = performance.now();
+      const esp = sf.esperar("bestmove", 120000);
+      sf.enviar("go depth " + prof);
+      const best = await esp;
+      const dur = ms(t);
+      fila.tiempos[prof] = dur;
+      if (prof === 13) fila.jugada = best.split(" ")[1] || "?";
+      pintarTabla();
+      if (dur > 12000) { detalle.push(`  corto acá, muy lento`); verDetalle(); break; }
+    }
+  } catch (e) {
+    fila.error = e.message;
+    detalle.push(`${m.nombre}: ${e.message}`);
+    verDetalle();
+  }
+  if (sf) sf.cerrar();
+  return fila;
+}
+
+let FILAS = [];
+function pintarTabla() {
+  const col = (s, n) => String(s).padEnd(n);
+  const der = (s, n) => String(s).padStart(n);
+  const cab = col("motor", 13) + der("arranque", 11) + PROFUNDIDADES.map(p => der("prof " + p, 10)).join("") + "  jugada";
+  const filas = FILAS.map(f => {
+    if (f.error && f.carga == null) return col(f.nombre, 13) + "  no funcionó";
+    return col(f.nombre, 13) + der(f.carga != null ? f.carga + " ms" : "—", 11)
+      + PROFUNDIDADES.map(p => der(f.tiempos[p] != null ? f.tiempos[p] + " ms" : "—", 10)).join("")
+      + "  " + (f.jugada ? f.jugada + (f.jugada === ESPERADO ? " ✓" : " ✗") : "");
+  });
+  $("tabla").textContent = [cab, "".padEnd(cab.length, "─"), ...filas].join("\n");
+}
+
+async function correr(lista) {
+  document.querySelectorAll("button").forEach(b => b.disabled = true);
+  FILAS = []; detalle.length = 0; verDetalle(); pintarTabla();
+  for (const m of lista) {
+    FILAS.push(await probar(m));
+    pintarTabla();
+  }
+  clearInterval(reloj);
+
+  const buenos = FILAS.filter(f => f.tiempos[13]);
+  if (buenos.length) {
+    const mejor = buenos.reduce((a, b) => a.tiempos[13] <= b.tiempos[13] ? a : b);
+    const t13 = mejor.tiempos[13];
+    detalle.push("");
+    detalle.push(`Más rápido: ${mejor.nombre}, ${t13} ms a profundidad 13 (${(REFERENCIA / t13).toFixed(1)}× la referencia).`);
+    detalle.push(`Con ese: 40 jugadas ≈ ${(t13 * 40 / 1000).toFixed(0)} s · un mes de 13 partidas ≈ ${(t13 * 40 * 13 / 60000).toFixed(1)} min.`);
+    verDetalle();
+    $("estado").textContent = `Terminó todo. Funcionaron ${buenos.length} de ${FILAS.length}.`;
+  } else {
+    $("estado").textContent = "Terminó todo. Ninguno funcionó.";
+  }
+  document.querySelectorAll("button").forEach(b => b.disabled = false);
+}
+
+$("go").onclick = () => correr(MOTORES);
+$("local").onclick = () => correr([{
+  nombre: "SF 18 propio", base: new URL("./", location.href).href,
+  archivo: "stockfish-18-lite-single.js", peso: "7,3 MB de tu repo"
+}]);
+</script>
+</html>
