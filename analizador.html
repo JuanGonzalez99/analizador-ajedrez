@@ -94,7 +94,7 @@
 </div>
 
 <script>
-  window.VERSION = "v25 · 04-09";
+  window.VERSION = "v26 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -290,7 +290,13 @@
 </div>
 
 <div id="zonaMes" class="oculto">
-  <h2>El mes</h2>
+  <h2>Estadísticas</h2>
+  <div class="fila">
+    <select id="fuente">
+      <option value="mes">El mes seleccionado</option>
+      <option value="todo">Todo lo analizado</option>
+    </select>
+  </div>
   <p class="cap" id="capMes"></p>
   <div class="tw"><table id="mesResumen"></table></div>
   <h2>Riesgo por franja de ventaja</h2>
@@ -602,8 +608,15 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
     /* la posición vista desde el que mueve, en peones */
     const antesMio = (turno === "w" ? antes : -antes) / 100;
     const despuesMio = (turno === "w" ? despues : -despues) / 100;
-    const cat = categorizar({ perdida, caida, esMejor, esLibro, entrega, unicaBuena,
-                              oportunidad, legales, antesMio, despuesMio }, modo);
+    /* El modo se usa acá y en ningún otro lado: la pérdida, la precisión y los
+       mecanismos son idénticos en los dos. Por eso se calculan las dos
+       etiquetas de una vez —categorizar() es aritmética, no toca chess.js— y
+       así "todo lo analizado" puede cambiar de modo sin rehacer el barrido. */
+    const d = { perdida, caida, esMejor, esLibro, entrega, unicaBuena,
+                oportunidad, legales, antesMio, despuesMio };
+    const cats = { critico: categorizar(d, "critico"),
+                   amigable: categorizar(d, "amigable") };
+    const cat = cats[modo] || cats.critico;
 
     const senales = [];
     if (perdida >= 0.5) {
@@ -616,7 +629,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
     }
 
     filas.push({
-      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, perdida, precision, caida,
+      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, cats, perdida, precision, caida,
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
@@ -746,6 +759,14 @@ const cache = {
       await this._tx("readwrite", s => s.put(
         Object.assign({ clave: this.clave(id, prof, variante), fecha: Date.now() }, datos)));
     } catch (e) { window.LOG.add("!", "caché guardar: " + (e.message || e)); }
+  },
+  /* Todas las claves de una, para no leerlas una vez por partida. Con ellas se
+     puede saber si una partida está analizada a OTRA profundidad: no sirve para
+     mezclar —números de distinta profundidad no se comparan (§5.3)— pero sí
+     para avisar que existen y que por eso no aparecen. */
+  async claves() {
+    try { return await this._tx("readonly", s => s.getAllKeys()) || []; }
+    catch (e) { return []; }
   },
   async contar() {
     try { return await this._tx("readonly", s => s.count()) || 0; } catch (e) { return 0; }
@@ -1037,6 +1058,9 @@ const TOPE_MES = 50;
 let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
 let VER_AMBOS = false;
 let MES = null;
+let MESES = [];        /* urls de todos los archivos mensuales del usuario */
+let TODO = null;       /* filas flacas de todo lo analizado, o null */
+let FUENTE = "mes";    /* de dónde salen las tablas: "mes" o "todo" */
 
 /* cuántos motores ofrecer: el techo real es la memoria del teléfono, así que
    se puede subir o bajar a mano y medir con el registro */
@@ -1075,6 +1099,8 @@ $("buscar").onclick = seguro("buscar", async () => {
     if (!r.ok) throw new Error("no encontré ese usuario");
     const meses = (await r.json()).archives || [];
     if (!meses.length) throw new Error("ese usuario no tiene partidas públicas");
+    MESES = meses;
+    TODO = null;
     $("meses").innerHTML = meses.slice().reverse()
       .map(m => `<option value="${m}">${m.slice(-7).replace("/", "-")}</option>`).join("");
     ver("zonaMeses", true);
@@ -1084,6 +1110,53 @@ $("buscar").onclick = seguro("buscar", async () => {
 });
 
 $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
+
+/* El interruptor cambia de dónde salen las tablas. La primera vez que se pide
+   "todo lo analizado" hay que barrer la caché; después queda en memoria y
+   volver a moverlo es instantáneo. Cambiar de modo tampoco lo rehace, porque
+   cada fila se guardó con sus dos etiquetas. */
+/* El barrido se hizo con una profundidad y una configuración concretas, que son
+   parte de la clave de la caché. Si cambian, lo juntado ya no corresponde. */
+["prof", "optMpv", "optLimpiar", "optBarrido", "optBloques"].forEach(id => {
+  const el = $(id);
+  const antes = el.onchange;
+  el.onchange = e => {
+    if (TODO) { TODO = null; window.LOG.add("·", "barrido descartado: cambió la configuración"); }
+    if (FUENTE === "todo") { FUENTE = "mes"; $("fuente").value = "mes"; }
+    if (antes) antes.call(el, e);
+  };
+});
+
+$("fuente").onchange = seguro("fuente", async () => {
+  FUENTE = $("fuente").value;
+  window.LOG.add("·", "fuente " + FUENTE);
+  if (FUENTE === "todo" && !TODO) {
+    if (!MESES.length) { estado("Primero buscá un usuario."); $("fuente").value = FUENTE = "mes"; return; }
+    ocupado(true);
+    const t0 = performance.now();
+    try {
+      const prof = MES ? MES.prof : +$("prof").value;
+      TODO = await barrerCache(prof, opcionesDePantalla(),
+        (m, n) => { estado(`Juntando lo analizado… mes ${m + 1} de ${n}`); progreso(m / n); });
+      window.LOG.add("·", `barrido: ${TODO.partidas} partidas de ${TODO.meses} mes(es) ` +
+        `en ${Math.round(performance.now() - t0)} ms` +
+        (TODO.otraProf ? ` · ${TODO.otraProf} a otra profundidad` : ""));
+    } catch (e) {
+      window.LOG.add("!", "barrido: " + (e.message || e));
+      estado("No se pudo juntar lo analizado.");
+      $("fuente").value = FUENTE = "mes";
+    }
+    ocupado(false);
+    progreso(0);
+    estado("");
+  }
+  /* Se puede mirar lo acumulado sin haber analizado el mes que está cargado:
+     es justamente para lo que sirve. */
+  if (MES || (FUENTE === "todo" && TODO)) {
+    ver("zonaMes", true);
+    pintarMes(MES ? MES.prof : TODO.prof);
+  }
+});
 
 async function cargarMes(url) {
   $("partidas").innerHTML = "<div>Cargando…</div>";
@@ -1173,6 +1246,14 @@ async function correrMes(desdeCero) {
   if (!USUARIO) { estado("Para el mes hace falta buscar por usuario."); return; }
   if (desdeCero || !MES) MES = { hechas: 0, resultados: [], prof: +$("prof").value };
   const prof = MES.prof;
+  /* Van a aparecer partidas nuevas, así que lo juntado queda corto. Se descarta
+     y se vuelve a mirar el mes; si querés lo acumulado, el interruptor lo
+     rehace con las nuevas adentro. */
+  if (TODO) {
+    TODO = null;
+    FUENTE = "mes"; $("fuente").value = "mes";
+    window.LOG.add("·", "barrido descartado: se van a analizar partidas nuevas");
+  }
   ocupado(true);
   ver("zonaRevision", false); ver("zonaResumen", false);
   ver("seguirMes", false);
@@ -1337,6 +1418,81 @@ function pintarBanco(filas, prof, queCompara) {
 /* Cambiar de modo NO vuelve a correr el motor: las categorías se derivan de las
    evaluaciones, y las evaluaciones ya están. Es la razón por la que la caché
    guarda evaluaciones y no veredictos. */
+/* ============ todo lo analizado ============
+
+   Recorre la caché y arma las filas de cada partida ya analizada, sin tocar el
+   motor. Es exactamente para esto que la caché guarda evaluaciones y no
+   veredictos (§4.4).
+
+   El orden importa: primero se pregunta a la caché por el uuid, que viene en el
+   JSON del mes, y recién las que dieron acierto se parsean. Así el costo escala
+   con lo que analizaste, no con tu historial.
+
+   De cada fila se guardan solo los campos que usan las tablas. Los fens, las
+   evaluaciones, las jugadas y el PGN se tiran: son para la pantalla de
+   revisión, que sigue trabajando sobre el mes elegido. Un año entero de filas
+   flacas pesa menos que un mes con todo. */
+const CAMPOS_FLACOS = ["n", "cats", "perdida", "precision", "franja", "pieza",
+                       "esCaptura", "colgada", "capBuena", "tomoBuena"];
+
+function adelgazar(f) {
+  const o = {};
+  for (const k of CAMPOS_FLACOS) o[k] = f[k];
+  return o;
+}
+
+async function barrerCache(prof, opc, onProg) {
+  const vte = variante(opc);
+  const libro = await cargarLibro();
+  /* los ids que están en la caché con cualquier profundidad; la clave es
+     `id|dN|variante|motor`, así que el id es lo que va antes de la primera raya */
+  const idsEnCache = new Set((await cache.claves())
+    .map(k => String(k).split("|")[0]));
+  const porPartida = [], hito = [];
+  let partidas = 0, mesesConDatos = 0, otraProf = 0, asistidas = 0;
+
+  for (let m = 0; m < MESES.length; m++) {
+    if (onProg) onProg(m, MESES.length);
+    let juegos = [];
+    try {
+      juegos = ((await (await fetch(MESES[m])).json()).games || []);
+    } catch (e) {
+      window.LOG.add("!", `barrido: no se pudo leer ${MESES[m].slice(-7)}: ${e.message || e}`);
+      continue;
+    }
+    let enEste = 0;
+    for (const g of juegos) {
+      const id = idPartida(g);
+      const guardado = await cache.leer(id, prof, vte);
+      if (!guardado || !guardado.evs) {
+        /* ¿estará analizada a otra profundidad? se avisa, no se mezcla (§5.3) */
+        if (idsEnCache.has(id)) otraProf++;
+        continue;
+      }
+      let d;
+      try {
+        const prep = prepararPartida(g.pgn);
+        if (guardado.evs.length !== prep.fens.length) continue;
+        d = derivarFilas(prep.jugadas, prep.fens, guardado.evs, libro, 0, $("modo").value);
+        d.cab = prep.cab;
+      } catch (e) { continue; }
+
+      const falso = { cab: d.cab, filas: d.filas };
+      if (esAsistida(falso)) { asistidas++; continue; }
+      const mias = filasDelUsuario(falso);
+      if (!mias.length) continue;
+      porPartida.push(mias.map(adelgazar));
+      partidas++; enEste++;
+    }
+    if (enEste) { mesesConDatos++; hito.push(MESES[m].slice(-7).replace("/", "-")); }
+  }
+
+  const filas = [];
+  porPartida.forEach(fs => filas.push(...fs));
+  return { filas, porPartida, partidas, meses: mesesConDatos, otraProf, asistidas,
+           prof, vte, desde: hito[0] || null, hasta: hito[hito.length - 1] || null };
+}
+
 function reDerivar(r) {
   if (!r || !r.evs) return;
   const d = derivarFilas(r.jugadas, r.fens, r.evs, LIBRO, 0, $("modo").value);
@@ -1348,6 +1504,7 @@ function reDerivar(r) {
 $("modo").onchange = seguro("modo", () => {
   window.LOG.add("·", "modo " + $("modo").value);
   if (MES) { MES.resultados.forEach(reDerivar); pintarMes(MES.prof); }
+  /* TODO no se rehace: cada fila flaca lleva las dos etiquetas. */
   if (R) {
     reDerivar(R);
     IDX = Math.min(IDX, R.filas.length - 1);
@@ -1587,22 +1744,61 @@ function pintarDetalle(todas, porPartida) {
     "Jugadas");
 }
 
-function pintarMes(prof) {
+/* De dónde salen los números de las tablas. La lista de partidas NO pasa por
+   acá: esa es del mes elegido siempre, porque es para abrir una partida.
+   Las filas del mes traen `cat` ya resuelto; las flacas del barrido traen las
+   dos etiquetas en `cats` y se elige acá, que es lo que hace instantáneo el
+   cambio de modo sin haber guardado las evaluaciones. */
+function datosDeTablas() {
+  const modo = $("modo").value;
+  if (FUENTE === "todo" && TODO) {
+    const cat = f => (f.cats && f.cats[modo]) || f.cat;
+    const porPartida = TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) })));
+    const todas = [];
+    porPartida.forEach(fs => todas.push(...fs));
+    return { todas, porPartida, asistidas: TODO.asistidas, deTodo: true };
+  }
+  if (!MES) return { todas: [], porPartida: [], asistidas: 0, deTodo: false };
   const asistidas = MES.resultados.filter(esAsistida);
   const limpias = MES.resultados.filter(r => !esAsistida(r));
   const porPartida = limpias.map(filasDelUsuario).filter(fs => fs.length);
   const todas = [];
   porPartida.forEach(fs => todas.push(...fs));
+  return { todas, porPartida, asistidas: asistidas.length, deTodo: false };
+}
+
+/* De dónde salen los números, dicho arriba de todo. Sin esto dos tablas de
+   distinto alcance se leen como si hablaran de lo mismo (§5.1 y §5.3). */
+function textoOrigen(d, prof) {
+  if (d.deTodo) {
+    const rango = TODO.desde === TODO.hasta ? TODO.desde : `${TODO.desde} a ${TODO.hasta}`;
+    return `Todo lo analizado: ${d.porPartida.length} partidas y ${d.todas.length} ` +
+      `jugadas de ${USUARIO}, en ${TODO.meses} mes(es), ${rango}. ` +
+      (TODO.otraProf
+        ? `Hay ${TODO.otraProf} partida(s) analizadas a otra profundidad o con otra ` +
+          "configuración: no entran, porque esos números no se comparan. "
+        : "");
+  }
+  return `El mes seleccionado: ${d.porPartida.length} partidas y ${d.todas.length} ` +
+    `jugadas de ${USUARIO}. `;
+}
+
+function pintarMes(prof) {
+  const d = datosDeTablas();
+  const { todas, porPartida } = d;
   if (!todas.length) {
-    $("capMes").textContent = "Ninguna de estas partidas es de ese usuario.";
-    $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = ""; $("mesLista").innerHTML = "";
+    $("capMes").textContent = d.deTodo
+      ? "Todavía no hay nada analizado a esta profundidad."
+      : "Ninguna de estas partidas es de ese usuario.";
+    $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = "";
+    ["mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => $(t).innerHTML = "");
+    pintarLista();
     return;
   }
   const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
-  $("capMes").textContent =
-    `Solo las jugadas de ${USUARIO}, en ${porPartida.length} partidas y ${todas.length} jugadas. ` +
-    (asistidas.length
-      ? `Quedan afuera ${asistidas.length} partida(s) con asistencia en vivo, que no miden juego propio. `
+  $("capMes").textContent = textoOrigen(d, prof) +
+    (d.asistidas
+      ? `Quedan afuera ${d.asistidas} partida(s) con asistencia en vivo, que no miden juego propio. `
       : "") +
     `Profundidad ${prof}, modo ${$("modo").value}; los números de distinta ` +
     "profundidad o de distinto modo no se comparan." +
@@ -1628,7 +1824,13 @@ function pintarMes(prof) {
     "Ventaja antes de mover");
 
   pintarDetalle(todas, porPartida);
+  pintarLista();
+}
 
+/* Siempre del mes elegido, pase lo que pase con el interruptor: es para abrir
+   una partida y revisarla, y eso solo tiene sentido sobre el mes cargado. */
+function pintarLista() {
+  if (!MES) { $("mesLista").innerHTML = ""; return; }
   $("mesLista").innerHTML = MES.resultados.map((r, i) => {
     const mias = filasDelUsuario(r);
     const g = r.meta || {};

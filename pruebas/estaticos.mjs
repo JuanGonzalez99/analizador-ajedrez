@@ -1,6 +1,9 @@
 /* Chequeos estáticos sobre analizador.html. Correr: node pruebas/estaticos.mjs
    Agarran los errores que las pruebas de node no ven, porque viven en el DOM. */
 import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
 
 const html = fs.readFileSync(new URL("../analizador.html", import.meta.url), "utf8");
 const fallas = [];
@@ -42,7 +45,22 @@ const sueltas = [...html.matchAll(/(.{0,24})<table id="([^"]+)"/g)]
   .filter(m => !m[1].includes('class="tw"')).map(m => m[2]);
 chequear("cada tabla scrollea sola", sueltas);
 
-/* 6. El traspaso dice en qué versión está al día. Si el HTML subió de versión
+/* 6. El módulo entero parsea. Los extractores solo miran dos pedazos, así que
+      un error de sintaxis en el resto —la interfaz, el motor, la caché— no lo
+      agarraba nada y aparecía como pantalla en blanco en el celu. */
+const mod = (html.match(/<script type="module">([\s\S]*?)<\/script>/) || [])[1];
+const tmp = path.join(os.tmpdir(), "analizador-modulo.mjs");
+let malSintaxis = [];
+if (!mod) malSintaxis = ["no se encontró el <script type=module>"];
+else {
+  fs.writeFileSync(tmp, mod, "utf8");
+  const r = spawnSync(process.execPath, ["--check", tmp], { encoding: "utf8" });
+  if (r.status !== 0) malSintaxis = [(r.stderr || "").split(String.fromCharCode(10)).slice(0, 4).join(" ").trim()];
+  fs.unlinkSync(tmp);
+}
+chequear("el módulo parsea", malSintaxis);
+
+/* 7. El traspaso dice en qué versión está al día. Si el HTML subió de versión
       y el documento no, alguien cambió algo y no lo anotó (§10). */
 const doc = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");
 const vHtml = (html.match(/window\.VERSION = "(v\d+)/) || [])[1];

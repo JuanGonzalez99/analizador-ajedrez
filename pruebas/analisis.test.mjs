@@ -304,3 +304,64 @@ test("la fila de mecanismos armada a mano también lleva su conjunto", () => {
   assert.ok(html.includes("dentro: trasMala"));
   assert.ok(html.includes("const dentro = todas.filter(test);"));
 });
+
+/* --- todo lo analizado, v26 --- */
+
+test("cada fila trae las dos etiquetas, y cat es la del modo pedido", () => {
+  /* Es lo que permite cambiar de modo sin haber guardado las evaluaciones. */
+  const pgn = "[White \"a\"]\n[Black \"b\"]\n\n1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7# 1-0";
+  const { jugadas, fens } = A.prepararPartida(pgn);
+  const evs = fens.map(() => ({ cp: 0, mate: null, mejor: "a2a3", segunda: null }));
+  for (const modo of ["critico", "amigable"]) {
+    const libro = { pos: new Set(), nombres: {} };
+    const { filas } = A.derivarFilas(jugadas, fens, evs, libro, 0, modo);
+    assert.ok(filas.length);
+    for (const f of filas) {
+      assert.ok(f.cats && "critico" in f.cats && "amigable" in f.cats, "faltan las dos");
+      assert.equal(f.cat, f.cats[modo], "cat tiene que ser la del modo pedido");
+    }
+  }
+});
+
+test("las dos etiquetas se calculan sobre los mismos datos", () => {
+  /* Un desplome de +10 a +6: grave en crítico, bien en amigable. Si alguna vez
+     dieran lo mismo siempre, el modo dejó de tener efecto. */
+  const d = { perdida: 4, caida: 3, esMejor: false, esLibro: false, entrega: false,
+              unicaBuena: false, oportunidad: null, legales: 20,
+              antesMio: 10, despuesMio: 6 };
+  assert.equal(A.categorizar(d, "critico"), "grave");
+  assert.equal(A.categorizar(d, "amigable"), "bien");
+});
+
+test("la fila flaca lleva lo que las tablas usan y nada más", () => {
+  const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
+  assert.ok(campos, "se perdió CAMPOS_FLACOS");
+  for (const c of ["cats", "perdida", "precision", "franja", "pieza", "esCaptura",
+                   "colgada", "capBuena", "tomoBuena", "n"])
+    assert.ok(campos.includes(`"${c}"`), `falta ${c}, alguna tabla se va a romper`);
+  for (const pesado of ["fens", "evs", "jugadas", "senales", "fen", "meta"])
+    assert.ok(!campos.includes(`"${pesado}"`), `${pesado} no tiene por qué viajar`);
+});
+
+test("la lista de partidas no pasa por el interruptor", () => {
+  const lista = html.slice(html.indexOf("function pintarLista"),
+                           html.indexOf("function pintarLista") + 600);
+  assert.ok(lista.includes("MES.resultados"), "la lista sale del mes elegido");
+  assert.ok(!lista.includes("TODO"), "y nunca de lo acumulado");
+});
+
+test("el barrido no toca el motor", () => {
+  const barrido = html.slice(html.indexOf("async function barrerCache"),
+                             html.indexOf("function reDerivar"));
+  for (const motor of ["evaluarPosiciones", "new Motor", "analizarPartida", "grupo"])
+    assert.ok(!barrido.includes(motor), `el barrido llama a ${motor}`);
+  assert.ok(barrido.includes("cache.leer"), "tiene que salir de la caché");
+});
+
+test("lo juntado se descarta cuando deja de corresponder", () => {
+  /* La clave de la caché lleva profundidad y variante: si cambian, lo barrido
+     es de otra cosa. Y al analizar partidas nuevas queda corto. */
+  assert.ok(html.includes('["prof", "optMpv", "optLimpiar", "optBarrido", "optBloques"]'));
+  assert.ok(html.includes("barrido descartado: cambió la configuración"));
+  assert.ok(html.includes("barrido descartado: se van a analizar partidas nuevas"));
+});

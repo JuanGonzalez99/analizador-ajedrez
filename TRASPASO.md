@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v25**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v26**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -73,6 +73,10 @@ Lo que no se puede probar así es el motor y el DOM. Para eso está
 3. Todo lugar que asigna la partida elegida rehabilita los botones.
 4. No quedan tablas ni leyendas huérfanas — restos de una tabla borrada a medias.
 5. Toda tabla vive dentro de un contenedor que scrollea.
+6. El `<script type="module">` entero parsea. Los extractores solo miran dos
+   pedazos, así que un error de sintaxis en la interfaz o en el motor no lo
+   agarraba nada y aparecía como pantalla en blanco en el celu.
+7. El traspaso dice en qué versión está al día, y coincide con el HTML.
 
 **Aun así, nada de esto ve la pantalla.** Los dos errores más caros de esta
 tanda —una columna recortada en el celu y una tabla que contestaba la pregunta
@@ -292,6 +296,37 @@ desglose calculado que dice a dónde fue cada jugada mala:
 
 Y al revés: "Omisión" se lleva jugadas de pérdida menor a 3, que no son malas.
 
+### El interruptor: el mes, o todo lo analizado
+
+Mueve **todo el panel menos la lista de partidas**, que es del mes elegido
+siempre porque sirve para abrir una partida y revisarla. Si el resumen mirara
+un mes y las tablas de abajo un año, el desglose que concilia "Malas" con las
+categorías dejaría de cerrar.
+
+"Todo lo analizado" lo arma `barrerCache()`, **sin tocar el motor**:
+
+1. Bajar el JSON de cada mes del usuario; ahí viene el `uuid` y el PGN.
+2. Preguntarle a la caché por el `uuid`. Sin acierto, se ignora.
+3. Solo las que aciertan se parsean y se derivan.
+
+El orden importa: el costo escala con lo que analizaste, no con tu historial.
+Parsear un PGN cuesta ~5,8 ms en PC, o sea ~10 s para 700 partidas en el celu.
+
+De cada fila se guardan **solo diez campos** (`CAMPOS_FLACOS`). Se tiran fens,
+evaluaciones, jugadas y PGN, que son para la pantalla de revisión. Un año de
+filas flacas pesa 9 MB de JSON contra 35 MB del objeto entero.
+
+**Cada fila lleva sus dos etiquetas** (`cats.critico` y `cats.amigable`). El
+modo se usa en un solo lugar de `derivarFilas` y `categorizar()` es aritmética
+—20.000 llamadas en 3 ms—, así que calcular las dos sale gratis y cambiar de
+modo en "todo lo analizado" es instantáneo sin haber guardado las evaluaciones.
+
+**Lo juntado se descarta** cuando cambia la profundidad o la configuración —son
+parte de la clave de la caché— y cuando se analizan partidas nuevas.
+
+Las partidas analizadas a **otra profundidad** no se mezclan, pero se cuentan y
+el encabezado avisa que existen: si no, parecería que se perdieron.
+
 ### Qué es una buena captura
 
 La decide **el motor**, no una heurística de material: hay una buena captura
@@ -324,13 +359,8 @@ columnas en el celu (v21) y el aviso de solapamiento (v25).
 
 ### Funcionalidad, lo que sigue
 
-6. **Interruptor "el mes seleccionado" / "todo lo analizado".** Cambia solo de
-   dónde salen las tablas de detalle. **La selección de mes y la lista de
-   partidas no se tocan**: siguen mostrando el mes elegido. El encabezado tiene
-   que decir de dónde salen los números y cuántos meses abarcan.
-
-   Es la mejora que más rinde, y ahora además **bloquea a otras**: el control
-   de dificultad de §8 no se puede leer con un mes solo.
+El interruptor "el mes seleccionado" / "todo lo analizado" está hecho (v26); se
+describe en §6.
 
 7. **Comparar dos jugadores.** Historial cara a cara y precisión de los dos,
    solo sobre las partidas entre ellos. Los datos ya están: las partidas se
