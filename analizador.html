@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v17 · 04-09";
+  window.VERSION = "v18 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -306,10 +306,6 @@
   <h2>Por tramo de la partida</h2>
   <p class="cap" id="capTramo"></p>
   <table id="mesTramo"></table>
-
-  <h2>Por color</h2>
-  <p class="cap" id="capColor"></p>
-  <table id="mesColor"></table>
 
   <h2>Partidas</h2>
   <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
@@ -1475,12 +1471,6 @@ function pintarDetalle(todas, porPartida) {
     "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
     TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom)),
     "Jugadas");
-
-  tablaTasas("mesColor", "capColor",
-    "Compara situaciones, no jugadas: con qué color se jugaba.",
-    [tasa(todas.filter(f => f.turno === "w"), "Con blancas"),
-     tasa(todas.filter(f => f.turno === "b"), "Con negras")],
-    "Color");
 }
 
 function pintarMes(prof) {

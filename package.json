@@ -1,0 +1,8 @@
+{
+  "name": "analizador-ajedrez",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test pruebas/analisis.test.mjs && node pruebas/estaticos.mjs"
+  }
+}
