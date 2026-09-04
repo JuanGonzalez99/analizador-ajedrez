@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v19 · 04-09";
+  window.VERSION = "v20 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -1390,13 +1390,14 @@ function variante(opc) {
 /* Por debajo de esta cantidad de jugadas no se muestra porcentaje. Con 389
    jugadas y 17 malas, cualquier corte deja celdas de dos casos, y un "7,3%"
    sobre 41 jugadas invita a comparaciones que el dato no aguanta. */
+/* ============ tablas ============ */
 const NMIN = 30;
 
 /* Una fila por mecanismo, con la tasa del resto de las jugadas al lado. Antes
    eran dos filas —"sí" y "no"— y había que restarlas de a ojo para leer el
    contraste, que es lo único que un mecanismo dice por sí solo (§5 regla 7). */
 function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
-  $(idCap).textContent = texto;
+  $(idCap).textContent = texto + DEF_MALA;
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>
       <th>% del resto</th></tr></thead>
@@ -1406,13 +1407,20 @@ function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
 }
 
 function tablaTasas(idTabla, idCap, texto, filas, encabezado) {
-  $(idCap).textContent = texto;
+  $(idCap).textContent = texto + DEF_MALA;
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
       `<td>${pct(f)}</td></tr>`).join("")}
     </tbody>`;
 }
+
+/* Qué cuenta como jugada mala en la columna "Malas". Es UNA definición y no la
+   misma que la categoría "Error grave": las categorías dependen del modo de
+   clasificación y esta no. La agregan solas tablaTasas y tablaContrastes, para
+   que ninguna tabla pueda quedarse sin decirlo. */
+const DEF_MALA = " Mala = pérdida de 3 peones o más, medida siempre igual, " +
+  "sin importar el modo de clasificación.";
 
 /* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
@@ -1422,9 +1430,41 @@ const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
 
 /* un mecanismo contra su propia tasa base: las jugadas que lo tienen y el resto */
+/* Por qué la columna "Malas" no coincide con la fila "Error grave" del resumen.
+   Son dos cortes distintos y hasta ahora nada lo decía (§5 regla 4):
+   - las tablas cuentan pérdida >= 3, siempre, en los dos modos;
+   - la categoría reparte esas mismas jugadas: las de apertura van a "Libro" y
+     las que además dejaron pasar mate o material van a "Omisión", así que no
+     llegan a "Error grave";
+   - "Omisión" además se lleva jugadas de pérdida menor a 3, que no son malas;
+   - en modo amigable la categoría se decide por puntos de victoria, no por
+     pérdida, así que un desplome de +10 a +6 es mala y sin embargo cae en
+     "Bien". Ese es justamente el desplome desde posición ganada.
+   El texto sale con los números del mes, para que se pueda comprobar. */
+function textoDesglose(todas) {
+  const malas = todas.filter(esMala);
+  if (!malas.length) return "";
+  const en = k => malas.filter(f => f.cat === k).length;
+  const grave = en("grave"), omision = en("omision"), libro = en("libro");
+  const otras = malas.length - grave - omision - libro;
+  const partes = [`${grave} como "Error grave"`];
+  if (omision) partes.push(`${omision} como "Omisión", por dejar pasar mate o material`);
+  if (libro) partes.push(`${libro} como "Libro"`);
+  if (otras) partes.push(`${otras} con otra etiqueta, porque el modo elegido ` +
+    "las mide por puntos de victoria y no por pérdida");
+  const sueltas = todas.filter(f => f.cat === "omision" && !esMala(f)).length;
+  return ` De las ${malas.length} jugadas malas de este mes, el resumen etiqueta ` +
+    partes.join(", ") + "." +
+    (sueltas ? (sueltas === 1
+      ? ' Otra jugada figura en "Omisión" sin ser mala: dejó pasar algo con una pérdida menor a 3.'
+      : ` Otras ${sueltas} jugadas figuran en "Omisión" sin ser malas: dejaron ` +
+        "pasar algo con una pérdida menor a 3.") : "");
+}
+
 const contraste = (todas, test, nombre) =>
   ({ nombre, con: tasa(todas.filter(test)), sin: tasa(todas.filter(f => !test(f))) });
 
+/* ================== fin del bloque de tablas =================== */
 const NOMBRE_PIEZA = { p: "Peón", n: "Caballo", b: "Alfil", r: "Torre", q: "Dama", k: "Rey" };
 const TRAMOS = [["1 a 10", n => n <= 10], ["11 a 25", n => n > 10 && n <= 25],
                 ["26 a 40", n => n > 25 && n <= 40], ["41 en adelante", n => n > 40]];
@@ -1494,7 +1534,7 @@ function pintarMes(prof) {
       ? `Quedan afuera ${asistidas.length} partida(s) con asistencia en vivo, que no miden juego propio. `
       : "") +
     `Profundidad ${prof}, modo ${$("modo").value}; los números de distinta ` +
-    "profundidad o de distinto modo no se comparan.";
+    "profundidad o de distinto modo no se comparan." + DEF_MALA + textoDesglose(todas);
 
   const cuentaCat = k => todas.filter(f => f.cat === k).length;
   $("mesResumen").innerHTML = `
@@ -1508,17 +1548,11 @@ function pintarMes(prof) {
         `<td>${cuentaCat(k)}</td><td>${(cuentaCat(k) / porPartida.length).toFixed(1)}</td></tr>`).join("")}
     </tbody>`;
 
-  $("capMesFranja").textContent =
-    "Compara situaciones, no jugadas: de cada nivel de ventaja, cuántas jugadas salieron mal " +
-    "sobre cuántas se jugaron desde ahí.";
-  $("mesFranja").innerHTML = `
-    <thead><tr><th>Ventaja antes de mover</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
-    <tbody>${FRANJAS.map(([nom, t]) => {
-      const en = todas.filter(f => t(f.franja));
-      const mal = en.filter(f => f.perdida >= 3).length;
-      return `<tr><td>${nom}</td><td>${en.length ? mal : "\u2014"}</td><td>${en.length}</td>` +
-             `<td>${en.length ? (100 * mal / en.length).toFixed(1) : "\u2014"}</td></tr>`;
-    }).join("")}</tbody>`;
+  tablaTasas("mesFranja", "capMesFranja",
+    "Compara situaciones, no jugadas: de cada nivel de ventaja, cuántas " +
+    "jugadas salieron mal sobre cuántas se jugaron desde ahí.",
+    FRANJAS.map(([nom, t]) => tasa(todas.filter(f => t(f.franja)), nom)),
+    "Ventaja antes de mover");
 
   pintarDetalle(todas, porPartida);
 

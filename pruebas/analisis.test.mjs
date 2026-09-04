@@ -99,3 +99,62 @@ test("todo porcentaje pasa por pct(), que aplica el mínimo de 30", () => {
   const propios = [...html.matchAll(/100 \* f\.malas \/ f\.total/g)];
   assert.equal(propios.length, 1, "hay un porcentaje calculado fuera de pct()");
 });
+
+/* --- qué cuenta como jugada mala, v20 --- */
+
+import T from "./extraer-tablas.mjs";
+
+const jugada = (perdida, cat) => ({ perdida, cat });
+
+test("esMala y pct son el único corte, y NMIN sigue en 30", () => {
+  assert.equal(T.NMIN, 30);
+  assert.equal(T.esMala(jugada(3, "grave")), true);
+  assert.equal(T.esMala(jugada(2.99, "error")), false);
+  assert.equal(T.pct({ malas: 3, total: 29 }), "\u2014", "debajo de 30 va guion");
+  assert.equal(T.pct({ malas: 3, total: 30 }), "10.0");
+});
+
+test("toda leyenda de tabla dice qué cuenta como mala", () => {
+  /* Se agrega sola en las dos funciones que pintan tablas, así que ninguna
+     tabla nueva puede quedarse sin decirlo. */
+  assert.ok(T.DEF_MALA.includes("3 peones"));
+  const pinta = html.match(/\$\(idCap\)\.textContent = [^;]+;/g) || [];
+  assert.equal(pinta.length, 2);
+  for (const l of pinta) assert.ok(l.includes("DEF_MALA"), `sin DEF_MALA: ${l}`);
+});
+
+test("el desglose concilia la columna Malas con las categorías del resumen", () => {
+  const todas = [
+    ...Array(4).fill(0).map(() => jugada(5, "grave")),
+    ...Array(2).fill(0).map(() => jugada(5, "omision")),
+    jugada(5, "libro"),
+    jugada(5, "bien"),          // modo amigable: mala pero etiquetada bien
+    jugada(1.5, "omision"),     // omisión que no es mala
+    jugada(0.2, "mejor"),
+  ];
+  const t = T.textoDesglose(todas);
+  assert.ok(t.includes("De las 8 jugadas malas"), t);
+  assert.ok(t.includes('4 como "Error grave"'), t);
+  assert.ok(t.includes('2 como "Omisión"'), t);
+  assert.ok(t.includes('1 como "Libro"'), t);
+  assert.ok(t.includes("1 con otra etiqueta"), t);
+  assert.ok(t.includes('Otra jugada figura en "Omisión" sin ser mala'), t);
+});
+
+test("sin jugadas malas el desglose no dice nada", () => {
+  assert.equal(T.textoDesglose([jugada(0.2, "mejor")]), "");
+});
+
+/* --- franjas de ventaja por el camino común, v20 (arreglo 5) --- */
+
+test("la tabla de franjas ya no se pinta sola", () => {
+  assert.ok(html.includes('tablaTasas("mesFranja", "capMesFranja"'));
+  assert.ok(!html.includes('$("mesFranja").innerHTML = `'),
+    "volvió a armarse su propio HTML y se saltea el mínimo de 30");
+});
+
+test("ninguna tabla calcula el porcentaje por su cuenta", () => {
+  /* Más ancho que la prueba anterior: cualquier "100 * algo / algo" suelto. */
+  const sueltos = [...html.matchAll(/100 \* \w[\w.]* \/ \w[\w.]*/g)].map(m => m[0]);
+  assert.deepEqual(sueltos, ["100 * f.malas / f.total"], `fuera de pct(): ${sueltos}`);
+});
