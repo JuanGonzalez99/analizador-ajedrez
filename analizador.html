@@ -73,7 +73,7 @@
 <div id="diag">cargando…</div>
 <div id="errores" class="oculto"></div>
 <script>
-  window.VERSION = "v2 · 03-09";
+  window.VERSION = "v3 · 03-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   diag.textContent = window.VERSION + " · cargando el módulo…";
@@ -97,8 +97,14 @@
   setTimeout(function () {
     if (!window.MODULO_OK) {
       diag.textContent = window.VERSION + " · el módulo no arrancó";
-      window.mostrarError("módulo",
-        "no se cargó analisis.js o chess.js. Revisá que analisis.js esté en el repo.");
+      /* pruebo cada archivo por separado para poder nombrar el que falta */
+      ["./chess.js", "./analisis.js", "./aperturas.json"].forEach(function (f) {
+        fetch(f).then(function (r) {
+          window.mostrarError(f, r.ok
+            ? "responde " + r.status + " como " + (r.headers.get("content-type") || "sin tipo")
+            : "el servidor devolvió " + r.status);
+        }).catch(function (e) { window.mostrarError(f, "no se pudo pedir: " + e.message); });
+      });
     }
   }, 6000);
 </script>
@@ -164,7 +170,7 @@
 </div>
 
 <script type="module">
-import { Chess } from "https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.js";
+import { Chess } from "./chess.js";
 import {
   aBlancas, winPct, precisionJugada, peonAtaca, quedaComible,
   capturaGanadora, entregaMaterial, categorizar, CATEGORIAS, ORDEN
