@@ -59,24 +59,117 @@
                         font-size: 13.5px; cursor: pointer; }
   .tira .jugadas span.sel { outline: 2px solid currentColor; font-weight: 700; }
   .senales { font-size: 12.5px; color: var(--tenue); margin-top: 8px; min-height: 18px; }
-  #diag { font: 12px/1.4 ui-monospace, monospace; color: var(--tenue); margin: 0 0 10px; }
+  #diag { font: 12px/1.4 ui-monospace, monospace; color: var(--tenue); margin: 0 0 10px;
+          cursor: pointer; user-select: none; }
   #errores { font: 12px/1.45 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
              border-left: 3px solid var(--c-grave); padding: 8px 10px; margin: 0 0 12px;
              color: var(--c-grave); }
+  #panelLog { border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px; margin: 0 0 12px; }
+  #logTexto { font: 11px/1.35 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
+              max-height: 260px; overflow-y: auto; margin: 8px 0 0; color: var(--tenue); }
 </style>
 
 <h1>Analizador de partidas</h1>
 <p class="n">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
 
 <!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
-     sirve para avisar que el módulo falló. -->
+     sirve para avisar que el módulo falló. Acá vive también el registro, para
+     que exista antes que cualquier otra cosa y capture lo que pase al arrancar. -->
 <div id="diag">cargando…</div>
 <div id="errores" class="oculto"></div>
+
+<div id="panelLog" class="oculto">
+  <div class="fila">
+    <button class="chico" id="logCopiar">Copiar</button>
+    <button class="chico" id="logBajar">Descargar</button>
+    <button class="chico" id="logLimpiar">Limpiar</button>
+    <button class="chico" id="cacheBorrar" disabled>Borrar caché</button>
+  </div>
+  <div id="logTexto"></div>
+</div>
+
 <script>
-  window.VERSION = "v5 · 03-09";
+  window.VERSION = "v6 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
+  var panel = document.getElementById("panelLog");
+  var logTexto = document.getElementById("logTexto");
+
+  /* ============ registro ============
+     Vive en localStorage y no en IndexedDB a propósito: escribir es sincrónico,
+     así que sobrevive a un cierre abrupto de la pestaña. Se escribe con un
+     retardo para no frenar el análisis, y a la fuerza al haber un error. */
+  var LOG = window.LOG = {
+    lineas: [], TOPE: 500, t0: Date.now(), pendiente: null,
+
+    add: function (nivel, txt) {
+      var t = ((Date.now() - this.t0) / 1000).toFixed(1);
+      this.lineas.push(t + "s " + nivel + " " + txt);
+      if (this.lineas.length > this.TOPE) this.lineas.splice(0, this.lineas.length - this.TOPE);
+      if (!panel.classList.contains("oculto")) this.pintar();
+      if (nivel === "ERR") this.guardar();
+      else if (!this.pendiente) this.pendiente = setTimeout(function () { LOG.guardar(); }, 2000);
+    },
+    texto: function () {
+      return window.VERSION + " · " + navigator.userAgent + "\n" +
+             "nucleos=" + (navigator.hardwareConcurrency || "?") + "\n\n" +
+             this.lineas.join("\n");
+    },
+    pintar: function () { logTexto.textContent = this.texto(); },
+    guardar: function () {
+      clearTimeout(this.pendiente); this.pendiente = null;
+      try { localStorage.setItem("log_analizador", this.lineas.join("\n")); } catch (e) {}
+    },
+    cargar: function () {
+      try {
+        var v = localStorage.getItem("log_analizador");
+        if (v) this.lineas = ["--- de la sesión anterior ---"].concat(v.split("\n")).concat(["--- fin ---"]);
+      } catch (e) {}
+    }
+  };
+  LOG.cargar();
+  LOG.add("i", "arranca la página");
+
+  /* el console sigue funcionando igual, pero además queda en el registro */
+  ["log", "warn", "error"].forEach(function (m) {
+    var orig = console[m].bind(console);
+    console[m] = function () {
+      var a = Array.prototype.slice.call(arguments).map(function (x) {
+        if (x instanceof Error) return x.message;
+        if (typeof x === "object") { try { return JSON.stringify(x); } catch (e) { return String(x); } }
+        return String(x);
+      });
+      LOG.add(m === "error" ? "ERR" : m === "warn" ? "!" : "·", a.join(" "));
+      orig.apply(null, arguments);
+    };
+  });
+
   diag.textContent = window.VERSION + " · cargando el módulo…";
+  diag.title = "tocá para ver el registro";
+  diag.onclick = function () {
+    panel.classList.toggle("oculto");
+    if (!panel.classList.contains("oculto")) LOG.pintar();
+  };
+
+  document.getElementById("logCopiar").onclick = function () {
+    var t = LOG.texto();
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(
+      function () { diag.textContent = window.VERSION + " · registro copiado"; },
+      function () { alert(t); });
+    else alert(t);
+  };
+  document.getElementById("logBajar").onclick = function () {
+    var b = new Blob([LOG.texto()], { type: "text/plain" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(b);
+    a.download = "registro-analizador.txt";
+    a.click();
+  };
+  document.getElementById("logLimpiar").onclick = function () {
+    LOG.lineas = []; LOG.guardar(); LOG.pintar();
+  };
+  window.addEventListener("pagehide", function () { LOG.guardar(); });
+
   window.mostrarError = function (donde, e) {
     var t = (e && (e.message || e.reason && e.reason.message || e.reason)) || e;
     caja.classList.remove("oculto");
@@ -90,6 +183,7 @@
       window.mostrarError(d, ev.error || ev.message);
       if (ev.error && ev.error.stack) {
         caja.textContent += "\n" + ev.error.stack.split("\n").slice(0, 3).join("\n");
+        LOG.add("ERR", ev.error.stack.split("\n").slice(0, 3).join(" | "));
       }
     } else if (ev.target && ev.target.tagName === "SCRIPT") {
       window.mostrarError("no cargó " + (ev.target.src || "un script embebido"),
@@ -103,7 +197,7 @@
     if (!window.MODULO_OK) {
       diag.textContent = window.VERSION + " · el módulo no arrancó";
       /* pruebo cada archivo por separado para poder nombrar el que falta */
-      ["./chess.js", "./analisis.js", "./aperturas.json"].forEach(function (f) {
+      ["./chess.js", "./aperturas.json", "./stockfish-18-lite-single.js"].forEach(function (f) {
         fetch(f).then(function (r) {
           window.mostrarError(f, r.ok
             ? "responde " + r.status + " como " + (r.headers.get("content-type") || "sin tipo")
@@ -138,10 +232,30 @@
         <option value="18">18 — lenta</option>
       </select>
     </label>
-    <button id="analizar">Analizar</button>
+    <label>Motores
+      <select id="motores"></select>
+    </label>
+  </div>
+  <div class="fila" style="margin-top:8px">
+    <button id="analizar">Analizar la partida</button>
+    <button id="analizarMes" class="chico">Analizar el mes</button>
+    <button id="detener" class="chico oculto">Detener</button>
   </div>
   <p id="estado"></p>
   <div class="barra"><i id="progreso"></i></div>
+</div>
+
+<div id="zonaMes" class="oculto">
+  <h2>El mes</h2>
+  <p class="cap" id="capMes"></p>
+  <table id="mesResumen"></table>
+  <h2>Riesgo por franja de ventaja</h2>
+  <p class="cap" id="capMesFranja"></p>
+  <table id="mesFranja"></table>
+  <h2>Partidas</h2>
+  <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
+  <div id="mesLista" class="lista"></div>
+  <div class="fila" style="margin-top:10px"><button id="seguirMes" class="chico oculto"></button></div>
 </div>
 
 <div id="zonaRevision" class="oculto">
@@ -184,9 +298,9 @@ try {
 }
 
 /* ==========================================================================
-   Lo que sigue es el contenido de analisis.js, copiado adentro a propósito.
-   El archivo suelto sigue existiendo porque es contra el que corren las
-   pruebas; acá va incrustado para que la página no dependa de traerlo.
+   Lo que sigue es el bloque de análisis: no toca el DOM ni el motor, así que
+   se puede extraer tal cual a un archivo suelto y probarlo aparte. Va acá
+   adentro para que la página no dependa de traer un segundo archivo.
    ========================================================================== */
 
 /* ============ evaluación ============ */
@@ -306,91 +420,6 @@ function categorizar({ perdida, esMejor, esLibro, entrega, unicaBuena, oportunid
   return "bien";
 }
 
-/* ===================== fin del código incrustado ====================== */
-
-try {
-
-window.MODULO_OK = true;
-const $ = id => document.getElementById(id);
-$("diag").textContent = window.VERSION + " \u00b7 listo";
-const ver = (id, si) => $(id).classList.toggle("oculto", !si);
-
-/* envuelve un manejador para que ningún error quede invisible */
-const seguro = (donde, fn) => async (...a) => {
-  try { return await fn(...a); }
-  catch (e) { window.mostrarError(donde, e); estado("Fall\u00f3: " + (e.message || e)); }
-};
-const estado = t => { $("estado").textContent = t; };
-const progreso = f => { $("progreso").style.width = Math.round(f * 100) + "%"; };
-
-/* ============ motor ============ */
-const motor = {
-  w: null, oyentes: [],
-  async arrancar() {
-    if (this.w) return;
-    this.w = new Worker("./stockfish-18-lite-single.js");
-    this.w.onmessage = ev => {
-      const d = ev.data;
-      const s = typeof d === "string" ? d : String((d && d.data) || d);
-      this.oyentes.slice().forEach(f => f(s));
-    };
-    await new Promise((ok, no) => {
-      const t0 = Date.now();
-      const fn = s => { if (s.startsWith("uciok")) { quitar(); clearInterval(p); ok(); } };
-      const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
-      this.oyentes.push(fn);
-      this.w.postMessage("uci");
-      const p = setInterval(() => {
-        if (Date.now() - t0 > 120000) { quitar(); clearInterval(p); no(new Error("el motor no arrancó")); }
-        else this.w.postMessage("uci");
-      }, 700);
-    });
-    this.w.postMessage("setoption name MultiPV value 2");
-  },
-  analizar(fen, prof) {
-    return new Promise((ok, no) => {
-      const linea = {};
-      const fn = s => {
-        if (s.startsWith("info") && s.includes(" score ")) {
-          const pv = /multipv (\d+)/.exec(s);
-          const sc = /score (cp|mate) (-?\d+)/.exec(s);
-          const mv = / pv ([a-h][1-8][a-h][1-8][qrbn]?)/.exec(s);
-          if (sc) {
-            const k = pv ? +pv[1] : 1;
-            linea[k] = {
-              cp: sc[1] === "cp" ? +sc[2] : null,
-              mate: sc[1] === "mate" ? +sc[2] : null,
-              mov: mv ? mv[1] : (linea[k] && linea[k].mov) || null
-            };
-          }
-        } else if (s.startsWith("bestmove")) {
-          quitar(); clearTimeout(corte);
-          const uno = linea[1] || { cp: 0, mate: null, mov: null };
-          ok({ cp: uno.cp, mate: uno.mate, mejor: s.split(" ")[1] || uno.mov, segunda: linea[2] || null });
-        }
-      };
-      const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
-      this.oyentes.push(fn);
-      const corte = setTimeout(() => { quitar(); no(new Error("el motor no respondió")); }, 120000);
-      this.w.postMessage("position fen " + fen);
-      this.w.postMessage("go depth " + prof);
-    });
-  }
-};
-
-/* ============ aperturas ============ */
-let LIBRO = null;
-async function cargarLibro() {
-  if (LIBRO) return LIBRO;
-  try {
-    const d = await (await fetch("./aperturas.json")).json();
-    LIBRO = { pos: new Set(d.posiciones), nombres: d.nombres };
-  } catch { LIBRO = { pos: new Set(), nombres: {} }; }
-  return LIBRO;
-}
-const claveLibro = fen => fen.split(" ").slice(0, 4).join(" ");
-
-/* ============ análisis ============ */
 function textoEval(ev, turno) {
   if (ev.mate !== null && ev.mate !== undefined) {
     const blancasGanan = (ev.mate > 0) === (turno === "w");
@@ -400,26 +429,25 @@ function textoEval(ev, turno) {
   return (cp >= 0 ? "+" : "") + (cp / 100).toFixed(2);
 }
 
-async function analizarPartida(pgn, prof) {
+const claveLibro = fen => fen.split(" ").slice(0, 4).join(" ");
+
+/* Lee el PGN y devuelve las jugadas y las posiciones. No usa el motor: es la
+   parte que se puede rehacer gratis cuando el análisis viene de la caché. */
+function prepararPartida(pgn) {
   const base = new Chess();
   if (!base.load_pgn(pgn, { sloppy: true })) throw new Error("no pude leer ese PGN");
   const jugadas = base.history({ verbose: true });
   if (!jugadas.length) throw new Error("el PGN no tiene jugadas");
-
-  const libro = await cargarLibro();
   const rep = new Chess();
   const fens = [rep.fen()];
   for (const j of jugadas) { rep.move(j); fens.push(rep.fen()); }
+  return { cab: base.header(), jugadas, fens };
+}
 
-  await motor.arrancar();
-  const evs = [];
-  for (let i = 0; i < fens.length; i++) {
-    estado(`Analizando posición ${i + 1} de ${fens.length}`);
-    progreso(i / fens.length);
-    evs.push(await motor.analizar(fens[i], prof));
-  }
-  progreso(1);
-
+/* Arma las filas a partir de las evaluaciones. Todo lo de acá es derivable, y
+   por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
+   categorización, las partidas ya analizadas no hay que volver a correrlas. */
+function derivarFilas(jugadas, fens, evs, libro) {
   let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
@@ -483,7 +511,262 @@ async function analizarPartida(pgn, prof) {
       franja: (turno === "w" ? antes : -antes) / 100
     });
   }
-  return { filas, cab: base.header(), apertura };
+  return { filas, apertura };
+}
+
+function mediana(xs) {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+/* Reparte una lista de tareas entre varios obreros. Cada obrero toma la
+   siguiente libre, así que el orden en que terminan no afecta al resultado:
+   `res[i]` siempre corresponde a `items[i]`. Si una tarea tira error, se
+   propaga y el resto se corta. */
+async function repartir(items, obreros, tarea, onProg) {
+  const res = new Array(items.length);
+  let sig = 0, hechas = 0;
+  const consumidor = async o => {
+    for (;;) {
+      const i = sig++;
+      if (i >= items.length) return;
+      res[i] = await tarea(o, items[i], i);
+      hechas++;
+      if (onProg) onProg(hechas, items.length);
+    }
+  };
+  await Promise.all(obreros.slice(0, Math.max(1, Math.min(obreros.length, items.length)))
+    .map(consumidor));
+  return res;
+}
+
+/* identidad de una partida para la caché: la de chess.com si la hay, y si no
+   un hash del PGN. Nunca la fecha ni el rival: §D regla 9. */
+function hashTexto(t) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < t.length; i++) { h ^= t.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return (h >>> 0).toString(16);
+}
+function idPartida(g) {
+  if (g && g.uuid) return g.uuid;
+  if (g && g.url) return "url:" + hashTexto(g.url);
+  return "pgn:" + hashTexto((g && g.pgn) || String(g));
+}
+
+/* ===================== fin del bloque de análisis ====================== */
+
+try {
+
+window.MODULO_OK = true;
+const $ = id => document.getElementById(id);
+$("diag").textContent = window.VERSION + " · listo · tocá para ver el registro";
+const ver = (id, si) => $(id).classList.toggle("oculto", !si);
+const log = (...a) => window.LOG.add("·", a.join(" "));
+
+/* envuelve un manejador para que ningún error quede invisible */
+const seguro = (donde, fn) => async (...a) => {
+  try { return await fn(...a); }
+  catch (e) { window.mostrarError(donde, e); estado("Falló: " + (e.message || e)); }
+};
+const estado = t => { $("estado").textContent = t; };
+const progreso = f => { $("progreso").style.width = Math.round(f * 100) + "%"; };
+
+/* ============ caché de evaluaciones (IndexedDB) ============
+   Guarda las evaluaciones del motor, no los veredictos. La clave lleva la
+   profundidad y la versión del motor: números de distinta profundidad no se
+   comparan (§D regla 11), así que tampoco se reutilizan. */
+const MOTOR_VER = "sf18lite";
+const cache = {
+  db: null, roto: false, aciertos: 0, fallos: 0,
+  async abrir() {
+    if (this.db || this.roto) return this.db;
+    try {
+      this.db = await new Promise((ok, no) => {
+        const r = indexedDB.open("analizador", 1);
+        r.onupgradeneeded = () => {
+          if (!r.result.objectStoreNames.contains("evs"))
+            r.result.createObjectStore("evs", { keyPath: "clave" });
+        };
+        r.onsuccess = () => ok(r.result);
+        r.onerror = () => no(r.error || new Error("no se pudo abrir"));
+        r.onblocked = () => no(new Error("base bloqueada por otra pestaña"));
+      });
+    } catch (e) {
+      this.roto = true;
+      window.LOG.add("!", "sin caché: " + (e.message || e));
+    }
+    return this.db;
+  },
+  clave: (id, prof) => `${id}|d${prof}|${MOTOR_VER}`,
+  async _tx(modo, fn) {
+    const db = await this.abrir();
+    if (!db) return null;
+    return new Promise((ok, no) => {
+      const t = db.transaction("evs", modo);
+      const p = fn(t.objectStore("evs"));
+      p.onsuccess = () => ok(p.result);
+      p.onerror = () => no(p.error);
+    });
+  },
+  async leer(id, prof) {
+    try {
+      const v = await this._tx("readonly", s => s.get(this.clave(id, prof)));
+      if (v && v.evs) { this.aciertos++; return v.evs; }
+    } catch (e) { window.LOG.add("!", "caché leer: " + (e.message || e)); }
+    this.fallos++;
+    return null;
+  },
+  async guardar(id, prof, evs) {
+    try {
+      await this._tx("readwrite", s => s.put({
+        clave: this.clave(id, prof), evs, n: evs.length, fecha: Date.now()
+      }));
+    } catch (e) { window.LOG.add("!", "caché guardar: " + (e.message || e)); }
+  },
+  async contar() {
+    try { return await this._tx("readonly", s => s.count()) || 0; } catch (e) { return 0; }
+  },
+  async borrarTodo() {
+    try { await this._tx("readwrite", s => s.clear()); } catch (e) {}
+  }
+};
+
+/* ============ motor ============
+   Antes era un objeto único. Ahora es una clase y hay varios: las posiciones
+   de una partida son independientes entre sí, así que se reparten. */
+class Motor {
+  constructor(i) { this.i = i; this.w = null; this.oyentes = []; }
+
+  async arrancar() {
+    if (this.w) return;
+    const t0 = performance.now();
+    this.w = new Worker("./stockfish-18-lite-single.js");
+    this.w.onerror = e => window.mostrarError("motor " + this.i, e.message || "falló el worker");
+    this.w.onmessage = ev => {
+      const d = ev.data;
+      const s = typeof d === "string" ? d : String((d && d.data) || d);
+      this.oyentes.slice().forEach(f => f(s));
+    };
+    await new Promise((ok, no) => {
+      const t = Date.now();
+      const fn = s => { if (s.startsWith("uciok")) { quitar(); clearInterval(p); ok(); } };
+      const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
+      this.oyentes.push(fn);
+      this.w.postMessage("uci");
+      const p = setInterval(() => {
+        if (Date.now() - t > 120000) { quitar(); clearInterval(p); no(new Error("el motor " + this.i + " no arrancó")); }
+        else this.w.postMessage("uci");
+      }, 700);
+    });
+    this.w.postMessage("setoption name MultiPV value 2");
+    /* con varios motores a la vez la memoria es el límite, así que se acota */
+    this.w.postMessage("setoption name Hash value 16");
+    window.LOG.add("·", `motor ${this.i} arrancó en ${Math.round(performance.now() - t0)} ms`);
+  }
+
+  analizar(fen, prof) {
+    return new Promise((ok, no) => {
+      const linea = {};
+      const fn = s => {
+        if (s.startsWith("info") && s.includes(" score ")) {
+          const pv = /multipv (\d+)/.exec(s);
+          const sc = /score (cp|mate) (-?\d+)/.exec(s);
+          const mv = / pv ([a-h][1-8][a-h][1-8][qrbn]?)/.exec(s);
+          if (sc) {
+            const k = pv ? +pv[1] : 1;
+            linea[k] = {
+              cp: sc[1] === "cp" ? +sc[2] : null,
+              mate: sc[1] === "mate" ? +sc[2] : null,
+              mov: mv ? mv[1] : (linea[k] && linea[k].mov) || null
+            };
+          }
+        } else if (s.startsWith("bestmove")) {
+          quitar(); clearTimeout(corte);
+          const uno = linea[1] || { cp: 0, mate: null, mov: null };
+          ok({ cp: uno.cp, mate: uno.mate, mejor: s.split(" ")[1] || uno.mov, segunda: linea[2] || null });
+        }
+      };
+      const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
+      this.oyentes.push(fn);
+      const corte = setTimeout(() => { quitar(); no(new Error("el motor " + this.i + " no respondió")); }, 120000);
+      this.w.postMessage("position fen " + fen);
+      this.w.postMessage("go depth " + prof);
+    });
+  }
+}
+
+const pool = {
+  motores: [],
+  async asegurar(n) {
+    const faltan = [];
+    for (let i = this.motores.length; i < n; i++) {
+      const m = new Motor(i + 1);
+      this.motores.push(m);
+      faltan.push(m);
+    }
+    if (faltan.length) await Promise.all(faltan.map(m => m.arrancar()));
+    return this.motores.slice(0, n);
+  }
+};
+
+let CANCELAR = false;
+
+/* Reparte las posiciones entre los motores. Cada uno toma la siguiente libre;
+   el orden del resultado no depende del orden en que terminen. */
+async function evaluarPosiciones(fens, prof, onProg) {
+  const n = Math.max(1, Math.min(+$("motores").value || 1, fens.length));
+  const motores = await pool.asegurar(n);
+  const tiempos = [];
+  const t0 = performance.now();
+  const evs = await repartir(fens, motores, async (m, fen) => {
+    if (CANCELAR) throw new Error("cancelado");
+    const t = performance.now();
+    const ev = await m.analizar(fen, prof);
+    tiempos.push(performance.now() - t);
+    return ev;
+  }, onProg);
+  window.LOG.add("·", `${fens.length} posiciones en ${Math.round(performance.now() - t0)} ms ` +
+    `con ${n} motores · mediana ${Math.round(mediana(tiempos))} ms por posición`);
+  return evs;
+}
+
+/* ============ aperturas ============ */
+let LIBRO = null;
+async function cargarLibro() {
+  if (LIBRO) return LIBRO;
+  try {
+    const d = await (await fetch("./aperturas.json")).json();
+    LIBRO = { pos: new Set(d.posiciones), nombres: d.nombres };
+  } catch (e) {
+    window.LOG.add("!", "sin libro de aperturas: " + (e.message || e));
+    LIBRO = { pos: new Set(), nombres: {} };
+  }
+  return LIBRO;
+}
+
+/* ============ análisis de una partida ============ */
+async function analizarPartida(pgn, prof, id, onProg) {
+  const { cab, jugadas, fens } = prepararPartida(pgn);
+  const libro = await cargarLibro();
+
+  let evs = await cache.leer(id, prof);
+  let deCache = !!evs;
+  if (evs && evs.length !== fens.length) {   /* el PGN cambió: no sirve */
+    window.LOG.add("!", "caché descartada por largo distinto en " + id);
+    evs = null; deCache = false;
+  }
+  if (!evs) {
+    evs = await evaluarPosiciones(fens, prof, onProg);
+    await cache.guardar(id, prof, evs);
+  } else {
+    window.LOG.add("·", `caché: ${id} a profundidad ${prof}`);
+    if (onProg) onProg(fens.length, fens.length);
+  }
+
+  const { filas, apertura } = derivarFilas(jugadas, fens, evs, libro);
+  return { filas, cab, apertura, id, deCache };
 }
 
 /* ============ tablero ============ */
@@ -526,7 +809,31 @@ function dibujar(fen, jugada, mejor) {
 }
 
 /* ============ interfaz ============ */
-let PARTIDAS = [], ELEGIDA = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
+const TOPE_MES = 50;
+let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
+let MES = null;
+
+/* cuántos motores ofrecer: el techo real es la memoria del teléfono, así que
+   se puede subir o bajar a mano y medir con el registro */
+(function () {
+  const nucleos = navigator.hardwareConcurrency || 2;
+  const sug = Math.max(1, Math.min(4, nucleos - 1));
+  $("motores").innerHTML = [1, 2, 3, 4, 6, 8]
+    .map(n => `<option value="${n}" ${n === sug ? "selected" : ""}>${n}</option>`).join("");
+  window.LOG.add("·", `núcleos ${nucleos}, motores sugeridos ${sug}`);
+})();
+
+cache.contar().then(n => {
+  if (cache.roto) return;
+  $("cacheBorrar").disabled = false;
+  $("cacheBorrar").textContent = `Borrar caché (${n})`;
+  window.LOG.add("·", `caché con ${n} partidas`);
+});
+$("cacheBorrar").onclick = seguro("borrar caché", async () => {
+  await cache.borrarTodo();
+  $("cacheBorrar").textContent = "Borrar caché (0)";
+  window.LOG.add("·", "caché borrada");
+});
 
 $("verPegar").onclick = () => ver("zonaPegar", $("zonaPegar").classList.contains("oculto"));
 
@@ -535,7 +842,7 @@ $("buscar").onclick = seguro("buscar", async () => {
   if (!u) return;
   USUARIO = u.toLowerCase();
   $("buscar").disabled = true;
-  ["zonaAnalizar", "zonaRevision", "zonaResumen", "zonaPartidas"].forEach(z => ver(z, false));
+  ["zonaAnalizar", "zonaRevision", "zonaResumen", "zonaPartidas", "zonaMes"].forEach(z => ver(z, false));
   try {
     const r = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`);
     if (!r.ok) throw new Error("no encontré ese usuario");
@@ -554,8 +861,11 @@ $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
 async function cargarMes(url) {
   $("partidas").innerHTML = "<div>Cargando…</div>";
   ver("zonaPartidas", true);
+  ver("zonaMes", false);
+  MES = null;
   const j = await (await fetch(url)).json();
   PARTIDAS = (j.games || []).reverse();
+  window.LOG.add("·", `mes ${url.slice(-7)}: ${PARTIDAS.length} partidas`);
   if (!PARTIDAS.length) { $("partidas").innerHTML = "<div>Ese mes no tiene partidas.</div>"; return; }
   $("partidas").innerHTML = PARTIDAS.map((g, i) => {
     const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
@@ -567,40 +877,198 @@ async function cargarMes(url) {
     d.onclick = () => {
       $("partidas").querySelectorAll("div").forEach(x => x.classList.remove("sel"));
       d.classList.add("sel");
-      ELEGIDA = PARTIDAS[+d.dataset.i].pgn;
+      const g = PARTIDAS[+d.dataset.i];
+      ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g);
       ver("zonaAnalizar", true);
       estado("");
     };
   });
+  ELEGIDA = null; ELEGIDA_ID = null;
+  ver("zonaAnalizar", true);
+  ocupado(false);
+  estado("Elegí una partida, o analizá el mes entero.");
+  $("analizarMes").textContent = `Analizar el mes (${Math.min(TOPE_MES, PARTIDAS.length)} de ${PARTIDAS.length})`;
 }
 
 $("usarPgn").onclick = seguro("pgn", () => {
   const t = $("pgn").value.trim();
   if (!t) return;
-  ELEGIDA = t; ver("zonaAnalizar", true); estado("PGN cargado.");
+  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t });
+  ver("zonaAnalizar", true); estado("PGN cargado.");
 });
+
+function ocupado(si) {
+  $("analizar").disabled = si || !ELEGIDA;
+  $("analizarMes").disabled = si || !PARTIDAS.length;
+  $("buscar").disabled = si;
+  ver("detener", si);
+  if (si) CANCELAR = false;
+}
+$("detener").onclick = () => { CANCELAR = true; estado("Deteniendo\u2026"); };
 
 $("analizar").onclick = seguro("analizar", async () => {
   if (!ELEGIDA) return;
-  $("analizar").disabled = true;
-  ver("zonaRevision", false); ver("zonaResumen", false);
+  ocupado(true);
+  ver("zonaRevision", false); ver("zonaResumen", false); ver("zonaMes", false);
   progreso(0);
   try {
     const prof = +$("prof").value;
     estado("Levantando el motor\u2026");
-    R = await analizarPartida(ELEGIDA, prof);
+    R = await analizarPartida(ELEGIDA, prof, ELEGIDA_ID, (hechas, total) => {
+      estado(`Analizando posición ${hechas} de ${total}`);
+      progreso(hechas / total);
+    });
+    progreso(1);
     IDX = 0;
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
     ver("zonaRevision", true); ver("zonaResumen", true);
-    estado(R.apertura ? `Listo. Apertura: ${R.apertura}` : "Listo.");
+    estado((R.deCache ? "Ya estaba analizada. " : "Listo. ") +
+           (R.apertura ? "Apertura: " + R.apertura : ""));
   } catch (e) {
     estado("No se pudo: " + e.message);
+    window.LOG.add("ERR", "analizar: " + (e.message || e));
   }
-  $("analizar").disabled = false;
+  ocupado(false);
 });
 
+/* ============ el mes ============ */
+$("analizarMes").onclick = seguro("analizar el mes", () => correrMes(true));
+$("seguirMes").onclick = seguro("seguir el mes", () => correrMes(false));
+
+async function correrMes(desdeCero) {
+  if (!PARTIDAS.length) return;
+  if (!USUARIO) { estado("Para el mes hace falta buscar por usuario."); return; }
+  if (desdeCero || !MES) MES = { hechas: 0, resultados: [], prof: +$("prof").value };
+  const prof = MES.prof;
+  ocupado(true);
+  ver("zonaRevision", false); ver("zonaResumen", false);
+  ver("seguirMes", false);
+
+  const desde = MES.hechas;
+  const hasta = Math.min(PARTIDAS.length, desde + TOPE_MES);
+  const t0 = performance.now();
+  window.LOG.add("·", `mes: partidas ${desde + 1} a ${hasta} a profundidad ${prof}`);
+
+  try {
+    for (let i = desde; i < hasta; i++) {
+      if (CANCELAR) break;
+      const g = PARTIDAS[i];
+      const tp = performance.now();
+      estado(`Partida ${i + 1} de ${hasta}\u2026`);
+      let r = null;
+      try {
+        r = await analizarPartida(g.pgn, prof, idPartida(g), (hechas, total) => {
+          estado(`Partida ${i + 1} de ${hasta} \u00b7 posición ${hechas} de ${total}`);
+          progreso((i - desde + hechas / total) / (hasta - desde));
+        });
+      } catch (e) {
+        if (CANCELAR) break;
+        window.LOG.add("!", `partida ${i + 1} salteada: ${e.message || e}`);
+      }
+      if (r) {
+        r.meta = g;
+        MES.resultados.push(r);
+        window.LOG.add("·", `partida ${i + 1}: ${r.filas.length} jugadas en ` +
+          `${Math.round(performance.now() - tp)} ms${r.deCache ? " (de caché)" : ""}`);
+      }
+      MES.hechas = i + 1;
+      progreso((i - desde + 1) / (hasta - desde));
+      pintarMes(prof);
+      ver("zonaMes", true);
+    }
+    const seg = Math.round((performance.now() - t0) / 1000);
+    window.LOG.add("·", `mes: ${MES.resultados.length} partidas en ${seg} s · ` +
+      `caché ${cache.aciertos} aciertos, ${cache.fallos} fallos`);
+    estado(CANCELAR
+      ? `Detenido en la partida ${MES.hechas}.`
+      : `Listo: ${MES.resultados.length} partidas en ${seg} s.`);
+    pintarMes(prof);
+    ver("zonaMes", true);
+    if (MES.hechas < PARTIDAS.length) {
+      const quedan = PARTIDAS.length - MES.hechas;
+      $("seguirMes").textContent = `Seguir con ${Math.min(TOPE_MES, quedan)} más (quedan ${quedan})`;
+      ver("seguirMes", true);
+    }
+    cache.contar().then(n => { $("cacheBorrar").textContent = `Borrar caché (${n})`; });
+  } catch (e) {
+    estado("No se pudo: " + e.message);
+    window.LOG.add("ERR", "mes: " + (e.message || e));
+  }
+  ocupado(false);
+}
+
+/* de cada partida se toman solo las jugadas del usuario buscado */
+function filasDelUsuario(r) {
+  const b = (r.cab.White || "").toLowerCase(), n = (r.cab.Black || "").toLowerCase();
+  const lado = b === USUARIO ? "w" : n === USUARIO ? "b" : null;
+  return lado ? r.filas.filter(f => f.turno === lado) : [];
+}
+
+const FRANJAS = [["menos de +2", x => x < 2], ["+2 a +5", x => x >= 2 && x < 5],
+                 ["+5 a +8", x => x >= 5 && x < 8], ["+8 o m\u00e1s", x => x >= 8]];
+
+function pintarMes(prof) {
+  const todas = [];
+  MES.resultados.forEach(r => todas.push(...filasDelUsuario(r)));
+  if (!todas.length) {
+    $("capMes").textContent = "Ninguna de estas partidas es de ese usuario.";
+    $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = ""; $("mesLista").innerHTML = "";
+    return;
+  }
+  const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
+  $("capMes").textContent =
+    `Solo las jugadas de ${USUARIO}, en ${MES.resultados.length} partidas y ${todas.length} jugadas. ` +
+    `Profundidad ${prof}; los números de distinta profundidad no se comparan.`;
+
+  const cuentaCat = k => todas.filter(f => f.cat === k).length;
+  $("mesResumen").innerHTML = `
+    <thead><tr><th></th><th>Total</th><th>Por partida</th></tr></thead>
+    <tbody>
+      <tr><td><b>Precisión</b></td><td><b>${prec.toFixed(1)}</b></td><td>—</td></tr>
+      <tr><td>Mediana de pérdida</td><td>${mediana(todas.map(f => f.perdida)).toFixed(2)}</td><td>—</td></tr>
+      <tr><td>Jugadas</td><td>${todas.length}</td>
+          <td>${(todas.length / MES.resultados.length).toFixed(1)}</td></tr>
+      ${ORDEN.map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
+        `<td>${cuentaCat(k)}</td><td>${(cuentaCat(k) / MES.resultados.length).toFixed(1)}</td></tr>`).join("")}
+    </tbody>`;
+
+  $("capMesFranja").textContent =
+    "Compara situaciones, no jugadas: de cada nivel de ventaja, cuántas jugadas salieron mal " +
+    "sobre cuántas se jugaron desde ahí.";
+  $("mesFranja").innerHTML = `
+    <thead><tr><th>Ventaja antes de mover</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
+    <tbody>${FRANJAS.map(([nom, t]) => {
+      const en = todas.filter(f => t(f.franja));
+      const mal = en.filter(f => f.perdida >= 3).length;
+      return `<tr><td>${nom}</td><td>${en.length ? mal : "\u2014"}</td><td>${en.length}</td>` +
+             `<td>${en.length ? (100 * mal / en.length).toFixed(1) : "\u2014"}</td></tr>`;
+    }).join("")}</tbody>`;
+
+  $("mesLista").innerHTML = MES.resultados.map((r, i) => {
+    const mias = filasDelUsuario(r);
+    const g = r.meta || {};
+    const rival = (r.cab.White || "").toLowerCase() === USUARIO ? r.cab.Black : r.cab.White;
+    const p = mias.length ? (mias.reduce((a, x) => a + x.precision, 0) / mias.length).toFixed(1) : "\u2014";
+    const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
+    return `<div data-i="${i}">vs ${rival || "?"} \u00b7 precisión ${p}
+      <span style="opacity:.6">\u00b7 ${mias.length} jugadas \u00b7 ${f}</span></div>`;
+  }).join("");
+  $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
+    d.onclick = () => {
+      R = MES.resultados[+d.dataset.i];
+      IDX = 0;
+      GIRADO = (R.cab.Black || "").toLowerCase() === USUARIO;
+      pintarResumen(MES.prof);
+      pintarRevision();
+      ver("zonaRevision", true); ver("zonaResumen", true);
+      $("zonaRevision").scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+  });
+}
+
+/* ============ revisión de una partida ============ */
 function pintarRevision() {
   const f = R.filas[IDX];
   const c = CATEGORIAS[f.cat];
@@ -633,13 +1101,6 @@ $("sig").onclick = seguro("siguiente", () => { if (IDX < R.filas.length - 1) { I
 $("btnMejor").onclick = seguro("mejor", () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); });
 $("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
 
-function mediana(xs) {
-  if (!xs.length) return 0;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
 function pintarResumen(prof) {
   const { filas, cab } = R;
   const B = filas.filter(f => f.turno === "w"), N = filas.filter(f => f.turno === "b");
@@ -660,8 +1121,6 @@ function pintarResumen(prof) {
       ${ORDEN.map(filaCat).join("")}
     </tbody>`;
 
-  const FR = [["menos de +2", x => x < 2], ["+2 a +5", x => x >= 2 && x < 5],
-              ["+5 a +8", x => x >= 5 && x < 8], ["+8 o m\u00e1s", x => x >= 8]];
   const cuenta = (fs, test) => {
     const en = fs.filter(f => test(f.franja));
     return en.length ? `${en.filter(f => f.perdida >= 3).length} de ${en.length}` : "\u2014";
@@ -670,7 +1129,7 @@ function pintarResumen(prof) {
     "Compara situaciones, no jugadas: cu\u00e1ntas jugadas malas salieron de cada nivel de ventaja del que mov\u00eda.";
   $("franja").innerHTML = `
     <thead><tr><th>Ventaja antes de mover</th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
-    <tbody>${FR.map(([n, t]) => `<tr><td>${n}</td><td>${cuenta(B, t)}</td><td>${cuenta(N, t)}</td></tr>`).join("")}</tbody>`;
+    <tbody>${FRANJAS.map(([n, t]) => `<tr><td>${n}</td><td>${cuenta(B, t)}</td><td>${cuenta(N, t)}</td></tr>`).join("")}</tbody>`;
 }
 
 } catch (e) {
