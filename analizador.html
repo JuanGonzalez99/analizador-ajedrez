@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v7 · 04-09";
+  window.VERSION = "v9 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -123,8 +123,12 @@
     cargar: function () {
       try {
         var v = localStorage.getItem("log_analizador");
-        if (v) this.lineas = ["--- de la sesión anterior ---"].concat(v.split("\n")).concat(["--- fin ---"]);
+        if (v) this.lineas = v.split("\n");
       } catch (e) {}
+      var d = new Date();
+      this.lineas.push("──── sesión de las " +
+        d.toLocaleTimeString() + " del " + d.toLocaleDateString() + " ────");
+      if (this.lineas.length > this.TOPE) this.lineas.splice(0, this.lineas.length - this.TOPE);
     }
   };
   LOG.cargar();
@@ -236,13 +240,27 @@
       <select id="motores"></select>
     </label>
   </div>
+  <div class="fila" style="margin-top:6px; font-size:14px">
+    <label><input type="checkbox" id="optBloques"> reparto por bloques</label>
+    <label><input type="checkbox" id="optMpv1"> MultiPV 1</label>
+    <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
+  </div>
   <div class="fila" style="margin-top:8px">
     <button id="analizar">Analizar la partida</button>
     <button id="analizarMes" class="chico">Analizar el mes</button>
     <button id="detener" class="chico oculto">Detener</button>
   </div>
+  <div class="fila" style="margin-top:8px">
+    <button id="banco" class="chico">Comparar configuraciones</button>
+  </div>
   <p id="estado"></p>
   <div class="barra"><i id="progreso"></i></div>
+</div>
+
+<div id="zonaBanco" class="oculto">
+  <h2>Comparación de configuraciones</h2>
+  <p class="cap" id="capBanco"></p>
+  <table id="tablaBanco"></table>
 </div>
 
 <div id="zonaMes" class="oculto">
@@ -447,12 +465,13 @@ function prepararPartida(pgn) {
 /* Arma las filas a partir de las evaluaciones. Todo lo de acá es derivable, y
    por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
    categorización, las partidas ya analizadas no hay que volver a correrlas. */
-function derivarFilas(jugadas, fens, evs, libro) {
+function derivarFilas(jugadas, fens, evs, libro, desde = 0) {
   let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
     const j = jugadas[i];
-    const turno = i % 2 === 0 ? "w" : "b";
+    const k = desde + i;
+    const turno = k % 2 === 0 ? "w" : "b";
     const rival = turno === "w" ? "b" : "w";
     const antes = aBlancas(evs[i], turno);
     const despues = aBlancas(evs[i + 1], rival);
@@ -505,7 +524,7 @@ function derivarFilas(jugadas, fens, evs, libro) {
     }
 
     filas.push({
-      n: Math.floor(i / 2) + 1, turno, san: j.san, uci, cat, perdida, precision,
+      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, perdida, precision,
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales,
       franja: (turno === "w" ? antes : -antes) / 100
@@ -521,24 +540,35 @@ function mediana(xs) {
   return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
 }
 
-/* Reparte una lista de tareas entre varios obreros. Cada obrero toma la
-   siguiente libre, así que el orden en que terminan no afecta al resultado:
-   `res[i]` siempre corresponde a `items[i]`. Si una tarea tira error, se
-   propaga y el resto se corta. */
-async function repartir(items, obreros, tarea, onProg) {
+/* Reparte una lista de tareas entre varios obreros. `res[i]` siempre
+   corresponde a `items[i]`, termine quien termine primero.
+   Dos modos: salteado (cada obrero toma la siguiente libre) y por bloques
+   (cada obrero se lleva un tramo seguido). El segundo existe porque el motor
+   guarda lo que calculó de una posición y la siguiente de la partida se le
+   parece; salteando, esa memoria no le sirve. */
+async function repartir(items, obreros, tarea, onProg, opc) {
   const res = new Array(items.length);
-  let sig = 0, hechas = 0;
-  const consumidor = async o => {
-    for (;;) {
-      const i = sig++;
-      if (i >= items.length) return;
-      res[i] = await tarea(o, items[i], i);
-      hechas++;
-      if (onProg) onProg(hechas, items.length);
-    }
-  };
-  await Promise.all(obreros.slice(0, Math.max(1, Math.min(obreros.length, items.length)))
-    .map(consumidor));
+  const n = Math.max(1, Math.min(obreros.length, items.length));
+  const usados = obreros.slice(0, n);
+  let hechas = 0;
+  const anotar = () => { hechas++; if (onProg) onProg(hechas, items.length); };
+
+  if (opc && opc.bloques) {
+    const tam = Math.ceil(items.length / n);
+    await Promise.all(usados.map(async (o, k) => {
+      const fin = Math.min(items.length, (k + 1) * tam);
+      for (let i = k * tam; i < fin; i++) { res[i] = await tarea(o, items[i], i); anotar(); }
+    }));
+  } else {
+    let sig = 0;
+    await Promise.all(usados.map(async o => {
+      for (;;) {
+        const i = sig++;
+        if (i >= items.length) return;
+        res[i] = await tarea(o, items[i], i); anotar();
+      }
+    }));
+  }
   return res;
 }
 
@@ -599,7 +629,7 @@ const cache = {
     }
     return this.db;
   },
-  clave: (id, prof) => `${id}|d${prof}|${MOTOR_VER}`,
+  clave: (id, prof, v) => `${id}|d${prof}|${v || "n"}|${MOTOR_VER}`,
   async _tx(modo, fn) {
     const db = await this.abrir();
     if (!db) return null;
@@ -610,19 +640,18 @@ const cache = {
       p.onerror = () => no(p.error);
     });
   },
-  async leer(id, prof) {
+  async leer(id, prof, variante) {
     try {
-      const v = await this._tx("readonly", s => s.get(this.clave(id, prof)));
-      if (v && v.evs) { this.aciertos++; return v.evs; }
+      const v = await this._tx("readonly", s => s.get(this.clave(id, prof, variante)));
+      if (v && v.evs) { this.aciertos++; return v; }
     } catch (e) { window.LOG.add("!", "caché leer: " + (e.message || e)); }
     this.fallos++;
     return null;
   },
-  async guardar(id, prof, evs) {
+  async guardar(id, prof, variante, datos) {
     try {
-      await this._tx("readwrite", s => s.put({
-        clave: this.clave(id, prof), evs, n: evs.length, fecha: Date.now()
-      }));
+      await this._tx("readwrite", s => s.put(
+        Object.assign({ clave: this.clave(id, prof, variante), fecha: Date.now() }, datos)));
     } catch (e) { window.LOG.add("!", "caché guardar: " + (e.message || e)); }
   },
   async contar() {
@@ -660,11 +689,14 @@ class Motor {
         else this.w.postMessage("uci");
       }, 700);
     });
-    this.w.postMessage("setoption name MultiPV value 2");
     /* con varios motores a la vez la memoria es el límite, así que se acota */
     this.w.postMessage("setoption name Hash value 16");
     window.LOG.add("·", `motor ${this.i} arrancó en ${Math.round(performance.now() - t0)} ms`);
   }
+
+  multiPV(n) { if (this.w) this.w.postMessage("setoption name MultiPV value " + n); }
+
+  terminar() { if (this.w) { this.w.terminate(); this.w = null; this.oyentes = []; } }
 
   analizar(fen, prof) {
     return new Promise((ok, no) => {
@@ -698,8 +730,8 @@ class Motor {
 }
 
 const pool = {
-  motores: [],
-  async asegurar(n) {
+  motores: [], mpv: null,
+  async asegurar(n, multipv) {
     const faltan = [];
     for (let i = this.motores.length; i < n; i++) {
       const m = new Motor(i + 1);
@@ -707,17 +739,26 @@ const pool = {
       faltan.push(m);
     }
     if (faltan.length) await Promise.all(faltan.map(m => m.arrancar()));
+    if (multipv !== this.mpv) {
+      this.motores.forEach(m => m.multiPV(multipv));
+      this.mpv = multipv;
+    }
     return this.motores.slice(0, n);
+  },
+  /* apaga todo y arranca de cero: sin esto, una corrida hereda la memoria de
+     la anterior y las comparaciones de velocidad no valen nada */
+  reiniciar() {
+    this.motores.forEach(m => m.terminar());
+    this.motores = []; this.mpv = null;
   }
 };
 
 let CANCELAR = false;
 
-/* Reparte las posiciones entre los motores. Cada uno toma la siguiente libre;
-   el orden del resultado no depende del orden en que terminen. */
-async function evaluarPosiciones(fens, prof, onProg) {
+/* Evalúa una lista de posiciones con el grupo de motores. */
+async function evaluarPosiciones(fens, prof, onProg, opc = {}) {
   const n = Math.max(1, Math.min(+$("motores").value || 1, fens.length));
-  const motores = await pool.asegurar(n);
+  const motores = await pool.asegurar(n, opc.multipv || 2);
   const tiempos = [];
   const t0 = performance.now();
   const evs = await repartir(fens, motores, async (m, fen) => {
@@ -726,9 +767,11 @@ async function evaluarPosiciones(fens, prof, onProg) {
     const ev = await m.analizar(fen, prof);
     tiempos.push(performance.now() - t);
     return ev;
-  }, onProg);
-  window.LOG.add("·", `${fens.length} posiciones en ${Math.round(performance.now() - t0)} ms ` +
-    `con ${n} motores · mediana ${Math.round(mediana(tiempos))} ms por posición`);
+  }, onProg, opc);
+  window.LOG.add("·", `${fens.length} posiciones a profundidad ${prof} en ` +
+    `${Math.round(performance.now() - t0)} ms · ${n} motores · ` +
+    `${opc.bloques ? "bloques" : "salteado"} · MultiPV ${opc.multipv || 2} · ` +
+    `mediana ${Math.round(mediana(tiempos))} ms por posición`);
   return evs;
 }
 
@@ -747,26 +790,78 @@ async function cargarLibro() {
 }
 
 /* ============ análisis de una partida ============ */
-async function analizarPartida(pgn, prof, id, onProg) {
+
+/* Qué jugadas merecen una segunda mirada más profunda. Se calcula sobre el
+   barrido, así que el umbral es generoso a propósito: es más barato mirar de
+   más que perderse una. */
+function esSospechosa(f) {
+  return f.perdida >= 0.3 || f.cat === "omision" || f.cat === "grave" ||
+         f.cat === "error" || f.senales.length > 0;
+}
+
+/* Barrido a 13 y revisión a la profundidad elegida.
+   Las cifras del resumen quedan TODAS a 13: mezclar profundidades en una misma
+   mediana sería exactamente lo que prohíbe §D regla 11. Lo profundo se guarda
+   aparte, por jugada, como segunda opinión sobre las sospechosas. */
+async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc) {
+  const evs = await evaluarPosiciones(fens, 13, (h, t) => onProg(h, t, "barrido"), opc);
+  const d = derivarFilas(jugadas, fens, evs, libro);
+
+  const sospechosas = d.filas.map((f, i) => i).filter(i => esSospechosa(d.filas[i]));
+  const necesarias = new Set();
+  sospechosas.forEach(i => { necesarias.add(i); necesarias.add(i + 1); });
+  const idx = [...necesarias].sort((a, b) => a - b);
+  window.LOG.add("·", `barrido: ${sospechosas.length} jugadas sospechosas de ${d.filas.length}, ` +
+    `${idx.length} posiciones a revisar de ${fens.length}`);
+
+  let revisadas = 0;
+  if (idx.length && prof > 13) {
+    const hondas = await evaluarPosiciones(idx.map(i => fens[i]), prof,
+      (h, t) => onProg(h, t, "revisión"), opc);
+    const mapa = new Map(idx.map((i, k) => [i, hondas[k]]));
+    for (const i of sospechosas) {
+      if (!mapa.has(i) || !mapa.has(i + 1)) continue;
+      const sub = derivarFilas([jugadas[i]], [fens[i], fens[i + 1]],
+        [mapa.get(i), mapa.get(i + 1)], libro, i).filas[0];
+      d.filas[i].rev = { prof, perdida: sub.perdida, cat: sub.cat };
+      revisadas++;
+    }
+  }
+  return { filas: d.filas, apertura: d.apertura, evs, revisadas, profBase: 13 };
+}
+
+async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   const { cab, jugadas, fens } = prepararPartida(pgn);
   const libro = await cargarLibro();
+  const variante = opc.barrido ? "barrido" : (opc.multipv === 1 ? "mpv1" : "");
+  const prog = (h, t, fase) => { if (onProg) onProg(h, t, fase); };
 
-  let evs = await cache.leer(id, prof);
-  let deCache = !!evs;
-  if (evs && evs.length !== fens.length) {   /* el PGN cambió: no sirve */
-    window.LOG.add("!", "caché descartada por largo distinto en " + id);
-    evs = null; deCache = false;
+  const guardado = opc.sinCache ? null : await cache.leer(id, prof, variante);
+  if (guardado && guardado.evs && guardado.evs.length === fens.length) {
+    window.LOG.add("·", `caché: ${id} a profundidad ${prof}${variante ? " (" + variante + ")" : ""}`);
+    prog(fens.length, fens.length, "caché");
+    const d = derivarFilas(jugadas, fens, guardado.evs, libro);
+    (guardado.revs || []).forEach(r => { if (d.filas[r.i]) d.filas[r.i].rev = r.rev; });
+    return { filas: d.filas, cab, apertura: d.apertura, id, deCache: true,
+             profBase: guardado.profBase || prof, revisadas: (guardado.revs || []).length };
   }
-  if (!evs) {
-    evs = await evaluarPosiciones(fens, prof, onProg);
-    await cache.guardar(id, prof, evs);
+  if (guardado) window.LOG.add("!", "caché descartada por largo distinto en " + id);
+
+  let r;
+  if (opc.barrido && prof > 13) {
+    r = await analizarConBarrido(jugadas, fens, prof, libro, prog, opc);
   } else {
-    window.LOG.add("·", `caché: ${id} a profundidad ${prof}`);
-    if (onProg) onProg(fens.length, fens.length);
+    const evs = await evaluarPosiciones(fens, prof, (h, t) => prog(h, t, "análisis"), opc);
+    const d = derivarFilas(jugadas, fens, evs, libro);
+    r = { filas: d.filas, apertura: d.apertura, evs, revisadas: 0, profBase: prof };
   }
-
-  const { filas, apertura } = derivarFilas(jugadas, fens, evs, libro);
-  return { filas, cab, apertura, id, deCache };
+  if (!opc.sinCache) {
+    const revs = r.filas.map((f, i) => f.rev ? { i, rev: f.rev } : null).filter(Boolean);
+    await cache.guardar(id, prof, variante,
+      { evs: r.evs, n: r.evs.length, profBase: r.profBase, revs });
+  }
+  return { filas: r.filas, cab, apertura: r.apertura, id, deCache: false,
+           profBase: r.profBase, revisadas: r.revisadas };
 }
 
 /* ============ tablero ============ */
@@ -823,15 +918,17 @@ let MES = null;
   window.LOG.add("·", `núcleos ${nucleos}, motores sugeridos ${sug}`);
 })();
 
-cache.contar().then(n => {
+async function refrescarCache() {
   if (cache.roto) return;
+  const n = await cache.contar();
   $("cacheBorrar").disabled = false;
   $("cacheBorrar").textContent = `Borrar caché (${n})`;
-  window.LOG.add("·", `caché con ${n} partidas`);
-});
+  return n;
+}
+refrescarCache().then(n => { if (n !== undefined) window.LOG.add("·", `caché con ${n} partidas`); });
 $("cacheBorrar").onclick = seguro("borrar caché", async () => {
   await cache.borrarTodo();
-  $("cacheBorrar").textContent = "Borrar caché (0)";
+  await refrescarCache();
   window.LOG.add("·", "caché borrada");
 });
 
@@ -901,6 +998,7 @@ $("usarPgn").onclick = seguro("pgn", () => {
 function ocupado(si) {
   $("analizar").disabled = si || !ELEGIDA;
   $("analizarMes").disabled = si || !PARTIDAS.length;
+  $("banco").disabled = si || !ELEGIDA;
   $("buscar").disabled = si;
   ver("detener", si);
   if (si) CANCELAR = false;
@@ -915,10 +1013,10 @@ $("analizar").onclick = seguro("analizar", async () => {
   try {
     const prof = +$("prof").value;
     estado("Levantando el motor\u2026");
-    R = await analizarPartida(ELEGIDA, prof, ELEGIDA_ID, (hechas, total) => {
-      estado(`Analizando posición ${hechas} de ${total}`);
+    R = await analizarPartida(ELEGIDA, prof, ELEGIDA_ID, (hechas, total, fase) => {
+      estado(`${fase}: posición ${hechas} de ${total}`);
       progreso(hechas / total);
-    });
+    }, opcionesDePantalla());
     progreso(1);
     IDX = 0;
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
@@ -927,6 +1025,7 @@ $("analizar").onclick = seguro("analizar", async () => {
     ver("zonaRevision", true); ver("zonaResumen", true);
     estado((R.deCache ? "Ya estaba analizada. " : "Listo. ") +
            (R.apertura ? "Apertura: " + R.apertura : ""));
+    refrescarCache();
   } catch (e) {
     estado("No se pudo: " + e.message);
     window.LOG.add("ERR", "analizar: " + (e.message || e));
@@ -963,7 +1062,7 @@ async function correrMes(desdeCero) {
         r = await analizarPartida(g.pgn, prof, idPartida(g), (hechas, total) => {
           estado(`Partida ${i + 1} de ${hasta} \u00b7 posición ${hechas} de ${total}`);
           progreso((i - desde + hechas / total) / (hasta - desde));
-        });
+        }, opcionesDePantalla());
       } catch (e) {
         if (CANCELAR) break;
         window.LOG.add("!", `partida ${i + 1} salteada: ${e.message || e}`);
@@ -992,7 +1091,7 @@ async function correrMes(desdeCero) {
       $("seguirMes").textContent = `Seguir con ${Math.min(TOPE_MES, quedan)} más (quedan ${quedan})`;
       ver("seguirMes", true);
     }
-    cache.contar().then(n => { $("cacheBorrar").textContent = `Borrar caché (${n})`; });
+    refrescarCache();
   } catch (e) {
     estado("No se pudo: " + e.message);
     window.LOG.add("ERR", "mes: " + (e.message || e));
@@ -1000,11 +1099,92 @@ async function correrMes(desdeCero) {
   ocupado(false);
 }
 
+/* ============ banco de pruebas ============
+   Corre la MISMA partida con cada configuración, reiniciando los motores entre
+   una y otra. Sin ese reinicio la corrida hereda la memoria de la anterior y la
+   comparación no vale: es el confundidor que ya nos costó una medición. */
+const CONFIGS = [
+  { nombre: "salteado, MultiPV 2", opc: {} },
+  { nombre: "bloques, MultiPV 2", opc: { bloques: true } },
+  { nombre: "bloques, MultiPV 1", opc: { bloques: true, multipv: 1 } },
+  { nombre: "barrido 13 + revisión", opc: { bloques: true, barrido: true } }
+];
+
+$("banco").onclick = seguro("banco", async () => {
+  if (!ELEGIDA) { estado("Elegí una partida primero."); return; }
+  const prof = +$("prof").value;
+  if (prof <= 13) { estado("Para comparar poné profundidad 16 o 18: a 13 el barrido no hace nada."); return; }
+  ocupado(true);
+  ver("zonaRevision", false); ver("zonaResumen", false); ver("zonaMes", false);
+  const filas = [];
+  try {
+    for (const c of CONFIGS) {
+      if (CANCELAR) break;
+      pool.reiniciar();
+      window.LOG.add("·", `banco: arranca "${c.nombre}"`);
+      const t0 = performance.now();
+      const r = await analizarPartida(ELEGIDA, prof, ELEGIDA_ID,
+        (h, t, fase) => {
+          estado(`${c.nombre} \u00b7 ${fase} ${h} de ${t}`);
+          progreso(h / t);
+        },
+        Object.assign({ sinCache: true }, c.opc));
+      const ms = performance.now() - t0;
+      const mias = r.filas;
+      filas.push({
+        nombre: c.nombre, ms,
+        prof: r.profBase,
+        precision: mias.reduce((a, x) => a + x.precision, 0) / mias.length,
+        mediana: mediana(mias.map(f => f.perdida)),
+        graves: mias.filter(f => f.cat === "grave" || f.cat === "omision").length,
+        revisadas: r.revisadas || 0
+      });
+      window.LOG.add("·", `banco: "${c.nombre}" ${Math.round(ms)} ms`);
+      pintarBanco(filas, prof);
+      ver("zonaBanco", true);
+    }
+    estado(CANCELAR ? "Comparación detenida." : "Comparación lista.");
+  } catch (e) {
+    estado("No se pudo: " + e.message);
+    window.LOG.add("ERR", "banco: " + (e.message || e));
+  }
+  pool.reiniciar();
+  ocupado(false);
+});
+
+function pintarBanco(filas, prof) {
+  const base = filas[0];
+  $("capBanco").textContent =
+    "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
+    `Motores: ${$("motores").value}. Los motores se reinician entre corrida y corrida. ` +
+    "Las últimas tres columnas tienen que dar igual salvo en el barrido, " +
+    `que mide a profundidad 13 y no a ${prof}.`;
+  $("tablaBanco").innerHTML = `
+    <thead><tr><th>Configuración</th><th>Seg</th><th>vs 1ª</th><th>Prof</th>
+      <th>Precisión</th><th>Mediana</th><th>Graves</th></tr></thead>
+    <tbody>${filas.map(f => `<tr>
+      <td>${f.nombre}${f.revisadas ? ` (${f.revisadas} rev.)` : ""}</td>
+      <td>${(f.ms / 1000).toFixed(1)}</td>
+      <td>${f === base ? "\u2014" : (base.ms / f.ms).toFixed(2) + "\u00d7"}</td>
+      <td>${f.prof}</td>
+      <td>${f.precision.toFixed(1)}</td>
+      <td>${f.mediana.toFixed(2)}</td>
+      <td>${f.graves}</td></tr>`).join("")}</tbody>`;
+}
+
 /* de cada partida se toman solo las jugadas del usuario buscado */
 function filasDelUsuario(r) {
   const b = (r.cab.White || "").toLowerCase(), n = (r.cab.Black || "").toLowerCase();
   const lado = b === USUARIO ? "w" : n === USUARIO ? "b" : null;
   return lado ? r.filas.filter(f => f.turno === lado) : [];
+}
+
+function opcionesDePantalla() {
+  return {
+    bloques: $("optBloques").checked,
+    multipv: $("optMpv1").checked ? 1 : 2,
+    barrido: $("optBarrido").checked
+  };
 }
 
 const FRANJAS = [["menos de +2", x => x < 2], ["+2 a +5", x => x >= 2 && x < 5],
@@ -1092,7 +1272,10 @@ function pintarRevision() {
   const sel = $("tira").querySelector(".sel");
   if (sel) sel.scrollIntoView({ inline: "center", block: "nearest" });
 
-  $("senales").textContent = f.senales.length ? "\u00b7 " + f.senales.join(" \u00b7 ") : "";
+  const notas = f.senales.slice();
+  if (f.rev) notas.push(`a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +
+    `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`);
+  $("senales").textContent = notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "";
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
   $("ant").disabled = IDX === 0;
   $("sig").disabled = IDX === R.filas.length - 1;
