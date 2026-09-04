@@ -189,7 +189,7 @@ test("no queda rastro de la definición vieja, de material", () => {
 test("tomoBuena exige haber jugado la mejor del motor", () => {
   /* Es lo que hace imposible la fila contradictoria: si jugaste la mejor, la
      pérdida es cero, así que "la vi y la tomé" no puede contar jugadas malas. */
-  assert.ok(html.includes("tomoBuena: esMejor && !!capB"));
+  assert.ok(html.includes("const tomoBuena = esMejor && !!capB;"));
 });
 
 test("la fila canario muestra guion en cero y el número si algo se rompió", () => {
@@ -204,4 +204,30 @@ test("la tabla de capturas tiene las tres filas más la de contraste", () => {
                       '"No había buena captura"'])
     assert.ok(html.includes(fila), `falta la fila ${fila}`);
   assert.ok(html.includes("{ canario: true }"), "la fila 1 tiene que ser canario");
+});
+
+/* --- Omisión con el mismo juez, v23 --- */
+
+test("Omisión por material la decide el motor, no la heurística", () => {
+  assert.ok(html.includes("if (!oportunidad && !tomoBuena && capB)"));
+  assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
+});
+
+test("capturaGanadora se fue, porque ya no la usa nadie", () => {
+  assert.ok(!html.includes("capturaGanadora"));
+  assert.ok("gananciaDeCaptura" in A, "esta sí se sigue usando");
+  assert.ok("entregaMaterial" in A);
+});
+
+test("capturar otra cosa ya no tapa la omisión", () => {
+  /* Antes la condición era !j.captured: si capturabas cualquier otra cosa, la
+     omisión no se registraba. Ahora la condición es no haber jugado la buena. */
+  assert.ok(!html.includes("!j.captured && cap"));
+});
+
+test("una jugada que deja pasar material y pierde >= 3 cae en Omisión", () => {
+  const base = { perdida: 5, caida: 40, esMejor: false, esLibro: false, entrega: false,
+                 unicaBuena: false, legales: 20, antesMio: 0, despuesMio: 0 };
+  assert.equal(A.categorizar({ ...base, oportunidad: { tipo: "material" } }), "omision");
+  assert.equal(A.categorizar({ ...base, oportunidad: null }), "grave");
 });
