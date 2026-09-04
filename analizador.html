@@ -59,10 +59,49 @@
                         font-size: 13.5px; cursor: pointer; }
   .tira .jugadas span.sel { outline: 2px solid currentColor; font-weight: 700; }
   .senales { font-size: 12.5px; color: var(--tenue); margin-top: 8px; min-height: 18px; }
+  #diag { font: 12px/1.4 ui-monospace, monospace; color: var(--tenue); margin: 0 0 10px; }
+  #errores { font: 12px/1.45 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
+             border-left: 3px solid var(--c-grave); padding: 8px 10px; margin: 0 0 12px;
+             color: var(--c-grave); }
 </style>
 
 <h1>Analizador de partidas</h1>
 <p class="n">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
+
+<!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
+     sirve para avisar que el módulo falló. -->
+<div id="diag">cargando…</div>
+<div id="errores" class="oculto"></div>
+<script>
+  window.VERSION = "v2 · 03-09";
+  var diag = document.getElementById("diag");
+  var caja = document.getElementById("errores");
+  diag.textContent = window.VERSION + " · cargando el módulo…";
+  window.mostrarError = function (donde, e) {
+    var t = (e && (e.message || e.reason && e.reason.message || e.reason)) || e;
+    caja.classList.remove("oculto");
+    caja.textContent = (caja.textContent ? caja.textContent + "\n" : "") + donde + ": " + t;
+    console.error(donde, e);
+  };
+  window.addEventListener("error", function (ev) {
+    if (ev.target && ev.target.tagName === "SCRIPT") {
+      window.mostrarError("no cargó " + (ev.target.src || "un script"),
+        "el servidor lo rechazó o no existe");
+    } else {
+      window.mostrarError("error", ev.error || ev.message);
+    }
+  }, true);
+  window.addEventListener("unhandledrejection", function (ev) {
+    window.mostrarError("promesa rechazada", ev.reason);
+  });
+  setTimeout(function () {
+    if (!window.MODULO_OK) {
+      diag.textContent = window.VERSION + " · el módulo no arrancó";
+      window.mostrarError("módulo",
+        "no se cargó analisis.js o chess.js. Revisá que analisis.js esté en el repo.");
+    }
+  }, 6000);
+</script>
 
 <div class="fila">
   <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
@@ -129,10 +168,18 @@ import { Chess } from "https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.js";
 import {
   aBlancas, winPct, precisionJugada, peonAtaca, quedaComible,
   capturaGanadora, entregaMaterial, categorizar, CATEGORIAS, ORDEN
-} from "./analisis.mjs";
+} from "./analisis.js";
 
+window.MODULO_OK = true;
 const $ = id => document.getElementById(id);
+$("diag").textContent = window.VERSION + " \u00b7 listo";
 const ver = (id, si) => $(id).classList.toggle("oculto", !si);
+
+/* envuelve un manejador para que ningún error quede invisible */
+const seguro = (donde, fn) => async (...a) => {
+  try { return await fn(...a); }
+  catch (e) { window.mostrarError(donde, e); estado("Fall\u00f3: " + (e.message || e)); }
+};
 const estado = t => { $("estado").textContent = t; };
 const progreso = f => { $("progreso").style.width = Math.round(f * 100) + "%"; };
 
@@ -343,7 +390,7 @@ let PARTIDAS = [], ELEGIDA = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO
 
 $("verPegar").onclick = () => ver("zonaPegar", $("zonaPegar").classList.contains("oculto"));
 
-$("buscar").onclick = async () => {
+$("buscar").onclick = seguro("buscar", async () => {
   const u = $("usuario").value.trim();
   if (!u) return;
   USUARIO = u.toLowerCase();
@@ -358,11 +405,11 @@ $("buscar").onclick = async () => {
       .map(m => `<option value="${m}">${m.slice(-7).replace("/", "-")}</option>`).join("");
     ver("zonaMeses", true);
     await cargarMes(meses[meses.length - 1]);
-  } catch (e) { ver("zonaMeses", false); alert(e.message); }
+  } catch (e) { ver("zonaMeses", false); window.mostrarError("buscar", e); estado(e.message); }
   $("buscar").disabled = false;
-};
+});
 
-$("meses").onchange = () => cargarMes($("meses").value);
+$("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
 
 async function cargarMes(url) {
   $("partidas").innerHTML = "<div>Cargando…</div>";
@@ -387,13 +434,13 @@ async function cargarMes(url) {
   });
 }
 
-$("usarPgn").onclick = () => {
+$("usarPgn").onclick = seguro("pgn", () => {
   const t = $("pgn").value.trim();
   if (!t) return;
   ELEGIDA = t; ver("zonaAnalizar", true); estado("PGN cargado.");
-};
+});
 
-$("analizar").onclick = async () => {
+$("analizar").onclick = seguro("analizar", async () => {
   if (!ELEGIDA) return;
   $("analizar").disabled = true;
   ver("zonaRevision", false); ver("zonaResumen", false);
@@ -412,7 +459,7 @@ $("analizar").onclick = async () => {
     estado("No se pudo: " + e.message);
   }
   $("analizar").disabled = false;
-};
+});
 
 function pintarRevision() {
   const f = R.filas[IDX];
@@ -441,10 +488,10 @@ function pintarRevision() {
   $("ant").disabled = IDX === 0;
   $("sig").disabled = IDX === R.filas.length - 1;
 }
-$("ant").onclick = () => { if (IDX > 0) { IDX--; pintarRevision(); } };
-$("sig").onclick = () => { if (IDX < R.filas.length - 1) { IDX++; pintarRevision(); } };
-$("btnMejor").onclick = () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); };
-$("btnGirar").onclick = () => { GIRADO = !GIRADO; pintarRevision(); };
+$("ant").onclick = seguro("anterior", () => { if (IDX > 0) { IDX--; pintarRevision(); } });
+$("sig").onclick = seguro("siguiente", () => { if (IDX < R.filas.length - 1) { IDX++; pintarRevision(); } });
+$("btnMejor").onclick = seguro("mejor", () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); });
+$("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
 
 function mediana(xs) {
   if (!xs.length) return 0;
