@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v13 · 04-09";
+  window.VERSION = "v15 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -239,6 +239,13 @@
     <label>Motores
       <select id="motores"></select>
     </label>
+    <label>Hash
+      <select id="hashMotor">
+        <option value="1">1 MB</option>
+        <option value="4">4 MB</option>
+        <option value="16" selected>16 MB</option>
+      </select>
+    </label>
   </div>
   <div class="fila" style="margin-top:6px; font-size:14px">
     <label>MultiPV
@@ -265,6 +272,7 @@
   </div>
   <div class="fila" style="margin-top:8px">
     <button id="banco" class="chico">Comparar configuraciones</button>
+    <button id="barrido" class="chico">Barrer motores y memoria</button>
   </div>
   <p id="estado"></p>
   <div class="barra"><i id="progreso"></i></div>
@@ -306,6 +314,7 @@
   <div class="fila" style="margin-top:8px">
     <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
+    <button class="chico" id="btnAmbos">Pintar las dos</button>
   </div>
   <div class="senales" id="senales"></div>
 </div>
@@ -722,7 +731,7 @@ const cache = {
 class Motor {
   constructor(i) { this.i = i; this.w = null; this.oyentes = []; }
 
-  async arrancar() {
+  async arrancar(hash) {
     if (this.w) return;
     const t0 = performance.now();
     this.w = new Worker("./stockfish-18-lite-single.js");
@@ -743,8 +752,9 @@ class Motor {
         else this.w.postMessage("uci");
       }, 700);
     });
-    /* con varios motores a la vez la memoria es el límite, así que se acota */
-    this.w.postMessage("setoption name Hash value 16");
+    /* la tabla del motor. Con la memoria limpiándose en cada posición puede no
+       servir de nada: es justo lo que mide el barrido. */
+    this.w.postMessage("setoption name Hash value " + (hash || 16));
     window.LOG.add("·", `motor ${this.i} arrancó en ${Math.round(performance.now() - t0)} ms`);
   }
 
@@ -785,15 +795,17 @@ class Motor {
 }
 
 const pool = {
-  motores: [], mpv: null,
-  async asegurar(n, multipv) {
+  motores: [], mpv: null, hash: null,
+  async asegurar(n, multipv, hash) {
+    if (hash && this.hash !== null && hash !== this.hash) this.reiniciar();
+    this.hash = hash || 16;
     const faltan = [];
     for (let i = this.motores.length; i < n; i++) {
       const m = new Motor(i + 1);
       this.motores.push(m);
       faltan.push(m);
     }
-    if (faltan.length) await Promise.all(faltan.map(m => m.arrancar()));
+    if (faltan.length) await Promise.all(faltan.map(m => m.arrancar(this.hash)));
     if (multipv !== this.mpv) {
       this.motores.forEach(m => m.multiPV(multipv));
       this.mpv = multipv;
@@ -804,7 +816,7 @@ const pool = {
      la anterior y las comparaciones de velocidad no valen nada */
   reiniciar() {
     this.motores.forEach(m => m.terminar());
-    this.motores = []; this.mpv = null;
+    this.motores = []; this.mpv = null; this.hash = null;
   }
 };
 
@@ -812,8 +824,10 @@ let CANCELAR = false;
 
 /* Evalúa una lista de posiciones con el grupo de motores. */
 async function evaluarPosiciones(fens, prof, onProg, opc = {}) {
-  const n = Math.max(1, Math.min(+$("motores").value || 1, fens.length));
-  const motores = await pool.asegurar(n, typeof opc.multipv === "number" ? opc.multipv : 2);
+  const pedidos = opc.motores || +$("motores").value || 1;
+  const n = Math.max(1, Math.min(pedidos, fens.length));
+  const hash = opc.hash || +$("hashMotor").value || 16;
+  const motores = await pool.asegurar(n, typeof opc.multipv === "number" ? opc.multipv : 2, hash);
   const tiempos = [];
   const t0 = performance.now();
   const evs = await repartir(fens, motores, async (m, fen) => {
@@ -826,7 +840,7 @@ async function evaluarPosiciones(fens, prof, onProg, opc = {}) {
   window.LOG.add("·", `${fens.length} posiciones a profundidad ${prof} en ` +
     `${Math.round(performance.now() - t0)} ms · ${n} motores · ` +
     `${opc.bloques ? "bloques" : "salteado"} · MultiPV ${opc.multipv || 2}` +
-    `${opc.limpiar ? " · memoria limpia" : ""} · ` +
+    `${opc.limpiar ? " · memoria limpia" : ""} · Hash ${hash} · ` +
     `mediana ${Math.round(mediana(tiempos))} ms por posición`);
   return evs;
 }
@@ -991,6 +1005,7 @@ function dibujar(fen, jugada, mejor) {
 /* ============ interfaz ============ */
 const TOPE_MES = 50;
 let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
+let VER_AMBOS = false;
 let MES = null;
 
 /* cuántos motores ofrecer: el techo real es la memoria del teléfono, así que
@@ -1084,6 +1099,7 @@ function ocupado(si) {
   $("analizar").disabled = si || !ELEGIDA;
   $("analizarMes").disabled = si || !PARTIDAS.length;
   $("banco").disabled = si || !ELEGIDA;
+  $("barrido").disabled = si || !ELEGIDA;
   $("buscar").disabled = si;
   ver("detener", si);
   if (si) CANCELAR = false;
@@ -1201,15 +1217,28 @@ const CONFIGS = [
   { nombre: "MultiPV 2 sin limpiar", opc: {} }
 ];
 
-$("banco").onclick = seguro("banco", async () => {
+/* Barrido de motores y memoria. Con la memoria limpia cada posición se analiza
+   sola, así que cambiar la CANTIDAD de motores no debería mover ni un decimal:
+   las filas con el mismo Hash tienen que dar idénticas, y si no, hay un
+   problema. Cambiar el Hash sí puede mover algo, porque altera la búsqueda. */
+const BARRIDO = [];
+for (const hash of [1, 16])
+  for (const motores of [2, 4, 6, 8])
+    BARRIDO.push({ nombre: `Hash ${hash} · ${motores} motores`,
+                   opc: { limpiar: true, hash, motores } });
+
+$("banco").onclick = seguro("banco", () => correrBanco(CONFIGS, "configuraciones"));
+$("barrido").onclick = seguro("barrido", () => correrBanco(BARRIDO, "motores y memoria"));
+
+async function correrBanco(lista, queCompara) {
   if (!ELEGIDA) { estado("Elegí una partida primero."); return; }
   const prof = +$("prof").value;
-  if (prof <= 13) { estado("Para comparar poné profundidad 16 o 18: a 13 el barrido no hace nada."); return; }
+  if (prof <= 13) { estado("Para comparar poné profundidad 16 o 18."); return; }
   ocupado(true);
   ver("zonaRevision", false); ver("zonaResumen", false); ver("zonaMes", false);
   const filas = [];
   try {
-    for (const c of CONFIGS) {
+    for (const c of lista) {
       if (CANCELAR) break;
       pool.reiniciar();
       window.LOG.add("·", `banco: arranca "${c.nombre}"`);
@@ -1232,7 +1261,7 @@ $("banco").onclick = seguro("banco", async () => {
         revisadas: r.revisadas || 0
       });
       window.LOG.add("·", `banco: "${c.nombre}" ${Math.round(ms)} ms`);
-      pintarBanco(filas, prof);
+      pintarBanco(filas, prof, queCompara);
       ver("zonaBanco", true);
     }
     estado(CANCELAR ? "Comparación detenida." : "Comparación lista.");
@@ -1242,9 +1271,9 @@ $("banco").onclick = seguro("banco", async () => {
   }
   pool.reiniciar();
   ocupado(false);
-});
+}
 
-function pintarBanco(filas, prof) {
+function pintarBanco(filas, prof, queCompara) {
   const base = filas[0];
   $("capBanco").textContent =
     "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
@@ -1290,9 +1319,14 @@ $("modo").onchange = seguro("modo", () => {
 });
 
 /* de cada partida se toman solo las jugadas del usuario buscado */
-function filasDelUsuario(r) {
+function ladoDelUsuario(r) {
+  if (!USUARIO) return null;
   const b = (r.cab.White || "").toLowerCase(), n = (r.cab.Black || "").toLowerCase();
-  const lado = b === USUARIO ? "w" : n === USUARIO ? "b" : null;
+  return b === USUARIO ? "w" : n === USUARIO ? "b" : null;
+}
+
+function filasDelUsuario(r) {
+  const lado = ladoDelUsuario(r);
   return lado ? r.filas.filter(f => f.turno === lado) : [];
 }
 
@@ -1400,8 +1434,15 @@ function pintarRevision() {
   $("evalfill").style.width = Math.max(2, Math.min(98, winPct(f.evalBlancas))) + "%";
   $("tablero").innerHTML = dibujar(f.fen, f.uci, VER_MEJOR && f.mejor !== f.uci ? f.mejor : null);
 
-  $("tira").innerHTML = R.filas.map((x, i) =>
-    `<span data-i="${i}" class="${i === IDX ? "sel" : ""}" style="color:var(--c-${x.cat})">${x.turno === "w" ? x.n + "." : ""}${x.san}</span>`).join("");
+  /* por defecto solo se pintan las jugadas propias: las del rival distraen de
+     lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
+  const lado = ladoDelUsuario(R);
+  $("tira").innerHTML = R.filas.map((x, i) => {
+    const mia = !lado || VER_AMBOS || x.turno === lado;
+    const col = mia ? `var(--c-${x.cat})` : "var(--tenue)";
+    return `<span data-i="${i}" class="${i === IDX ? "sel" : ""}" style="color:${col}` +
+           `${mia ? "" : ";opacity:.55"}">${x.turno === "w" ? x.n + "." : ""}${x.san}</span>`;
+  }).join("");
   $("tira").querySelectorAll("span[data-i]").forEach(s => {
     s.onclick = () => { IDX = +s.dataset.i; pintarRevision(); };
   });
@@ -1413,6 +1454,8 @@ function pintarRevision() {
     `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`);
   $("senales").textContent = notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "";
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
+  $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
+  $("btnAmbos").disabled = !ladoDelUsuario(R);
   $("ant").disabled = IDX === 0;
   $("sig").disabled = IDX === R.filas.length - 1;
 }
@@ -1420,6 +1463,7 @@ $("ant").onclick = seguro("anterior", () => { if (IDX > 0) { IDX--; pintarRevisi
 $("sig").onclick = seguro("siguiente", () => { if (IDX < R.filas.length - 1) { IDX++; pintarRevision(); } });
 $("btnMejor").onclick = seguro("mejor", () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); });
 $("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
+$("btnAmbos").onclick = seguro("pintar", () => { VER_AMBOS = !VER_AMBOS; pintarRevision(); });
 
 function pintarResumen(prof) {
   const { filas, cab } = R;
