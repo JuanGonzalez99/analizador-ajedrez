@@ -73,7 +73,7 @@
 <div id="diag">cargando…</div>
 <div id="errores" class="oculto"></div>
 <script>
-  window.VERSION = "v3 · 03-09";
+  window.VERSION = "v4 · 03-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   diag.textContent = window.VERSION + " · cargando el módulo…";
@@ -84,11 +84,16 @@
     console.error(donde, e);
   };
   window.addEventListener("error", function (ev) {
-    if (ev.target && ev.target.tagName === "SCRIPT") {
-      window.mostrarError("no cargó " + (ev.target.src || "un script"),
-        "el servidor lo rechazó o no existe");
-    } else {
-      window.mostrarError("error", ev.error || ev.message);
+    if (ev.error || ev.message) {
+      var d = "error";
+      if (ev.filename) d += " en " + ev.filename.split("/").pop() + ":" + ev.lineno + ":" + ev.colno;
+      window.mostrarError(d, ev.error || ev.message);
+      if (ev.error && ev.error.stack) {
+        caja.textContent += "\n" + ev.error.stack.split("\n").slice(0, 3).join("\n");
+      }
+    } else if (ev.target && ev.target.tagName === "SCRIPT") {
+      window.mostrarError("no cargó " + (ev.target.src || "un script embebido"),
+        "importación fallida o error de sintaxis");
     }
   }, true);
   window.addEventListener("unhandledrejection", function (ev) {
@@ -170,11 +175,24 @@
 </div>
 
 <script type="module">
-import { Chess } from "./chess.js";
-import {
-  aBlancas, winPct, precisionJugada, peonAtaca, quedaComible,
-  capturaGanadora, entregaMaterial, categorizar, CATEGORIAS, ORDEN
-} from "./analisis.js";
+let Chess, aBlancas, winPct, precisionJugada, peonAtaca, quedaComible,
+    capturaGanadora, entregaMaterial, categorizar, CATEGORIAS, ORDEN;
+try {
+  ({ Chess } = await import("./chess.js"));
+} catch (e) {
+  window.mostrarError("chess.js", e.message || e);
+  throw e;
+}
+try {
+  ({ aBlancas, winPct, precisionJugada, peonAtaca, quedaComible,
+     capturaGanadora, entregaMaterial, categorizar, CATEGORIAS, ORDEN } =
+     await import("./analisis.js"));
+} catch (e) {
+  window.mostrarError("analisis.js", e.message || e);
+  throw e;
+}
+
+try {
 
 window.MODULO_OK = true;
 const $ = id => document.getElementById(id);
@@ -537,6 +555,13 @@ function pintarResumen(prof) {
   $("franja").innerHTML = `
     <thead><tr><th>Ventaja antes de mover</th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
     <tbody>${FR.map(([n, t]) => `<tr><td>${n}</td><td>${cuenta(B, t)}</td><td>${cuenta(N, t)}</td></tr>`).join("")}</tbody>`;
+}
+
+} catch (e) {
+  window.mostrarError("al armar la p\u00e1gina", (e && e.message) || e);
+  if (e && e.stack) document.getElementById("errores").textContent +=
+    "\n" + e.stack.split("\n").slice(0, 3).join("\n");
+  document.getElementById("diag").textContent = window.VERSION + " \u00b7 fall\u00f3 al iniciar";
 }
 </script>
 </html>
