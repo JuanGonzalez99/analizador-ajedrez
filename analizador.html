@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v10 · 04-09";
+  window.VERSION = "v11 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -248,7 +248,7 @@
         <option value="h">híbrido</option>
       </select>
     </label>
-    <label><input type="checkbox" id="optLimpiar"> memoria limpia</label>
+    <label><input type="checkbox" id="optLimpiar" checked> memoria limpia</label>
     <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
     <label><input type="checkbox" id="optBloques"> bloques</label>
   </div>
@@ -1137,14 +1137,17 @@ async function correrMes(desdeCero) {
    Corre la MISMA partida con cada configuración, reiniciando los motores entre
    una y otra. Sin ese reinicio la corrida hereda la memoria de la anterior y la
    comparación no vale: es el confundidor que ya nos costó una medición. */
+/* Todas con memoria limpia: sin eso las corridas no son repetibles y las
+   diferencias entre filas no se pueden leer. Medido el 04/09: dos corridas
+   limpias de la misma configuración dieron cifras idénticas, y dos sucias
+   dieron 87.2/0.39 contra 88.1/0.35. */
 const CONFIGS = [
-  { nombre: "MultiPV 2 (actual)", opc: {} },
-  { nombre: "MultiPV 2, otra vez", opc: {} },
-  { nombre: "MultiPV 1", opc: { multipv: 1 } },
-  { nombre: "MultiPV híbrido", opc: { multipv: "hibrido" } },
-  { nombre: "memoria limpia", opc: { limpiar: true } },
-  { nombre: "memoria limpia, otra vez", opc: { limpiar: true } },
-  { nombre: "barrido 13 + revisión", opc: { barrido: true } }
+  { nombre: "MultiPV 2 (actual)", opc: { limpiar: true } },
+  { nombre: "MultiPV 2, otra vez", opc: { limpiar: true } },
+  { nombre: "MultiPV 1", opc: { limpiar: true, multipv: 1 } },
+  { nombre: "MultiPV híbrido", opc: { limpiar: true, multipv: "hibrido" } },
+  { nombre: "barrido 13 + revisión", opc: { limpiar: true, barrido: true } },
+  { nombre: "MultiPV 2 sin limpiar", opc: {} }
 ];
 
 $("banco").onclick = seguro("banco", async () => {
@@ -1195,9 +1198,8 @@ function pintarBanco(filas, prof) {
   $("capBanco").textContent =
     "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
     `Motores: ${$("motores").value}. Los motores se reinician entre corrida y corrida. ` +
-    "Las filas 1 y 2 son la misma configuración corrida dos veces: lo que se " +
-    "muevan entre ellas es el ruido del motor, y ninguna diferencia más chica " +
-    "que eso significa nada. Lo mismo las filas 5 y 6. El barrido mide a " +
+    "Todas corren con memoria limpia salvo la última. Las filas 1 y 2 son la " +
+    "misma configuración dos veces: tienen que dar idénticas. El barrido mide a " +
     `profundidad 13 y no a ${prof}, así que sus cifras no se comparan con el resto.`;
   $("tablaBanco").innerHTML = `
     <thead><tr><th>Configuración</th><th>Seg</th><th>vs 1ª</th><th>Prof</th>
