@@ -94,7 +94,7 @@
 </div>
 
 <script>
-  window.VERSION = "v24 · 04-09";
+  window.VERSION = "v25 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -1439,7 +1439,7 @@ function tablaReparto(idTabla, idCap, texto, filas, encabezado) {
 }
 
 function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
-  $(idCap).textContent = texto + DEF_MALA;
+  $(idCap).textContent = texto + DEF_MALA + textoSolape(filas);
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>
       <th>% resto</th></tr></thead>
@@ -1502,8 +1502,37 @@ function textoDesglose(todas) {
         "pasar algo con una pérdida menor a 3.") : "");
 }
 
-const contraste = (todas, test, nombre) =>
-  ({ nombre, con: tasa(todas.filter(test)), sin: tasa(todas.filter(f => !test(f))) });
+const contraste = (todas, test, nombre) => {
+  const dentro = todas.filter(test);
+  return { nombre, dentro, con: tasa(dentro), sin: tasa(todas.filter(f => !test(f))) };
+};
+
+/* Dos mecanismos pueden darse en la misma jugada —dejar la pieza comible y
+   además venir después de una mala, por ejemplo— y entonces las dos filas
+   muestran en parte el mismo efecto. Se cuenta por identidad de objeto, porque
+   todas las filas salen del mismo arreglo, así que el número es exacto.
+   Cuando no hay solapamiento también se dice: callarse sería ambiguo, no se
+   sabría si es que no lo hay o si no se calculó. */
+function textoSolape(filas) {
+  /* Si alguna fila no trae su conjunto no se puede saber, y decir que no se
+     solapan sería afirmar algo que no medimos: mejor no decir nada. */
+  if (filas.some(f => !f.dentro)) return "";
+  const pares = [];
+  for (let i = 0; i < filas.length; i++)
+    for (let k = i + 1; k < filas.length; k++) {
+      const a = new Set(filas[i].dentro);
+      const n = filas[k].dentro.filter(f => a.has(f)).length;
+      if (n) pares.push({ n, texto: `${n} entre "${filas[i].nombre}" y "${filas[k].nombre}"` });
+    }
+  if (!pares.length) return " Las filas no se solapan: ninguna jugada cae en dos.";
+  const cola = ", así que parte de lo que muestran puede ser el mismo efecto " +
+    "contado dos veces.";
+  if (pares.length === 1)
+    return pares[0].n === 1
+      ? " Ojo: 1 jugada cae en las dos filas" + cola
+      : ` Ojo: ${pares[0].n} jugadas caen en las dos filas` + cola;
+  return ` Ojo, hay filas que se solapan (${pares.map(p => p.texto).join("; ")})` + cola;
+}
 
 /* ================== fin del bloque de tablas =================== */
 const NOMBRE_PIEZA = { p: "Peón", n: "Caballo", b: "Alfil", r: "Torre", q: "Dama", k: "Rey" };
@@ -1538,12 +1567,11 @@ function pintarDetalle(todas, porPartida) {
 
   const { trasMala, resto } = paresDeErrores(porPartida);
   tablaContrastes("mesMecanismos", "capMecanismos",
-    "Compara situaciones, no jugadas. Cada mecanismo va con la tasa del resto " +
-    "de las jugadas al lado: sin ese contraste, saber que un mecanismo aparece " +
-    "en las jugadas malas no dice nada, porque puede aparecer también en las " +
-    "buenas. Cada porcentaje se lee solo contra el de al lado.",
+    "Compara situaciones, no jugadas. Cada porcentaje se lee solo contra el de " +
+    "al lado, que es la tasa del resto de las jugadas.",
     [contraste(todas, f => f.colgada, "Dejé comible la pieza que moví"),
-     { nombre: "Jugada siguiente a una mala", con: tasa(trasMala), sin: tasa(resto) }],
+     { nombre: "Jugada siguiente a una mala", dentro: trasMala,
+       con: tasa(trasMala), sin: tasa(resto) }],
     "Mecanismo");
 
   tablaTasas("mesPieza", "capPieza",

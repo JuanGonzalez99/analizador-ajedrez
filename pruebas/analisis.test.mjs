@@ -261,3 +261,46 @@ test("una jugada que deja pasar material y pierde >= 3 cae en Omisión", () => {
   assert.equal(A.categorizar({ ...base, oportunidad: { tipo: "material" } }), "omision");
   assert.equal(A.categorizar({ ...base, oportunidad: null }), "grave");
 });
+
+/* --- solapamiento entre mecanismos, v25 --- */
+
+const jug = i => ({ i, perdida: 0.2 });
+
+test("el solapamiento se cuenta por identidad y es exacto", () => {
+  const a = [jug(1), jug(2), jug(3)];
+  const dos = T.textoSolape([{ nombre: "A", dentro: a },
+                             { nombre: "B", dentro: [a[0], a[1], jug(9)] }]);
+  assert.ok(dos.includes("2 jugadas caen en las dos filas"), dos);
+});
+
+test("una sola jugada solapada se dice en singular", () => {
+  const a = [jug(1), jug(2)];
+  assert.ok(T.textoSolape([{ nombre: "A", dentro: a },
+                           { nombre: "B", dentro: [a[0]] }])
+    .includes("1 jugada cae en las dos filas"));
+});
+
+test("cuando no se solapan lo dice igual, en vez de callarse", () => {
+  /* Callarse sería ambiguo: no se sabría si no hay solapamiento o si no se
+     calculó. Son dos cosas distintas y el lector no puede distinguirlas. */
+  assert.ok(T.textoSolape([{ nombre: "A", dentro: [jug(1)] },
+                           { nombre: "B", dentro: [jug(2)] }])
+    .includes("no se solapan"));
+});
+
+test("si una fila no trae su conjunto, no se afirma nada", () => {
+  assert.equal(T.textoSolape([{ nombre: "A" }, { nombre: "B", dentro: [jug(1)] }]), "");
+});
+
+test("con más de dos filas nombra cada par que se solapa", () => {
+  const a = [jug(1), jug(2)];
+  const t = T.textoSolape([{ nombre: "A", dentro: a }, { nombre: "B", dentro: [a[0]] },
+                           { nombre: "C", dentro: [a[1]] }]);
+  assert.ok(t.includes('1 entre "A" y "B"') && t.includes('1 entre "A" y "C"'), t);
+});
+
+test("la fila de mecanismos armada a mano también lleva su conjunto", () => {
+  /* Si se olvida, textoSolape se calla y el aviso desaparece sin ruido. */
+  assert.ok(html.includes("dentro: trasMala"));
+  assert.ok(html.includes("const dentro = todas.filter(test);"));
+});

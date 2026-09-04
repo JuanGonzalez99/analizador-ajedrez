@@ -42,5 +42,13 @@ const sueltas = [...html.matchAll(/(.{0,24})<table id="([^"]+)"/g)]
   .filter(m => !m[1].includes('class="tw"')).map(m => m[2]);
 chequear("cada tabla scrollea sola", sueltas);
 
+/* 6. El traspaso dice en qué versión está al día. Si el HTML subió de versión
+      y el documento no, alguien cambió algo y no lo anotó (§10). */
+const doc = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");
+const vHtml = (html.match(/window\.VERSION = "(v\d+)/) || [])[1];
+const vDoc = (doc.match(/al día en la \*\*(v\d+)\*\*/) || [])[1];
+chequear("el traspaso está al día",
+  vHtml && vHtml === vDoc ? [] : [`analizador.html es ${vHtml} y TRASPASO.md dice ${vDoc}`]);
+
 if (fallas.length) { console.error("\nFALLA:\n- " + fallas.join("\n- ")); process.exit(1); }
 console.log("\nchequeos estáticos: todo bien");
