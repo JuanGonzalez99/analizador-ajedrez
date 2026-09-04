@@ -94,7 +94,7 @@
 </div>
 
 <script>
-  window.VERSION = "v21 · 04-09";
+  window.VERSION = "v22 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -412,6 +412,28 @@ function gananciaDeCaptura(fen, mov) {
   return recaptura ? gana - (VALOR[hecho.piece] || 0) : gana;
 }
 
+/* ¿Había una buena captura? La decide el MOTOR, no la heurística de material:
+   es buena cuando la mejor jugada del motor es una captura Y además gana
+   material. Las dos condiciones, porque solo con la primera se llenaba de
+   recapturas e intercambios que se ven sí o sí.
+
+   Antes esto lo decidía capturaGanadora() sola, a un ply, y entonces la tabla
+   tenía dos jueces: uno de material para la columna "había captura" y el motor
+   para la columna "malas". Cuando discrepaban salía la fila sin sentido "había
+   captura ganadora, la tomé, y fue mala": lo que pasaba de verdad es que la
+   captura nunca había sido buena y la heurística la etiquetó mal. */
+function capturaBuena(fen, mejorUci) {
+  if (!mejorUci || mejorUci.length < 4) return null;
+  const mov = { from: mejorUci.slice(0, 2), to: mejorUci.slice(2, 4),
+                promotion: mejorUci[4] || undefined };
+  /* gananciaDeCaptura da 0 si no es captura, así que el >= 1 pide las dos cosas */
+  const gana = gananciaDeCaptura(fen, mov);
+  if (gana < 1) return null;
+  const j = new Chess(fen);
+  const hecho = j.move(mov);
+  return hecho ? { san: hecho.san, gana } : null;
+}
+
 /* ¿había una captura que ganaba material? devuelve la mejor o null */
 function capturaGanadora(fen, minimo = 1) {
   const j = new Chess(fen);
@@ -568,8 +590,9 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
        veces apareció sin consecuencias. Es la tasa base de §D regla 16. */
     const colgada = quedaComible(fens[i + 1], j.to);
     const capDisp = capturaGanadora(fens[i]);
-    const tomoGanadora = !!(capDisp && j.captured &&
-      gananciaDeCaptura(fens[i], { from: j.from, to: j.to, promotion: j.promotion }) >= 1);
+    /* capDisp sigue siendo el de material y solo alimenta "oportunidad", que
+       decide la categoría "Omisión": cambiarlo movería números ya medidos. */
+    const capB = capturaBuena(fens[i], evs[i].mejor);
 
     let oportunidad = null;
     const eMate = evs[i].mate;
@@ -604,7 +627,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
-      capDisponible: capDisp, tomoGanadora
+      capBuena: !!capB, tomoBuena: esMejor && !!capB
     });
   }
   return { filas, apertura };
@@ -1428,7 +1451,15 @@ const DEF_MALA = " Mala = pérdida de 3 peones o más.";
 
 /* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
-const pct = f => f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
+const pct = f => {
+  /* Una fila marcada como canario da 0 por construcción —jugar la mejor jugada
+     del motor no puede perder nada—, así que el porcentaje no informa y va un
+     guion. Pero si alguna vez da distinto de cero hay algo roto, y entonces se
+     muestra el número aunque haya menos de NMIN jugadas: no es una estadística,
+     es un aviso. Es la única excepción al mínimo de 30. */
+  if (f.canario) return f.malas ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
+  return f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
+};
 
 const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
@@ -1487,14 +1518,17 @@ function paresDeErrores(porPartida) {
 }
 
 function pintarDetalle(todas, porPartida) {
-  const conCap = todas.filter(f => f.capDisponible);
+  const conCap = todas.filter(f => f.capBuena);
   tablaTasas("mesCapturas", "capCapturas",
-    "Compara situaciones, no jugadas: de las veces que había una captura que " +
-    "ganaba material, cuántas se tomaron y cómo salió cada grupo. Es el punto " +
-    "ciego 3 del archivo, medido sobre este mes.",
-    [tasa(conCap.filter(f => f.tomoGanadora), "Había captura ganadora y la tomé"),
-     tasa(conCap.filter(f => !f.tomoGanadora), "Había captura ganadora y no la tomé"),
-     tasa(todas.filter(f => !f.capDisponible), "No había captura ganadora")],
+    "Compara situaciones, no jugadas: de las veces que la mejor jugada del " +
+    "motor era una captura que ganaba material, qué se hizo y cómo salió cada " +
+    "grupo. La pregunta que contesta es cuántas veces había material a la vista " +
+    "y no se vio.",
+    [Object.assign(tasa(conCap.filter(f => f.tomoBuena), "La vi y la tomé"),
+                   { canario: true }),
+     tasa(conCap.filter(f => !f.tomoBuena && f.esCaptura), "Tomé otra"),
+     tasa(conCap.filter(f => !f.tomoBuena && !f.esCaptura), "No capturé"),
+     tasa(todas.filter(f => !f.capBuena), "No había buena captura")],
     "Situación");
 
   const { trasMala, resto } = paresDeErrores(porPartida);

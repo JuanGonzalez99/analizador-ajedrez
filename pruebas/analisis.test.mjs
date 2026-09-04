@@ -95,9 +95,7 @@ test("la tabla de mecanismos es de contrastes, no de filas sí/no", () => {
 test("todo porcentaje pasa por pct(), que aplica el mínimo de 30", () => {
   /* Regla §5.2: debajo de NMIN va un guion. Si alguna tabla vuelve a calcular
      el porcentaje por su cuenta, el corte se le escapa. */
-  assert.ok(/const pct = f => f\.total >= NMIN/.test(html));
-  const propios = [...html.matchAll(/100 \* f\.malas \/ f\.total/g)];
-  assert.equal(propios.length, 1, "hay un porcentaje calculado fuera de pct()");
+  assert.ok(/f\.total >= NMIN/.test(html));
 });
 
 /* --- qué cuenta como jugada mala, v20 --- */
@@ -155,6 +153,55 @@ test("la tabla de franjas ya no se pinta sola", () => {
 
 test("ninguna tabla calcula el porcentaje por su cuenta", () => {
   /* Más ancho que la prueba anterior: cualquier "100 * algo / algo" suelto. */
+  const cuerpo = html.slice(html.indexOf("const pct = f =>"), html.indexOf("const esMala"));
   const sueltos = [...html.matchAll(/100 \* \w[\w.]* \/ \w[\w.]*/g)].map(m => m[0]);
-  assert.deepEqual(sueltos, ["100 * f.malas / f.total"], `fuera de pct(): ${sueltos}`);
+  assert.ok(sueltos.length, "no quedó ningún cálculo de porcentaje");
+  for (const c of sueltos)
+    assert.ok(cuerpo.includes(c), `porcentaje calculado fuera de pct(): ${c}`);
+});
+
+/* --- buena captura decidida por el motor, v22 --- */
+
+test("capturaBuena pide las dos cosas: mejor del motor Y ganar material", () => {
+  /* torre negra en d5 sin defensa, dama blanca en d1: Dxd5 gana torre */
+  const fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1";
+  assert.ok(A.capturaBuena(fen, "d1d5"), "gana torre y es la mejor: es buena");
+  assert.equal(A.capturaBuena(fen, "d1d3"), null, "no es captura: no es buena");
+});
+
+test("capturaBuena descarta el intercambio que no gana material", () => {
+  /* torre por torre, con la torre negra defendida por su rey en d6: come 5 y
+     le recomen 5, ganancia 0. Verificado con chess.js, no de memoria (§5.6). */
+  const fen = "8/8/3k4/3r4/8/8/8/3RK3 w - - 0 1";
+  assert.equal(A.capturaBuena(fen, "d1d5"), null);
+});
+
+test("capturaBuena aguanta una jugada mejor que no existe o viene rota", () => {
+  const fen = "4k3/8/8/3r4/8/8/8/3QK3 w - - 0 1";
+  for (const m of [null, undefined, "", "d1"]) assert.equal(A.capturaBuena(fen, m), null);
+});
+
+test("no queda rastro de la definición vieja, de material", () => {
+  for (const rastro of ["capDisponible", "tomoGanadora", "captura ganadora y la tomé"])
+    assert.ok(!html.includes(rastro), `volvió "${rastro}"`);
+});
+
+test("tomoBuena exige haber jugado la mejor del motor", () => {
+  /* Es lo que hace imposible la fila contradictoria: si jugaste la mejor, la
+     pérdida es cero, así que "la vi y la tomé" no puede contar jugadas malas. */
+  assert.ok(html.includes("tomoBuena: esMejor && !!capB"));
+});
+
+test("la fila canario muestra guion en cero y el número si algo se rompió", () => {
+  assert.equal(T.pct({ malas: 0, total: 12, canario: true }), "\u2014");
+  assert.equal(T.pct({ malas: 1, total: 12, canario: true }), "8.3",
+    "un canario distinto de cero se muestra aunque haya menos de 30 jugadas");
+  assert.equal(T.pct({ malas: 0, total: 12 }), "\u2014", "sin canario sigue el mínimo");
+});
+
+test("la tabla de capturas tiene las tres filas más la de contraste", () => {
+  for (const fila of ['"La vi y la tomé"', '"Tomé otra"', '"No capturé"',
+                      '"No había buena captura"'])
+    assert.ok(html.includes(fila), `falta la fila ${fila}`);
+  assert.ok(html.includes("{ canario: true }"), "la fila 1 tiene que ser canario");
 });
