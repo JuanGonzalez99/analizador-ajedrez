@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v6 · 04-09";
+  window.VERSION = "v7 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -880,6 +880,7 @@ async function cargarMes(url) {
       const g = PARTIDAS[+d.dataset.i];
       ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g);
       ver("zonaAnalizar", true);
+      ocupado(false);
       estado("");
     };
   });
@@ -894,7 +895,7 @@ $("usarPgn").onclick = seguro("pgn", () => {
   const t = $("pgn").value.trim();
   if (!t) return;
   ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t });
-  ver("zonaAnalizar", true); estado("PGN cargado.");
+  ver("zonaAnalizar", true); ocupado(false); estado("PGN cargado.");
 });
 
 function ocupado(si) {
