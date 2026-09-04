@@ -393,6 +393,18 @@ describe en §6.
   franja gris ancha arriba de "Estadísticas". Hay que esconderla al terminar,
   no solo ponerla en cero.
 
+- **Revisar la columna "% resto" de la tabla de mecanismos.** Pendiente abierto
+  por el usuario en la v26, sin diagnóstico todavía: hay que mirarla y decidir.
+  Lo que conviene chequear primero, en ese orden:
+  - que el "resto" de cada fila sea el que se espera. El de "Dejé comible la
+    pieza que moví" son todas las demás jugadas; el de "Jugada siguiente a una
+    mala" es `resto` de `paresDeErrores()`, que excluye la primera jugada de
+    cada partida. Son dos universos distintos y la columna no lo dice.
+  - que el encabezado se entienda. Al lado de "%" a secas, "% resto" no aclara
+    de qué resto habla.
+  - si la columna sigue teniendo sentido con el interruptor en "todo lo
+    analizado", donde el "resto" pasa a ser miles de jugadas de varios meses.
+
 - **Falta la estadística de partidas ganadas y perdidas.** Los datos están: el
   JSON de cada mes trae `white.result` y `black.result`, y `ladoDelUsuario()`
   ya dice de qué lado jugaba. Ojo con dos cosas: las filas flacas del barrido
