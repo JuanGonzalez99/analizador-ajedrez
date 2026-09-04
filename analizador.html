@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v11 · 04-09";
+  window.VERSION = "v13 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -251,6 +251,12 @@
     <label><input type="checkbox" id="optLimpiar" checked> memoria limpia</label>
     <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
     <label><input type="checkbox" id="optBloques"> bloques</label>
+    <label>Modo
+      <select id="modo">
+        <option value="critico" selected>crítico (centipeones)</option>
+        <option value="amigable">amigable (puntos de victoria)</option>
+      </select>
+    </label>
   </div>
   <div class="fila" style="margin-top:8px">
     <button id="analizar">Analizar la partida</button>
@@ -412,8 +418,8 @@ function entregaMaterial(fen, mov) {
 
 /* ============ categorías ============ */
 const CATEGORIAS = {
-  brillante:  { nombre: "Brillante",   icono: "!!", desc: "Entrega material y aun así es la mejor." },
-  genial:     { nombre: "Genial",      icono: "!",  desc: "La única jugada que sostiene la posición." },
+  brillante:  { nombre: "Brillante",   icono: "!!", desc: "Un sacrificio que además es la mejor jugada." },
+  genial:     { nombre: "Genial",      icono: "!",  desc: "La única que sostiene la posición, o la que cambia el rumbo." },
   mejor:      { nombre: "Mejor",       icono: "★",  desc: "La primera elección del motor." },
   excelente:  { nombre: "Excelente",   icono: "👍", desc: "Casi tan buena como la mejor." },
   bien:       { nombre: "Bien",        icono: "✓",  desc: "Una buena jugada, pero no la mejor." },
@@ -424,24 +430,61 @@ const CATEGORIAS = {
   grave:      { nombre: "Error grave", icono: "??", desc: "Pierde material o la partida." }
 };
 
+/* los cortes que deciden la categoría. Una jugada pegada a uno de estos
+   números puede cambiar de etiqueta por ruido del motor: se avisa. */
+const UMBRALES = [0.5, 1, 3];
+const alFilo = perdida => UMBRALES.some(u => Math.abs(perdida - u) <= 0.15);
+
 const ORDEN = ["brillante", "genial", "mejor", "excelente", "bien", "libro",
                       "imprecision", "error", "omision", "grave"];
 
 /*
-  Prioridad: libro gana a todo (las primeras jugadas no se juzgan).
-  Después, si hubo una oportunidad concreta desperdiciada, es omisión, aunque
-  la pérdida sea grande: el mecanismo importa más que el tamaño.
+  DOS MODOS. Cambian SOLO las etiquetas: la pérdida en centipeones y la mediana
+  son las mismas en los dos, para que la línea de base del apéndice siga
+  sirviendo de referencia.
+
+  - crítico: corta por centipeones perdidos (0.5 / 1 / 3), la convención de
+    lichess y del apéndice. Señala el desplome desde posición ganada, que es
+    el punto ciego principal del usuario.
+  - amigable: corta por puntos de victoria perdidos, como la clasificación V2
+    de chess.com. La curva es casi plana en los extremos, así que un desplome
+    de +10 a +6 casi no se castiga.
+
+  Una jugada grave en crítico y buena en amigable ES, por construcción, un
+  desplome desde posición ganada.
 */
-function categorizar({ perdida, esMejor, esLibro, entrega, unicaBuena, oportunidad, legales }) {
-  if (esLibro) return "libro";
-  if (oportunidad && perdida >= 1) return "omision";
-  if (perdida >= 3) return "grave";
-  if (perdida >= 1) return "error";
-  if (perdida >= 0.5) return "imprecision";
-  if (esMejor && entrega) return "brillante";
-  if (esMejor && unicaBuena && legales >= 2) return "genial";
-  if (esMejor) return "mejor";
-  if (perdida < 0.1) return "excelente";
+const CORTES = {
+  critico:  { excelente: 0.1, imprecision: 0.5, error: 1, grave: 3, medida: f => f.perdida },
+  amigable: { excelente: 2,   imprecision: 5,   error: 10, grave: 20, medida: f => f.caida }
+};
+
+/* bandas de la posición, en peones y desde el lado del que mueve */
+const banda = x => x <= -2 ? "perdiendo" : x >= 2 ? "ganando" : "parejo";
+
+function categorizar(d, modo = "critico") {
+  const c = CORTES[modo] || CORTES.critico;
+  const x = c.medida(d);
+
+  if (d.esLibro) return "libro";
+  if (d.oportunidad && x >= c.error) return "omision";
+  if (x >= c.grave) return "grave";
+  if (x >= c.error) return "error";
+  if (x >= c.imprecision) return "imprecision";
+
+  /* Brillante: un sacrificio bueno. Las dos condiciones son de chess.com y a la
+     nuestra le faltaban: no quedar peor después, y no venir ya ganando de todos
+     modos — entregar material en +10 no tiene mérito. */
+  if (d.esMejor && d.entrega && d.despuesMio >= -0.5 && d.antesMio < 3) return "brillante";
+
+  /* Genial: la única jugada que sostiene la posición, O la que cambia de banda.
+     La segunda mitad venía de chess.com y nos faltaba, y es justo el momento
+     que el apéndice marca como más peligroso: el cruce a posición ganada. */
+  const cruce = banda(d.antesMio) !== banda(d.despuesMio) &&
+                banda(d.despuesMio) !== "perdiendo";
+  if (d.esMejor && (d.unicaBuena || cruce) && d.legales >= 2) return "genial";
+
+  if (d.esMejor) return "mejor";
+  if (x < c.excelente) return "excelente";
   return "bien";
 }
 
@@ -472,7 +515,7 @@ function prepararPartida(pgn) {
 /* Arma las filas a partir de las evaluaciones. Todo lo de acá es derivable, y
    por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
    categorización, las partidas ya analizadas no hay que volver a correrlas. */
-function derivarFilas(jugadas, fens, evs, libro, desde = 0) {
+function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
   let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
@@ -486,7 +529,8 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0) {
 
     const wAntes = turno === "w" ? winPct(antes) : 100 - winPct(antes);
     const wDespues = turno === "w" ? winPct(despues) : 100 - winPct(despues);
-    const precision = precisionJugada(Math.max(0, wAntes - wDespues));
+    const caida = Math.max(0, wAntes - wDespues);
+    const precision = precisionJugada(caida);
 
     const uci = j.from + j.to + (j.promotion || "");
     const esMejor = evs[i].mejor === uci;
@@ -516,7 +560,11 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0) {
     const entrega = esMejor
       ? entregaMaterial(fens[i], { from: j.from, to: j.to, promotion: j.promotion })
       : false;
-    const cat = categorizar({ perdida, esMejor, esLibro, entrega, unicaBuena, oportunidad, legales });
+    /* la posición vista desde el que mueve, en peones */
+    const antesMio = (turno === "w" ? antes : -antes) / 100;
+    const despuesMio = (turno === "w" ? despues : -despues) / 100;
+    const cat = categorizar({ perdida, caida, esMejor, esLibro, entrega, unicaBuena,
+                              oportunidad, legales, antesMio, despuesMio }, modo);
 
     const senales = [];
     if (perdida >= 0.5) {
@@ -531,10 +579,9 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0) {
     }
 
     filas.push({
-      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, perdida, precision,
+      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, perdida, precision, caida,
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
-      fen: fens[i + 1], mejor: evs[i].mejor, senales,
-      franja: (turno === "w" ? antes : -antes) / 100
+      fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio
     });
   }
   return { filas, apertura };
@@ -813,7 +860,7 @@ function esSospechosa(f) {
    aparte, por jugada, como segunda opinión sobre las sospechosas. */
 async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc) {
   const evs = await evaluarPosiciones(fens, 13, (h, t) => onProg(h, t, "barrido"), opc);
-  const d = derivarFilas(jugadas, fens, evs, libro);
+  const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value);
 
   const sospechosas = d.filas.map((f, i) => i).filter(i => esSospechosa(d.filas[i]));
   const necesarias = new Set();
@@ -866,13 +913,15 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   const vte = variante(opc);
   const prog = (h, t, fase) => { if (onProg) onProg(h, t, fase); };
 
+  const MODO = () => $("modo").value;
   const guardado = opc.sinCache ? null : await cache.leer(id, prof, vte);
   if (guardado && guardado.evs && guardado.evs.length === fens.length) {
     window.LOG.add("·", `caché: ${id} a profundidad ${prof}${vte ? " (" + vte + ")" : ""}`);
     prog(fens.length, fens.length, "caché");
-    const d = derivarFilas(jugadas, fens, guardado.evs, libro);
+    const d = derivarFilas(jugadas, fens, guardado.evs, libro, 0, MODO());
     (guardado.revs || []).forEach(r => { if (d.filas[r.i]) d.filas[r.i].rev = r.rev; });
     return { filas: d.filas, cab, apertura: d.apertura, id, deCache: true,
+             jugadas, fens, evs: guardado.evs, revs: guardado.revs || [],
              profBase: guardado.profBase || prof, revisadas: (guardado.revs || []).length };
   }
   if (guardado) window.LOG.add("!", "caché descartada por largo distinto en " + id);
@@ -882,11 +931,11 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
     r = await analizarConBarrido(jugadas, fens, prof, libro, prog, opc);
   } else if (opc.multipv === "hibrido") {
     const h = await analizarHibrido(jugadas, fens, prof, prog, opc);
-    const d = derivarFilas(jugadas, fens, h.evs, libro);
+    const d = derivarFilas(jugadas, fens, h.evs, libro, 0, $("modo").value);
     r = { filas: d.filas, apertura: d.apertura, evs: h.evs, revisadas: h.extra, profBase: prof };
   } else {
     const evs = await evaluarPosiciones(fens, prof, (h, t) => prog(h, t, "análisis"), opc);
-    const d = derivarFilas(jugadas, fens, evs, libro);
+    const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value);
     r = { filas: d.filas, apertura: d.apertura, evs, revisadas: 0, profBase: prof };
   }
   if (!opc.sinCache) {
@@ -895,6 +944,8 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
       { evs: r.evs, n: r.evs.length, profBase: r.profBase, revs });
   }
   return { filas: r.filas, cab, apertura: r.apertura, id, deCache: false,
+           jugadas, fens, evs: r.evs,
+           revs: r.filas.map((f, i) => f.rev ? { i, rev: f.rev } : null).filter(Boolean),
            profBase: r.profBase, revisadas: r.revisadas };
 }
 
@@ -1197,7 +1248,8 @@ function pintarBanco(filas, prof) {
   const base = filas[0];
   $("capBanco").textContent =
     "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
-    `Motores: ${$("motores").value}. Los motores se reinician entre corrida y corrida. ` +
+    `Motores: ${$("motores").value}, modo ${$("modo").value}. ` +
+    "Los motores se reinician entre corrida y corrida. " +
     "Todas corren con memoria limpia salvo la última. Las filas 1 y 2 son la " +
     "misma configuración dos veces: tienen que dar idénticas. El barrido mide a " +
     `profundidad 13 y no a ${prof}, así que sus cifras no se comparan con el resto.`;
@@ -1214,6 +1266,28 @@ function pintarBanco(filas, prof) {
       <td>${f.graves}</td>
       <td>${f.geniales}</td></tr>`).join("")}</tbody>`;
 }
+
+/* Cambiar de modo NO vuelve a correr el motor: las categorías se derivan de las
+   evaluaciones, y las evaluaciones ya están. Es la razón por la que la caché
+   guarda evaluaciones y no veredictos. */
+function reDerivar(r) {
+  if (!r || !r.evs) return;
+  const d = derivarFilas(r.jugadas, r.fens, r.evs, LIBRO, 0, $("modo").value);
+  r.filas = d.filas;
+  r.apertura = d.apertura;
+  (r.revs || []).forEach(x => { if (r.filas[x.i]) r.filas[x.i].rev = x.rev; });
+}
+
+$("modo").onchange = seguro("modo", () => {
+  window.LOG.add("·", "modo " + $("modo").value);
+  if (MES) { MES.resultados.forEach(reDerivar); pintarMes(MES.prof); }
+  if (R) {
+    reDerivar(R);
+    IDX = Math.min(IDX, R.filas.length - 1);
+    pintarResumen(R.profBase || +$("prof").value);
+    pintarRevision();
+  }
+});
 
 /* de cada partida se toman solo las jugadas del usuario buscado */
 function filasDelUsuario(r) {
@@ -1257,7 +1331,8 @@ function pintarMes(prof) {
   const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
   $("capMes").textContent =
     `Solo las jugadas de ${USUARIO}, en ${MES.resultados.length} partidas y ${todas.length} jugadas. ` +
-    `Profundidad ${prof}; los números de distinta profundidad no se comparan.`;
+    `Profundidad ${prof}, modo ${$("modo").value}; los números de distinta ` +
+    "profundidad o de distinto modo no se comparan.";
 
   const cuentaCat = k => todas.filter(f => f.cat === k).length;
   $("mesResumen").innerHTML = `
@@ -1314,7 +1389,12 @@ function pintarRevision() {
   $("vIco").textContent = c.icono;
   $("vIco").style.color = color;
   $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
-  $("vSub").textContent = c.desc;
+  const filo = alFilo(f.perdida) && f.cat !== "libro";
+  $("vSub").textContent = c.desc +
+    ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
+    ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria` +
+    (filo ? " \u00b7 AL FILO DEL UMBRAL" : "");
+  $("vSub").style.color = filo ? "var(--c-imprecision)" : "";
   $("vEv").textContent = f.evalTexto;
 
   $("evalfill").style.width = Math.max(2, Math.min(98, winPct(f.evalBlancas))) + "%";
@@ -1347,7 +1427,8 @@ function pintarResumen(prof) {
   const prec = fs => fs.length ? fs.reduce((a, x) => a + x.precision, 0) / fs.length : 0;
 
   $("capResumen").textContent =
-    `Compara a los dos jugadores. Profundidad ${prof}; los n\u00fameros de distinta profundidad no se comparan.`;
+    `Compara a los dos jugadores. Profundidad ${prof}, modo ${$("modo").value}; ` +
+    "los n\u00fameros de distinta profundidad o de distinto modo no se comparan.";
 
   const filaCat = k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
     `<td>${B.filter(f => f.cat === k).length}</td><td>${N.filter(f => f.cat === k).length}</td></tr>`;
