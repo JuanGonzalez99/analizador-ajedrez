@@ -35,5 +35,12 @@ const huerfanos = [...ids].filter(i =>
   /^(mes|cap)[A-Z]/.test(i) && (html.match(citado(i)) || []).length < 2);
 chequear("sin tablas ni leyendas huérfanas", huerfanos);
 
+/* 5. Toda tabla vive dentro de un contenedor que scrollea. Sin eso, una fila
+      con etiqueta larga estira la tabla y el celu recorta la última columna:
+      el número queda invisible y nada avisa. */
+const sueltas = [...html.matchAll(/(.{0,24})<table id="([^"]+)"/g)]
+  .filter(m => !m[1].includes('class="tw"')).map(m => m[2]);
+chequear("cada tabla scrollea sola", sueltas);
+
 if (fallas.length) { console.error("\nFALLA:\n- " + fallas.join("\n- ")); process.exit(1); }
 console.log("\nchequeos estáticos: todo bien");

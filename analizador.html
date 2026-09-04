@@ -34,7 +34,12 @@
   .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width .15s; }
   table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
   th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
-  th:first-child, td:first-child { text-align: left; }
+  /* La etiqueta es lo único que puede cortar en varias líneas: si no, empuja la
+     tabla más ancha que la pantalla y el porcentaje queda tapado en el celu. */
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  /* red de seguridad: si aun así no entra, la tabla scrollea sola y no se
+     recorta ningún número */
+  .tw { overflow-x: auto; }
   .lista { border: 1px solid var(--linea); border-radius: 8px; overflow: hidden; margin-top: 8px; }
   .lista > div { padding: 9px 11px; border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
   .lista > div:last-child { border-bottom: 0; }
@@ -89,7 +94,7 @@
 </div>
 
 <script>
-  window.VERSION = "v20 · 04-09";
+  window.VERSION = "v21 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -281,31 +286,31 @@
 <div id="zonaBanco" class="oculto">
   <h2 id="tituloBanco">Comparación de configuraciones</h2>
   <p class="cap" id="capBanco"></p>
-  <table id="tablaBanco"></table>
+  <div class="tw"><table id="tablaBanco"></table></div>
 </div>
 
 <div id="zonaMes" class="oculto">
   <h2>El mes</h2>
   <p class="cap" id="capMes"></p>
-  <table id="mesResumen"></table>
+  <div class="tw"><table id="mesResumen"></table></div>
   <h2>Riesgo por franja de ventaja</h2>
   <p class="cap" id="capMesFranja"></p>
-  <table id="mesFranja"></table>
+  <div class="tw"><table id="mesFranja"></table></div>
   <h2>Capturas que estaban disponibles</h2>
   <p class="cap" id="capCapturas"></p>
-  <table id="mesCapturas"></table>
+  <div class="tw"><table id="mesCapturas"></table></div>
 
   <h2>Mecanismos</h2>
   <p class="cap" id="capMecanismos"></p>
-  <table id="mesMecanismos"></table>
+  <div class="tw"><table id="mesMecanismos"></table></div>
 
   <h2>Por pieza movida</h2>
   <p class="cap" id="capPieza"></p>
-  <table id="mesPieza"></table>
+  <div class="tw"><table id="mesPieza"></table></div>
 
   <h2>Por tramo de la partida</h2>
   <p class="cap" id="capTramo"></p>
-  <table id="mesTramo"></table>
+  <div class="tw"><table id="mesTramo"></table></div>
 
   <h2>Partidas</h2>
   <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
@@ -338,10 +343,10 @@
 <div id="zonaResumen" class="oculto">
   <h2>Resumen</h2>
   <p class="cap" id="capResumen"></p>
-  <table id="resumen"></table>
+  <div class="tw"><table id="resumen"></table></div>
   <h2>Riesgo por franja de ventaja</h2>
   <p class="cap" id="capFranja"></p>
-  <table id="franja"></table>
+  <div class="tw"><table id="franja"></table></div>
 </div>
 
 <script type="module">
@@ -1400,7 +1405,7 @@ function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
   $(idCap).textContent = texto + DEF_MALA;
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>
-      <th>% del resto</th></tr></thead>
+      <th>% resto</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.con.malas}</td>` +
       `<td>${f.con.total}</td><td>${pct(f.con)}</td><td>${pct(f.sin)}</td></tr>`).join("")}
     </tbody>`;
@@ -1419,8 +1424,7 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado) {
    misma que la categoría "Error grave": las categorías dependen del modo de
    clasificación y esta no. La agregan solas tablaTasas y tablaContrastes, para
    que ninguna tabla pueda quedarse sin decirlo. */
-const DEF_MALA = " Mala = pérdida de 3 peones o más, medida siempre igual, " +
-  "sin importar el modo de clasificación.";
+const DEF_MALA = " Mala = pérdida de 3 peones o más.";
 
 /* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
@@ -1534,7 +1538,9 @@ function pintarMes(prof) {
       ? `Quedan afuera ${asistidas.length} partida(s) con asistencia en vivo, que no miden juego propio. `
       : "") +
     `Profundidad ${prof}, modo ${$("modo").value}; los números de distinta ` +
-    "profundidad o de distinto modo no se comparan." + DEF_MALA + textoDesglose(todas);
+    "profundidad o de distinto modo no se comparan." +
+    " Mala = pérdida de 3 peones o más, medida siempre igual, sin importar el " +
+    "modo de clasificación." + textoDesglose(todas);
 
   const cuentaCat = k => todas.filter(f => f.cat === k).length;
   $("mesResumen").innerHTML = `
