@@ -94,7 +94,7 @@
 </div>
 
 <script>
-  window.VERSION = "v23 · 04-09";
+  window.VERSION = "v24 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -1417,6 +1417,27 @@ const NMIN = 30;
 /* Una fila por mecanismo, con la tasa del resto de las jugadas al lado. Antes
    eran dos filas —"sí" y "no"— y había que restarlas de a ojo para leer el
    contraste, que es lo único que un mecanismo dice por sí solo (§5 regla 7). */
+/* Reparto: las filas parten un mismo total y los porcentajes suman 100. Es
+   otra pregunta que la de tablaTasas —no "qué parte de esto salió mal" sino
+   "qué parte de las veces hice cada cosa"— y por eso no lleva DEF_MALA.
+
+   La columna "Malas" queda como control, no como estadística: una fila marcada
+   canario tiene que dar 0 y muestra un guion. Su tasa no se muestra porque
+   sería circular: los grupos están definidos por no haber jugado la mejor
+   jugada del motor, así que por construcción pierden evaluación. */
+function tablaReparto(idTabla, idCap, texto, filas, encabezado) {
+  const total = filas.reduce((a, f) => a + f.total, 0);
+  $(idCap).textContent = texto +
+    ` Sobre ${total} situaciones` +
+    (total < NMIN ? "; son muy pocas para porcentajes, van los casos." : ".");
+  $(idTabla).innerHTML = `
+    <thead><tr><th>${encabezado}</th><th>Veces</th><th>%</th><th>Malas</th></tr></thead>
+    <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.total}</td>` +
+      `<td>${total >= NMIN ? (100 * f.total / total).toFixed(1) : "\u2014"}</td>` +
+      `<td>${f.canario && !f.malas ? "\u2014" : f.malas}</td></tr>`).join("")}
+    </tbody>`;
+}
+
 function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
   $(idCap).textContent = texto + DEF_MALA;
   $(idTabla).innerHTML = `
@@ -1444,15 +1465,7 @@ const DEF_MALA = " Mala = pérdida de 3 peones o más.";
 
 /* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
-const pct = f => {
-  /* Una fila marcada como canario da 0 por construcción —jugar la mejor jugada
-     del motor no puede perder nada—, así que el porcentaje no informa y va un
-     guion. Pero si alguna vez da distinto de cero hay algo roto, y entonces se
-     muestra el número aunque haya menos de NMIN jugadas: no es una estadística,
-     es un aviso. Es la única excepción al mínimo de 30. */
-  if (f.canario) return f.malas ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
-  return f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
-};
+const pct = f => f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
 
 const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
@@ -1512,16 +1525,15 @@ function paresDeErrores(porPartida) {
 
 function pintarDetalle(todas, porPartida) {
   const conCap = todas.filter(f => f.capBuena);
-  tablaTasas("mesCapturas", "capCapturas",
-    "Compara situaciones, no jugadas: de las veces que la mejor jugada del " +
-    "motor era una captura que ganaba material, qué se hizo y cómo salió cada " +
-    "grupo. La pregunta que contesta es cuántas veces había material a la vista " +
-    "y no se vio.",
+  tablaReparto("mesCapturas", "capCapturas",
+    "De las veces que la mejor jugada del motor era una captura que ganaba " +
+    "material, qué se hizo. Es la pregunta de cuántas veces había material a " +
+    "la vista y no se vio. La columna Malas es un control: la primera fila " +
+    "tiene que dar cero, porque jugar la mejor jugada no puede perder nada.",
     [Object.assign(tasa(conCap.filter(f => f.tomoBuena), "La vi y la tomé"),
                    { canario: true }),
      tasa(conCap.filter(f => !f.tomoBuena && f.esCaptura), "Tomé otra"),
-     tasa(conCap.filter(f => !f.tomoBuena && !f.esCaptura), "No capturé"),
-     tasa(todas.filter(f => !f.capBuena), "No había buena captura")],
+     tasa(conCap.filter(f => !f.tomoBuena && !f.esCaptura), "No capturé")],
     "Situación");
 
   const { trasMala, resto } = paresDeErrores(porPartida);

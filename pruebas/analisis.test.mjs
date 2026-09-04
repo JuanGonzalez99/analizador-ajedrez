@@ -117,8 +117,13 @@ test("toda leyenda de tabla dice qué cuenta como mala", () => {
      tabla nueva puede quedarse sin decirlo. */
   assert.ok(T.DEF_MALA.includes("3 peones"));
   const pinta = html.match(/\$\(idCap\)\.textContent = [^;]+;/g) || [];
-  assert.equal(pinta.length, 2);
-  for (const l of pinta) assert.ok(l.includes("DEF_MALA"), `sin DEF_MALA: ${l}`);
+  assert.equal(pinta.length, 3, "hay tres funciones que pintan leyenda");
+  assert.equal(pinta.filter(l => l.includes("DEF_MALA")).length, 2,
+    "las dos tablas de tasas la llevan");
+  /* La de reparto no: sus porcentajes no son tasas de jugadas malas. Pero tiene
+     que decir su denominador igual, que es la regla §5.1. */
+  const reparto = pinta.find(l => !l.includes("DEF_MALA"));
+  assert.ok(reparto.includes("situaciones"), `sin denominador: ${reparto}`);
 });
 
 test("el desglose concilia la columna Malas con las categorías del resumen", () => {
@@ -153,11 +158,19 @@ test("la tabla de franjas ya no se pinta sola", () => {
 
 test("ninguna tabla calcula el porcentaje por su cuenta", () => {
   /* Más ancho que la prueba anterior: cualquier "100 * algo / algo" suelto. */
-  const cuerpo = html.slice(html.indexOf("const pct = f =>"), html.indexOf("const esMala"));
+  const permitido = {
+    "100 * f.malas / f.total": "const pct = f =>",    // la tasa, una sola vez
+    "100 * f.total / total": "function tablaReparto",  // el reparto, adentro suyo
+  };
   const sueltos = [...html.matchAll(/100 \* \w[\w.]* \/ \w[\w.]*/g)].map(m => m[0]);
   assert.ok(sueltos.length, "no quedó ningún cálculo de porcentaje");
-  for (const c of sueltos)
-    assert.ok(cuerpo.includes(c), `porcentaje calculado fuera de pct(): ${c}`);
+  for (const c of sueltos) {
+    const duenio = permitido[c];
+    assert.ok(duenio, `porcentaje nuevo sin dueño: ${c}`);
+    const i = html.indexOf(duenio);
+    assert.ok(i >= 0 && html.indexOf(c) > i && html.indexOf(c) - i < 900,
+      `${c} calculado fuera de ${duenio}`);
+  }
 });
 
 /* --- buena captura decidida por el motor, v22 --- */
@@ -192,18 +205,35 @@ test("tomoBuena exige haber jugado la mejor del motor", () => {
   assert.ok(html.includes("const tomoBuena = esMejor && !!capB;"));
 });
 
-test("la fila canario muestra guion en cero y el número si algo se rompió", () => {
-  assert.equal(T.pct({ malas: 0, total: 12, canario: true }), "\u2014");
-  assert.equal(T.pct({ malas: 1, total: 12, canario: true }), "8.3",
-    "un canario distinto de cero se muestra aunque haya menos de 30 jugadas");
-  assert.equal(T.pct({ malas: 0, total: 12 }), "\u2014", "sin canario sigue el mínimo");
+test("el canario vive en la columna Malas, no en el porcentaje", () => {
+  /* Guion cuando da cero, que es lo que tiene que pasar siempre; el número
+     crudo si alguna vez no da cero, porque entonces hay algo para revisar. */
+  const i = html.indexOf("f.canario && !f.malas");
+  assert.ok(i > 0, "se perdió el canario");
+  const guion = String.fromCharCode(34, 92) + "u2014" + String.fromCharCode(34);
+  assert.ok(html.slice(i).startsWith(`f.canario && !f.malas ? ${guion} : f.malas`),
+    html.slice(i, i + 70));
+  const cuerpoPct = html.slice(html.indexOf("const pct = f =>"), html.indexOf("const esMala"));
+  assert.ok(!cuerpoPct.includes("canario"), "pct() ya no tiene que saber del canario");
 });
 
-test("la tabla de capturas tiene las tres filas más la de contraste", () => {
-  for (const fila of ['"La vi y la tomé"', '"Tomé otra"', '"No capturé"',
-                      '"No había buena captura"'])
+test("la tabla de capturas reparte las tres cosas que se pueden hacer", () => {
+  assert.ok(html.includes('tablaReparto("mesCapturas"'));
+  for (const fila of ['"La vi y la tomé"', '"Tomé otra"', '"No capturé"'])
     assert.ok(html.includes(fila), `falta la fila ${fila}`);
   assert.ok(html.includes("{ canario: true }"), "la fila 1 tiene que ser canario");
+  /* La fila de contraste se fue: en un reparto no tiene sentido, porque las
+     tres filas parten un mismo total y los porcentajes ya suman 100. */
+  assert.ok(!html.includes('"No había buena captura"'));
+});
+
+test("las tres filas del reparto son excluyentes y cubren todo el grupo", () => {
+  const en = [f => f.tomoBuena, f => !f.tomoBuena && f.esCaptura,
+              f => !f.tomoBuena && !f.esCaptura];
+  for (const f of [{ tomoBuena: true, esCaptura: true },
+                   { tomoBuena: false, esCaptura: true },
+                   { tomoBuena: false, esCaptura: false }])
+    assert.equal(en.filter(t => t(f)).length, 1, `${JSON.stringify(f)} cae en una sola fila`);
 });
 
 /* --- Omisión con el mismo juez, v23 --- */
