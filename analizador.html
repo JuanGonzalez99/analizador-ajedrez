@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v18 · 04-09";
+  window.VERSION = "v19 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -383,19 +383,6 @@ function precisionJugada(caidaPuntos) {
 
 /* ============ geometría ============ */
 const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-const casilla = (f, r) => "abcdefgh"[f] + (r + 1);
-
-function peonAtaca(juego, sq, colorRival) {
-  const f = "abcdefgh".indexOf(sq[0]), r = +sq[1] - 1;
-  const dr = colorRival === "w" ? -1 : 1;
-  for (const df of [-1, 1]) {
-    const ff = f + df, rr = r + dr;
-    if (ff < 0 || ff > 7 || rr < 0 || rr > 7) continue;
-    const p = juego.get(casilla(ff, rr));
-    if (p && p.type === "p" && p.color === colorRival) return true;
-  }
-  return false;
-}
 
 /* ¿la pieza parada en `sq` se la llevan sin devolución? */
 function quedaComible(fenDespues, sq) {
@@ -575,7 +562,6 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
        mal: para saber si un mecanismo es peligroso hace falta también cuántas
        veces apareció sin consecuencias. Es la tasa base de §D regla 16. */
     const colgada = quedaComible(fens[i + 1], j.to);
-    const aPeon = j.piece !== "p" && peonAtaca(new Chess(fens[i]), j.to, rival);
     const capDisp = capturaGanadora(fens[i]);
     const tomoGanadora = !!(capDisp && j.captured &&
       gananciaDeCaptura(fens[i], { from: j.from, to: j.to, promotion: j.promotion }) >= 1);
@@ -600,7 +586,6 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
 
     const senales = [];
     if (perdida >= 0.5) {
-      if (aPeon) senales.push("fue a una casilla atacada por un peón");
       if (colgada) senales.push("la pieza movida queda comible");
     }
     if (oportunidad) {
@@ -613,7 +598,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
       n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, perdida, precision, caida,
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
-      pieza: j.piece, esCaptura: !!j.captured, colgada, aPeon,
+      pieza: j.piece, esCaptura: !!j.captured, colgada,
       capDisponible: capDisp, tomoGanadora
     });
   }
@@ -1407,17 +1392,38 @@ function variante(opc) {
    sobre 41 jugadas invita a comparaciones que el dato no aguanta. */
 const NMIN = 30;
 
+/* Una fila por mecanismo, con la tasa del resto de las jugadas al lado. Antes
+   eran dos filas —"sí" y "no"— y había que restarlas de a ojo para leer el
+   contraste, que es lo único que un mecanismo dice por sí solo (§5 regla 7). */
+function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
+  $(idCap).textContent = texto;
+  $(idTabla).innerHTML = `
+    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>
+      <th>% del resto</th></tr></thead>
+    <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.con.malas}</td>` +
+      `<td>${f.con.total}</td><td>${pct(f.con)}</td><td>${pct(f.sin)}</td></tr>`).join("")}
+    </tbody>`;
+}
+
 function tablaTasas(idTabla, idCap, texto, filas, encabezado) {
   $(idCap).textContent = texto;
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
-      `<td>${f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014"}</td></tr>`).join("")}
+      `<td>${pct(f)}</td></tr>`).join("")}
     </tbody>`;
 }
 
+/* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
+   las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
+const pct = f => f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
+
 const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
+
+/* un mecanismo contra su propia tasa base: las jugadas que lo tienen y el resto */
+const contraste = (todas, test, nombre) =>
+  ({ nombre, con: tasa(todas.filter(test)), sin: tasa(todas.filter(f => !test(f))) });
 
 const NOMBRE_PIEZA = { p: "Peón", n: "Caballo", b: "Alfil", r: "Torre", q: "Dama", k: "Rey" };
 const TRAMOS = [["1 a 10", n => n <= 10], ["11 a 25", n => n > 10 && n <= 25],
@@ -1448,16 +1454,13 @@ function pintarDetalle(todas, porPartida) {
     "Situación");
 
   const { trasMala, resto } = paresDeErrores(porPartida);
-  tablaTasas("mesMecanismos", "capMecanismos",
-    "Compara situaciones, no jugadas. Cada mecanismo va con su contrario al " +
-    "lado: sin eso, saber que un mecanismo aparece en las jugadas malas no " +
-    "dice nada, porque puede aparecer también en las buenas.",
-    [tasa(todas.filter(f => f.aPeon), "Fui a una casilla atacada por un peón"),
-     tasa(todas.filter(f => !f.aPeon), "No fui"),
-     tasa(todas.filter(f => f.colgada), "Dejé comible la pieza que moví"),
-     tasa(todas.filter(f => !f.colgada), "No la dejé"),
-     tasa(trasMala, "Jugada siguiente a una mala"),
-     tasa(resto, "Resto de las jugadas")],
+  tablaContrastes("mesMecanismos", "capMecanismos",
+    "Compara situaciones, no jugadas. Cada mecanismo va con la tasa del resto " +
+    "de las jugadas al lado: sin ese contraste, saber que un mecanismo aparece " +
+    "en las jugadas malas no dice nada, porque puede aparecer también en las " +
+    "buenas. Cada porcentaje se lee solo contra el de al lado.",
+    [contraste(todas, f => f.colgada, "Dejé comible la pieza que moví"),
+     { nombre: "Jugada siguiente a una mala", con: tasa(trasMala), sin: tasa(resto) }],
     "Mecanismo");
 
   tablaTasas("mesPieza", "capPieza",

@@ -68,3 +68,34 @@ test('no queda rastro de la tabla "Por color"', () => {
   for (const rastro of ["mesColor", "capColor", "Por color", "Con blancas"])
     assert.ok(!html.includes(rastro), `volvió "${rastro}"`);
 });
+
+/* --- mecanismo del peón, sacado en v19 --- */
+
+test('no queda rastro del mecanismo "casilla atacada por un peón"', () => {
+  /* Era un caso particular de "dejé comible la pieza que moví" y no se sostiene
+     solo. Se fue el campo, la señal, la tabla y el helper peonAtaca. */
+  for (const rastro of ["aPeon", "peonAtaca", "atacada por un peón"])
+    assert.ok(!html.includes(rastro), `volvió "${rastro}"`);
+});
+
+test("derivarFilas ya no emite el campo aPeon", () => {
+  const campos = html.slice(html.indexOf("filas.push({"), html.indexOf("filas.push({") + 400);
+  assert.ok(!campos.includes("aPeon"));
+  assert.ok(campos.includes("colgada"), "colgada sí tiene que seguir");
+});
+
+/* --- tabla de contrastes, v19 --- */
+
+test("la tabla de mecanismos es de contrastes, no de filas sí/no", () => {
+  assert.ok(html.includes('tablaContrastes("mesMecanismos"'));
+  for (const fila of ['"No fui"', '"No la dejé"', '"Resto de las jugadas"'])
+    assert.ok(!html.includes(fila), `quedó la fila ${fila}`);
+});
+
+test("todo porcentaje pasa por pct(), que aplica el mínimo de 30", () => {
+  /* Regla §5.2: debajo de NMIN va un guion. Si alguna tabla vuelve a calcular
+     el porcentaje por su cuenta, el corte se le escapa. */
+  assert.ok(/const pct = f => f\.total >= NMIN/.test(html));
+  const propios = [...html.matchAll(/100 \* f\.malas \/ f\.total/g)];
+  assert.equal(propios.length, 1, "hay un porcentaje calculado fuera de pct()");
+});
