@@ -6,51 +6,63 @@
 <style>
   :root {
     color-scheme: light dark;
-    --linea: color-mix(in srgb, currentColor 22%, transparent);
-    --tenue: color-mix(in srgb, currentColor 60%, transparent);
-    --claro: #e8e2d4; --oscuro: #a08b6a;
-    --malo: #c0392b; --regular: #b8860b; --bien: #2e7d32;
+    --linea: color-mix(in srgb, currentColor 20%, transparent);
+    --tenue: color-mix(in srgb, currentColor 62%, transparent);
+    --claro: #ded3bd; --oscuro: #9a7f5c;
+    --c-brillante: #26a69a; --c-genial: #5b8def; --c-mejor: #4a9d4a;
+    --c-excelente: #6bb06b; --c-bien: #86b886; --c-libro: #b08d63;
+    --c-imprecision: #d4a017; --c-error: #e08030;
+    --c-omision: #d0453b; --c-grave: #c0392b;
   }
   * { box-sizing: border-box; }
-  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 18px 14px 70px; max-width: 720px; }
-  h1 { font-size: 21px; margin: 0 0 2px; }
-  h2 { font-size: 15px; margin: 26px 0 4px; }
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 16px 14px 60px; max-width: 700px; }
+  h1 { font-size: 20px; margin: 0 0 2px; }
+  h2 { font-size: 15px; margin: 24px 0 4px; }
   p.n { margin: 0 0 12px; color: var(--tenue); font-size: 14px; }
-  p.cap { margin: 10px 0 4px; font-size: 13px; color: var(--tenue); }
+  p.cap { margin: 8px 0 2px; font-size: 12.5px; color: var(--tenue); }
   button { font: inherit; padding: 9px 15px; border: 1px solid currentColor; background: transparent;
            color: inherit; border-radius: 6px; cursor: pointer; }
   button:disabled { opacity: .35; cursor: default; }
   button.chico { padding: 5px 10px; font-size: 14px; }
   input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--linea);
     border-radius: 6px; background: transparent; color: inherit; max-width: 100%; }
-  input#usuario { width: 150px; }
-  textarea { width: 100%; height: 90px; font: 12px/1.4 ui-monospace, monospace; }
+  input#usuario { width: 145px; }
+  textarea { width: 100%; height: 80px; font: 12px/1.4 ui-monospace, monospace; }
   .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  #estado { font-weight: 600; font-size: 14px; margin: 14px 0 0; min-height: 22px; }
+  #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
   .barra { height: 4px; background: var(--linea); border-radius: 2px; overflow: hidden; margin-top: 6px; }
   .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width .15s; }
-  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin-top: 6px; }
-  th, td { text-align: right; padding: 5px 6px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
-  th:first-child, td:first-child, th.izq, td.izq { text-align: left; }
-  tbody tr.sel { outline: 2px solid currentColor; }
-  tbody tr.jugable { cursor: pointer; }
-  td.senal { white-space: normal; font-size: 12.5px; color: var(--tenue); text-align: left; }
-  .grave { color: var(--malo); font-weight: 700; }
-  .error { color: var(--malo); }
-  .impre { color: var(--regular); }
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+  th:first-child, td:first-child { text-align: left; }
   .lista { border: 1px solid var(--linea); border-radius: 8px; overflow: hidden; margin-top: 8px; }
   .lista > div { padding: 9px 11px; border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
   .lista > div:last-child { border-bottom: 0; }
   .lista > div.sel { font-weight: 700; }
   .oculto { display: none; }
-  #tablero { margin-top: 10px; }
-  svg.tab { width: 100%; max-width: 340px; height: auto; display: block; }
-  .leyenda { font-size: 13px; color: var(--tenue); margin-top: 6px; }
+
+  .evalbar { height: 10px; border-radius: 5px; overflow: hidden; background: #2b2b2b;
+             border: 1px solid var(--linea); margin: 10px 0 8px; }
+  .evalbar > i { display: block; height: 100%; background: #f0ece2; transition: width .2s; }
+  .veredicto { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+               border: 1px solid var(--linea); border-left-width: 5px; border-radius: 8px; }
+  .veredicto .ico { font-weight: 800; font-size: 17px; min-width: 26px; text-align: center; }
+  .veredicto .txt { flex: 1; min-width: 0; }
+  .veredicto .tit { font-weight: 700; font-size: 15px; }
+  .veredicto .sub { font-size: 12.5px; color: var(--tenue); }
+  .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
+  svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: 10px auto 0; }
+  .tira { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .tira .jugadas { flex: 1; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+  .tira .jugadas::-webkit-scrollbar { display: none; }
+  .tira .jugadas span { display: inline-block; padding: 4px 7px; margin-right: 2px; border-radius: 5px;
+                        font-size: 13.5px; cursor: pointer; }
+  .tira .jugadas span.sel { outline: 2px solid currentColor; font-weight: 700; }
+  .senales { font-size: 12.5px; color: var(--tenue); margin-top: 8px; min-height: 18px; }
 </style>
 
 <h1>Analizador de partidas</h1>
-<p class="n">Busca partidas de chess.com y las analiza con Stockfish en tu propio navegador.
-  Nada sale de tu teléfono salvo el pedido de las partidas.</p>
+<p class="n">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
 
 <div class="fila">
   <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
@@ -59,19 +71,12 @@
 </div>
 
 <div id="zonaPegar" class="oculto" style="margin-top:10px">
-  <textarea id="pgn" placeholder="Pegá acá el PGN de una partida"></textarea>
+  <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
   <div class="fila" style="margin-top:6px"><button id="usarPgn" class="chico">Usar este PGN</button></div>
 </div>
 
-<div id="zonaMeses" class="oculto">
-  <h2>Mes</h2>
-  <select id="meses"></select>
-</div>
-
-<div id="zonaPartidas" class="oculto">
-  <h2>Partida</h2>
-  <div id="partidas" class="lista"></div>
-</div>
+<div id="zonaMeses" class="oculto"><h2>Mes</h2><select id="meses"></select></div>
+<div id="zonaPartidas" class="oculto"><h2>Partida</h2><div id="partidas" class="lista"></div></div>
 
 <div id="zonaAnalizar" class="oculto">
   <h2>Análisis</h2>
@@ -89,19 +94,42 @@
   <div class="barra"><i id="progreso"></i></div>
 </div>
 
-<div id="zonaResultado" class="oculto">
+<div id="zonaRevision" class="oculto">
+  <h2>Revisión</h2>
+  <div class="evalbar"><i id="evalfill"></i></div>
+  <div class="veredicto" id="veredicto">
+    <div class="ico" id="vIco"></div>
+    <div class="txt"><div class="tit" id="vTit"></div><div class="sub" id="vSub"></div></div>
+    <div class="ev" id="vEv"></div>
+  </div>
+  <div id="tablero"></div>
+  <div class="tira">
+    <button class="chico" id="ant">&lsaquo;</button>
+    <div class="jugadas" id="tira"></div>
+    <button class="chico" id="sig">&rsaquo;</button>
+  </div>
+  <div class="fila" style="margin-top:8px">
+    <button class="chico" id="btnMejor">Mostrar la mejor</button>
+    <button class="chico" id="btnGirar">Girar tablero</button>
+  </div>
+  <div class="senales" id="senales"></div>
+</div>
+
+<div id="zonaResumen" class="oculto">
   <h2>Resumen</h2>
   <p class="cap" id="capResumen"></p>
   <table id="resumen"></table>
-
-  <h2>Jugada por jugada</h2>
-  <p class="cap">Una fila por jugada de la partida. Tocá cualquiera para ver la posición.</p>
-  <div id="tablero"></div>
-  <table id="jugadas"></table>
+  <h2>Riesgo por franja de ventaja</h2>
+  <p class="cap" id="capFranja"></p>
+  <table id="franja"></table>
 </div>
 
 <script type="module">
 import { Chess } from "https://cdn.jsdelivr.net/npm/chess.js@0.13.4/chess.js";
+import {
+  aBlancas, winPct, precisionJugada, peonAtaca, quedaComible,
+  capturaGanadora, entregaMaterial, categorizar, CATEGORIAS, ORDEN
+} from "./analisis.mjs";
 
 const $ = id => document.getElementById(id);
 const ver = (id, si) => $(id).classList.toggle("oculto", !si);
@@ -119,7 +147,6 @@ const motor = {
       const s = typeof d === "string" ? d : String((d && d.data) || d);
       this.oyentes.slice().forEach(f => f(s));
     };
-    /* el wasm sigue compilando un rato: se repite uci hasta que conteste */
     await new Promise((ok, no) => {
       const t0 = Date.now();
       const fn = s => { if (s.startsWith("uciok")) { quitar(); clearInterval(p); ok(); } };
@@ -131,83 +158,60 @@ const motor = {
         else this.w.postMessage("uci");
       }, 700);
     });
-    this.w.postMessage("setoption name MultiPV value 1");
+    this.w.postMessage("setoption name MultiPV value 2");
   },
-  /* devuelve { cp, mate, mejor } visto por el que tiene el turno */
   analizar(fen, prof) {
     return new Promise((ok, no) => {
-      let cp = null, mate = null;
+      const linea = {};
       const fn = s => {
         if (s.startsWith("info") && s.includes(" score ")) {
-          const m = /score (cp|mate) (-?\d+)/.exec(s);
-          if (m) { if (m[1] === "cp") { cp = +m[2]; mate = null; } else { mate = +m[2]; cp = null; } }
+          const pv = /multipv (\d+)/.exec(s);
+          const sc = /score (cp|mate) (-?\d+)/.exec(s);
+          const mv = / pv ([a-h][1-8][a-h][1-8][qrbn]?)/.exec(s);
+          if (sc) {
+            const k = pv ? +pv[1] : 1;
+            linea[k] = {
+              cp: sc[1] === "cp" ? +sc[2] : null,
+              mate: sc[1] === "mate" ? +sc[2] : null,
+              mov: mv ? mv[1] : (linea[k] && linea[k].mov) || null
+            };
+          }
         } else if (s.startsWith("bestmove")) {
-          quitar();
-          ok({ cp, mate, mejor: s.split(" ")[1] || null });
+          quitar(); clearTimeout(corte);
+          const uno = linea[1] || { cp: 0, mate: null, mov: null };
+          ok({ cp: uno.cp, mate: uno.mate, mejor: s.split(" ")[1] || uno.mov, segunda: linea[2] || null });
         }
       };
       const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
       this.oyentes.push(fn);
       const corte = setTimeout(() => { quitar(); no(new Error("el motor no respondió")); }, 120000);
-      const ok0 = ok; ok = v => { clearTimeout(corte); ok0(v); };
       this.w.postMessage("position fen " + fen);
       this.w.postMessage("go depth " + prof);
     });
   }
 };
 
-/* ============ evaluación en peones, vista desde las blancas ============ */
-const TOPE = 1000; // §D regla 6: topear en ±1000 cp
-function aBlancas(ev, turno) {
-  let cp;
-  if (ev.mate !== null && ev.mate !== undefined) cp = ev.mate > 0 ? 10000 : -10000;
-  else cp = ev.cp === null ? 0 : ev.cp;
-  if (turno === "b") cp = -cp;
-  return Math.max(-TOPE, Math.min(TOPE, cp));
+/* ============ aperturas ============ */
+let LIBRO = null;
+async function cargarLibro() {
+  if (LIBRO) return LIBRO;
+  try {
+    const d = await (await fetch("./aperturas.json")).json();
+    LIBRO = { pos: new Set(d.posiciones), nombres: d.nombres };
+  } catch { LIBRO = { pos: new Set(), nombres: {} }; }
+  return LIBRO;
 }
+const claveLibro = fen => fen.split(" ").slice(0, 4).join(" ");
+
+/* ============ análisis ============ */
 function textoEval(ev, turno) {
   if (ev.mate !== null && ev.mate !== undefined) {
-    const n = Math.abs(ev.mate);
     const blancasGanan = (ev.mate > 0) === (turno === "w");
-    return (blancasGanan ? "M" : "-M") + n;
+    return (blancasGanan ? "M" : "-M") + Math.abs(ev.mate);
   }
-  const cp = (turno === "b" ? -ev.cp : ev.cp) || 0;
+  const cp = turno === "b" ? -(ev.cp || 0) : (ev.cp || 0);
   return (cp >= 0 ? "+" : "") + (cp / 100).toFixed(2);
 }
-
-/* ============ detectores que no necesitan motor ============ */
-const DIR = { w: 1, b: -1 };
-function casilla(f, r) { return "abcdefgh"[f] + (r + 1); }
-
-/* ¿algún peón rival ataca esa casilla? */
-function peonAtaca(juego, sq, colorRival) {
-  const f = "abcdefgh".indexOf(sq[0]), r = +sq[1] - 1;
-  const dr = -DIR[colorRival];
-  for (const df of [-1, 1]) {
-    const ff = f + df, rr = r + dr;
-    if (ff < 0 || ff > 7 || rr < 0 || rr > 7) continue;
-    const p = juego.get(casilla(ff, rr));
-    if (p && p.type === "p" && p.color === colorRival) return true;
-  }
-  return false;
-}
-
-/* ¿la pieza que quedó en `sq` se la comen gratis? */
-function quedaComible(fenDespues, sq) {
-  const j = new Chess(fenDespues);
-  const capturas = j.moves({ verbose: true }).filter(m => m.to === sq);
-  if (!capturas.length) return false;
-  for (const c of capturas) {
-    const j2 = new Chess(fenDespues);
-    j2.move(c);
-    const recupera = j2.moves({ verbose: true }).some(m => m.to === sq);
-    if (!recupera) return true; // se la lleva y no hay devuelta
-  }
-  return false;
-}
-
-/* ============ análisis de una partida ============ */
-const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 
 async function analizarPartida(pgn, prof) {
   const base = new Chess();
@@ -215,7 +219,7 @@ async function analizarPartida(pgn, prof) {
   const jugadas = base.history({ verbose: true });
   if (!jugadas.length) throw new Error("el PGN no tiene jugadas");
 
-  // reconstruyo las posiciones
+  const libro = await cargarLibro();
   const rep = new Chess();
   const fens = [rep.fen()];
   for (const j of jugadas) { rep.move(j); fens.push(rep.fen()); }
@@ -229,121 +233,122 @@ async function analizarPartida(pgn, prof) {
   }
   progreso(1);
 
+  let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
     const j = jugadas[i];
     const turno = i % 2 === 0 ? "w" : "b";
+    const rival = turno === "w" ? "b" : "w";
     const antes = aBlancas(evs[i], turno);
-    const despues = aBlancas(evs[i + 1], i % 2 === 0 ? "b" : "w");
+    const despues = aBlancas(evs[i + 1], rival);
     const perdida = Math.max(0, turno === "w" ? antes - despues : despues - antes) / 100;
 
-    const senales = [];
-    const jm = new Chess(fens[i]);
-    const rival = turno === "w" ? "b" : "w";
+    const wAntes = turno === "w" ? winPct(antes) : 100 - winPct(antes);
+    const wDespues = turno === "w" ? winPct(despues) : 100 - winPct(despues);
+    const precision = precisionJugada(Math.max(0, wAntes - wDespues));
 
-    if (j.piece !== "p" && peonAtaca(jm, j.to, rival)) senales.push("va a casilla de peón");
-    if (quedaComible(fens[i + 1], j.to)) senales.push("queda comible");
+    const uci = j.from + j.to + (j.promotion || "");
+    const esMejor = evs[i].mejor === uci;
+    const clave = claveLibro(fens[i + 1]);
+    const esLibro = libro.pos.has(clave);
+    if (esLibro && libro.nombres[clave]) apertura = libro.nombres[clave];
 
-    // ¿había mate y se perdió?
+    let unicaBuena = false;
+    if (evs[i].segunda) {
+      const a1 = aBlancas(evs[i], turno);
+      const a2 = aBlancas({ cp: evs[i].segunda.cp, mate: evs[i].segunda.mate }, turno);
+      unicaBuena = Math.abs(a1 - a2) >= 150;
+    }
+    const legales = new Chess(fens[i]).moves().length;
+
+    let oportunidad = null;
     const eMate = evs[i].mate;
     if (eMate !== null && eMate !== undefined && eMate > 0) {
       const sig = evs[i + 1].mate;
-      const sigueMate = sig !== null && sig !== undefined && sig < 0;
-      if (!sigueMate) senales.push(`había mate en ${eMate}`);
+      if (!(sig !== null && sig !== undefined && sig < 0)) oportunidad = { tipo: "mate", n: eMate };
+    }
+    if (!oportunidad && !j.captured) {
+      const c = capturaGanadora(fens[i]);
+      if (c) oportunidad = { tipo: "material", san: c.san, gana: c.gana };
     }
 
-    // ¿la mejor era una captura y no capturó?
-    const mejor = evs[i].mejor;
-    if (mejor && perdida >= 1) {
-      const jm2 = new Chess(fens[i]);
-      const cand = jm2.moves({ verbose: true })
-        .find(m => m.from === mejor.slice(0, 2) && m.to === mejor.slice(2, 4));
-      if (cand) {
-        if (cand.captured && !j.captured) senales.push(`mejor era comer (${cand.san})`);
-        else if (cand.san !== j.san) senales.push(`mejor era ${cand.san}`);
-      }
+    const entrega = esMejor
+      ? entregaMaterial(fens[i], { from: j.from, to: j.to, promotion: j.promotion })
+      : false;
+    const cat = categorizar({ perdida, esMejor, esLibro, entrega, unicaBuena, oportunidad, legales });
+
+    const senales = [];
+    if (perdida >= 0.5) {
+      const jm = new Chess(fens[i]);
+      if (j.piece !== "p" && peonAtaca(jm, j.to, rival)) senales.push("fue a una casilla atacada por un peón");
+      if (quedaComible(fens[i + 1], j.to)) senales.push("la pieza movida queda comible");
+    }
+    if (oportunidad) {
+      senales.push(oportunidad.tipo === "mate"
+        ? `había mate forzado en ${oportunidad.n}`
+        : `había ${oportunidad.san}, que ganaba ${oportunidad.gana}`);
     }
 
     filas.push({
-      n: Math.floor(i / 2) + 1, turno, san: j.san, uci: j.from + j.to,
-      evalTexto: textoEval(evs[i + 1], i % 2 === 0 ? "b" : "w"),
-      perdida, senales, fen: fens[i + 1], fenAntes: fens[i],
-      mejor: evs[i].mejor
+      n: Math.floor(i / 2) + 1, turno, san: j.san, uci, cat, perdida, precision,
+      evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
+      fen: fens[i + 1], mejor: evs[i].mejor, senales,
+      franja: (turno === "w" ? antes : -antes) / 100
     });
   }
-  return { filas, cabeceras: base.header() };
+  return { filas, cab: base.header(), apertura };
 }
 
-/* ============ resumen ============ */
-function mediana(xs) {
-  if (!xs.length) return 0;
-  const s = [...xs].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-function resumir(filas, turno) {
-  const p = filas.filter(f => f.turno === turno).map(f => f.perdida);
-  const n = p.length || 1;
-  const cont = u => p.filter(u).length;
-  return {
-    jugadas: p.length,
-    buenas: cont(x => x < 0.5) / n,
-    impre: cont(x => x >= 0.5 && x < 1) / n,
-    errores: cont(x => x >= 1 && x < 3) / n,
-    graves: cont(x => x >= 3),
-    mediana: mediana(p)
-  };
-}
-
-/* ============ tablero en SVG ============ */
-const GLIFO = { wk: "\u2654", wq: "\u2655", wr: "\u2656", wb: "\u2657", wn: "\u2658", wp: "\u2659",
-                bk: "\u265A", bq: "\u265B", br: "\u265C", bb: "\u265D", bn: "\u265E", bp: "\u265F" };
+/* ============ tablero ============ */
+const FORMA = { k: "\u2654", q: "\u2655", r: "\u2656", b: "\u2657", n: "\u2658", p: "\u2659" };
+let GIRADO = false;
 function dibujar(fen, jugada, mejor) {
-  const j = new Chess(fen);
-  const b = j.board(); // fila 8 primero
-  const S = 40, M = 14, T = S * 8;
-  const px = sq => ("abcdefgh".indexOf(sq[0])) * S + M;
-  const py = sq => (8 - +sq[1]) * S + M;
+  const b = new Chess(fen).board();
+  const S = 42, M = 15, T = S * 8;
+  const fx = f => (GIRADO ? 7 - f : f) * S + M;
+  const ry = r => (GIRADO ? 7 - r : r) * S + M;
+  const cx = sq => fx("abcdefgh".indexOf(sq[0])) + S / 2;
+  const cy = sq => ry(8 - +sq[1]) + S / 2;
   let s = `<svg class="tab" viewBox="0 0 ${T + M * 2} ${T + M * 2}" xmlns="http://www.w3.org/2000/svg">`;
-  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
-    const claro = (r + f) % 2 === 0;
-    s += `<rect x="${f * S + M}" y="${r * S + M}" width="${S}" height="${S}" fill="${claro ? "var(--claro)" : "var(--oscuro)"}"/>`;
-  }
+  for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
+    s += `<rect x="${fx(f)}" y="${ry(r)}" width="${S}" height="${S}" fill="${(r + f) % 2 === 0 ? "var(--claro)" : "var(--oscuro)"}"/>`;
+  /* misma silueta para los dos bandos: el bando se distingue por el relleno */
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
     const p = b[r][f];
     if (!p) continue;
-    s += `<text x="${f * S + M + S / 2}" y="${r * S + M + S / 2}" font-size="${S * 0.78}"
-      text-anchor="middle" dominant-baseline="central"
-      fill="${p.color === "w" ? "#fff" : "#111"}" stroke="${p.color === "w" ? "#111" : "none"}"
-      stroke-width="0.7">${GLIFO[p.color + p.type]}</text>`;
+    s += `<text x="${fx(f) + S / 2}" y="${ry(r) + S / 2}" font-size="${S * 0.8}"
+      text-anchor="middle" dominant-baseline="central" font-family="serif"
+      fill="${p.color === "w" ? "#ffffff" : "#1a1a1a"}"
+      stroke="${p.color === "w" ? "#1a1a1a" : "#e8e8e8"}" stroke-width="1"
+      paint-order="stroke">${FORMA[p.type]}</text>`;
   }
   const flecha = (uci, color, ancho) => {
     if (!uci || uci.length < 4) return "";
     const a = uci.slice(0, 2), z = uci.slice(2, 4);
-    return `<line x1="${px(a) + S / 2}" y1="${py(a) + S / 2}" x2="${px(z) + S / 2}" y2="${py(z) + S / 2}"
-      stroke="${color}" stroke-width="${ancho}" stroke-linecap="round" opacity=".75"/>
-      <circle cx="${px(z) + S / 2}" cy="${py(z) + S / 2}" r="6" fill="${color}" opacity=".75"/>`;
+    return `<line x1="${cx(a)}" y1="${cy(a)}" x2="${cx(z)}" y2="${cy(z)}" stroke="${color}"
+      stroke-width="${ancho}" stroke-linecap="round" opacity=".8"/>
+      <circle cx="${cx(z)}" cy="${cy(z)}" r="7" fill="${color}" opacity=".8"/>`;
   };
   s += flecha(jugada, "#1565c0", 5);
-  if (mejor && mejor !== jugada) s += flecha(mejor, "#2e7d32", 4);
+  if (mejor) s += flecha(mejor, "#2e7d32", 4);
   for (let f = 0; f < 8; f++)
-    s += `<text x="${f * S + M + S / 2}" y="${T + M + 10}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".6">${"abcdefgh"[f]}</text>`;
+    s += `<text x="${fx(f) + S / 2}" y="${T + M + 10}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".55">${"abcdefgh"[f]}</text>`;
   for (let r = 0; r < 8; r++)
-    s += `<text x="${M - 4}" y="${r * S + M + S / 2}" font-size="10" text-anchor="end" dominant-baseline="central" fill="currentColor" opacity=".6">${8 - r}</text>`;
+    s += `<text x="${M - 4}" y="${ry(r) + S / 2}" font-size="10" text-anchor="end" dominant-baseline="central" fill="currentColor" opacity=".55">${8 - r}</text>`;
   return s + "</svg>";
 }
 
 /* ============ interfaz ============ */
-let PARTIDAS = [], ELEGIDA = null, RESULTADO = null;
+let PARTIDAS = [], ELEGIDA = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
 
 $("verPegar").onclick = () => ver("zonaPegar", $("zonaPegar").classList.contains("oculto"));
 
 $("buscar").onclick = async () => {
   const u = $("usuario").value.trim();
   if (!u) return;
+  USUARIO = u.toLowerCase();
   $("buscar").disabled = true;
-  ver("zonaAnalizar", false); ver("zonaResultado", false); ver("zonaPartidas", false);
-  estado("");
+  ["zonaAnalizar", "zonaRevision", "zonaResumen", "zonaPartidas"].forEach(z => ver(z, false));
   try {
     const r = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`);
     if (!r.ok) throw new Error("no encontré ese usuario");
@@ -353,10 +358,7 @@ $("buscar").onclick = async () => {
       .map(m => `<option value="${m}">${m.slice(-7).replace("/", "-")}</option>`).join("");
     ver("zonaMeses", true);
     await cargarMes(meses[meses.length - 1]);
-  } catch (e) {
-    ver("zonaMeses", false);
-    alert(e.message);
-  }
+  } catch (e) { ver("zonaMeses", false); alert(e.message); }
   $("buscar").disabled = false;
 };
 
@@ -370,9 +372,9 @@ async function cargarMes(url) {
   if (!PARTIDAS.length) { $("partidas").innerHTML = "<div>Ese mes no tiene partidas.</div>"; return; }
   $("partidas").innerHTML = PARTIDAS.map((g, i) => {
     const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
-    const res = g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "½-½";
-    return `<div data-i="${i}">${g.white.username} vs ${g.black.username} · ${res}
-      <span style="opacity:.6">· ${g.time_class} · ${f}</span></div>`;
+    const res = g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "\u00bd-\u00bd";
+    return `<div data-i="${i}">${g.white.username} vs ${g.black.username} \u00b7 ${res}
+      <span style="opacity:.6">\u00b7 ${g.time_class} \u00b7 ${f}</span></div>`;
   }).join("");
   $("partidas").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
@@ -388,70 +390,100 @@ async function cargarMes(url) {
 $("usarPgn").onclick = () => {
   const t = $("pgn").value.trim();
   if (!t) return;
-  ELEGIDA = t;
-  ver("zonaAnalizar", true);
-  estado("PGN cargado.");
+  ELEGIDA = t; ver("zonaAnalizar", true); estado("PGN cargado.");
 };
 
 $("analizar").onclick = async () => {
   if (!ELEGIDA) return;
   $("analizar").disabled = true;
-  ver("zonaResultado", false);
+  ver("zonaRevision", false); ver("zonaResumen", false);
   progreso(0);
   try {
     const prof = +$("prof").value;
-    estado("Levantando el motor…");
-    RESULTADO = await analizarPartida(ELEGIDA, prof);
-    pintar(prof);
-    estado("Listo.");
+    estado("Levantando el motor\u2026");
+    R = await analizarPartida(ELEGIDA, prof);
+    IDX = 0;
+    GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
+    pintarResumen(prof);
+    pintarRevision();
+    ver("zonaRevision", true); ver("zonaResumen", true);
+    estado(R.apertura ? `Listo. Apertura: ${R.apertura}` : "Listo.");
   } catch (e) {
     estado("No se pudo: " + e.message);
   }
   $("analizar").disabled = false;
 };
 
-function pintar(prof) {
-  const { filas, cabeceras } = RESULTADO;
-  const pct = x => (x * 100).toFixed(0) + "%";
-  const blancas = resumir(filas, "w"), negras = resumir(filas, "b");
+function pintarRevision() {
+  const f = R.filas[IDX];
+  const c = CATEGORIAS[f.cat];
+  const color = `var(--c-${f.cat})`;
+  $("veredicto").style.borderLeftColor = color;
+  $("vIco").textContent = c.icono;
+  $("vIco").style.color = color;
+  $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
+  $("vSub").textContent = c.desc;
+  $("vEv").textContent = f.evalTexto;
+
+  $("evalfill").style.width = Math.max(2, Math.min(98, winPct(f.evalBlancas))) + "%";
+  $("tablero").innerHTML = dibujar(f.fen, f.uci, VER_MEJOR && f.mejor !== f.uci ? f.mejor : null);
+
+  $("tira").innerHTML = R.filas.map((x, i) =>
+    `<span data-i="${i}" class="${i === IDX ? "sel" : ""}" style="color:var(--c-${x.cat})">${x.turno === "w" ? x.n + "." : ""}${x.san}</span>`).join("");
+  $("tira").querySelectorAll("span[data-i]").forEach(s => {
+    s.onclick = () => { IDX = +s.dataset.i; pintarRevision(); };
+  });
+  const sel = $("tira").querySelector(".sel");
+  if (sel) sel.scrollIntoView({ inline: "center", block: "nearest" });
+
+  $("senales").textContent = f.senales.length ? "\u00b7 " + f.senales.join(" \u00b7 ") : "";
+  $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
+  $("ant").disabled = IDX === 0;
+  $("sig").disabled = IDX === R.filas.length - 1;
+}
+$("ant").onclick = () => { if (IDX > 0) { IDX--; pintarRevision(); } };
+$("sig").onclick = () => { if (IDX < R.filas.length - 1) { IDX++; pintarRevision(); } };
+$("btnMejor").onclick = () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); };
+$("btnGirar").onclick = () => { GIRADO = !GIRADO; pintarRevision(); };
+
+function mediana(xs) {
+  if (!xs.length) return 0;
+  const s = [...xs].sort((a, b) => a - b);
+  const m = Math.floor(s.length / 2);
+  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+}
+
+function pintarResumen(prof) {
+  const { filas, cab } = R;
+  const B = filas.filter(f => f.turno === "w"), N = filas.filter(f => f.turno === "b");
+  const prec = fs => fs.length ? fs.reduce((a, x) => a + x.precision, 0) / fs.length : 0;
+
   $("capResumen").textContent =
-    `Compara a los dos jugadores en esta partida. Profundidad ${prof}; los números de distinta profundidad no se comparan entre sí.`;
+    `Compara a los dos jugadores. Profundidad ${prof}; los n\u00fameros de distinta profundidad no se comparan.`;
+
+  const filaCat = k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
+    `<td>${B.filter(f => f.cat === k).length}</td><td>${N.filter(f => f.cat === k).length}</td></tr>`;
+
   $("resumen").innerHTML = `
-    <thead><tr><th class="izq"></th><th>${cabeceras.White || "Blancas"}</th><th>${cabeceras.Black || "Negras"}</th></tr></thead>
+    <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
     <tbody>
-      <tr><td class="izq">Jugadas</td><td>${blancas.jugadas}</td><td>${negras.jugadas}</td></tr>
-      <tr><td class="izq">Buenas (menos de 0.5)</td><td>${pct(blancas.buenas)}</td><td>${pct(negras.buenas)}</td></tr>
-      <tr><td class="izq">Imprecisiones (0.5 a 1)</td><td>${pct(blancas.impre)}</td><td>${pct(negras.impre)}</td></tr>
-      <tr><td class="izq">Errores (1 a 3)</td><td>${pct(blancas.errores)}</td><td>${pct(negras.errores)}</td></tr>
-      <tr><td class="izq">Errores graves (3 o más)</td><td>${blancas.graves}</td><td>${negras.graves}</td></tr>
-      <tr><td class="izq">Mediana de pérdida</td><td>${blancas.mediana.toFixed(2)}</td><td>${negras.mediana.toFixed(2)}</td></tr>
+      <tr><td><b>Precisi\u00f3n</b></td><td><b>${prec(B).toFixed(1)}</b></td><td><b>${prec(N).toFixed(1)}</b></td></tr>
+      <tr><td>Mediana de p\u00e9rdida</td><td>${mediana(B.map(f => f.perdida)).toFixed(2)}</td>
+          <td>${mediana(N.map(f => f.perdida)).toFixed(2)}</td></tr>
+      ${ORDEN.map(filaCat).join("")}
     </tbody>`;
 
-  const clase = p => p >= 3 ? "grave" : p >= 1 ? "error" : p >= 0.5 ? "impre" : "";
-  $("jugadas").innerHTML = `
-    <thead><tr><th>N°</th><th class="izq">Jugada</th><th>Eval</th><th>Pérdida</th><th class="izq">Señales</th></tr></thead>
-    <tbody>${filas.map((f, i) => `
-      <tr class="jugable" data-i="${i}">
-        <td>${f.n}${f.turno === "w" ? "." : "..."}</td>
-        <td class="izq">${f.san}</td>
-        <td>${f.evalTexto}</td>
-        <td class="${clase(f.perdida)}">${f.perdida.toFixed(2)}</td>
-        <td class="senal">${f.senales.join(" · ")}</td>
-      </tr>`).join("")}</tbody>`;
-
-  $("jugadas").querySelectorAll("tr[data-i]").forEach(tr => {
-    tr.onclick = () => {
-      $("jugadas").querySelectorAll("tr").forEach(x => x.classList.remove("sel"));
-      tr.classList.add("sel");
-      const f = filas[+tr.dataset.i];
-      $("tablero").innerHTML = dibujar(f.fen, f.uci, f.mejor) +
-        `<p class="leyenda">Azul: la jugada que se hizo (${f.san}).` +
-        (f.mejor && f.mejor !== f.uci ? " Verde: la que prefería el motor." : "") + `</p>`;
-      $("tablero").scrollIntoView({ block: "nearest", behavior: "smooth" });
-    };
-  });
-
-  ver("zonaResultado", true);
+  const FR = [["menos de +2", x => x < 2], ["+2 a +5", x => x >= 2 && x < 5],
+              ["+5 a +8", x => x >= 5 && x < 8], ["+8 o m\u00e1s", x => x >= 8]];
+  const cuenta = (fs, test) => {
+    const en = fs.filter(f => test(f.franja));
+    return en.length ? `${en.filter(f => f.perdida >= 3).length} de ${en.length}` : "\u2014";
+  };
+  $("capFranja").textContent =
+    "Compara situaciones, no jugadas: cu\u00e1ntas jugadas malas salieron de cada nivel de ventaja del que mov\u00eda.";
+  $("franja").innerHTML = `
+    <thead><tr><th>Ventaja antes de mover</th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
+    <tbody>${FR.map(([n, t]) => `<tr><td>${n}</td><td>${cuenta(B, t)}</td><td>${cuenta(N, t)}</td></tr>`).join("")}</tbody>`;
 }
 </script>
 </html>
