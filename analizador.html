@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v9 · 04-09";
+  window.VERSION = "v10 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -241,9 +241,16 @@
     </label>
   </div>
   <div class="fila" style="margin-top:6px; font-size:14px">
-    <label><input type="checkbox" id="optBloques"> reparto por bloques</label>
-    <label><input type="checkbox" id="optMpv1"> MultiPV 1</label>
+    <label>MultiPV
+      <select id="optMpv">
+        <option value="2" selected>2 — con Genial</option>
+        <option value="1">1 — sin Genial</option>
+        <option value="h">híbrido</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="optLimpiar"> memoria limpia</label>
     <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
+    <label><input type="checkbox" id="optBloques"> bloques</label>
   </div>
   <div class="fila" style="margin-top:8px">
     <button id="analizar">Analizar la partida</button>
@@ -698,7 +705,7 @@ class Motor {
 
   terminar() { if (this.w) { this.w.terminate(); this.w = null; this.oyentes = []; } }
 
-  analizar(fen, prof) {
+  analizar(fen, prof, limpiar) {
     return new Promise((ok, no) => {
       const linea = {};
       const fn = s => {
@@ -723,6 +730,7 @@ class Motor {
       const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
       this.oyentes.push(fn);
       const corte = setTimeout(() => { quitar(); no(new Error("el motor " + this.i + " no respondió")); }, 120000);
+      if (limpiar) this.w.postMessage("ucinewgame");
       this.w.postMessage("position fen " + fen);
       this.w.postMessage("go depth " + prof);
     });
@@ -758,19 +766,20 @@ let CANCELAR = false;
 /* Evalúa una lista de posiciones con el grupo de motores. */
 async function evaluarPosiciones(fens, prof, onProg, opc = {}) {
   const n = Math.max(1, Math.min(+$("motores").value || 1, fens.length));
-  const motores = await pool.asegurar(n, opc.multipv || 2);
+  const motores = await pool.asegurar(n, typeof opc.multipv === "number" ? opc.multipv : 2);
   const tiempos = [];
   const t0 = performance.now();
   const evs = await repartir(fens, motores, async (m, fen) => {
     if (CANCELAR) throw new Error("cancelado");
     const t = performance.now();
-    const ev = await m.analizar(fen, prof);
+    const ev = await m.analizar(fen, prof, opc.limpiar);
     tiempos.push(performance.now() - t);
     return ev;
   }, onProg, opc);
   window.LOG.add("·", `${fens.length} posiciones a profundidad ${prof} en ` +
     `${Math.round(performance.now() - t0)} ms · ${n} motores · ` +
-    `${opc.bloques ? "bloques" : "salteado"} · MultiPV ${opc.multipv || 2} · ` +
+    `${opc.bloques ? "bloques" : "salteado"} · MultiPV ${opc.multipv || 2}` +
+    `${opc.limpiar ? " · memoria limpia" : ""} · ` +
     `mediana ${Math.round(mediana(tiempos))} ms por posición`);
   return evs;
 }
@@ -795,8 +804,7 @@ async function cargarLibro() {
    barrido, así que el umbral es generoso a propósito: es más barato mirar de
    más que perderse una. */
 function esSospechosa(f) {
-  return f.perdida >= 0.3 || f.cat === "omision" || f.cat === "grave" ||
-         f.cat === "error" || f.senales.length > 0;
+  return f.perdida >= 1 || f.cat === "omision" || f.cat === "grave";
 }
 
 /* Barrido a 13 y revisión a la profundidad elegida.
@@ -830,15 +838,37 @@ async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc) {
   return { filas: d.filas, apertura: d.apertura, evs, revisadas, profBase: 13 };
 }
 
+/* MultiPV híbrido: una pasada entera con MultiPV 1, y una segunda pasada con
+   MultiPV 2 SOLO donde puede haber Genial, que es donde el usuario jugó la
+   primera opción del motor. De la segunda pasada se toma únicamente la segunda
+   mejor jugada: la evaluación y la mejor jugada quedan siempre las de la
+   pasada de MultiPV 1, así que todas las posiciones se miden igual. */
+async function analizarHibrido(jugadas, fens, prof, onProg, opc) {
+  const evs = await evaluarPosiciones(fens, prof,
+    (h, t) => onProg(h, t, "MultiPV 1"), Object.assign({}, opc, { multipv: 1 }));
+  const idx = [];
+  for (let i = 0; i < jugadas.length; i++) {
+    const j = jugadas[i];
+    if (evs[i] && evs[i].mejor === j.from + j.to + (j.promotion || "")) idx.push(i);
+  }
+  window.LOG.add("·", `híbrido: ${idx.length} posiciones de ${fens.length} necesitan la segunda`);
+  if (idx.length) {
+    const seg = await evaluarPosiciones(idx.map(i => fens[i]), prof,
+      (h, t) => onProg(h, t, "segunda opinión"), Object.assign({}, opc, { multipv: 2 }));
+    idx.forEach((i, k) => { evs[i].segunda = seg[k] ? seg[k].segunda : null; });
+  }
+  return { evs, extra: idx.length };
+}
+
 async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   const { cab, jugadas, fens } = prepararPartida(pgn);
   const libro = await cargarLibro();
-  const variante = opc.barrido ? "barrido" : (opc.multipv === 1 ? "mpv1" : "");
+  const vte = variante(opc);
   const prog = (h, t, fase) => { if (onProg) onProg(h, t, fase); };
 
-  const guardado = opc.sinCache ? null : await cache.leer(id, prof, variante);
+  const guardado = opc.sinCache ? null : await cache.leer(id, prof, vte);
   if (guardado && guardado.evs && guardado.evs.length === fens.length) {
-    window.LOG.add("·", `caché: ${id} a profundidad ${prof}${variante ? " (" + variante + ")" : ""}`);
+    window.LOG.add("·", `caché: ${id} a profundidad ${prof}${vte ? " (" + vte + ")" : ""}`);
     prog(fens.length, fens.length, "caché");
     const d = derivarFilas(jugadas, fens, guardado.evs, libro);
     (guardado.revs || []).forEach(r => { if (d.filas[r.i]) d.filas[r.i].rev = r.rev; });
@@ -850,6 +880,10 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   let r;
   if (opc.barrido && prof > 13) {
     r = await analizarConBarrido(jugadas, fens, prof, libro, prog, opc);
+  } else if (opc.multipv === "hibrido") {
+    const h = await analizarHibrido(jugadas, fens, prof, prog, opc);
+    const d = derivarFilas(jugadas, fens, h.evs, libro);
+    r = { filas: d.filas, apertura: d.apertura, evs: h.evs, revisadas: h.extra, profBase: prof };
   } else {
     const evs = await evaluarPosiciones(fens, prof, (h, t) => prog(h, t, "análisis"), opc);
     const d = derivarFilas(jugadas, fens, evs, libro);
@@ -857,7 +891,7 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   }
   if (!opc.sinCache) {
     const revs = r.filas.map((f, i) => f.rev ? { i, rev: f.rev } : null).filter(Boolean);
-    await cache.guardar(id, prof, variante,
+    await cache.guardar(id, prof, vte,
       { evs: r.evs, n: r.evs.length, profBase: r.profBase, revs });
   }
   return { filas: r.filas, cab, apertura: r.apertura, id, deCache: false,
@@ -1104,10 +1138,13 @@ async function correrMes(desdeCero) {
    una y otra. Sin ese reinicio la corrida hereda la memoria de la anterior y la
    comparación no vale: es el confundidor que ya nos costó una medición. */
 const CONFIGS = [
-  { nombre: "salteado, MultiPV 2", opc: {} },
-  { nombre: "bloques, MultiPV 2", opc: { bloques: true } },
-  { nombre: "bloques, MultiPV 1", opc: { bloques: true, multipv: 1 } },
-  { nombre: "barrido 13 + revisión", opc: { bloques: true, barrido: true } }
+  { nombre: "MultiPV 2 (actual)", opc: {} },
+  { nombre: "MultiPV 2, otra vez", opc: {} },
+  { nombre: "MultiPV 1", opc: { multipv: 1 } },
+  { nombre: "MultiPV híbrido", opc: { multipv: "hibrido" } },
+  { nombre: "memoria limpia", opc: { limpiar: true } },
+  { nombre: "memoria limpia, otra vez", opc: { limpiar: true } },
+  { nombre: "barrido 13 + revisión", opc: { barrido: true } }
 ];
 
 $("banco").onclick = seguro("banco", async () => {
@@ -1137,6 +1174,7 @@ $("banco").onclick = seguro("banco", async () => {
         precision: mias.reduce((a, x) => a + x.precision, 0) / mias.length,
         mediana: mediana(mias.map(f => f.perdida)),
         graves: mias.filter(f => f.cat === "grave" || f.cat === "omision").length,
+        geniales: mias.filter(f => f.cat === "genial").length,
         revisadas: r.revisadas || 0
       });
       window.LOG.add("·", `banco: "${c.nombre}" ${Math.round(ms)} ms`);
@@ -1157,19 +1195,22 @@ function pintarBanco(filas, prof) {
   $("capBanco").textContent =
     "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
     `Motores: ${$("motores").value}. Los motores se reinician entre corrida y corrida. ` +
-    "Las últimas tres columnas tienen que dar igual salvo en el barrido, " +
-    `que mide a profundidad 13 y no a ${prof}.`;
+    "Las filas 1 y 2 son la misma configuración corrida dos veces: lo que se " +
+    "muevan entre ellas es el ruido del motor, y ninguna diferencia más chica " +
+    "que eso significa nada. Lo mismo las filas 5 y 6. El barrido mide a " +
+    `profundidad 13 y no a ${prof}, así que sus cifras no se comparan con el resto.`;
   $("tablaBanco").innerHTML = `
     <thead><tr><th>Configuración</th><th>Seg</th><th>vs 1ª</th><th>Prof</th>
-      <th>Precisión</th><th>Mediana</th><th>Graves</th></tr></thead>
+      <th>Precisión</th><th>Mediana</th><th>Graves</th><th>Genial</th></tr></thead>
     <tbody>${filas.map(f => `<tr>
-      <td>${f.nombre}${f.revisadas ? ` (${f.revisadas} rev.)` : ""}</td>
+      <td>${f.nombre}${f.revisadas ? ` (${f.revisadas})` : ""}</td>
       <td>${(f.ms / 1000).toFixed(1)}</td>
       <td>${f === base ? "\u2014" : (base.ms / f.ms).toFixed(2) + "\u00d7"}</td>
       <td>${f.prof}</td>
       <td>${f.precision.toFixed(1)}</td>
       <td>${f.mediana.toFixed(2)}</td>
-      <td>${f.graves}</td></tr>`).join("")}</tbody>`;
+      <td>${f.graves}</td>
+      <td>${f.geniales}</td></tr>`).join("")}</tbody>`;
 }
 
 /* de cada partida se toman solo las jugadas del usuario buscado */
@@ -1180,11 +1221,24 @@ function filasDelUsuario(r) {
 }
 
 function opcionesDePantalla() {
+  const m = $("optMpv").value;
   return {
     bloques: $("optBloques").checked,
-    multipv: $("optMpv1").checked ? 1 : 2,
+    multipv: m === "h" ? "hibrido" : +m,
+    limpiar: $("optLimpiar").checked,
     barrido: $("optBarrido").checked
   };
+}
+
+/* nombre corto de la configuración, para la clave de caché y para el registro */
+function variante(opc) {
+  const p = [];
+  if (opc.multipv === 1) p.push("mpv1");
+  if (opc.multipv === "hibrido") p.push("hib");
+  if (opc.limpiar) p.push("limpio");
+  if (opc.barrido) p.push("barrido");
+  if (opc.bloques) p.push("bloq");
+  return p.join("-");
 }
 
 const FRANJAS = [["menos de +2", x => x < 2], ["+2 a +5", x => x >= 2 && x < 5],
