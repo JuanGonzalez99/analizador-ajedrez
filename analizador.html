@@ -89,7 +89,7 @@
 </div>
 
 <script>
-  window.VERSION = "v15 · 04-09";
+  window.VERSION = "v17 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -279,7 +279,7 @@
 </div>
 
 <div id="zonaBanco" class="oculto">
-  <h2>Comparación de configuraciones</h2>
+  <h2 id="tituloBanco">Comparación de configuraciones</h2>
   <p class="cap" id="capBanco"></p>
   <table id="tablaBanco"></table>
 </div>
@@ -291,6 +291,26 @@
   <h2>Riesgo por franja de ventaja</h2>
   <p class="cap" id="capMesFranja"></p>
   <table id="mesFranja"></table>
+  <h2>Capturas que estaban disponibles</h2>
+  <p class="cap" id="capCapturas"></p>
+  <table id="mesCapturas"></table>
+
+  <h2>Mecanismos</h2>
+  <p class="cap" id="capMecanismos"></p>
+  <table id="mesMecanismos"></table>
+
+  <h2>Por pieza movida</h2>
+  <p class="cap" id="capPieza"></p>
+  <table id="mesPieza"></table>
+
+  <h2>Por tramo de la partida</h2>
+  <p class="cap" id="capTramo"></p>
+  <table id="mesTramo"></table>
+
+  <h2>Por color</h2>
+  <p class="cap" id="capColor"></p>
+  <table id="mesColor"></table>
+
   <h2>Partidas</h2>
   <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
   <div id="mesLista" class="lista"></div>
@@ -555,16 +575,23 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
     }
     const legales = new Chess(fens[i]).moves().length;
 
+    /* Los tres mecanismos se calculan SIEMPRE, no solo cuando la jugada salió
+       mal: para saber si un mecanismo es peligroso hace falta también cuántas
+       veces apareció sin consecuencias. Es la tasa base de §D regla 16. */
+    const colgada = quedaComible(fens[i + 1], j.to);
+    const aPeon = j.piece !== "p" && peonAtaca(new Chess(fens[i]), j.to, rival);
+    const capDisp = capturaGanadora(fens[i]);
+    const tomoGanadora = !!(capDisp && j.captured &&
+      gananciaDeCaptura(fens[i], { from: j.from, to: j.to, promotion: j.promotion }) >= 1);
+
     let oportunidad = null;
     const eMate = evs[i].mate;
     if (eMate !== null && eMate !== undefined && eMate > 0) {
       const sig = evs[i + 1].mate;
       if (!(sig !== null && sig !== undefined && sig < 0)) oportunidad = { tipo: "mate", n: eMate };
     }
-    if (!oportunidad && !j.captured) {
-      const c = capturaGanadora(fens[i]);
-      if (c) oportunidad = { tipo: "material", san: c.san, gana: c.gana };
-    }
+    if (!oportunidad && !j.captured && capDisp)
+      oportunidad = { tipo: "material", san: capDisp.san, gana: capDisp.gana };
 
     const entrega = esMejor
       ? entregaMaterial(fens[i], { from: j.from, to: j.to, promotion: j.promotion })
@@ -577,9 +604,8 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
 
     const senales = [];
     if (perdida >= 0.5) {
-      const jm = new Chess(fens[i]);
-      if (j.piece !== "p" && peonAtaca(jm, j.to, rival)) senales.push("fue a una casilla atacada por un peón");
-      if (quedaComible(fens[i + 1], j.to)) senales.push("la pieza movida queda comible");
+      if (aPeon) senales.push("fue a una casilla atacada por un peón");
+      if (colgada) senales.push("la pieza movida queda comible");
     }
     if (oportunidad) {
       senales.push(oportunidad.tipo === "mate"
@@ -590,7 +616,9 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
     filas.push({
       n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, perdida, precision, caida,
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
-      fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio
+      fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
+      pieza: j.piece, esCaptura: !!j.captured, colgada, aPeon,
+      capDisponible: capDisp, tomoGanadora
     });
   }
   return { filas, apertura };
@@ -1275,13 +1303,21 @@ async function correrBanco(lista, queCompara) {
 
 function pintarBanco(filas, prof, queCompara) {
   const base = filas[0];
-  $("capBanco").textContent =
-    "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
-    `Motores: ${$("motores").value}, modo ${$("modo").value}. ` +
-    "Los motores se reinician entre corrida y corrida. " +
-    "Todas corren con memoria limpia salvo la última. Las filas 1 y 2 son la " +
-    "misma configuración dos veces: tienen que dar idénticas. El barrido mide a " +
-    `profundidad 13 y no a ${prof}, así que sus cifras no se comparan con el resto.`;
+  const esMotores = queCompara === "motores y memoria";
+  $("tituloBanco").textContent = esMotores
+    ? "Barrido de motores y memoria" : "Comparación de configuraciones";
+  $("capBanco").textContent = esMotores
+    ? "Compara motores y memoria sobre la misma partida, no partidas entre sí. " +
+      `Profundidad ${prof}, modo ${$("modo").value}, todas con memoria limpia. ` +
+      "Las cuatro filas de un mismo Hash tienen que dar precisión, mediana y graves " +
+      "IDÉNTICAS: la cantidad de motores no puede cambiar un veredicto. Entre Hash " +
+      "distintos sí puede cambiar algo, porque el Hash altera cómo busca el motor."
+    : "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
+      `Motores: ${$("motores").value}, modo ${$("modo").value}. ` +
+      "Los motores se reinician entre corrida y corrida. " +
+      "Todas corren con memoria limpia salvo la última. Las filas 1 y 2 son la " +
+      "misma configuración dos veces: tienen que dar idénticas. El barrido mide a " +
+      `profundidad 13 y no a ${prof}, así que sus cifras no se comparan con el resto.`;
   $("tablaBanco").innerHTML = `
     <thead><tr><th>Configuración</th><th>Seg</th><th>vs 1ª</th><th>Prof</th>
       <th>Precisión</th><th>Mediana</th><th>Graves</th><th>Genial</th></tr></thead>
@@ -1319,6 +1355,25 @@ $("modo").onchange = seguro("modo", () => {
 });
 
 /* de cada partida se toman solo las jugadas del usuario buscado */
+/* Lista cerrada de cuentas de entrenador de chess.com. Coincidencia EXACTA, no
+   por prefijo: los nombres de usuario admiten guiones, así que "Coach-loquesea"
+   es un nombre que cualquier persona puede registrar y un prefijo daría falsos
+   positivos. La API no expone ninguna marca de bot ni de entrenador, así que no
+   hay forma automática mejor que esta.
+   [PEND] completar con el resto de los entrenadores de chess.com. */
+const ENTRENADORES = new Set(["coach-drwolf"]);
+
+/* Las partidas con asistencia en vivo no miden juego propio: el entrenador
+   muestra el termómetro, avisa cuando hay mate y deja rehacer jugadas. Se
+   separan del promedio pero NO se borran: los episodios sirven igual, porque
+   el aviso funciona como control. */
+function esAsistida(r) {
+  const lado = ladoDelUsuario(r);
+  if (!lado) return false;
+  const rival = (lado === "w" ? r.cab.Black : r.cab.White) || "";
+  return ENTRENADORES.has(rival.toLowerCase());
+}
+
 function ladoDelUsuario(r) {
   if (!USUARIO) return null;
   const b = (r.cab.White || "").toLowerCase(), n = (r.cab.Black || "").toLowerCase();
@@ -1351,12 +1406,89 @@ function variante(opc) {
   return p.join("-");
 }
 
+/* Por debajo de esta cantidad de jugadas no se muestra porcentaje. Con 389
+   jugadas y 17 malas, cualquier corte deja celdas de dos casos, y un "7,3%"
+   sobre 41 jugadas invita a comparaciones que el dato no aguanta. */
+const NMIN = 30;
+
+function tablaTasas(idTabla, idCap, texto, filas, encabezado) {
+  $(idCap).textContent = texto;
+  $(idTabla).innerHTML = `
+    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
+    <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
+      `<td>${f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014"}</td></tr>`).join("")}
+    </tbody>`;
+}
+
+const esMala = f => f.perdida >= 3;
+const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
+
+const NOMBRE_PIEZA = { p: "Peón", n: "Caballo", b: "Alfil", r: "Torre", q: "Dama", k: "Rey" };
+const TRAMOS = [["1 a 10", n => n <= 10], ["11 a 25", n => n > 10 && n <= 25],
+                ["26 a 40", n => n > 25 && n <= 40], ["41 en adelante", n => n > 40]];
+
 const FRANJAS = [["menos de +2", x => x < 2], ["+2 a +5", x => x >= 2 && x < 5],
                  ["+5 a +8", x => x >= 5 && x < 8], ["+8 o m\u00e1s", x => x >= 8]];
 
+/* jugada siguiente a una mala, dentro de la misma partida y solo entre jugadas
+   propias: la de al lado en la lista del usuario, no la del rival */
+function paresDeErrores(porPartida) {
+  const trasMala = [], resto = [];
+  porPartida.forEach(fs => {
+    for (let i = 1; i < fs.length; i++) (esMala(fs[i - 1]) ? trasMala : resto).push(fs[i]);
+  });
+  return { trasMala, resto };
+}
+
+function pintarDetalle(todas, porPartida) {
+  const conCap = todas.filter(f => f.capDisponible);
+  tablaTasas("mesCapturas", "capCapturas",
+    "Compara situaciones, no jugadas: de las veces que había una captura que " +
+    "ganaba material, cuántas se tomaron y cómo salió cada grupo. Es el punto " +
+    "ciego 3 del archivo, medido sobre este mes.",
+    [tasa(conCap.filter(f => f.tomoGanadora), "Había captura ganadora y la tomé"),
+     tasa(conCap.filter(f => !f.tomoGanadora), "Había captura ganadora y no la tomé"),
+     tasa(todas.filter(f => !f.capDisponible), "No había captura ganadora")],
+    "Situación");
+
+  const { trasMala, resto } = paresDeErrores(porPartida);
+  tablaTasas("mesMecanismos", "capMecanismos",
+    "Compara situaciones, no jugadas. Cada mecanismo va con su contrario al " +
+    "lado: sin eso, saber que un mecanismo aparece en las jugadas malas no " +
+    "dice nada, porque puede aparecer también en las buenas.",
+    [tasa(todas.filter(f => f.aPeon), "Fui a una casilla atacada por un peón"),
+     tasa(todas.filter(f => !f.aPeon), "No fui"),
+     tasa(todas.filter(f => f.colgada), "Dejé comible la pieza que moví"),
+     tasa(todas.filter(f => !f.colgada), "No la dejé"),
+     tasa(trasMala, "Jugada siguiente a una mala"),
+     tasa(resto, "Resto de las jugadas")],
+    "Mecanismo");
+
+  tablaTasas("mesPieza", "capPieza",
+    "Compara situaciones, no jugadas: con qué pieza se movió y qué porcentaje " +
+    "de esas jugadas salió mal.",
+    Object.keys(NOMBRE_PIEZA).map(k =>
+      tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total),
+    "Pieza");
+
+  tablaTasas("mesTramo", "capTramo",
+    "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
+    TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom)),
+    "Jugadas");
+
+  tablaTasas("mesColor", "capColor",
+    "Compara situaciones, no jugadas: con qué color se jugaba.",
+    [tasa(todas.filter(f => f.turno === "w"), "Con blancas"),
+     tasa(todas.filter(f => f.turno === "b"), "Con negras")],
+    "Color");
+}
+
 function pintarMes(prof) {
+  const asistidas = MES.resultados.filter(esAsistida);
+  const limpias = MES.resultados.filter(r => !esAsistida(r));
+  const porPartida = limpias.map(filasDelUsuario).filter(fs => fs.length);
   const todas = [];
-  MES.resultados.forEach(r => todas.push(...filasDelUsuario(r)));
+  porPartida.forEach(fs => todas.push(...fs));
   if (!todas.length) {
     $("capMes").textContent = "Ninguna de estas partidas es de ese usuario.";
     $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = ""; $("mesLista").innerHTML = "";
@@ -1364,7 +1496,10 @@ function pintarMes(prof) {
   }
   const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
   $("capMes").textContent =
-    `Solo las jugadas de ${USUARIO}, en ${MES.resultados.length} partidas y ${todas.length} jugadas. ` +
+    `Solo las jugadas de ${USUARIO}, en ${porPartida.length} partidas y ${todas.length} jugadas. ` +
+    (asistidas.length
+      ? `Quedan afuera ${asistidas.length} partida(s) con asistencia en vivo, que no miden juego propio. `
+      : "") +
     `Profundidad ${prof}, modo ${$("modo").value}; los números de distinta ` +
     "profundidad o de distinto modo no se comparan.";
 
@@ -1375,9 +1510,9 @@ function pintarMes(prof) {
       <tr><td><b>Precisión</b></td><td><b>${prec.toFixed(1)}</b></td><td>—</td></tr>
       <tr><td>Mediana de pérdida</td><td>${mediana(todas.map(f => f.perdida)).toFixed(2)}</td><td>—</td></tr>
       <tr><td>Jugadas</td><td>${todas.length}</td>
-          <td>${(todas.length / MES.resultados.length).toFixed(1)}</td></tr>
+          <td>${(todas.length / porPartida.length).toFixed(1)}</td></tr>
       ${ORDEN.map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
-        `<td>${cuentaCat(k)}</td><td>${(cuentaCat(k) / MES.resultados.length).toFixed(1)}</td></tr>`).join("")}
+        `<td>${cuentaCat(k)}</td><td>${(cuentaCat(k) / porPartida.length).toFixed(1)}</td></tr>`).join("")}
     </tbody>`;
 
   $("capMesFranja").textContent =
@@ -1392,14 +1527,17 @@ function pintarMes(prof) {
              `<td>${en.length ? (100 * mal / en.length).toFixed(1) : "\u2014"}</td></tr>`;
     }).join("")}</tbody>`;
 
+  pintarDetalle(todas, porPartida);
+
   $("mesLista").innerHTML = MES.resultados.map((r, i) => {
     const mias = filasDelUsuario(r);
     const g = r.meta || {};
     const rival = (r.cab.White || "").toLowerCase() === USUARIO ? r.cab.Black : r.cab.White;
     const p = mias.length ? (mias.reduce((a, x) => a + x.precision, 0) / mias.length).toFixed(1) : "\u2014";
     const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
+    const marca = esAsistida(r) ? " \u00b7 ASISTIDA, fuera del promedio" : "";
     return `<div data-i="${i}">vs ${rival || "?"} \u00b7 precisión ${p}
-      <span style="opacity:.6">\u00b7 ${mias.length} jugadas \u00b7 ${f}</span></div>`;
+      <span style="opacity:.6">\u00b7 ${mias.length} jugadas \u00b7 ${f}${marca}</span></div>`;
   }).join("");
   $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
