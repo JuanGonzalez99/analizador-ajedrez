@@ -381,6 +381,27 @@ describe en §6.
 
 ## 8. Pendientes de fondo, sin resolver
 
+### Chicos, de la v26
+
+- **`textoDesglose` dice "de este mes" siempre.** Con el interruptor en "todo
+  lo analizado" la leyenda afirma "De las 189 jugadas malas de este mes" cuando
+  los números son de dos meses. El número está bien, la frase no. Está escrito
+  fijo de cuando el mes era la única fuente posible; hay que pasarle de dónde
+  salen los datos, como hace `textoOrigen`.
+
+- **La barra de progreso queda visible después del barrido.** Se ve como una
+  franja gris ancha arriba de "Estadísticas". Hay que esconderla al terminar,
+  no solo ponerla en cero.
+
+- **Falta la estadística de partidas ganadas y perdidas.** Los datos están: el
+  JSON de cada mes trae `white.result` y `black.result`, y `ladoDelUsuario()`
+  ya dice de qué lado jugaba. Ojo con dos cosas: las filas flacas del barrido
+  no guardan el resultado, así que hay que sumarlo a `CAMPOS_FLACOS` o llevarlo
+  aparte por partida; y las partidas asistidas quedan afuera de los promedios
+  pero podrían contar para el historial, que es una decisión a tomar.
+
+### De fondo
+
 - **"Jugada siguiente a una mala" tiene un confundidor.** Da 21,8% contra 6,0%
   del resto, pero después de un error la posición está peor y las jugadas son
   más difíciles: puede ser que encadene errores o puede ser la posición. Se
