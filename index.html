@@ -184,9 +184,6 @@
   .ayuda[aria-expanded="true"] { background: var(--linea); color: inherit; }
   .ayudaPanel { display: block; border-left: 2px solid var(--linea);
                 padding-left: 10px; margin-top: 6px; }
-  /* La cadencia al lado del título, y solo cuando hay más de una. En el título
-     porque se ve con la sección plegada: se sabe el alcance sin abrir. */
-  .cadChip { font-weight: 400; color: var(--tenue); }
   th .sub { display: block; font-weight: 400; font-size: 10.5px; color: var(--tenue); }
 
   .marcadorMes { font-size: 14px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
@@ -279,7 +276,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.45 · 05-09";
+  window.VERSION = "v0.46 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -527,6 +524,7 @@
       <option value="mes">El mes seleccionado</option>
       <option value="todo">Todo lo analizado</option>
     </select>
+    <select id="cadencia" aria-label="Cadencia"></select>
   </div>
   <p class="cap" id="capMes"></p>
   <details class="quemide"><summary>Cómo se leen estos números</summary>
@@ -551,12 +549,12 @@
     <div class="tw"><table id="mesMecanismos"></table></div>
   </details>
   <details class="seccion">
-    <summary><span class="tit">Por pieza movida <span class="cadChip oculto" id="cadPieza"></span></span><button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Por pieza movida</span><button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capPieza"></p>
     <div class="tw"><table id="mesPieza"></table></div>
   </details>
   <details class="seccion">
-    <summary><span class="tit">Por tramo de la partida <span class="cadChip oculto" id="cadTramo"></span></span><button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Por tramo de la partida</span><button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capTramo"></p>
     <div class="tw"><table id="mesTramo"></table></div>
   </details>
@@ -1608,6 +1606,10 @@ function dibujar(fen, jugada, mejor) {
 /* ============ interfaz ============ */
 const TOPE_MES = 50;
 let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
+/* Cadencia elegida, por clave exacta ("300+0"). null = todavía no se eligió y
+   manda la que más partidas tiene. Es una PREFERENCIA y no una orden: si el mes
+   que se abre no tiene esa cadencia, se cae a la dominante (elegirCadencia). */
+let CADENCIA = null;
 
 /* Dos formas distintas de ver la mejor jugada, a propósito:
    - VER_MEJOR es la preferencia, la enciende el botón de abajo y queda puesta.
@@ -2087,7 +2089,8 @@ async function barrerCache(prof, opc, onProg) {
 
   const filas = [];
   porPartida.forEach(fs => filas.push(...fs));
-  return { filas, porPartida, cadencias, partidas, meses: mesesConDatos, otraProf, asistidas,
+  return { filas, porPartida, cadencias, resultados, partidas,
+           meses: mesesConDatos, otraProf, asistidas,
            marcador: contarResultados(resultados),
            prof, vte, desde: hito[0] || null, hasta: hito[hito.length - 1] || null };
 }
@@ -2133,6 +2136,14 @@ document.querySelectorAll("details.seccion").forEach(sec => {
     if (b) b.setAttribute("aria-expanded", "false");
     if (panel) panel.classList.add("oculto");
   });
+});
+
+$("cadencia").onchange = seguro("cadencia", () => {
+  CADENCIA = $("cadencia").value || null;
+  window.LOG.add("\u00b7", "cadencia " + CADENCIA);
+  /* no hay que rehacer nada: las filas ya están, lo único que cambia es cuáles
+     entran. Por eso el cambio es instantáneo, igual que el de modo. */
+  if (MES || TODO) pintarMes(MES ? MES.prof : TODO.prof);
 });
 
 $("modo").onchange = seguro("modo", () => {
@@ -2259,17 +2270,14 @@ function tablaContrastes(idTabla, idCap, texto, filas, encabezado, base) {
     </tbody>`;
 }
 
-function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo, idCad) {
+function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
   /* La columna de segundos aparece SOLO si hay de dónde sacarla. Una columna de
      guiones no dice "no se midió", dice "no hay", que no es lo mismo (§5.12);
      mejor que no esté y que la leyenda lo explique. */
   const conTiempo = filas.some(f => f.seg != null);
   pintarLeyenda(idCap,
-    [DEF_MALA, conTiempo ? cortoTiempo(tiempo) : ""],
+    [DEF_MALA],
     [texto, conTiempo ? textoTiempo(tiempo) : ""]);
-  /* El chip lo decide ESTA función y no quien la llama: si la tabla no dibujó
-     la columna, el título no puede prometer un alcance que la tabla no tiene. */
-  if (idCad) chipCadencia(idCad, conTiempo ? tiempo : null);
   /* "mediana" va en el encabezado y no en la leyenda: ahí no cuesta un renglón
      y queda al lado del número que califica. */
   $(idTabla).innerHTML = `
@@ -2310,21 +2318,6 @@ function pintarLeyenda(idCap, corto, ayuda) {
   c.querySelector(".corto").textContent = limpiar(corto).join(" \u00b7 ");
   c.querySelector(".ayudaPanel").textContent = limpiar(ayuda).join(" ");
 }
-
-/* La cadencia se nombra en el título SOLO cuando hay más de una. Si todas las
-   partidas son de la misma, repetirla en cada sección no informa: lo que hay
-   que saber es que quedaron partidas afuera, y eso ya lo dice el "N de M". */
-function chipCadencia(id, tiempo) {
-  const hay = tiempo && tiempo.cadencia && tiempo.otras.length;
-  $(id).textContent = hay ? "\u00b7 " + tiempo.cadencia.nombre : "";
-  ver(id, !!hay);
-}
-
-/* El denominador del tiempo, en corto: de cuántas partidas salen los segundos.
-   El detalle de cuáles quedaron afuera y por qué está en textoTiempo, que va
-   al panel del ?. */
-const cortoTiempo = t => t && t.cadencia
-  ? `${t.cadencia.partidas} de ${t.total} partidas` : "";
 
 /* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
@@ -2405,48 +2398,69 @@ const tasa = (fs, nombre) => {
            seg: segs.length >= NMIN ? mediana(segs) : null };
 };
 
-/* Los segundos de una cadencia no se pueden mezclar con los de otra: diez
-   segundos en un 5+0 es muchísimo y en un 10+0 no tanto (§7.8). Así que todo lo
-   que hable de tiempo habla de UNA cadencia —la que más partidas tiene— y de
-   las demás se dice cuántas quedaron afuera, nunca se callan (§5.12).
+/* La cadencia NO es un detalle de la columna de segundos: es el alcance de toda
+   la vista. Diez segundos en un 5 min es muchísimo y en un 10 min no tanto
+   (§7.8), pero el argumento no se queda ahí: la tasa de errores tampoco es la
+   misma variable en bullet que en rapid, y "por tramo" menos todavía —el apuro
+   final de un 3+0 no se parece al de un 15+10—. Así que TODOS los números de la
+   vista Mes hablan de una sola cadencia, elegida en un selector, y la cabecera
+   dice cuál y cuántas partidas quedaron afuera.
 
-   Las partidas que sobran conservan sus jugadas para las malas: lo único que
-   pierden es el `seg`. Y la fila original NO se toca, porque es la misma que
-   usa la pantalla de revisión: la que hay que cambiar se copia. */
-function unaSolaCadencia(porPartida, cadencias) {
+   Antes de la v0.46 esto era más chico: se elegía la dominante y las demás
+   perdían solo el `seg`. Quedaban dos denominadores en la misma tabla —"Malas"
+   de todas las partidas y "Seg." de una cadencia— y el título nombraba uno
+   solo. Lo detectó el usuario mirando la pantalla. */
+
+/* Cuántas partidas hay de cada cadencia, de mayor a menor. La clave es exacta
+   —"300+0"— y el nombre es el que se muestra. Empatadas en partidas gana la que
+   tiene más jugadas, y recién ahí el nombre, para que el orden no dependa de en
+   qué orden vinieron las partidas. */
+function censoCadencias(cadencias, porPartida) {
   const cuenta = new Map();
   cadencias.forEach((c, i) => {
     if (!c) return;
-    const a = cuenta.get(c.clave) || { nombre: c.nombre, partidas: 0, jugadas: 0 };
-    a.partidas++; a.jugadas += porPartida[i].length;
+    const a = cuenta.get(c.clave) ||
+      { clave: c.clave, nombre: c.nombre, partidas: 0, jugadas: 0 };
+    a.partidas++; a.jugadas += (porPartida[i] || []).length;
     cuenta.set(c.clave, a);
   });
-  /* Empatadas en partidas gana la que tiene más jugadas —más datos—, y recién
-     si eso también empata, el nombre, para que el resultado no dependa del
-     orden en que vinieron las partidas. */
-  const orden = [...cuenta.values()].sort((a, b) =>
+  return [...cuenta.values()].sort((a, b) =>
     b.partidas - a.partidas || b.jugadas - a.jugadas || a.nombre.localeCompare(b.nombre));
-  const manda = orden[0] || null;
-  const mandaClave = manda ? [...cuenta].find(([, v]) => v === manda)[0] : null;
-  const filas = porPartida.map((fs, i) => {
-    const c = cadencias[i];
-    if (c && c.clave === mandaClave) return fs;
-    return fs.map(f => f.seg == null ? f : Object.assign({}, f, { seg: null }));
-  });
-  return { porPartida: filas, cadencia: manda, otras: orden.slice(1),
-           total: cadencias.length,
-           sinReloj: cadencias.filter(c => !c).length };
 }
 
-/* La frase que acompaña a cualquier tabla con segundos. Sin esto la columna
-   sería un número sin universo, que es justo lo que prohíbe §5.1. */
+/* La pedida si sigue estando, y si no la que más partidas tiene. Cambiar de mes
+   puede dejar sin partidas a la cadencia elegida: ahí se cae a la dominante en
+   vez de mostrar una vista vacía. */
+const elegirCadencia = (censo, pedida) =>
+  censo.find(c => c.clave === pedida) || censo[0] || null;
+
+/* El selector de cadencia. Se llena con lo que hay: no tiene sentido ofrecer
+   cadencias que el usuario no jugó. Con una sola queda DESHABILITADO —decisión
+   del usuario—: sigue viéndose, así que se lee como el alcance de la vista y no
+   como un control que falta, pero no invita a tocar algo sin alternativas. */
+function pintarSelectorCadencia(t) {
+  const sel = $("cadencia");
+  const censo = (t && t.censo) || [];
+  const actual = t && t.cadencia ? t.cadencia.clave : "";
+  sel.innerHTML = censo.map(c =>
+    `<option value="${c.clave}"${c.clave === actual ? " selected" : ""}></option>`).join("");
+  /* el texto por textContent y no interpolado: el nombre sale de números, pero
+     la regla de la casa es que nada del PGN llegue al HTML sin pasar por acá */
+  [...sel.options].forEach((o, i) => {
+    o.textContent = `${censo[i].nombre} (${censo[i].partidas})`;
+  });
+  sel.disabled = censo.length < 2;
+  ver("cadencia", censo.length > 0);
+}
+
+/* La frase que acompaña a cualquier tabla con segundos. El ALCANCE ya no va
+   acá: lo dice la cabecera, una vez, para toda la vista. Acá queda lo que es
+   propio de la columna. */
 function textoTiempo(t) {
-  if (!t || !t.cadencia) return "";
-  const otras = t.otras.map(o => `${o.partidas} de ${o.nombre}`);
-  if (t.sinReloj) otras.push(`${t.sinReloj} sin reloj`);
-  return ` Los segundos son la mediana de lo que se pensó esa jugada, y salen ` +
-    `solo de las ${t.cadencia.partidas} partidas de ${t.cadencia.nombre}` +
-    (otras.length ? `; quedaron afuera ${otras.join(" y ")}.` : ".");
+  return "Los segundos son la mediana de lo que se pensó esa jugada, no el " +
+    "promedio: una sola jugada de tres minutos corre el promedio y no la " +
+    "mediana." + (t && t.sinReloj
+      ? ` ${t.sinReloj} partida(s) de esta cadencia no traen reloj y no cuentan.` : "");
 }
 
 /* un mecanismo contra su propia tasa base: las jugadas que lo tienen y el resto */
@@ -2565,12 +2579,12 @@ function pintarDetalle(todas, porPartida, tiempo) {
     "de esas jugadas salió mal.",
     Object.keys(NOMBRE_PIEZA).map(k =>
       tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total),
-    "Pieza", tiempo, "cadPieza");
+    "Pieza", tiempo);
 
   tablaTasas("mesTramo", "capTramo",
     "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
     TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom)),
-    "Jugadas", tiempo, "cadTramo");
+    "Jugadas", tiempo);
 }
 
 /* De dónde salen los números de las tablas. La lista de partidas NO pasa por
@@ -2580,30 +2594,55 @@ function pintarDetalle(todas, porPartida, tiempo) {
    cambio de modo sin haber guardado las evaluaciones. */
 function datosDeTablas() {
   const modo = $("modo").value;
-  if (FUENTE === "todo" && TODO) {
-    const cat = f => (f.cats && f.cats[modo]) || f.cat;
-    const crudo = TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) })));
-    const t = unaSolaCadencia(crudo, TODO.cadencias || crudo.map(() => null));
-    const porPartida = t.porPartida;
-    const todas = [];
-    porPartida.forEach(fs => todas.push(...fs));
-    return { todas, porPartida, asistidas: TODO.asistidas, tiempo: t,
-             marcador: TODO.marcador, deTodo: true };
-  }
-  if (!MES) return { todas: [], porPartida: [], asistidas: 0, tiempo: null,
-                     marcador: contarResultados([]), deTodo: false };
-  const asistidas = MES.resultados.filter(esAsistida);
+  /* Se arma el conjunto entero y RECIÉN AHÍ se filtra por cadencia, una sola
+     vez, para que las filas, el historial y los denominadores salgan todos del
+     mismo subconjunto. Filtrar cada cosa por su lado fue el error de la v0.43:
+     quedaban dos universos en la misma tabla. */
+  const bruto = FUENTE === "todo" && TODO ? deTodoBruto(modo) : delMesBruto();
+  const censo = censoCadencias(bruto.cadencias, bruto.porPartida);
+  const cad = elegirCadencia(censo, CADENCIA);
+  const dentro = i => !!cad && !!bruto.cadencias[i] && bruto.cadencias[i].clave === cad.clave;
+  const idx = bruto.porPartida.map((_, i) => i).filter(dentro);
+
+  const porPartida = idx.map(i => bruto.porPartida[i]);
+  const todas = [];
+  porPartida.forEach(fs => todas.push(...fs));
+  const tiempo = { cadencia: cad, censo, total: bruto.porPartida.length,
+                   /* de ESTA cadencia, cuántas no traen reloj */
+                   sinReloj: idx.filter(i => !bruto.porPartida[i].some(f => f.seg != null)).length };
+  return { todas, porPartida, tiempo, deTodo: bruto.deTodo,
+           asistidas: bruto.asistidas,
+           /* lo que queda afuera por cadencia: partidas del conjunto que no son
+              de la elegida, incluidas las que no tienen cadencia (daily) */
+           otraCadencia: bruto.porPartida.length - idx.length,
+           marcador: contarResultados(idx.map(i => bruto.resultados[i])) };
+}
+
+/* Los dos conjuntos crudos, antes de filtrar por cadencia. Los tres arreglos
+   —filas, cadencia y resultado— van en paralelo y por índice de partida: es la
+   misma convención que usa barrerCache desde la v0.39. */
+function deTodoBruto(modo) {
+  const cat = f => (f.cats && f.cats[modo]) || f.cat;
+  return {
+    porPartida: TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) }))),
+    cadencias: TODO.cadencias || TODO.porPartida.map(() => null),
+    resultados: TODO.resultados || TODO.porPartida.map(() => null),
+    asistidas: TODO.asistidas, deTodo: true,
+  };
+}
+
+function delMesBruto() {
+  if (!MES) return { porPartida: [], cadencias: [], resultados: [], asistidas: 0, deTodo: false };
   const limpias = MES.resultados.filter(r => !esAsistida(r));
   /* el historial se cuenta sobre EXACTAMENTE las mismas partidas que los
      promedios, o los dos números hablarían de universos distintos */
   const conMias = limpias.filter(r => filasDelUsuario(r).length);
-  const t = unaSolaCadencia(conMias.map(filasDelUsuario), conMias.map(r => r.cadencia || null));
-  const porPartida = t.porPartida;
-  const todas = [];
-  porPartida.forEach(fs => todas.push(...fs));
-  const marcador = contarResultados(
-    conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab)));
-  return { todas, porPartida, asistidas: asistidas.length, tiempo: t, marcador, deTodo: false };
+  return {
+    porPartida: conMias.map(filasDelUsuario),
+    cadencias: conMias.map(r => r.cadencia || null),
+    resultados: conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab)),
+    asistidas: MES.resultados.filter(esAsistida).length, deTodo: false,
+  };
 }
 
 /* De dónde salen los números, dicho arriba de todo. Sin esto dos tablas de
@@ -2625,10 +2664,16 @@ function datosDeTablas() {
 const nombreModo = () => $("modo").value === "amigable" ? "amigable" : "crítico";
 
 function origenCorto(d, prof) {
-  const partes = [`${d.porPartida.length} partidas`, `${d.todas.length} jugadas`];
-  if (d.deTodo) partes.push(`${TODO.meses} mes(es)`);
+  const partes = [];
+  /* La cadencia va PRIMERA: es el alcance de todo lo que sigue, y desde la
+     v0.46 se dice una sola vez acá en vez de repetirse en cada título. */
+  if (d.tiempo && d.tiempo.cadencia) partes.push(d.tiempo.cadencia.nombre);
+  partes.push(cuantas(d.porPartida.length, "partida", "partidas"),
+              cuantas(d.todas.length, "jugada", "jugadas"));
+  if (d.deTodo) partes.push(cuantas(TODO.meses, "mes", "meses"));
   partes.push(`prof ${prof}`, nombreModo());
-  const afuera = (d.asistidas || 0) + (d.deTodo && TODO.otraProf ? TODO.otraProf : 0);
+  const afuera = (d.asistidas || 0) + (d.otraCadencia || 0) +
+                 (d.deTodo && TODO.otraProf ? TODO.otraProf : 0);
   if (afuera) partes.push(`${afuera} afuera`);
   return partes.join(" \u00b7 ");
 }
@@ -2636,16 +2681,33 @@ function origenCorto(d, prof) {
 /* Y esto va adentro del plegable "Cómo se leen estos números", que es donde el
    usuario los busca cuando no entiende una cifra. */
 function origenLargo(d) {
+  /* El desglose de lo que quedó afuera: la línea de arriba dice cuántas son y
+     acá se dice por qué. Que algo no se contó no se puede callar (§5.12); el
+     motivo, sí se puede plegar. */
+  const c = d.tiempo && d.tiempo.cadencia;
+  const otras = c ? d.tiempo.censo.filter(x => x.clave !== c.clave) : [];
+  const trozos = otras.map(x => `${x.partidas} de ${x.nombre}`);
+  /* las que no tienen cadencia comparable —las de correspondencia— también
+     quedaron afuera y también hay que nombrarlas */
+  const sinCad = (d.otraCadencia || 0) - otras.reduce((a, x) => a + x.partidas, 0);
+  if (sinCad > 0) trozos.push(`${sinCad} por correspondencia, que no tienen reloj comparable`);
+  const porCadencia = c
+    ? `Los números son solo de tus partidas de ${c.nombre}: mezclar cadencias no ` +
+      "sirve, porque no se juega igual con 3 minutos que con 15, ni la tasa de " +
+      "errores ni el tiempo por jugada. " +
+      (trozos.length ? `Quedaron afuera ${trozos.join(", ")}. ` : "")
+    : "";
   if (d.deTodo) {
     const rango = TODO.desde === TODO.hasta ? TODO.desde : `${TODO.desde} a ${TODO.hasta}`;
-    return `Son todas las partidas de ${USUARIO} que analizaste, de ${TODO.meses} ` +
-      `mes(es) (${rango}). ` +
+    return porCadencia +
+      `Son partidas de ${USUARIO} que analizaste, de ${TODO.meses} mes(es) (${rango}). ` +
       (TODO.otraProf
         ? `${TODO.otraProf} partida(s) están analizadas a otra profundidad o con otra ` +
           "configuración y no entran, porque esos números no se comparan. "
         : "");
   }
-  return `Son las partidas de ${USUARIO} del mes seleccionado que ya analizaste. `;
+  return porCadencia +
+    `Son partidas de ${USUARIO} del mes seleccionado que ya analizaste. `;
 }
 
 function pintarMes(prof) {
@@ -2666,6 +2728,7 @@ function pintarMes(prof) {
   /* La leyenda se parte en dos: arriba queda lo que hace falta para leer los
      números —de dónde salen y con qué configuración—, y el resto se pliega.
      Todo junto era un párrafo de seis renglones antes del primer número. */
+  pintarSelectorCadencia(d.tiempo);
   $("capMes").textContent = origenCorto(d, prof);
   $("capMesDetalle").textContent = origenLargo(d) +
     (d.asistidas

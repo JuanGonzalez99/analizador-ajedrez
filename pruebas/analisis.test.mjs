@@ -163,8 +163,8 @@ test("la leyenda corta se queda con el universo y el ? con el porqué", () => {
   const cuerpo = html.slice(html.indexOf("function tablaTasas"),
                             html.indexOf("function tablaTasas") + 1200);
   const corto = cuerpo.slice(cuerpo.indexOf("pintarLeyenda(idCap,"));
-  assert.ok(corto.includes("[DEF_MALA, conTiempo ? cortoTiempo(tiempo)"),
-    "arriba: qué es mala y de cuántas partidas salen los segundos");
+  assert.ok(corto.includes("[DEF_MALA],"),
+    "arriba solo qué es mala: el alcance lo dice la cabecera, una vez");
   assert.ok(corto.includes("[texto, conTiempo ? textoTiempo(tiempo)"),
     "detrás del ?: el texto explicativo y el detalle de las cadencias");
 });
@@ -210,12 +210,15 @@ test("el modo se escribe con tilde y no con el value del select", () => {
   assert.ok(!html.includes('modo ${$("modo").value}'), "quedo un modo crudo en una leyenda");
 });
 
-test("el titulo no nombra la cadencia si la tabla no muestra segundos", () => {
-  /* Se vio al probarlo: "Por pieza movida · 5 min" con la tabla sin columna de
-     segundos. El titulo prometia un alcance que la tabla no tenia. */
-  const c = html.slice(html.indexOf("function tablaTasas(idTabla"));
-  assert.ok(c.slice(0, 1400).includes("chipCadencia(idCad, conTiempo ? tiempo : null)"));
-  assert.ok(!/chipCadencia\("cad/.test(html), "el chip lo decide tablaTasas, no el llamador");
+test("la cadencia no se nombra en los titulos de seccion", () => {
+  /* El chip decia "Por tramo · 5 min" mientras Malas y Jugadas eran de TODAS
+     las partidas: dos denominadores en la misma tabla y el titulo nombraba uno.
+     Lo detecto el usuario mirando la pantalla. Desde la v0.46 la cadencia es el
+     alcance de la vista entera y se dice una sola vez, en la cabecera. */
+  assert.ok(!html.includes("cadChip"), "volvio el chip por seccion");
+  assert.ok(!html.includes("chipCadencia"));
+  const corto = html.slice(html.indexOf("function origenCorto"), html.indexOf("function origenLargo"));
+  assert.ok(corto.includes("d.tiempo.cadencia.nombre"), "la cabecera tiene que decir cual es");
 });
 
 test("el ? no pliega la sección al tocarlo", () => {
@@ -438,54 +441,90 @@ test("el segundo viaja en la fila flaca", () => {
   assert.ok(html.includes('"tomoBuena", "seg"'));
 });
 
-/* --- una sola cadencia, v0.43 --- */
+/* --- la cadencia como alcance de la vista, v0.43 y v0.46 --- */
 
-test("manda la cadencia con mas partidas y las otras pierden el segundo", () => {
-  const p = n => Array.from({ length: n }, () => ({ seg: 10 }));
-  const t = T.unaSolaCadencia([p(2), p(2), p(2)],
-    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
-  assert.equal(t.cadencia.nombre, "5 min");
-  assert.equal(t.cadencia.partidas, 2);
-  assert.deepEqual(t.otras, [{ nombre: "10 min", partidas: 1, jugadas: 2 }]);
-  assert.deepEqual(t.porPartida[0].map(f => f.seg), [10, 10]);
-  assert.deepEqual(t.porPartida[2].map(f => f.seg), [null, null]);
+const cad = (clave, nombre) => ({ clave, nombre });
+const P = n => Array.from({ length: n }, () => ({ seg: 10 }));
+
+test("el censo cuenta partidas por cadencia, de mayor a menor", () => {
+  const c = T.censoCadencias(
+    [cad("300+0", "5 min"), cad("600+0", "10 min"), cad("300+0", "5 min")],
+    [P(2), P(3), P(2)]);
+  assert.deepEqual(c, [
+    { clave: "300+0", nombre: "5 min", partidas: 2, jugadas: 4 },
+    { clave: "600+0", nombre: "10 min", partidas: 1, jugadas: 3 },
+  ]);
 });
 
-test("la partida de otra cadencia sigue contando para las malas", () => {
-  /* Pierde el tiempo, no las jugadas: son dos denominadores distintos. */
-  const t = T.unaSolaCadencia([[{ seg: 10 }], [{ seg: 10 }], [{ seg: 99, perdida: 5 }]],
-    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
-  assert.equal(t.porPartida[2].length, 1);
-  assert.equal(t.porPartida[2][0].seg, null);
-  assert.equal(t.porPartida[2][0].perdida, 5, "la jugada sigue entera");
+test("empatadas en partidas gana la que tiene mas jugadas", () => {
+  /* Si no, el orden depende de en que orden vinieron las partidas, y la vista
+     cambiaria de alcance sola al reanalizar. */
+  const c = T.censoCadencias([cad("300+0", "5 min"), cad("600+0", "10 min")], [P(1), P(9)]);
+  assert.equal(c[0].nombre, "10 min");
 });
 
-test("no se toca la fila original al sacarle el segundo", () => {
-  /* Es la misma fila que usa la pantalla de revision: mutarla la romperia. */
-  const fila = { seg: 42 };
-  const t = T.unaSolaCadencia([[{ seg: 1 }], [{ seg: 1 }], [fila]],
-    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
-  assert.equal(fila.seg, 42);
-  assert.equal(t.porPartida[2][0].seg, null);
+test("las partidas sin cadencia no entran al censo", () => {
+  /* Las de correspondencia: el reloj no mide lo mismo ni de lejos. */
+  const c = T.censoCadencias([cad("300+0", "5 min"), null], [P(1), P(1)]);
+  assert.equal(c.length, 1);
+  assert.equal(c[0].partidas, 1);
 });
 
-test("una partida sin reloj no manda ni desaparece del texto", () => {
-  /* La daily del mes no tiene cadencia comparable: no puede ganar el desempate
-     ni quedar sin mencionar. */
-  const t = T.unaSolaCadencia([[{ seg: 5 }], [{}]], [{ clave: "300+0", nombre: "5 min" }, null]);
-  assert.equal(t.cadencia.nombre, "5 min");
-  assert.equal(t.sinReloj, 1);
-  assert.match(T.textoTiempo(t), /1 sin reloj/);
+test("manda la pedida, y si no esta la que mas partidas tiene", () => {
+  const censo = T.censoCadencias(
+    [cad("300+0", "5 min"), cad("300+0", "5 min"), cad("600+0", "10 min")],
+    [P(1), P(1), P(1)]);
+  assert.equal(T.elegirCadencia(censo, null).nombre, "5 min");
+  assert.equal(T.elegirCadencia(censo, "600+0").nombre, "10 min");
+  /* cambiar de mes puede dejar sin partidas a la elegida: se cae a la
+     dominante en vez de mostrar una vista vacia */
+  assert.equal(T.elegirCadencia(censo, "60+0").nombre, "5 min");
+  assert.equal(T.elegirCadencia([], "300+0"), null);
 });
 
-test("la leyenda dice de que cadencia salen los segundos", () => {
-  /* §5.1: un numero sin universo no se puede leer. */
-  const t = T.unaSolaCadencia([[{ seg: 5 }], [{ seg: 5 }], [{ seg: 5 }]],
-    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
-  const txt = T.textoTiempo(t);
-  assert.match(txt, /las 2 partidas de 5 min/);
-  assert.match(txt, /quedaron afuera 1 de 10 min/);
-  assert.equal(T.textoTiempo(null), "");
+test("la vista se filtra UNA vez y todo sale del mismo subconjunto", () => {
+  /* El error de la v0.43: las filas se filtraban por cadencia y el historial
+     no, asi que "Malas" y "Seg." hablaban de universos distintos. Ahora se
+     eligen los indices y de ahi salen filas, historial y denominadores. */
+  const d = html.slice(html.indexOf("function datosDeTablas"), html.indexOf("function deTodoBruto"));
+  assert.ok(d.includes("const idx = bruto.porPartida.map((_, i) => i).filter(dentro)"));
+  assert.ok(d.includes("idx.map(i => bruto.porPartida[i])"));
+  assert.ok(d.includes("contarResultados(idx.map(i => bruto.resultados[i]))"),
+    "el historial tiene que salir de los MISMOS indices que las filas");
+});
+
+test("el selector se llena con lo que hay y se bloquea con una sola", () => {
+  const f = html.slice(html.indexOf("function pintarSelectorCadencia"));
+  assert.ok(f.slice(0, 900).includes("sel.disabled = censo.length < 2"));
+  assert.ok(f.slice(0, 900).includes("censo.map(c =>"), "las opciones salen del censo");
+});
+
+test("cambiar de cadencia no rehace el analisis", () => {
+  /* Las filas ya estan: lo unico que cambia es cuales entran. Si esto llamara
+     al motor, cambiar de cadencia costaria una corrida entera. */
+  const h = html.slice(html.indexOf('$("cadencia").onchange'));
+  const cuerpo = h.slice(0, h.indexOf("});"));
+  assert.ok(cuerpo.includes("pintarMes("));
+  assert.ok(!/analizar|evaluarPosiciones|derivarFilas/.test(cuerpo));
+});
+
+test("la cabecera no dice 1 partidas", () => {
+  /* Con una sola partida de una cadencia queda "10 min · 1 partidas". Se vio al
+     probarlo. El helper de singular ya existia desde la v0.42. */
+  const corto = html.slice(html.indexOf("function origenCorto"), html.indexOf("function origenLargo"));
+  assert.ok(corto.includes('cuantas(d.porPartida.length, "partida", "partidas")'));
+  assert.ok(corto.includes('cuantas(d.todas.length, "jugada", "jugadas")'));
+  assert.ok(!/\$\{[^}]*\.length\} partidas/.test(corto), "volvio el plural fijo");
+});
+
+test("la cabecera dice cuantas partidas quedaron afuera, y por que", () => {
+  /* §5.12: filtrar por cadencia esconde partidas; que se escondieron va arriba
+     y el motivo puede plegarse. */
+  const corto = html.slice(html.indexOf("function origenCorto"), html.indexOf("function origenLargo"));
+  assert.ok(corto.includes("d.otraCadencia"), "las de otra cadencia cuentan como afuera");
+  const largo = html.slice(html.indexOf("function origenLargo"), html.indexOf("function origenLargo") + 1600);
+  assert.ok(largo.includes("Quedaron afuera"));
+  assert.ok(largo.includes("correspondencia"), "las daily tambien hay que nombrarlas");
 });
 
 test("la mediana de segundos respeta el minimo de 30", () => {

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.45**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.46**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -974,6 +974,70 @@ su ?"**, que además falla si aparece una tabla nueva sin `?`.
 **La de mecanismos quedó en dos renglones** (91 caracteres): lleva la referencia
 de §5.7 *y* el aviso de solapamiento de §5.11, y las dos son de las que no se
 pueden plegar. Es el caso donde el criterio y el renglón chocan de verdad.
+
+## 4undecies. La cadencia pasa a ser el alcance de toda la vista (v0.46)
+
+Lo empezó el usuario mirando la pantalla: *"las leyendas «5 min» meten ruido en
+la cabecera, porque dan a entender que toda la tabla analiza solo esas
+partidas"*. Y tenía razón dos veces.
+
+**Era un error real, introducido en la v0.43.** En "Por tramo · 5 min"
+convivían dos denominadores: `Malas` y `Jugadas` eran de **todas** las partidas
+y `Seg.` solo de las de 5 min. El título nombraba uno solo. Es el mismo bug que
+se había arreglado en la v0.44 para "Por pieza", con otra cara.
+
+**Y el argumento era más grande que el error.** El usuario siguió solo: si el
+nivel de las jugadas depende del tiempo que hay para pensar, entonces *todas*
+las estadísticas tendrían que estar bajo la misma cadencia, no solo los
+segundos. Es correcto. La tasa de errores no es la misma variable en bullet que
+en rapid, y "por tramo" menos todavía: el apuro final de un 3+0 no se parece al
+de un 15+10.
+
+### Lo que se hizo
+
+**La cadencia dejó de ser un detalle de una columna y pasó a ser el alcance de
+la vista Mes entera.** Hay un `<select id="cadencia">` al lado del que ya elige
+"El mes seleccionado / Todo lo analizado", porque es el mismo tipo de control:
+*qué universo estoy mirando*.
+
+- **Por defecto manda la que más partidas tiene.** Decisión del usuario.
+- **Con una sola cadencia el selector queda deshabilitado**, no escondido:
+  se sigue leyendo como el alcance de la vista, pero no invita a tocar algo sin
+  alternativas. También del usuario.
+- **El chip de cadencia desapareció de los cinco títulos.** El alcance se dice
+  una vez, en la cabecera: `10 min · 1 partida · 31 jugadas · prof 13 · crítico
+  · 2 afuera`.
+- **Cambiar de cadencia no toca el motor.** Las filas ya están; lo único que
+  cambia es cuáles entran. Es instantáneo, igual que cambiar de modo.
+
+### La decisión de fondo: se filtra UNA vez
+
+El error de la v0.43 fue filtrar cada cosa por su lado. Ahora `datosDeTablas`
+arma el conjunto crudo, elige los **índices** de las partidas de la cadencia, y
+de esos índices salen las filas, el historial y todos los denominadores. Si algo
+nuevo se agrega a la vista, tiene que salir de `idx` o vuelve el problema.
+
+`barrerCache` ahora devuelve `resultados` además del `marcador`, porque el
+historial se recalcula sobre el subconjunto y ya no puede venir precontado.
+
+### Lo que esto le cuesta a lo ya medido
+
+**Varias mediciones de §8 se tomaron con las cadencias mezcladas** —la franja de
+ventaja, "por pieza", "Genial se dispara ~2 veces por partida"—. Con el filtro
+puesto, esos números **ya no corresponden con lo anotado**: hay que volver a
+medirlos por cadencia antes de sacar conclusiones de ellos. No es motivo para no
+hacerlo; es motivo para no leer §8 como si siguiera vigente tal cual.
+
+**El mínimo de 30 se vuelve el cuello de botella.** Filtrar achica todo: un mes
+repartido 6/5/3 va a mostrar guiones en casi todo. El selector muestra la
+cantidad de partidas de cada cadencia justamente para que eso se vea venir.
+
+### Lo que no se hizo
+
+**No hay opción "todas las cadencias".** Se descartó porque es exactamente lo
+que se está arreglando: mezclar. Si alguna vez hace falta —por muestra chica—,
+tendría que venir con la columna de segundos escondida, porque ahí sí no se
+puede calcular.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
