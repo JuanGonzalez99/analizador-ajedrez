@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.41**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.42**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -659,7 +659,7 @@ vuelta.
 Verificado en el navegador: desde scroll 0, 600 y 1200, abrir una partida deja
 el tablero **entero** en pantalla y volver restaura la posición exacta.
 
-## 4septies. Ganadas, empatadas y perdidas (v0.39)
+## 4septies. Ganadas, empatadas y perdidas (v0.39, y el listado en la v0.42)
 
 Debajo de las tres cifras del mes, en palabras: *"7 ganadas · 1 empatada · 6
 perdidas"*. **No como "7-1-6"**: esa abreviatura hay que decodificarla y encima
@@ -691,6 +691,62 @@ partida y el dato es uno solo: `barrerCache` lo guarda en un arreglo paralelo a
 Sobre el mes de 2026-09: la API cruda da 8 ganadas, 1 empatada y 6 perdidas en
 15 partidas; la app muestra 7-1-6 en 14. La diferencia es **exactamente** la
 partida contra `Coach-DrWolf`, que es asistida y está en `ENTRENADORES`.
+
+### El mismo marcador arriba del listado, sin analizar nada (v0.42)
+
+Pedido por el usuario. El listado del mes ahora abre, apenas se elige el mes,
+con dos renglones:
+
+```
+15 partidas del mes            ← gris, 12,5 px
+8 ganadas · 1 empatada · 6 perdidas
+```
+
+**El resultado ya viene en el JSON de chess.com**, así que no cuesta ni una
+corrida del motor. Es el número que antes había que analizar el mes entero para
+ver.
+
+**Por qué en dos renglones y no en uno.** Se dibujaron cuatro variantes a ancho
+de celular (412 px) con este mismo mes y se eligió mirándolas, no de memoria:
+
+| | |
+|---|---|
+| `15 partidas del mes · 8 ganadas · …` | se parte en dos renglones y corta por donde le toque |
+| `15 del mes · 8 ganadas · …` | entra en uno, **justo**: con tres cifras, o con el "· N sin resultado conocido", se vuelve a partir. Y sin la palabra *partidas* el denominador se apoya en el título de arriba |
+| cantidad arriba, resultados abajo | nunca se parte, digan lo que digan los números |
+| **la misma, con la cantidad tenue** | **elegida** |
+
+La cantidad es el **denominador** y los resultados son la **respuesta**: el gris
+`--tenue` y los 12,5 px los separan, y son los mismos que ya usan `p.cap` y los
+datos de apoyo del listado, así que no se inventó ningún estilo. Cuesta un
+renglón más que la variante corta; se aceptó porque no se parte nunca.
+
+`.marcadorMes .deQue` tiene que seguir siendo `display: block`, o la frase
+vuelve a partirse sola. Hay una prueba que lo mira.
+
+**Los dos marcadores dan distinto a propósito, y ahora se ven juntos.** Es
+exactamente la diferencia medida acá arriba: el del listado son las 15 del mes,
+el de la vista Mes son las 14 analizadas y sin asistencia. Por eso el del
+listado lleva su denominador escrito —"15 partidas del mes"— y el de la vista
+Mes se apoya en la leyenda que ya tenía encima (§5.1). Sin eso, el mismo mes
+mostraría 8-1-6 en una pantalla y 7-1-6 en la otra sin ninguna explicación.
+
+**Las palabras se eligen en un solo lugar.** `textoMarcador()` arma la frase y
+la usan los dos; el denominador NO va adentro, porque es lo único que difiere.
+Si cada pantalla escribiera su texto, se irían separando con el tiempo.
+
+**Hay una segunda función para el lado del usuario.** `ladoDelUsuario()` mira
+las cabeceras del PGN ya parseado, y el listado todavía no parseó nada: tiene el
+JSON y nada más. `ladoEnJuego(g, usuario)` lee `g.white.username` /
+`g.black.username`, recibe el usuario por parámetro en vez de leer la global —
+así es pura y tiene pruebas— y devuelve `null` si el usuario no juega esa
+partida, que `resultadoDeLado` ya traduce a "no se sabe".
+
+**Lo que quedó afuera a propósito:** el motivo del desenlace (`timeout`,
+`checkmate`, `resigned`, que vienen en el mismo JSON y son gratis) y el
+resultado desde el lado del usuario en cada fila del listado, que hoy sigue
+mostrando el marcador neutro "1-0". Las dos se discutieron y el usuario las
+quiere en otro lado, no acá.
 
 ## 4octies. Dos fallas reportadas desde el celular (v0.40)
 
