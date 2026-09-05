@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v27**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v28**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -232,6 +232,48 @@ buscarlo y **verificarle la licencia de a uno** (los de lichess no comparten
 todos las mismas condiciones), y no existe una pantalla de ajustes donde meter el
 selector. Hacerla ahora sería hacerla dos veces, porque la disposición se está
 rehaciendo. Cuando la vista Partida esté firme, es una tanda corta.
+
+## 4ter. La vista Partida — disposición densa (v28)
+
+La disposición de `zonaRevision` se rehizo según la dirección elegida: **toda la
+información de la jugada en una pantalla, sin scrollear**, salvo la lista de
+jugadas, que scrollea sola para que el tablero no se mueva de lugar.
+
+### Qué cambió, y por qué
+
+- **La barra de evaluación va vertical, al costado del tablero.** Horizontal se
+  comía un renglón entero para mostrar un número, y en un celular lo escaso es
+  el alto. Se llena desde abajo, que es donde están las blancas; con el tablero
+  girado se llena desde arriba (`.evalbar.girada`). El tablero trae margen
+  superior propio para cuando va suelto: dentro de `.revtab` se anula, o las
+  dos quedan desalineadas por 10 px.
+
+- **La tira horizontal de jugadas pasó a una lista vertical en pares.** La tira
+  mostraba tres jugadas por vez y obligaba a scrollear a ciegas. La lista se
+  agrupa por número de jugada —no de a dos por posición, así un PGN que arranca
+  con negras no se desfasa— y tiene `max-height: 27vh` con scroll propio.
+
+- **Tres métricas nuevas debajo del veredicto:** mejor, pérdida y caída. La
+  mejor jugada la devuelve el motor en UCI (`b8a5`), que no se lee: `sanDeLaMejor`
+  la pasa a la notación de la partida. Para eso hace falta la posición
+  **anterior**, y cada fila guarda el FEN de *después* — así que la de antes es
+  la de la fila `i-1`, y para la primera es el arranque. Si algo no cuadra,
+  muestra el UCI crudo antes que nada.
+
+- **Las señales ya no reservan un renglón vacío.** Tenían `min-height: 18px`
+  para que no saltara el layout; en una disposición densa un renglón que casi
+  siempre está vacío cuesta más de lo que evita.
+
+### Lo que falta de esta vista
+
+- **La paleta.** Hay **tres verdes casi idénticos** —`#4a9d4a` Mejor, `#6bb06b`
+  Excelente, `#86b886` Bien— y en la lista de jugadas son puntos de 7 px: a ese
+  tamaño el color deja de informar. La escala semántica (verde bueno → rojo
+  malo) está bien; lo que hay que rehacer es la separación dentro de cada tramo.
+- **La vista Mes** sigue con la disposición vieja, seis tablas una abajo de la
+  otra. Es la otra mitad de la decisión de tener dos vistas equivalentes.
+- **La barra de progreso sigue visible después del barrido** (pendiente de la
+  v26). Ahora se nota más, porque quedó justo arriba de una vista más ordenada.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

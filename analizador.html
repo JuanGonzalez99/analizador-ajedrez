@@ -46,9 +46,29 @@
   .lista > div.sel { font-weight: 700; }
   .oculto { display: none; }
 
-  .evalbar { height: 10px; border-radius: 5px; overflow: hidden; background: #2b2b2b;
-             border: 1px solid var(--linea); margin: 10px 0 8px; }
-  .evalbar > i { display: block; height: 100%; background: #f0ece2; transition: width .2s; }
+  /* La barra de evaluación va vertical al costado del tablero. Horizontal se
+     comía un renglón entero de una pantalla donde lo escaso es el alto, y al
+     lado del tablero se lee igual de bien. Se llena desde abajo, que es donde
+     están las blancas; si el tablero se gira, desde arriba. */
+  .revtab { display: flex; gap: 8px; align-items: stretch; margin-top: 10px; }
+  .revtab > #tablero { flex: 1; min-width: 0; }
+  /* el tablero trae margen propio para cuando va suelto; al lado de la barra
+     sobra, y desalinea las dos por 10 px */
+  .revtab svg.tab { margin: 0 auto; }
+  .evalbar { width: 10px; flex-shrink: 0; border-radius: 5px; overflow: hidden;
+             background: #2b2b2b; border: 1px solid var(--linea);
+             display: flex; flex-direction: column; justify-content: flex-end; }
+  .evalbar.girada { justify-content: flex-start; }
+  .evalbar > i { display: block; width: 100%; background: #f0ece2; transition: height .2s; }
+
+  .metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+              gap: 6px; margin-top: 8px; }
+  .metricas > div { border: 1px solid var(--linea); border-radius: 6px; padding: 6px 8px;
+                    overflow: hidden; }
+  .metricas .et { font-size: 10.5px; letter-spacing: .07em; text-transform: uppercase;
+                  color: var(--tenue); }
+  .metricas .va { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .veredicto { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
                border: 1px solid var(--linea); border-left-width: 5px; border-radius: 8px; }
   .veredicto .ico { font-weight: 800; font-size: 17px; min-width: 26px; text-align: center; }
@@ -57,17 +77,29 @@
   .veredicto .sub { font-size: 12.5px; color: var(--tenue); }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: 10px auto 0; }
-  .tira { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
-  .tira .jugadas { flex: 1; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
-  .tira .jugadas::-webkit-scrollbar { display: none; }
-  .tira .jugadas span { display: inline-block; padding: 4px 7px; margin-right: 2px; border-radius: 5px;
-                        font-size: 13.5px; cursor: pointer; }
-  .tira .jugadas span.sel { outline: 2px solid currentColor; font-weight: 700; }
+  /* La tira horizontal mostraba tres jugadas por vez y obligaba a scrollear a
+     ciegas para encontrar una. La lista vertical entra en pares —como se lee
+     una planilla— y scrollea sola, así el tablero no se mueve de lugar. */
+  .jugadas { border: 1px solid var(--linea); border-radius: 8px; margin-top: 10px;
+             max-height: 27vh; overflow-y: auto; font-size: 13.5px; }
+  .jugadas > div { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 4px;
+                   align-items: center; padding: 3px 7px;
+                   border-bottom: 1px solid var(--linea); }
+  .jugadas > div:last-child { border-bottom: 0; }
+  .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
+                 padding: 4px 6px; border-radius: 5px; min-width: 0; }
+  .jugadas .jg .pt { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
+  .jugadas .jg.sel { outline: 2px solid currentColor; font-weight: 700; }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
   .revcab { display: flex; justify-content: space-between; gap: 10px; font-size: 13px;
             color: var(--tenue); margin-top: 10px; }
-  .senales { font-size: 12.5px; color: var(--tenue); margin-top: 8px; min-height: 18px; }
+  /* sin min-height: en la disposición densa un renglón reservado que casi
+     siempre está vacío cuesta más de lo que evita. Cuando no hay señales el
+     bloque se esconde entero. */
+  .senales { font-size: 12.5px; color: var(--tenue); margin-top: 8px; }
   #diag { font: 12px/1.4 ui-monospace, monospace; color: var(--tenue); margin: 0 0 10px;
           cursor: pointer; user-select: none; }
   #errores { font: 12px/1.45 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
@@ -98,7 +130,7 @@
 </div>
 
 <script>
-  window.VERSION = "v27 · 04-09";
+  window.VERSION = "v28 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -331,25 +363,32 @@
 <div id="zonaRevision" class="oculto">
   <h2>Revisión</h2>
   <div class="revcab"><span id="revRival"></span><span id="revJugada"></span></div>
-  <div class="evalbar"><i id="evalfill"></i></div>
+  <div class="revtab">
+    <div class="evalbar" id="evalbar"><i id="evalfill"></i></div>
+    <div id="tablero"></div>
+  </div>
   <div class="veredicto" id="veredicto">
     <div class="ico" id="vIco"></div>
     <div class="txt"><div class="tit" id="vTit"></div><div class="sub" id="vSub"></div></div>
     <div class="ev" id="vEv"></div>
   </div>
-  <div id="tablero"></div>
-  <div class="tira">
+  <div class="metricas">
+    <div><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
+    <div><div class="et">Pérdida</div><div class="va" id="mPerdida"></div></div>
+    <div><div class="et">Caída</div><div class="va" id="mCaida"></div></div>
+  </div>
+  <div class="senales" id="senales"></div>
+  <div class="jugadas" id="jugadas"></div>
+  <div class="fila" style="margin-top:8px">
     <button class="chico" id="ant">&lsaquo;</button>
-    <div class="jugadas" id="tira"></div>
+    <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="sig">&rsaquo;</button>
   </div>
-  <div class="fila" style="margin-top:8px">
-    <button class="chico" id="btnMejor">Mostrar la mejor</button>
+  <div class="fila" style="margin-top:6px">
     <button class="chico" id="btnGirar">Girar tablero</button>
     <button class="chico" id="btnAmbos">Pintar las dos</button>
     <select id="tema" aria-label="Tema del tablero"></select>
   </div>
-  <div class="senales" id="senales"></div>
 </div>
 
 <div id="zonaResumen" class="oculto">
@@ -1031,6 +1070,22 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
            jugadas, fens, evs: r.evs,
            revs: r.filas.map((f, i) => f.rev ? { i, rev: f.rev } : null).filter(Boolean),
            profBase: r.profBase, revisadas: r.revisadas };
+}
+
+/* La mejor jugada viene del motor en UCI ("b8a5"), que no se lee. Para pasarla
+   a la notación de la partida hace falta la posición ANTERIOR: la fila i guarda
+   el FEN de después, así que la de antes es la de la fila i-1, y para la primera
+   es el arranque de la partida. Si algo no cuadra se muestra el UCI crudo antes
+   que nada. */
+function sanDeLaMejor(i) {
+  const f = R.filas[i];
+  if (!f || !f.mejor || f.mejor.length < 4) return "—";
+  try {
+    const j = new Chess(i > 0 ? R.filas[i - 1].fen : (R.cab.FEN || undefined));
+    const m = j.move({ from: f.mejor.slice(0, 2), to: f.mejor.slice(2, 4),
+                       promotion: f.mejor[4] || undefined });
+    return m ? m.san : f.mejor;
+  } catch (e) { return f.mejor; }
 }
 
 /* ============ tablero ============ */
@@ -1946,28 +2001,49 @@ function pintarRevision() {
   }
   $("revJugada").textContent = `jugada ${IDX + 1} de ${R.filas.length}`;
 
-  $("evalfill").style.width = Math.max(2, Math.min(98, winPct(f.evalBlancas))) + "%";
+  /* la barra se llena con lo que le toca a las blancas, y acompaña al tablero
+     cuando se gira: si las blancas quedan arriba, la barra se llena de arriba */
+  $("evalfill").style.height = Math.max(2, Math.min(98, winPct(f.evalBlancas))) + "%";
+  $("evalbar").classList.toggle("girada", GIRADO);
+
+  $("mMejor").textContent = sanDeLaMejor(IDX);
+  $("mMejor").title = f.mejor || "";
+  $("mPerdida").textContent = f.perdida.toFixed(2);
+  $("mCaida").textContent = f.caida.toFixed(0) + " pt";
   $("tablero").innerHTML = dibujar(f.fen, f.uci, VER_MEJOR && f.mejor !== f.uci ? f.mejor : null);
 
   /* por defecto solo se pintan las jugadas propias: las del rival distraen de
      lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
   const lado = ladoDelUsuario(R);
-  $("tira").innerHTML = R.filas.map((x, i) => {
+  const celda = (x, i) => {
+    if (!x) return "<span></span>";
     const mia = !lado || VER_AMBOS || x.turno === lado;
     const col = mia ? `var(--c-${x.cat})` : "var(--tenue)";
-    return `<span data-i="${i}" class="${i === IDX ? "sel" : ""}" style="color:${col}` +
-           `${mia ? "" : ";opacity:.55"}">${x.turno === "w" ? x.n + "." : ""}${x.san}</span>`;
-  }).join("");
-  $("tira").querySelectorAll("span[data-i]").forEach(s => {
+    return `<span class="jg ${i === IDX ? "sel" : ""}" data-i="${i}" style="color:${col}` +
+      `${mia ? "" : ";opacity:.55"}"><span class="pt" style="background:${col}"></span>` +
+      `<span class="sa">${x.san}</span></span>`;
+  };
+  /* se agrupa por número de jugada, no de a dos por posición: si la partida
+     arranca con negras —un PGN desde una posición— el par queda igual */
+  const pares = new Map();
+  R.filas.forEach((x, i) => {
+    if (!pares.has(x.n)) pares.set(x.n, {});
+    pares.get(x.n)[x.turno] = { x, i };
+  });
+  $("jugadas").innerHTML = [...pares.entries()].map(([num, p]) =>
+    `<div><span class="np">${num}</span>` +
+    `${celda(p.w && p.w.x, p.w && p.w.i)}${celda(p.b && p.b.x, p.b && p.b.i)}</div>`).join("");
+  $("jugadas").querySelectorAll("span[data-i]").forEach(s => {
     s.onclick = () => { IDX = +s.dataset.i; pintarRevision(); };
   });
-  const sel = $("tira").querySelector(".sel");
-  if (sel) sel.scrollIntoView({ inline: "center", block: "nearest" });
+  const sel = $("jugadas").querySelector(".sel");
+  if (sel) sel.scrollIntoView({ block: "nearest" });
 
   const notas = f.senales.slice();
   if (f.rev) notas.push(`a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +
     `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`);
   $("senales").textContent = notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "";
+  $("senales").classList.toggle("oculto", !notas.length);
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
   $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
   $("btnAmbos").disabled = !ladoDelUsuario(R);
