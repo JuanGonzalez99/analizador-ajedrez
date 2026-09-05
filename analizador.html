@@ -191,7 +191,10 @@
   .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
   .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
                  padding: 4px 6px; border-radius: 5px; min-width: 0; }
-  .jugadas .jg .pt { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra
+     "??"): sin esto las jugadas bailan de fila en fila */
+  .jugadas .jg .sm { font-size: 11px; font-weight: 700; min-width: 16px;
+                     text-align: center; flex-shrink: 0; }
   .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
   /* un contorno redondeado se leía como un campo de texto editable. Un fondo
      del propio color de la categoría marca igual y no promete nada falso. */
@@ -235,7 +238,7 @@
 </div>
 
 <script>
-  window.VERSION = "v34 · 04-09";
+  window.VERSION = "v35 · 04-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2311,8 +2314,13 @@ function pintarRevision() {
     if (!x) return "<span></span>";
     const mia = !lado || VER_AMBOS || x.turno === lado;
     const col = mia ? `var(--c-${x.cat})` : "var(--tenue)";
+    /* El símbolo de la categoría en vez de un punto de color. El punto obligaba
+       a distinguir tonos a 7 px, y tres de las diez categorías comparten un
+       verde que solo cambia de luminosidad: eran indistinguibles. El símbolo se
+       lee a cualquier tamaño y no depende del color, así que también sirve para
+       quien no distingue verde de rojo. El color se queda como refuerzo. */
     return `<span class="jg ${i === IDX ? "sel" : ""}" data-i="${i}" style="color:${col}` +
-      `${mia ? "" : ";opacity:.55"}"><span class="pt" style="background:${col}"></span>` +
+      `${mia ? "" : ";opacity:.55"}"><span class="sm">${CATEGORIAS[x.cat].icono}</span>` +
       `<span class="sa">${x.san}</span></span>`;
   };
   /* se agrupa por número de jugada, no de a dos por posición: si la partida

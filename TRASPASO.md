@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v34**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v35**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -520,6 +520,32 @@ párrafo de seis renglones antes del primer número.
 **Cuidado al tocar esto:** el chequeo 5 exige que cada `<table>` esté precedido
 inmediatamente por `<div class="tw">`. Dentro del `<details>` esa adyacencia se
 mantiene.
+
+### La lista de jugadas usa el símbolo, no un punto de color (v35)
+
+El punto de 7 px obligaba a distinguir tonos a ese tamaño, y **tres de las diez
+categorías comparten un verde que solo cambia de luminosidad** —`#4a9d4a`,
+`#6bb06b`, `#86b886`, los tres en 120° de matiz—, que es lo primero que se
+pierde a ese tamaño. Hay una segunda colisión igual de fuerte: Omisión
+`#d0453b` y Error grave `#c0392b` son casi el mismo rojo.
+
+Ahora cada jugada lleva el símbolo de su categoría (`★` `☆` `✓` `?!` `??`…), con
+ancho fijo de 16 px porque van de uno a dos caracteres y si no las jugadas
+bailan de fila en fila. El color se queda como refuerzo.
+
+**Por qué no se cambió la paleta.** Se evaluó una de seis colores, calculados a
+la misma luminosidad percibida, agrupando Mejor/Excelente/Bien en un solo verde
+—diez categorías no entran en diez colores distinguibles: el extremo bueno no se
+puede abrir en más matices sin chocar con el ámbar de Imprecisión—. **El usuario
+eligió el cambio mínimo:** los símbolos ya dejan la lista legible sin tocar un
+solo hex.
+
+**Lo que queda sin resolver, y sigue siendo cierto:** la paleta tiene
+luminosidades desparejas, así que el ámbar de Imprecisión llama más la atención
+que el verde de Bien sin que eso signifique nada. Los símbolos arreglan la
+legibilidad, no el volumen. Si alguna vez se retoma, la propuesta medida está
+acá: brillante `#2ac3bb`, genial `#65a7fa`, bueno `#61bd67`, libro `#ac9c87`,
+imprecisión `#e3ae28`, error `#ef852e`, omisión `#ed5350`, grave `#c92e3b`.
 
 ### El chequeo 2 estaba verde por casualidad
 
