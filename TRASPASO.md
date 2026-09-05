@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v35**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.35**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -446,6 +446,26 @@ perilla técnica: decide qué tan duro te juzga la app, así que es del usuario.
 **La URL es cómo se prende; `localStorage` es cómo se queda prendido**: el link
 guardado en el teléfono no lleva el parámetro, así que sin recordarlo habría que
 escribirlo en cada visita.
+
+### La versión, y dónde se ve cada cosa
+
+Son **tres cosas distintas**, a propósito:
+
+| Qué | Dónde | Cuándo |
+|---|---|---|
+| La versión sola | al pie, junto a la atribución de las piezas | siempre, en los dos modos |
+| La línea de diagnóstico | arriba, con la configuración y el registro a un toque | en modo dev |
+| La misma línea | ídem | en modo simple, **solo si hubo un error** |
+
+La versión al pie se escribe desde el **script temprano**, no desde el módulo:
+si el módulo no arranca, la versión igual se ve, y es el primer dato que hace
+falta para diagnosticar desde un teléfono. Va dentro de un `DOMContentLoaded`
+porque ese script vive en la cabeza y el pie todavía no existe cuando corre.
+
+**Se muestra como `v0.35` y no como `v35`.** Es el mismo contador de siempre —no
+se reinició nada, v35 es v0.35—, solo que escrito como un número de versión de
+verdad. El chequeo 7 acepta las dos formas, porque las secciones viejas de este
+documento nombran commits reales que se llaman `v32`, `v33`, etc.
 
 ### La red de seguridad que NO se sacó
 

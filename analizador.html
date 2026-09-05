@@ -238,7 +238,7 @@
 </div>
 
 <script>
-  window.VERSION = "v35 · 04-09";
+  window.VERSION = "v0.35 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -256,6 +256,19 @@
     }
   } catch (e) { /* incógnito, o URL rara: se queda en modo simple */ }
   if (window.DEV) document.documentElement.classList.add("dev");
+
+  /* La version al pie, visible en los dos modos. Se escribe acá y no en el
+     módulo a propósito: si el módulo no arranca, la versión igual se ve, y es
+     el primer dato que hace falta para diagnosticar desde un teléfono.
+     La línea de diagnóstico es otra cosa: arrastra el registro y solo aparece
+     en modo dev, o sola cuando hubo un error. */
+  /* al DOMContentLoaded y no acá derecho: este script corre en la cabeza, y el
+     pie todavía no existe. Igual no depende del módulo: si el módulo no
+     arranca, la versión se ve lo mismo. */
+  document.addEventListener("DOMContentLoaded", function () {
+    var pie = document.getElementById("verPie");
+    if (pie) pie.textContent = window.VERSION.split(" ")[0] + " · ";
+  });
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -546,7 +559,7 @@
   <div class="tw"><table id="resumen"></table></div>
 </div>
 
-<p class="credito">Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
+<p class="credito"><span id="verPie"></span>Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
   rel="noopener">Cburnett</a> de Colin M.L. Burnett,
   <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener">CC BY-SA 3.0</a>.</p>
 

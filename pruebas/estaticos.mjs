@@ -74,8 +74,13 @@ chequear("el módulo parsea", malSintaxis);
 /* 7. El traspaso dice en qué versión está al día. Si el HTML subió de versión
       y el documento no, alguien cambió algo y no lo anotó (§10). */
 const doc = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");
-const vHtml = (html.match(/window\.VERSION = "(v\d+)/) || [])[1];
-const vDoc = (doc.match(/al día en la \*\*(v\d+)\*\*/) || [])[1];
+/* Desde la v0.35 la versión se muestra como "v0.35" y no como "v35". Es el
+   mismo contador de siempre —no se reinició nada, v35 es v0.35—, solo que
+   escrito como un número de versión de verdad. Las dos formas se aceptan
+   porque las secciones viejas del traspaso nombran commits reales. */
+const num = t => (t.match(/^v0?\.?(\d+)/) || [])[1];
+const vHtml = num((html.match(/window\.VERSION = "(v[\d.]+)/) || [])[1] || "");
+const vDoc = num((doc.match(/al día en la \*\*(v[\d.]+)\*\*/) || [])[1] || "");
 chequear("el traspaso está al día",
   vHtml && vHtml === vDoc ? [] : [`analizador.html es ${vHtml} y TRASPASO.md dice ${vDoc}`]);
 
