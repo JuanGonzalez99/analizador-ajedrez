@@ -169,6 +169,12 @@
   .nav button { flex: 1; height: 48px; font-size: 15px; }
 
   .marcadorMes { font-size: 14px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+  /* La cantidad de partidas es el DENOMINADOR, no el resultado: va en su propio
+     renglón y en el gris de los datos de apoyo, para que el ojo caiga primero
+     en las ganadas y perdidas. En un renglón aparte, además, la frase no se
+     parte sola: a ancho de celular "15 partidas del mes · 8 ganadas · 1
+     empatada · 6 perdidas" ocupa dos renglones y corta por cualquier lado. */
+  .marcadorMes .deQue { display: block; font-size: 12.5px; color: var(--tenue); }
   .metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
               gap: 6px; margin-top: 8px; }
   .metricas > div { border: 1px solid var(--linea); border-radius: 6px; padding: 6px 8px;
@@ -1647,9 +1653,12 @@ async function cargarMes(url) {
      resultado, se dice cuántas son en vez de callarlas (§5.12). */
   const marcador = textoMarcador(contarResultados(
     PARTIDAS.map(g => resultadoDeLado(ladoEnJuego(g, USUARIO), g, null))));
-  $("partidasMarcador").textContent =
-    `${cuantas(PARTIDAS.length, "partida", "partidas")} del mes` +
-    (marcador ? ` · ${marcador}` : "");
+  /* innerHTML y no textContent: son dos renglones con distinto peso. Lo que se
+     interpola son números y palabras fijas —nunca el nombre de un rival—, así
+     que no hay nada del usuario que pueda entrar como HTML. */
+  $("partidasMarcador").innerHTML =
+    `<span class="deQue">${cuantas(PARTIDAS.length, "partida", "partidas")} del mes</span> ` +
+    marcador;
   ver("partidasMarcador", true);
   $("partidas").innerHTML = PARTIDAS.map((g, i) => {
     const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();

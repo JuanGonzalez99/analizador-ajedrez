@@ -694,10 +694,35 @@ partida contra `Coach-DrWolf`, que es asistida y está en `ENTRENADORES`.
 
 ### El mismo marcador arriba del listado, sin analizar nada (v0.42)
 
-Pedido por el usuario. El listado del mes ahora abre con *"15 partidas del mes ·
-8 ganadas · 1 empatada · 6 perdidas"*, apenas se elige el mes: **el resultado ya
-viene en el JSON de chess.com**, así que no cuesta ni una corrida del motor. Es
-el número que antes había que analizar el mes entero para ver.
+Pedido por el usuario. El listado del mes ahora abre, apenas se elige el mes,
+con dos renglones:
+
+```
+15 partidas del mes            ← gris, 12,5 px
+8 ganadas · 1 empatada · 6 perdidas
+```
+
+**El resultado ya viene en el JSON de chess.com**, así que no cuesta ni una
+corrida del motor. Es el número que antes había que analizar el mes entero para
+ver.
+
+**Por qué en dos renglones y no en uno.** Se dibujaron cuatro variantes a ancho
+de celular (412 px) con este mismo mes y se eligió mirándolas, no de memoria:
+
+| | |
+|---|---|
+| `15 partidas del mes · 8 ganadas · …` | se parte en dos renglones y corta por donde le toque |
+| `15 del mes · 8 ganadas · …` | entra en uno, **justo**: con tres cifras, o con el "· N sin resultado conocido", se vuelve a partir. Y sin la palabra *partidas* el denominador se apoya en el título de arriba |
+| cantidad arriba, resultados abajo | nunca se parte, digan lo que digan los números |
+| **la misma, con la cantidad tenue** | **elegida** |
+
+La cantidad es el **denominador** y los resultados son la **respuesta**: el gris
+`--tenue` y los 12,5 px los separan, y son los mismos que ya usan `p.cap` y los
+datos de apoyo del listado, así que no se inventó ningún estilo. Cuesta un
+renglón más que la variante corta; se aceptó porque no se parte nunca.
+
+`.marcadorMes .deQue` tiene que seguir siendo `display: block`, o la frase
+vuelve a partirse sola. Hay una prueba que lo mira.
 
 **Los dos marcadores dan distinto a propósito, y ahora se ven juntos.** Es
 exactamente la diferencia medida acá arriba: el del listado son las 15 del mes,

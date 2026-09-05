@@ -260,7 +260,14 @@ test("los dos marcadores usan las mismas palabras y dicen de qué partidas habla
      partidas distintas —el listado todas las del mes, la vista Mes solo las
      analizadas y sin asistencia— el del listado lleva su denominador (§5.1). */
   assert.ok(html.includes('const marcadorMes = textoMarcador(d.marcador);'));
-  assert.ok(html.includes('`${cuantas(PARTIDAS.length, "partida", "partidas")} del mes`'));
+  assert.ok(html.includes('{cuantas(PARTIDAS.length, "partida", "partidas")} del mes</span>'));
+});
+
+test("la cantidad va en su propio renglón y con su estilo", () => {
+  /* Si `deQue` dejara de ser un bloque, la frase volvería a partirse sola por
+     donde le toque, que es de lo que se salió. */
+  assert.ok(/\.marcadorMes \.deQue \{[^}]*display: block;/.test(html));
+  assert.ok(/\.marcadorMes \.deQue \{[^}]*var\(--tenue\)/.test(html));
 });
 
 test("el marcador del listado no necesita análisis", () => {
