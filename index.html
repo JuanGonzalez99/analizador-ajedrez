@@ -59,9 +59,14 @@
   /* Las secciones plegables del mes: el título es la fila que se toca, y con
      todas cerradas se ve de un vistazo qué cortes hay. */
   .seccion { border-top: 1px solid var(--linea); }
+  /* El título se lleva el espacio sobrante (`flex: 1`) y no `space-between`:
+     con el chip de cadencia eran cuatro elementos repartiéndose el ancho, y el
+     ? de cada sección caía en una columna distinta. El `gap` lo despega del
+     chevron, que si no quedan pegados y se tocan por error. */
   .seccion > summary { cursor: pointer; padding: 11px 2px; font-size: 15px;
                        font-weight: 700; list-style: none; display: flex;
-                       align-items: center; justify-content: space-between; }
+                       align-items: center; gap: 14px; }
+  .seccion > summary > .tit { flex: 1; min-width: 0; }
   .seccion > summary::-webkit-details-marker { display: none; }
   .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
                               opacity: .5; font-size: 18px; transition: transform .15s; }
@@ -173,7 +178,7 @@
      otro. 44 px de área táctil aunque el círculo mida 21: es un celular. */
   .ayuda { border: 1px solid var(--linea); background: none; border-radius: 50%;
            width: 21px; height: 21px; font-size: 12px; line-height: 1; padding: 0;
-           color: var(--tenue); vertical-align: middle; margin-left: 2px;
+           color: var(--tenue); vertical-align: middle; flex: none;
            position: relative; }
   .ayuda::after { content: ""; position: absolute; inset: -12px; }
   .ayuda[aria-expanded="true"] { background: var(--linea); color: inherit; }
@@ -274,7 +279,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.44 · 05-09";
+  window.VERSION = "v0.45 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -531,27 +536,27 @@
   <div class="tw"><table id="mesResumen"></table></div>
 
   <details class="seccion">
-    <summary>Riesgo por franja de ventaja <button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Riesgo por franja de ventaja</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMesFranja"></p>
     <div class="tw"><table id="mesFranja"></table></div>
   </details>
   <details class="seccion">
-    <summary>Capturas que estaban disponibles <button type="button" class="ayuda" data-ayuda="capCapturas" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Capturas que estaban disponibles</span><button type="button" class="ayuda" data-ayuda="capCapturas" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capCapturas"></p>
     <div class="tw"><table id="mesCapturas"></table></div>
   </details>
   <details class="seccion">
-    <summary>Mecanismos <button type="button" class="ayuda" data-ayuda="capMecanismos" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Mecanismos</span><button type="button" class="ayuda" data-ayuda="capMecanismos" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMecanismos"></p>
     <div class="tw"><table id="mesMecanismos"></table></div>
   </details>
   <details class="seccion">
-    <summary>Por pieza movida <span class="cadChip oculto" id="cadPieza"></span> <button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Por pieza movida <span class="cadChip oculto" id="cadPieza"></span></span><button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capPieza"></p>
     <div class="tw"><table id="mesPieza"></table></div>
   </details>
   <details class="seccion">
-    <summary>Por tramo de la partida <span class="cadChip oculto" id="cadTramo"></span> <button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Por tramo de la partida <span class="cadChip oculto" id="cadTramo"></span></span><button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capTramo"></p>
     <div class="tw"><table id="mesTramo"></table></div>
   </details>
@@ -1977,12 +1982,12 @@ function pintarBanco(filas, prof, queCompara) {
     ? "Barrido de motores y memoria" : "Comparación de configuraciones";
   $("capBanco").textContent = esMotores
     ? "Compara motores y memoria sobre la misma partida, no partidas entre sí. " +
-      `Profundidad ${prof}, modo ${$("modo").value}, todas con memoria limpia. ` +
+      `Profundidad ${prof}, modo ${nombreModo()}, todas con memoria limpia. ` +
       "Las cuatro filas de un mismo Hash tienen que dar precisión, mediana y graves " +
       "IDÉNTICAS: la cantidad de motores no puede cambiar un veredicto. Entre Hash " +
       "distintos sí puede cambiar algo, porque el Hash altera cómo busca el motor."
     : "Compara configuraciones sobre la misma partida, no partidas entre sí. " +
-      `Motores: ${$("motores").value}, modo ${$("modo").value}. ` +
+      `Motores: ${$("motores").value}, modo ${nombreModo()}. ` +
       "Los motores se reinician entre corrida y corrida. " +
       "Todas corren con memoria limpia salvo la última. Las filas 1 y 2 son la " +
       "misma configuración dos veces: tienen que dar idénticas. El barrido mide a " +
@@ -2113,6 +2118,21 @@ document.addEventListener("click", e => {
   b.setAttribute("aria-expanded", abrir ? "true" : "false");
   const sec = b.closest("details");
   if (abrir && sec) sec.open = true;
+});
+
+/* Al plegar la sección hay que cerrar también la ayuda. El panel vive ADENTRO,
+   así que si no, el texto se esconde pero el ? sigue pintado diciendo que está
+   abierto, y al reabrir aparece un texto que nadie pidió. Lo reportó el usuario
+   desde el celular.
+   `toggle` no burbujea, así que se engancha en cada sección y no delegado. */
+document.querySelectorAll("details.seccion").forEach(sec => {
+  sec.addEventListener("toggle", () => {
+    if (sec.open) return;
+    const b = sec.querySelector("button.ayuda");
+    const panel = sec.querySelector(".ayudaPanel");
+    if (b) b.setAttribute("aria-expanded", "false");
+    if (panel) panel.classList.add("oculto");
+  });
 });
 
 $("modo").onchange = seguro("modo", () => {
@@ -2588,18 +2608,44 @@ function datosDeTablas() {
 
 /* De dónde salen los números, dicho arriba de todo. Sin esto dos tablas de
    distinto alcance se leen como si hablaran de lo mismo (§5.1 y §5.3). */
-function textoOrigen(d, prof) {
+/* De dónde salen los números, en dos piezas.
+
+   `origenCorto` es lo que queda a la vista: los denominadores y la
+   configuración, secos. NO repite lo que la pantalla ya dice —el `<select>` de
+   arriba dice "El mes seleccionado" o "Todo lo analizado", y el buscador dice
+   de qué usuario— porque eso era eco: 90 caracteres de los que la mitad ya
+   estaban en pantalla.
+
+   Sí lleva cuántas partidas quedaron AFUERA, en un solo número. Que algo no se
+   haya contado no se puede plegar (§5.12); el desglose de por qué, sí. */
+/* El value del <select> es ASCII a propósito ("critico"), así que no se puede
+   escribir crudo en pantalla: quedaba "prof 13 · critico", sin tilde. El texto
+   completo de la opción —"crítico (centipeones)"— tampoco sirve: es demasiado
+   largo para una leyenda de un renglón. */
+const nombreModo = () => $("modo").value === "amigable" ? "amigable" : "crítico";
+
+function origenCorto(d, prof) {
+  const partes = [`${d.porPartida.length} partidas`, `${d.todas.length} jugadas`];
+  if (d.deTodo) partes.push(`${TODO.meses} mes(es)`);
+  partes.push(`prof ${prof}`, nombreModo());
+  const afuera = (d.asistidas || 0) + (d.deTodo && TODO.otraProf ? TODO.otraProf : 0);
+  if (afuera) partes.push(`${afuera} afuera`);
+  return partes.join(" \u00b7 ");
+}
+
+/* Y esto va adentro del plegable "Cómo se leen estos números", que es donde el
+   usuario los busca cuando no entiende una cifra. */
+function origenLargo(d) {
   if (d.deTodo) {
     const rango = TODO.desde === TODO.hasta ? TODO.desde : `${TODO.desde} a ${TODO.hasta}`;
-    return `Todo lo analizado: ${d.porPartida.length} partidas y ${d.todas.length} ` +
-      `jugadas de ${USUARIO}, en ${TODO.meses} mes(es), ${rango}. ` +
+    return `Son todas las partidas de ${USUARIO} que analizaste, de ${TODO.meses} ` +
+      `mes(es) (${rango}). ` +
       (TODO.otraProf
-        ? `Hay ${TODO.otraProf} partida(s) analizadas a otra profundidad o con otra ` +
-          "configuración: no entran, porque esos números no se comparan. "
+        ? `${TODO.otraProf} partida(s) están analizadas a otra profundidad o con otra ` +
+          "configuración y no entran, porque esos números no se comparan. "
         : "");
   }
-  return `El mes seleccionado: ${d.porPartida.length} partidas y ${d.todas.length} ` +
-    `jugadas de ${USUARIO}. `;
+  return `Son las partidas de ${USUARIO} del mes seleccionado que ya analizaste. `;
 }
 
 function pintarMes(prof) {
@@ -2620,9 +2666,8 @@ function pintarMes(prof) {
   /* La leyenda se parte en dos: arriba queda lo que hace falta para leer los
      números —de dónde salen y con qué configuración—, y el resto se pliega.
      Todo junto era un párrafo de seis renglones antes del primer número. */
-  $("capMes").textContent = textoOrigen(d, prof) +
-    `Profundidad ${prof}, modo ${$("modo").value}.`;
-  $("capMesDetalle").textContent =
+  $("capMes").textContent = origenCorto(d, prof);
+  $("capMesDetalle").textContent = origenLargo(d) +
     (d.asistidas
       ? `Quedan afuera ${d.asistidas} partida(s) con asistencia en vivo, que no miden juego propio. `
       : "") +
@@ -2911,7 +2956,7 @@ function pintarResumen(prof) {
   const prec = fs => fs.length ? fs.reduce((a, x) => a + x.precision, 0) / fs.length : 0;
 
   $("capResumen").textContent =
-    `Compara a los dos jugadores. Profundidad ${prof}, modo ${$("modo").value}; ` +
+    `Compara a los dos jugadores. Profundidad ${prof}, modo ${nombreModo()}; ` +
     "los n\u00fameros de distinta profundidad o de distinto modo no se comparan.";
 
   const filaCat = k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +

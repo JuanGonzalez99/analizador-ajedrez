@@ -169,6 +169,47 @@ test("la leyenda corta se queda con el universo y el ? con el porqué", () => {
     "detrás del ?: el texto explicativo y el detalle de las cadencias");
 });
 
+test("plegar la seccion cierra tambien la ayuda", () => {
+  /* El panel vive adentro de la seccion: al plegarla el texto se escondia pero
+     el ? seguia pintado. Reportado desde el celular. */
+  const h = html.slice(html.indexOf('details.seccion").forEach'));
+  assert.ok(h.slice(0, 400).includes('addEventListener("toggle"'));
+  assert.ok(h.slice(0, 400).includes('setAttribute("aria-expanded", "false")'));
+  assert.ok(h.slice(0, 400).includes('classList.add("oculto")'));
+});
+
+test("el ? de cada seccion cae en la misma columna", () => {
+  /* Con space-between y el chip eran cuatro elementos repartiendose el ancho.
+     El titulo se lleva el sobrante y el ? queda ultimo, con su columna fija. */
+  assert.ok(html.includes(".seccion > summary > .tit { flex: 1; min-width: 0; }"));
+  assert.ok(!/\.seccion > summary \{[^}]*space-between/.test(html));
+  const sums = [...html.matchAll(/<summary><span class="tit">.*?<\/summary>/g)];
+  assert.equal(sums.length, 5, "las cinco secciones envuelven su titulo");
+  for (const m of sums)
+    assert.ok(m[0].indexOf("cadChip") < 0 || m[0].indexOf("cadChip") < m[0].indexOf("class=\"ayuda"),
+      "el chip va con el titulo, adentro; el ? queda ultimo");
+});
+
+test("la cabecera del mes no repite lo que la pantalla ya dice", () => {
+  /* Decia "El mes seleccionado:", que es lo que dice el <select> de arriba, y
+     "de USUARIO", que esta en el buscador. Eran 90 caracteres con la mitad de
+     eco. El detalle se fue al plegable que ya existia. */
+  assert.ok(html.includes('$("capMes").textContent = origenCorto(d, prof);'));
+  assert.ok(html.includes('$("capMesDetalle").textContent = origenLargo(d) +'));
+  const corto = html.slice(html.indexOf("function origenCorto"), html.indexOf("function origenLargo"));
+  assert.ok(!corto.includes("El mes seleccionado"), "vuelve el eco del <select>");
+  assert.ok(!corto.includes("USUARIO"), "vuelve el eco del buscador");
+  assert.ok(corto.includes("afuera"), "lo que no se conto tiene que decirse igual (§5.12)");
+  assert.ok(corto.includes("prof ") && corto.includes("nombreModo()"), "§5.3");
+});
+
+test("el modo se escribe con tilde y no con el value del select", () => {
+  /* El value es ASCII a proposito ("critico"): escrito crudo quedaba
+     "prof 13 · critico". Se vio en una captura desde el celular. */
+  assert.ok(html.includes('$("modo").value === "amigable" ? "amigable" : "crítico"'));
+  assert.ok(!html.includes('modo ${$("modo").value}'), "quedo un modo crudo en una leyenda");
+});
+
 test("el titulo no nombra la cadencia si la tabla no muestra segundos", () => {
   /* Se vio al probarlo: "Por pieza movida · 5 min" con la tabla sin columna de
      segundos. El titulo prometia un alcance que la tabla no tenia. */
@@ -193,6 +234,9 @@ test("cada tabla con leyenda tiene su ?", () => {
      decision de diseno. Esta lista es la deuda, escrita: si aparece una tabla
      nueva sin ?, esto falla. */
   const PENDIENTES = ["capMes", "capMesDetalle", "capResumen", "capBanco"];
+  /* capMes y capMesDetalle ya no son deuda: son el par corto/largo del plegable
+     "Cómo se leen estos números", que el usuario eligió dejar como esta (v0.45).
+     Siguen en la lista porque no tienen ? y la comprobacion mira eso. */
   const caps = [...html.matchAll(/<p class="cap" id="(\w+)">/g)].map(m => m[1]);
   const botones = [...html.matchAll(/data-ayuda="(\w+)"/g)].map(m => m[1]);
   assert.deepEqual(caps.filter(c => !botones.includes(c) && !PENDIENTES.includes(c)), [],

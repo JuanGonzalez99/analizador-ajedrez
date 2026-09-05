@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.44**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.45**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -924,14 +924,52 @@ Eso obligó a separar dos cosas que antes eran una: `leerCadencia` devuelve
 
 Las dos tienen prueba.
 
+### La cabecera del mes (v0.45)
+
+`capMesDetalle` **nunca fue el problema**: ya vivía dentro del plegable "Cómo se
+leen estos números", o sea que el patrón corto/largo ya existía ahí, hecho con
+otra forma. El problema era `capMes`, que está siempre a la vista y **repetía lo
+que la pantalla ya dice**: empezaba con "El mes seleccionado:", que es
+exactamente lo que dice el `<select>` de arriba, y con "de USUARIO", que está en
+el buscador. De sus 90 caracteres, la mitad era eco.
+
+```
+antes  El mes seleccionado: 14 partidas y 490 jugadas de santico26. Profundidad 16, modo crítico.
+ahora  14 partidas · 490 jugadas · prof 16 · crítico
+```
+
+Lo largo se fue a `origenLargo()`, dentro del plegable que ya existía. Lo que
+**no** se pliega es cuántas partidas quedaron afuera: va como `· N afuera` en la
+línea corta, sumando las asistidas y las de otra configuración. Que algo no se
+haya contado no se puede callar (§5.12); el desglose de por qué, sí.
+
+**Se decidió NO unificar el `?` con el plegable.** Se dibujaron las dos
+opciones. El argumento del usuario, que ganó: la explicación general está en
+medio de números que un aficionado no sabe leer, y ahí una frase con nombre
+—"Cómo se leen estos números"— se ve; un `?` chiquito en la esquina queda lejos
+y apartado. El `?` se queda para las tablas, donde el título ya dice de qué se
+trata y el ícono solo amplía.
+
+### Tres arreglos reportados desde el celular
+
+- **Los `?` caían en columnas distintas.** `.seccion > summary` era
+  `space-between`, y con el chip de cadencia eran cuatro elementos
+  repartiéndose el ancho. Ahora el título se lleva el sobrante (`.tit` con
+  `flex: 1`) y el `?` queda último: los cinco alinean en x. El `gap: 14px` lo
+  despega del chevron, que si no se tocan por error.
+- **El `?` seguía pintado con la sección plegada.** El panel vive adentro: al
+  cerrar, el texto se escondía y el botón seguía diciendo que estaba abierto.
+  Ahora plegar cierra también la ayuda (`toggle`, que no burbujea, así que se
+  engancha por sección).
+- **Decía "critico" sin tilde.** El `value` del `<select>` es ASCII a propósito.
+  `nombreModo()` lo traduce, y se arreglaron de paso los otros tres lugares que
+  lo escribían crudo.
+
 ### Lo que falta
 
-**Cuatro leyendas siguen largas** y no se tocaron: `capMes` y `capMesDetalle`
-—la cabecera del mes, que es lo primero que se ve— y `capResumen` y `capBanco`,
-del banco de pruebas. No cuelgan de un `<summary>`, así que el `?` no tiene de
-dónde agarrarse: necesitan su propia decisión de diseño. **La lista está escrita
-en la prueba "cada tabla con leyenda tiene su ?"**, que además falla si aparece
-una tabla nueva sin `?`.
+**`capResumen` y `capBanco` siguen largas**, las dos del banco de pruebas, que
+es modo dev. **La lista está escrita en la prueba "cada tabla con leyenda tiene
+su ?"**, que además falla si aparece una tabla nueva sin `?`.
 
 **La de mecanismos quedó en dos renglones** (91 caracteres): lleva la referencia
 de §5.7 *y* el aviso de solapamiento de §5.11, y las dos son de las que no se
