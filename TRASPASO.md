@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.35**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.36**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -567,6 +567,28 @@ legibilidad, no el volumen. Si alguna vez se retoma, la propuesta medida está
 acá: brillante `#2ac3bb`, genial `#65a7fa`, bueno `#61bd67`, libro `#ac9c87`,
 imprecisión `#e3ae28`, error `#ef852e`, omisión `#ed5350`, grave `#c92e3b`.
 
+### La columna "% resto" se fue (v0.36)
+
+Era la referencia contra la que se leía cada mecanismo, y **mezclaba dos
+denominadores distintos sin decirlo**:
+
+- para "Dejé comible la pieza que moví", el resto eran *todas* las demás
+  jugadas — o sea casi todas, prácticamente la tasa general;
+- para "Jugada siguiente a una mala", era el `resto` de `paresDeErrores()`, que
+  además **excluye la primera jugada de cada partida**.
+
+Dos universos en la misma columna. Diagnóstico del usuario, que lo dijo así: la
+tasa general "está buena, pero no va ahí".
+
+**El contraste no se perdió**, que es lo que exige §5.7: ahora va **una sola
+vez, en la leyenda**, sobre una base bien definida —todas las jugadas del
+usuario— y declarada con su denominador, como manda la regla 1 de §5. Cada fila
+se lee contra ese número.
+
+Para volver atrás alcanza con devolver `sin: tasa(todas.filter(f => !test(f)))`
+en `contraste` y la columna en `tablaContrastes`. Hay una prueba que falla si la
+columna vuelve.
+
 ### El chequeo 2 estaba verde por casualidad
 
 Pedía que `<table id="mesX">` tuviera un id `capX`. Esa convención **no describía
@@ -662,8 +684,11 @@ Tres formas distintas, y no son intercambiables:
 
 - **tasa** (`tablaTasas`): columna "% de estas jugadas que salió mal", contra el
   mínimo de 30 jugadas. Lleva pegada la definición de jugada mala.
-- **contraste** (`tablaContrastes`): igual, más la tasa del resto al lado. Sin
-  ese contraste un mecanismo no dice nada (§5.7). Avisa si dos filas se solapan.
+- **contraste** (`tablaContrastes`): igual, más **una referencia en la leyenda**
+  —cuántas de todas tus jugadas salieron mal, con su denominador— contra la que
+  se lee cada fila. Sin esa referencia un mecanismo no dice nada (§5.7). Avisa
+  si dos filas se solapan. Hasta la v0.35 la referencia era una columna
+  "% resto"; ver abajo por qué se fue.
 - **reparto** (`tablaReparto`): las filas parten un mismo total y los
   porcentajes suman 100. No lleva la definición de jugada mala, porque sus
   porcentajes no son de jugadas malas; sí declara su denominador.
@@ -787,25 +812,7 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 
 ## 8. Pendientes de fondo, sin resolver
 
-### Chicos, de la v26 (queda uno de la lista original resuelto en la v33)
-
-- **`textoDesglose` dice "de este mes" siempre.** Con el interruptor en "todo
-  lo analizado" la leyenda afirma "De las 189 jugadas malas de este mes" cuando
-  los números son de dos meses. El número está bien, la frase no. Está escrito
-  fijo de cuando el mes era la única fuente posible; hay que pasarle de dónde
-  salen los datos, como hace `textoOrigen`.
-
-- **Revisar la columna "% resto" de la tabla de mecanismos.** Pendiente abierto
-  por el usuario en la v26, sin diagnóstico todavía: hay que mirarla y decidir.
-  Lo que conviene chequear primero, en ese orden:
-  - que el "resto" de cada fila sea el que se espera. El de "Dejé comible la
-    pieza que moví" son todas las demás jugadas; el de "Jugada siguiente a una
-    mala" es `resto` de `paresDeErrores()`, que excluye la primera jugada de
-    cada partida. Son dos universos distintos y la columna no lo dice.
-  - que el encabezado se entienda. Al lado de "%" a secas, "% resto" no aclara
-    de qué resto habla.
-  - si la columna sigue teniendo sentido con el interruptor en "todo lo
-    analizado", donde el "resto" pasa a ser miles de jugadas de varios meses.
+### Chicos, de la v26 (de los cuatro originales queda uno)
 
 - **Falta la estadística de partidas ganadas y perdidas.** Los datos están: el
   JSON de cada mes trae `white.result` y `black.result`, y `ladoDelUsuario()`

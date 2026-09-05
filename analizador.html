@@ -238,7 +238,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.35 · 05-09";
+  window.VERSION = "v0.36 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1973,13 +1973,25 @@ function tablaReparto(idTabla, idCap, texto, filas, encabezado) {
     </tbody>`;
 }
 
-function tablaContrastes(idTabla, idCap, texto, filas, encabezado) {
-  $(idCap).textContent = texto + DEF_MALA + textoSolape(filas);
+/* La referencia contra la que se lee cada fila va UNA vez en la leyenda, no en
+   una columna. Como columna era "% resto" y mezclaba dos bases distintas: para
+   "Dejé comible la pieza que moví" el resto eran todas las demás jugadas —o sea
+   casi todas, prácticamente la tasa general—, y para "Jugada siguiente a una
+   mala" era el resto de paresDeErrores(), que además excluye la primera jugada
+   de cada partida. Dos denominadores en la misma columna, sin decirlo.
+   El contraste NO se perdió, que es lo que exige §5.7: sigue estando, pero
+   contra una sola base bien definida y declarada con su denominador. */
+function tablaContrastes(idTabla, idCap, texto, filas, encabezado, base) {
+  const p = base && base.total ? pct(base) : "";
+  const ref = base && base.total
+    ? ` Referencia: ${base.malas} de tus ${base.total} jugadas salieron mal` +
+      (p === "—" ? "" : ` (${p}%)`) + ". Cada fila se lee contra ese número."
+    : "";
+  $(idCap).textContent = texto + ref + DEF_MALA + textoSolape(filas);
   $(idTabla).innerHTML = `
-    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>
-      <th>% resto</th></tr></thead>
+    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.con.malas}</td>` +
-      `<td>${f.con.total}</td><td>${pct(f.con)}</td><td>${pct(f.sin)}</td></tr>`).join("")}
+      `<td>${f.con.total}</td><td>${pct(f.con)}</td></tr>`).join("")}
     </tbody>`;
 }
 
@@ -2017,7 +2029,11 @@ const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: 
      pérdida, así que un desplome de +10 a +6 es mala y sin embargo cae en
      "Bien". Ese es justamente el desplome desde posición ganada.
    El texto sale con los números del mes, para que se pueda comprobar. */
-function textoDesglose(todas) {
+/* `deTodo` dice de dónde salen los números, igual que textoOrigen. Antes la
+   frase decía "de este mes" fija, de cuando el mes era la única fuente posible:
+   con el interruptor en "todo lo analizado" afirmaba algo falso sobre números
+   que estaban bien. */
+function textoDesglose(todas, deTodo) {
   const malas = todas.filter(esMala);
   if (!malas.length) return "";
   const en = k => malas.filter(f => f.cat === k).length;
@@ -2029,7 +2045,7 @@ function textoDesglose(todas) {
   if (otras) partes.push(`${otras} con otra etiqueta, porque el modo elegido ` +
     "las mide por puntos de victoria y no por pérdida");
   const sueltas = todas.filter(f => f.cat === "omision" && !esMala(f)).length;
-  return ` De las ${malas.length} jugadas malas de este mes, el resumen etiqueta ` +
+  return ` De las ${malas.length} jugadas malas de ${deTodo ? "todo lo analizado" : "este mes"}, el resumen etiqueta ` +
     partes.join(", ") + "." +
     (sueltas ? (sueltas === 1
       ? ' Otra jugada figura en "Omisión" sin ser mala: dejó pasar algo con una pérdida menor a 3.'
@@ -2037,9 +2053,12 @@ function textoDesglose(todas) {
         "pasar algo con una pérdida menor a 3.") : "");
 }
 
+/* ya no devuelve la tasa del complemento: la referencia es una sola y la pone
+   tablaContrastes en la leyenda. Para volver atrás alcanza con agregar
+   `sin: tasa(todas.filter(f => !test(f)))` acá y la columna allá. */
 const contraste = (todas, test, nombre) => {
   const dentro = todas.filter(test);
-  return { nombre, dentro, con: tasa(dentro), sin: tasa(todas.filter(f => !test(f))) };
+  return { nombre, dentro, con: tasa(dentro) };
 };
 
 /* Dos mecanismos pueden darse en la misma jugada —dejar la pieza comible y
@@ -2100,14 +2119,13 @@ function pintarDetalle(todas, porPartida) {
      tasa(conCap.filter(f => !f.tomoBuena && !f.esCaptura), "No capturé")],
     "Situación");
 
-  const { trasMala, resto } = paresDeErrores(porPartida);
+  const { trasMala } = paresDeErrores(porPartida);
   tablaContrastes("mesMecanismos", "capMecanismos",
-    "Compara situaciones, no jugadas. Cada porcentaje se lee solo contra el de " +
-    "al lado, que es la tasa del resto de las jugadas.",
+    "Compara situaciones, no jugadas: qué porcentaje de las jugadas con ese " +
+    "mecanismo salió mal.",
     [contraste(todas, f => f.colgada, "Dejé comible la pieza que moví"),
-     { nombre: "Jugada siguiente a una mala", dentro: trasMala,
-       con: tasa(trasMala), sin: tasa(resto) }],
-    "Mecanismo");
+     { nombre: "Jugada siguiente a una mala", dentro: trasMala, con: tasa(trasMala) }],
+    "Mecanismo", tasa(todas));
 
   tablaTasas("mesPieza", "capPieza",
     "Compara situaciones, no jugadas: con qué pieza se movió y qué porcentaje " +
@@ -2186,7 +2204,7 @@ function pintarMes(prof) {
       : "") +
     "Los números de distinta profundidad o de distinto modo no se comparan." +
     " Mala = pérdida de 3 peones o más, medida siempre igual, sin importar el " +
-    "modo de clasificación." + textoDesglose(todas);
+    "modo de clasificación." + textoDesglose(todas, d.deTodo);
 
   /* Las tres cifras que resumen el mes van arriba y grandes; en la tabla se
      quedan solo los recuentos por categoría, que es lo que la tabla hace bien.

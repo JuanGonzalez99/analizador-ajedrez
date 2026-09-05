@@ -148,6 +148,32 @@ test("sin jugadas malas el desglose no dice nada", () => {
   assert.equal(T.textoDesglose([jugada(0.2, "mejor")]), "");
 });
 
+/* --- de dónde salen los números, v0.36 --- */
+
+test("el desglose dice si los números son del mes o de todo lo analizado", () => {
+  const todas = [jugada(5, "grave")];
+  assert.ok(T.textoDesglose(todas, false).includes("de este mes"));
+  assert.ok(T.textoDesglose(todas, true).includes("de todo lo analizado"));
+  /* sin el argumento se comporta como antes: es del mes */
+  assert.ok(T.textoDesglose(todas).includes("de este mes"));
+});
+
+/* --- la columna "% resto" se fue, v0.36 --- */
+
+test("la tabla de mecanismos no trae la columna % resto", () => {
+  /* se mira la celda de encabezado y no el archivo entero: el comentario que
+     explica por qué se sacó también nombra la columna */
+  assert.ok(!html.includes(">% resto<"),
+    "la columna mezclaba dos denominadores distintos sin decirlo");
+});
+
+test("la referencia de los mecanismos va en la leyenda, con su denominador", () => {
+  assert.ok(html.includes("Referencia: ${base.malas} de tus ${base.total} jugadas"),
+    "sin la referencia el porcentaje de un mecanismo no dice nada (§5.7)");
+  assert.ok(html.includes('"Mecanismo", tasa(todas))'),
+    "la base tiene que ser todas las jugadas del usuario, una sola y bien definida");
+});
+
 /* --- franjas de ventaja por el camino común, v20 (arreglo 5) --- */
 
 test("la tabla de franjas ya no se pinta sola", () => {
