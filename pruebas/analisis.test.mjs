@@ -154,7 +154,7 @@ test("toda leyenda de tabla dice qué cuenta como mala, y lo dice arriba", () =>
   /* La de reparto no: sus porcentajes no son tasas de jugadas malas. Pero tiene
      que decir su denominador igual, que es la regla §5.1. */
   const reparto = cortos.find(l => !l.includes("DEF_MALA"));
-  assert.ok(reparto.includes("situaciones"), `sin denominador: ${reparto}`);
+  assert.ok(reparto.includes("Sobre ${cuantas(total"), `sin denominador: ${reparto}`);
 });
 
 test("la leyenda corta se queda con el universo y el ? con el porqué", () => {
@@ -184,7 +184,7 @@ test("el ? de cada seccion cae en la misma columna", () => {
   assert.ok(html.includes(".seccion > summary > .tit { flex: 1; min-width: 0; }"));
   assert.ok(!/\.seccion > summary \{[^}]*space-between/.test(html));
   const sums = [...html.matchAll(/<summary><span class="tit">.*?<\/summary>/g)];
-  assert.equal(sums.length, 5, "las cinco secciones envuelven su titulo");
+  assert.equal(sums.length, 6, "las seis secciones envuelven su titulo");
   for (const m of sums)
     assert.ok(m[0].indexOf("cadChip") < 0 || m[0].indexOf("cadChip") < m[0].indexOf("class=\"ayuda"),
       "el chip va con el titulo, adentro; el ? queda ultimo");
@@ -309,7 +309,9 @@ test("el historial se cuenta sobre las mismas partidas que los promedios", () =>
      totales distintos para lo mismo. En "todo lo analizado" las asistidas ni
      se guardan, así que la única opción coherente es excluirlas en los dos. */
   assert.ok(html.includes("const conMias = limpias.filter(r => filasDelUsuario(r).length)"));
-  assert.ok(html.includes("conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab))"));
+  /* desde la v0.47 viaja el desenlace entero —resultado y motivo— porque son
+     el mismo dato y se calculan de la misma partida */
+  assert.ok(html.includes("conMias.map(r => desenlace(ladoDelUsuario(r), r.meta, r.cab))"));
 });
 
 /* --- el marcador del listado del mes, v0.42 --- */
@@ -441,6 +443,88 @@ test("el segundo viaja en la fila flaca", () => {
   assert.ok(html.includes('"tomoBuena", "seg"'));
 });
 
+/* --- desglose de desenlaces, v0.47 --- */
+
+const meta = (w, b) => ({ white: { result: w }, black: { result: b } });
+
+test("el motivo lo escribe el que no gano", () => {
+  /* chess.com le pone "win" al ganador y el detalle al otro: para una ganada
+     hay que mirar el campo del RIVAL y para una perdida el propio. */
+  assert.deepEqual(T.desenlace("w", meta("win", "checkmated")),
+    { res: "gane", motivo: "mate" });
+  assert.deepEqual(T.desenlace("b", meta("win", "checkmated")),
+    { res: "perdi", motivo: "mate" });
+  assert.deepEqual(T.desenlace("b", meta("timeout", "win")),
+    { res: "gane", motivo: "tiempo" });
+});
+
+test("en las tablas los dos lados traen el mismo motivo", () => {
+  assert.deepEqual(T.desenlace("w", meta("repetition", "repetition")),
+    { res: "empate", motivo: "repetición" });
+  assert.deepEqual(T.desenlace("b", meta("agreed", "agreed")),
+    { res: "empate", motivo: "acuerdo" });
+});
+
+test("un motivo que la API sume manana no se descarta", () => {
+  /* §5.12: descartarlo dejaria creyendo que se conto y dio cero. */
+  const d = T.desenlace("w", meta("win", "loquesea"));
+  assert.equal(d.res, "gane");
+  assert.equal(d.motivo, "otro motivo");
+});
+
+test("sin saber el resultado no hay motivo", () => {
+  assert.deepEqual(T.desenlace(null, meta("win", "resigned")), { res: null, motivo: null });
+  /* un PGN pegado a mano no trae el JSON: hay resultado pero no motivo */
+  assert.deepEqual(T.desenlace("w", null, { Result: "1-0" }), { res: "gane", motivo: null });
+});
+
+test("las filas se agrupan por resultado y dentro por cantidad", () => {
+  /* Agrupadas y no todas por cantidad: se barre con el ojo "como gano" y
+     "como pierdo" sin leer fila por fila. */
+  const d = (res, motivo) => ({ res, motivo });
+  const filas = T.filasDesenlace([
+    d("perdi", "tiempo"), d("gane", "mate"), d("perdi", "mate"),
+    d("gane", "abandono"), d("gane", "abandono"), d("perdi", "tiempo"),
+    d("empate", "acuerdo"),
+  ]);
+  assert.deepEqual(filas.map(f => f.nombre), [
+    "Gané por abandono", "Gané por mate", "Empaté por acuerdo",
+    "Perdí por tiempo", "Perdí por mate",
+  ]);
+  assert.deepEqual(filas.map(f => f.total), [2, 1, 1, 2, 1]);
+});
+
+test("las partidas sin resultado conocido no inventan una fila", () => {
+  assert.deepEqual(T.filasDesenlace([{ res: null, motivo: null }]), []);
+  assert.deepEqual(T.filasDesenlace([]), []);
+});
+
+test("el desglose no lleva columna de malas", () => {
+  /* Reparte PARTIDAS y no jugadas: una columna vacia ahi se leeria como
+     "cero malas", que seria falso. */
+  const f = html.slice(html.indexOf("function tablaReparto"));
+  assert.ok(f.slice(0, 1200).includes("const conMalas = filas.some(f => f.malas != null)"));
+  const filas = T.filasDesenlace([{ res: "gane", motivo: "mate" }]);
+  assert.equal(filas[0].malas, null);
+});
+
+test("el desglose reparte partidas y no situaciones", () => {
+  /* Decia "Sobre 5 situaciones" arriba de un desglose de partidas. Se vio al
+     probarlo en el navegador. */
+  assert.ok(html.includes('filasDesenlace(d.desenlaces), "Desenlace", ["partida", "partidas"]'));
+  const f = html.slice(html.indexOf("function tablaReparto"));
+  assert.ok(f.slice(0, 800).includes('unidad = ["situación", "situaciones"]'),
+    "las otras tablas de reparto siguen hablando de situaciones");
+});
+
+test("el desglose y el marcador cuentan las mismas partidas", () => {
+  /* Si no, la suma de las filas no daria el "8 ganadas · 1 empatada · 5
+     perdidas" de arriba y no habria forma de saber cual esta mal. */
+  const d = html.slice(html.indexOf("function datosDeTablas"), html.indexOf("function deTodoBruto"));
+  assert.ok(d.includes("desenlaces: idx.map(i => bruto.desenlaces[i])"));
+  assert.ok(d.includes("contarResultados(idx.map(i => bruto.desenlaces[i].res))"));
+});
+
 /* --- la cadencia como alcance de la vista, v0.43 y v0.46 --- */
 
 const cad = (clave, nombre) => ({ clave, nombre });
@@ -489,8 +573,10 @@ test("la vista se filtra UNA vez y todo sale del mismo subconjunto", () => {
   const d = html.slice(html.indexOf("function datosDeTablas"), html.indexOf("function deTodoBruto"));
   assert.ok(d.includes("const idx = bruto.porPartida.map((_, i) => i).filter(dentro)"));
   assert.ok(d.includes("idx.map(i => bruto.porPartida[i])"));
-  assert.ok(d.includes("contarResultados(idx.map(i => bruto.resultados[i]))"),
+  assert.ok(d.includes("contarResultados(idx.map(i => bruto.desenlaces[i].res))"),
     "el historial tiene que salir de los MISMOS indices que las filas");
+  assert.ok(d.includes("desenlaces: idx.map(i => bruto.desenlaces[i])"),
+    "y el desglose de motivos tambien");
 });
 
 test("el selector se llena con lo que hay y se bloquea con una sola", () => {
@@ -628,12 +714,18 @@ test("ninguna tabla calcula el porcentaje por su cuenta", () => {
   };
   const sueltos = [...html.matchAll(/100 \* \w[\w.]* \/ \w[\w.]*/g)].map(m => m[0]);
   assert.ok(sueltos.length, "no quedó ningún cálculo de porcentaje");
+  /* El cuerpo de la función y no una ventana de N caracteres: agregarle un
+     comentario a tablaReparto rompía la prueba sin que nada estuviera mal. */
+  const cuerpo = duenio => {
+    const i = html.indexOf(duenio);
+    if (i < 0) return "";
+    const j = html.indexOf("\n}", i);
+    return html.slice(i, j < 0 ? html.length : j);
+  };
   for (const c of sueltos) {
     const duenio = permitido[c];
     assert.ok(duenio, `porcentaje nuevo sin dueño: ${c}`);
-    const i = html.indexOf(duenio);
-    assert.ok(i >= 0 && html.indexOf(c) > i && html.indexOf(c) - i < 900,
-      `${c} calculado fuera de ${duenio}`);
+    assert.ok(cuerpo(duenio).includes(c), `${c} calculado fuera de ${duenio}`);
   }
 });
 

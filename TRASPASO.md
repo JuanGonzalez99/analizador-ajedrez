@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.46**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.47**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1038,6 +1038,62 @@ cantidad de partidas de cada cadencia justamente para que eso se vea venir.
 que se está arreglando: mezclar. Si alguna vez hace falta —por muestra chica—,
 tendría que venir con la columna de segundos escondida, porque ahí sí no se
 puede calcular.
+
+## 4duodecies. Cómo terminaron: el desglose de desenlaces (v0.47)
+
+Esto empezó como "derrotas por tiempo", una de las cuatro ideas de tiempo. El
+usuario la reubicó: *"la dejaría dentro de una mejora en la que se vea el
+desglose de motivos de victoria - empate - derrota"*. Tiene razón — el "perdí
+por tiempo" solo dice algo al lado de "perdí por mate".
+
+**No cuesta motor ni relojes.** El motivo ya viene en el JSON de chess.com.
+
+```
+Cómo terminaron                        ?
+Sobre 5 partidas · muy pocas para porcentajes, van los casos
+Desenlace              Veces    %
+Gané por abandono          1    —
+Gané por mate              1    —
+Empaté por acuerdo         1    —
+Perdí por abandono         1    —
+Perdí por tiempo           1    —
+```
+
+### Lo que hay que saber para tocarlo
+
+**El motivo lo escribe siempre el que NO ganó.** chess.com le pone `"win"` al
+ganador y el detalle —`checkmated`, `resigned`, `timeout`— al otro. Así que para
+una ganada hay que mirar el campo del **rival** y para una perdida el propio. En
+las tablas los dos lados traen el mismo motivo. Es el error fácil de esta
+función y tiene prueba.
+
+**Un motivo que la API sume mañana no se descarta**: cae en "otro motivo" y se
+anota en el registro. Descartarlo dejaría creyendo que se contó y dio cero
+(§5.12).
+
+**Las filas se agrupan por resultado y dentro por cantidad**, no todas por
+cantidad: así se barre con el ojo "cómo gano" y "cómo pierdo" sin leer fila por
+fila.
+
+**El desglose y el marcador salen de los mismos índices.** Si no, la suma de las
+filas no daría el "2 ganadas · 1 empatada · 2 perdidas" de arriba y no habría
+forma de saber cuál está mal. Los dos cuelgan de `idx`, que es el filtro de
+cadencia de la v0.46.
+
+**`tablaReparto` ganó dos parámetros**, los dos por la misma razón: la tabla
+reparte cosas distintas según quién la use.
+- La columna **Malas** solo aparece si las filas la tienen: el desglose reparte
+  PARTIDAS y ahí una columna vacía se leería como "cero malas", que sería falso.
+- La **unidad** es un parámetro: decía "Sobre 5 situaciones" arriba de un
+  desglose de partidas. Se vio al probarlo en el navegador.
+
+### Un efecto no buscado, y que conviene dejar
+
+"Riesgo por franja de ventaja" **también muestra ahora la columna Seg.**, porque
+`tablaTasas` la dibuja sola cuando las filas la traen. Queda "cuánto pensás
+según la ventaja que tenías", que es un corte legítimo y gratis. Es válido
+porque desde la v0.46 toda la vista es una sola cadencia; **si alguna vez vuelve
+a haber cadencias mezcladas en la misma vista, esta columna miente.**
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

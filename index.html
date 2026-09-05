@@ -276,7 +276,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.46 · 05-09";
+  window.VERSION = "v0.47 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -533,6 +533,11 @@
   <p class="marcadorMes" id="mesMarcador"></p>
   <div class="tw"><table id="mesResumen"></table></div>
 
+  <details class="seccion">
+    <summary><span class="tit">Cómo terminaron</span><button type="button" class="ayuda" data-ayuda="capDesenlaces" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capDesenlaces"></p>
+    <div class="tw"><table id="mesDesenlaces"></table></div>
+  </details>
   <details class="seccion">
     <summary><span class="tit">Riesgo por franja de ventaja</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMesFranja"></p>
@@ -2045,7 +2050,7 @@ async function barrerCache(prof, opc, onProg) {
      por partida y el dato es uno solo. Va en paralelo a porPartida. */
   /* La cadencia, igual que el resultado, es UN dato por partida y no por fila:
      va en un arreglo paralelo a porPartida y no dentro de cada fila flaca. */
-  const porPartida = [], resultados = [], cadencias = [], hito = [];
+  const porPartida = [], desenlaces = [], cadencias = [], hito = [];
   let partidas = 0, mesesConDatos = 0, otraProf = 0, asistidas = 0;
 
   for (let m = 0; m < MESES.length; m++) {
@@ -2080,7 +2085,7 @@ async function barrerCache(prof, opc, onProg) {
       const mias = filasDelUsuario(falso);
       if (!mias.length) continue;
       porPartida.push(mias.map(adelgazar));
-      resultados.push(resultadoDeLado(ladoDelUsuario(falso), g, d.cab));
+      desenlaces.push(desenlace(ladoDelUsuario(falso), g, d.cab));
       cadencias.push(prep.cadencia);
       partidas++; enEste++;
     }
@@ -2089,9 +2094,9 @@ async function barrerCache(prof, opc, onProg) {
 
   const filas = [];
   porPartida.forEach(fs => filas.push(...fs));
-  return { filas, porPartida, cadencias, resultados, partidas,
+  return { filas, porPartida, cadencias, desenlaces, partidas,
            meses: mesesConDatos, otraProf, asistidas,
-           marcador: contarResultados(resultados),
+           marcador: contarResultados(desenlaces.map(d => d.res)),
            prof, vte, desde: hito[0] || null, hasta: hito[hito.length - 1] || null };
 }
 
@@ -2227,20 +2232,30 @@ const NMIN = 30;
    canario tiene que dar 0 y muestra un guion. Su tasa no se muestra porque
    sería circular: los grupos están definidos por no haber jugado la mejor
    jugada del motor, así que por construcción pierden evaluación. */
-function tablaReparto(idTabla, idCap, texto, filas, encabezado) {
+/* `unidad` porque esta tabla reparte cosas distintas según quién la use: las
+   capturas reparten SITUACIONES y el desglose de desenlaces reparte PARTIDAS.
+   Decía "Sobre 5 situaciones" arriba de un desglose de partidas. */
+function tablaReparto(idTabla, idCap, texto, filas, encabezado,
+                      unidad = ["situación", "situaciones"]) {
   const total = filas.reduce((a, f) => a + f.total, 0);
   /* Esta tabla NO lleva DEF_MALA: sus porcentajes son un reparto —"qué parte de
      las veces hice cada cosa"— y no una tasa de jugadas malas. Lo que sí tiene
      que decir arriba es sobre cuántas situaciones reparte (§5.1). */
   pintarLeyenda(idCap,
-    [`Sobre ${total} situaciones`,
+    [`Sobre ${cuantas(total, unidad[0], unidad[1])}`,
      total < NMIN ? "muy pocas para porcentajes, van los casos" : ""],
     [texto]);
+  /* "Malas" solo cuando la fila es de jugadas. El desglose de desenlaces
+     reparte PARTIDAS, y ahí la columna no significa nada: una columna vacía se
+     lee como "cero malas", que sería falso. */
+  const conMalas = filas.some(f => f.malas != null);
   $(idTabla).innerHTML = `
-    <thead><tr><th>${encabezado}</th><th>Veces</th><th>%</th><th>Malas</th></tr></thead>
+    <thead><tr><th>${encabezado}</th><th>Veces</th><th>%</th>` +
+      (conMalas ? "<th>Malas</th>" : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.total}</td>` +
       `<td>${total >= NMIN ? (100 * f.total / total).toFixed(1) : "\u2014"}</td>` +
-      `<td>${f.canario && !f.malas ? "\u2014" : f.malas}</td></tr>`).join("")}
+      (conMalas ? `<td>${f.canario && !f.malas ? "\u2014" : f.malas}</td>` : "") +
+      `</tr>`).join("")}
     </tbody>`;
 }
 
@@ -2341,6 +2356,73 @@ function resultadoDeLado(lado, meta, cab) {
   if (r === "0-1") return lado === "b" ? "gane" : "perdi";
   if (r === "1/2-1/2") return "empate";
   return null;
+}
+
+/* Cómo terminó la partida, en palabras del usuario.
+
+   **El motivo lo escribe siempre el que NO ganó**: chess.com le pone "win" al
+   ganador y el detalle —"checkmated", "resigned", "timeout"— al otro. Así que
+   para una ganada hay que mirar el campo del rival y para una perdida el
+   propio. En las tablas los dos lados traen el mismo motivo.
+
+   Las palabras están elegidas para que entren en la frase "Gané por ___", y
+   son las de un aficionado y no las de la API. */
+const MOTIVOS = {
+  checkmated: "mate",
+  resigned: "abandono",
+  timeout: "tiempo",
+  abandoned: "desconexión",
+  agreed: "acuerdo",
+  repetition: "repetición",
+  stalemate: "ahogado",
+  insufficient: "material insuficiente",
+  "50move": "regla de 50 jugadas",
+  timevsinsufficient: "tiempo sin material",
+};
+
+/* Un motivo que no está en la tabla NO se descarta: se cuenta como "otro
+   motivo" y se anota en el registro, porque callarlo dejaría creyendo que se
+   midió y dio cero (§5.12). La API puede sumar variantes cuando quiera. */
+function motivoDesenlace(res, lado, meta) {
+  if (!res || !meta || !meta.white || !meta.black) return null;
+  const mio = lado === "w" ? meta.white.result : meta.black.result;
+  const suyo = lado === "w" ? meta.black.result : meta.white.result;
+  const crudo = res === "gane" ? suyo : mio;
+  if (MOTIVOS[crudo]) return MOTIVOS[crudo];
+  /* `typeof window` y no `window.LOG` a secas: el bloque de tablas se extrae y
+     corre en node para las pruebas, donde no existe ni `window`. */
+  if (typeof window !== "undefined" && window.LOG)
+    window.LOG.add("!", "motivo desconocido: " + crudo);
+  return "otro motivo";
+}
+
+/* resultado + motivo, que es lo que hace falta para el desglose. Se calcula
+   una vez por partida y viaja junto, porque son el mismo dato. */
+function desenlace(lado, meta, cab) {
+  const res = resultadoDeLado(lado, meta, cab);
+  return { res, motivo: motivoDesenlace(res, lado, meta) };
+}
+
+const VERBO = { gane: "Gané", empate: "Empaté", perdi: "Perdí" };
+
+/* Las filas del desglose: una por combinación de resultado y motivo, agrupadas
+   por resultado —ganadas, empatadas, perdidas— y dentro de cada grupo de mayor
+   a menor. Agrupar y no ordenar todo por cantidad es para poder barrer con el
+   ojo "cómo gano" y "cómo pierdo" sin leer fila por fila.
+   Las que no tienen resultado conocido no inventan una fila: van aparte. */
+function filasDesenlace(ds) {
+  const cuenta = new Map();
+  for (const d of ds) {
+    if (!d || !d.res) continue;
+    const k = d.res + "|" + (d.motivo || "otro motivo");
+    cuenta.set(k, (cuenta.get(k) || 0) + 1);
+  }
+  const orden = { gane: 0, empate: 1, perdi: 2 };
+  return [...cuenta].map(([k, total]) => {
+    const [res, motivo] = k.split("|");
+    return { nombre: `${VERBO[res]} por ${motivo}`, total, res, motivo, malas: null };
+  }).sort((a, b) => orden[a.res] - orden[b.res] || b.total - a.total ||
+                    a.motivo.localeCompare(b.motivo));
 }
 
 const contarResultados = rs => ({
@@ -2615,7 +2697,8 @@ function datosDeTablas() {
            /* lo que queda afuera por cadencia: partidas del conjunto que no son
               de la elegida, incluidas las que no tienen cadencia (daily) */
            otraCadencia: bruto.porPartida.length - idx.length,
-           marcador: contarResultados(idx.map(i => bruto.resultados[i])) };
+           desenlaces: idx.map(i => bruto.desenlaces[i]),
+           marcador: contarResultados(idx.map(i => bruto.desenlaces[i].res)) };
 }
 
 /* Los dos conjuntos crudos, antes de filtrar por cadencia. Los tres arreglos
@@ -2626,13 +2709,13 @@ function deTodoBruto(modo) {
   return {
     porPartida: TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) }))),
     cadencias: TODO.cadencias || TODO.porPartida.map(() => null),
-    resultados: TODO.resultados || TODO.porPartida.map(() => null),
+    desenlaces: TODO.desenlaces || TODO.porPartida.map(() => ({ res: null, motivo: null })),
     asistidas: TODO.asistidas, deTodo: true,
   };
 }
 
 function delMesBruto() {
-  if (!MES) return { porPartida: [], cadencias: [], resultados: [], asistidas: 0, deTodo: false };
+  if (!MES) return { porPartida: [], cadencias: [], desenlaces: [], asistidas: 0, deTodo: false };
   const limpias = MES.resultados.filter(r => !esAsistida(r));
   /* el historial se cuenta sobre EXACTAMENTE las mismas partidas que los
      promedios, o los dos números hablarían de universos distintos */
@@ -2640,7 +2723,7 @@ function delMesBruto() {
   return {
     porPartida: conMias.map(filasDelUsuario),
     cadencias: conMias.map(r => r.cadencia || null),
-    resultados: conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab)),
+    desenlaces: conMias.map(r => desenlace(ladoDelUsuario(r), r.meta, r.cab)),
     asistidas: MES.resultados.filter(esAsistida).length, deTodo: false,
   };
 }
@@ -2764,11 +2847,22 @@ function pintarMes(prof) {
         `<td>${cuentaCat(k)}</td><td>${(cuentaCat(k) / porPartida.length).toFixed(1)}</td></tr>`).join("")}
     </tbody>`;
 
+  tablaReparto("mesDesenlaces", "capDesenlaces",
+    "Cómo terminó cada partida, no cómo se jugó: es el desenlace y no la " +
+    "calidad. Sirve para ver por dónde se te van las partidas —si perdés más " +
+    "por reloj que por mate, el problema es el manejo del tiempo y no la " +
+    "táctica—. El motivo lo escribe siempre el que no ganó: chess.com le pone " +
+    "\"win\" al ganador y el detalle al otro.",
+    filasDesenlace(d.desenlaces), "Desenlace", ["partida", "partidas"]);
+
   tablaTasas("mesFranja", "capMesFranja",
     "Compara situaciones, no jugadas: de cada nivel de ventaja, cuántas " +
     "jugadas salieron mal sobre cuántas se jugaron desde ahí.",
     FRANJAS.map(([nom, t]) => tasa(todas.filter(f => t(f.franja)), nom)),
-    "Ventaja antes de mover");
+    /* la columna de segundos sale sola —tablaTasas la dibuja si las filas la
+       tienen— y acá significa algo: cuánto se piensa según la ventaja. Se le
+       pasa `d.tiempo` para que la leyenda pueda avisar si falta algún reloj. */
+    "Ventaja antes de mover", d.tiempo);
 
   pintarDetalle(todas, porPartida, d.tiempo);
   pintarLista();
