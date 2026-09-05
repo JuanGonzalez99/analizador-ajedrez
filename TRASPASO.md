@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.39**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.40**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -694,6 +694,45 @@ partida y el dato es uno solo: `barrerCache` lo guarda en un arreglo paralelo a
 Sobre el mes de 2026-09: la API cruda da 8 ganadas, 1 empatada y 6 perdidas en
 15 partidas; la app muestra 7-1-6 en 14. La diferencia es **exactamente** la
 partida contra `Coach-DrWolf`, que es asistida y está en `ENTRENADORES`.
+
+## 4octies. Dos fallas reportadas desde el celular (v0.40)
+
+### Un PGN válido que no se podía leer
+
+Un PGN pegado a mano daba **"no pude leer ese PGN"** con las 77 jugadas
+perfectamente legales. La causa: **chess.js exige una línea en blanco entre las
+cabeceras y las jugadas**, y si falta no lee nada — devuelve `false` y no dice
+por qué. El texto reportado tenía el `1. e4` pegado al último `[TimeControl]`.
+
+Se comprobó aplicando las jugadas de a una: **77 de 77 entraban**. O sea que el
+problema nunca fue el ajedrez, sino el parseo.
+
+`normalizarPgn()` agrega la línea si falta. **Mira línea por línea y NO usa
+`lastIndexOf("]")`**: los PGN de chess.com traen los relojes como
+`{[%clk 0:05:00]}` dentro de las jugadas, así que el último `]` del texto
+está en el medio de la partida, no al final de las cabeceras. Hay una prueba
+con relojes justamente por eso.
+
+**Límite conocido:** si el `1. e4` viene en la MISMA línea que la última
+cabecera, esto no lo arregla.
+
+De paso, el mensaje de error dejó de ser un callejón sin salida y ahora dice qué
+mirar.
+
+### El registro no se abría en modo simple
+
+Cuando un error destapaba la línea de diagnóstico —la red de seguridad de la
+v33— tocarla **no hacía nada**. `#panelLog` tenía la clase `solo-dev`, y esa
+regla lleva `!important`: el toque quitaba `oculto` pero el panel seguía
+escondido por la otra regla.
+
+Se le sacó `solo-dev`. Sigue naciendo `oculto`, y en modo simple la única
+forma de llegar a él es a través del diagnóstico, que solo aparece si hubo un
+error — que es exactamente cuando hace falta.
+
+**La lección se repite:** una clase puesta no es un efecto conseguido. Es el
+mismo error que con `.evalbar` en la v31, y las dos veces se vio mirando la
+pantalla, no el código.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

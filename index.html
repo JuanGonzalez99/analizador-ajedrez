@@ -241,7 +241,7 @@
 <div id="diag" class="solo-dev">cargando…</div>
 <div id="errores" class="oculto"></div>
 
-<div id="panelLog" class="oculto solo-dev">
+<div id="panelLog" class="oculto">
   <div class="fila">
     <button class="chico" id="logCopiar">Copiar</button>
     <button class="chico" id="logBajar">Descargar</button>
@@ -252,7 +252,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.39 · 05-09";
+  window.VERSION = "v0.40 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -761,7 +761,9 @@ const claveLibro = fen => fen.split(" ").slice(0, 4).join(" ");
    parte que se puede rehacer gratis cuando el análisis viene de la caché. */
 function prepararPartida(pgn) {
   const base = new Chess();
-  if (!base.load_pgn(pgn, { sloppy: true })) throw new Error("no pude leer ese PGN");
+  if (!base.load_pgn(normalizarPgn(pgn), { sloppy: true }))
+    throw new Error("no pude leer ese PGN. Fijate que las jugadas estén en " +
+                    "notación algebraica (e4, Nf3, O-O)");
   const jugadas = base.history({ verbose: true });
   if (!jugadas.length) throw new Error("el PGN no tiene jugadas");
   const rep = new Chess();
@@ -913,6 +915,29 @@ function idPartida(g) {
   if (g && g.uuid) return g.uuid;
   if (g && g.url) return "url:" + hashTexto(g.url);
   return "pgn:" + hashTexto((g && g.pgn) || String(g));
+}
+
+/* chess.js EXIGE una línea en blanco entre las cabeceras y las jugadas, y si
+   falta no lee nada: devuelve false y el error solo dice "no pude leer ese
+   PGN". Pasa de verdad —un PGN copiado a mano suele venir con el "1. e4"
+   pegado al último corchete— y las 77 jugadas eran todas legales.
+
+   Se mira línea por línea y NO con lastIndexOf("]"): los PGN de chess.com
+   traen los relojes como {[%clk 0:05:00]} dentro de las jugadas, así que el
+   último "]" del texto no es el final de las cabeceras.
+
+   Límite conocido: si alguien pega el "1. e4" en la MISMA línea que la última
+   cabecera, esto no lo arregla. */
+const LINEA_CABECERA = /^\s*\[[A-Za-z][A-Za-z0-9_]*\s+.*\]\s*$/;
+
+function normalizarPgn(texto) {
+  const lineas = String(texto).replace(/\r\n?/g, "\n").split("\n");
+  let i = 0;
+  while (i < lineas.length && LINEA_CABECERA.test(lineas[i])) i++;
+  if (!i) return String(texto).trim();
+  const cab = lineas.slice(0, i).join("\n");
+  const cuerpo = lineas.slice(i).join("\n").trim();
+  return cuerpo ? cab + "\n\n" + cuerpo : cab;
 }
 
 /* ===================== fin del bloque de análisis ====================== */

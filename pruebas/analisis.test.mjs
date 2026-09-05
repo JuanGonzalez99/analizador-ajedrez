@@ -98,6 +98,35 @@ test("todo porcentaje pasa por pct(), que aplica el mínimo de 30", () => {
   assert.ok(/f\.total >= NMIN/.test(html));
 });
 
+/* --- PGN sin línea en blanco entre cabeceras y jugadas, v0.40 --- */
+
+test("normalizarPgn separa las cabeceras de las jugadas", () => {
+  /* chess.js EXIGE esa línea en blanco y si falta no lee NADA: el error decía
+     "no pude leer ese PGN" con las 77 jugadas legales. Caso real, reportado
+     desde el celular. */
+  const pegado = '[White "A"]\n[Black "B"]\n1. e4 e5 2. Nf3 *';
+  assert.ok(A.normalizarPgn(pegado).includes(']\n\n1. e4'));
+});
+
+test("normalizarPgn no toca un PGN que ya está bien", () => {
+  const bien = '[White "A"]\n[Black "B"]\n\n1. e4 e5 *';
+  assert.equal(A.normalizarPgn(bien), bien);
+});
+
+test("normalizarPgn no se confunde con los relojes de chess.com", () => {
+  /* Los PGN de chess.com traen {[%clk 0:05:00]} DENTRO de las jugadas, así que
+     buscar el último "]" del texto daría un corte en el medio de la partida. */
+  const conReloj = '[White "A"]\n1. e4 {[%clk 0:05:00]} 1... e5 {[%clk 0:04:58]} *';
+  const salida = A.normalizarPgn(conReloj);
+  assert.ok(salida.includes('[White "A"]\n\n1. e4'), salida);
+  assert.ok(salida.includes('{[%clk 0:04:58]}'), "no se comió el cuerpo");
+});
+
+test("normalizarPgn aguanta un PGN sin cabeceras y saltos de Windows", () => {
+  assert.equal(A.normalizarPgn("1. e4 e5 *"), "1. e4 e5 *");
+  assert.ok(A.normalizarPgn('[White "A"]\r\n1. e4 *').includes(']\n\n1. e4'));
+});
+
 /* --- qué cuenta como jugada mala, v20 --- */
 
 import T from "./extraer-tablas.mjs";
