@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v30**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v31**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -314,6 +314,51 @@ jugada que en otra partida apunta a cualquier cosa.
 **Ojo con una confusión al probarlo:** cuando la jugada jugada *es* la mejor, no
 aparece flecha nueva y el cuadrito no se enciende. No está roto — no hay nada
 distinto que mostrar.
+
+### La evaluación: tres formas, elegibles (v31)
+
+Ninguna gana sola, así que se eligen y se guardan (`MODO_EVAL`, en
+`localStorage`). Los números son medidos, no estimados:
+
+| Modo | Ancho del tablero | Alto del bloque |
+|---|---|---|
+| `barra` — vertical ancha, número adentro | 309 | 309 |
+| `horizontal` — barra arriba, número adentro | **347** | 373 |
+| `tarjeta` — vertical fina, número en la tarjeta | 329 | 329 |
+
+**El tablero es cuadrado y lo limita el ancho, así que sacarle ancho le saca
+también alto.** La barra vertical comparte los renglones del tablero; la
+horizontal se suma. Por eso la vertical sale más barata en alto aunque achique
+el tablero — y por eso la horizontal, que no tiene barra al costado, da el
+tablero **más grande** de las tres.
+
+Cuando el número viaja en la barra, la tarjeta del veredicto no lo repite: si no
+quedaba dos veces en pantalla y en dos puntas opuestas, que es justo el problema
+que se estaba resolviendo. El número va en la punta del que va ganando, con
+tinta oscura sobre el relleno claro y clara sobre el fondo.
+
+### Galones en el margen del tablero
+
+Avisan que el tablero se puede deslizar. Van dibujados **dentro del SVG, en el
+margen de coordenadas** —el borde de 15 px donde viven las letras y los
+números—, así que **no le sacan un píxel al tablero**. Quedan a media altura,
+donde no hay ninguna etiqueta: las de las filas 4 y 5 pasan a 21 px de ahí. No
+se tocan: son un aviso, no un botón.
+
+Se descartó a propósito la variante que **sí** era un botón —un galón con fondo
+circular sobre las casillas del borde—: resolvía mejor la navegación pero tapaba
+piezas en el medio juego. Y quedó dicho que un galón estático avisa que *se
+puede* deslizar, pero enseñar *cómo* es trabajo de una animación, que es otra
+rama sin empezar.
+
+### Trampa: `.oculto` necesitaba `!important`
+
+`.oculto { display: none }` estaba declarada **antes** que `.evalbar { display:
+flex }`. Misma especificidad, gana la última: la barra tenía la clase puesta y
+seguía viéndose. **Las pruebas no lo agarran y una verificación por
+`classList.contains` tampoco** —la clase está, no surte efecto—; se vio en una
+captura. Ahora lleva `!important`, que es lo correcto para una utilidad de un
+solo uso. Al verificar algo visual, mirar `getComputedStyle`, no la clase.
 
 ### Dos arreglos de la misma tanda
 
