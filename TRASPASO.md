@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v32**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v33**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -418,6 +418,66 @@ para un caso que rara vez cambia lo que uno hace. Se borraron `UMBRALES` y
   otra. Es la otra mitad de la decisión de tener dos vistas equivalentes.
 - **La barra de progreso sigue visible después del barrido** (pendiente de la
   v26). Ahora se nota más, porque quedó justo arriba de una vista más ordenada.
+
+## 4quater. Los dos modos de la app (v33)
+
+La app arranca en **modo simple** y ahí es donde vive cualquiera que no sea el
+autor. El **modo dev** agrega las perillas de medición. Se marca con una clase
+en `<html>` y el resto se resuelve por CSS (`html:not(.dev) .solo-dev`), así no
+hay que esconder cada cosa a mano desde JS ni se ve un parpadeo al cargar.
+
+### El modo simple no esconde la configuración: la congela
+
+Es la diferencia que importa. `CONGELADO` fija profundidad 16, 4 motores, Hash
+16 MB, MultiPV 2, memoria limpia, sin barrido y sin bloques — **los valores que
+ya salieron de las mediciones** (§4.2 y §4.3): Hash 1 cambia veredictos, sin
+MultiPV 2 no se puede detectar "Genial", y sin memoria limpia los resultados
+dejan de ser repetibles.
+
+Se fijan **en el DOM**, no en el código que analiza, para que haya una sola
+fuente de verdad y el resto de la app no se entere de que existen modos.
+
+**"Modo" (crítico/amigable) quedó del lado simple a propósito.** No es una
+perilla técnica: decide qué tan duro te juzga la app, así que es del usuario.
+
+### Cómo se entra y se sale
+
+`?dev` en la URL lo prende, `?dev=0` o el botón "Salir del modo dev" lo apagan.
+**La URL es cómo se prende; `localStorage` es cómo se queda prendido**: el link
+guardado en el teléfono no lleva el parámetro, así que sin recordarlo habría que
+escribirlo en cada visita.
+
+### La red de seguridad que NO se sacó
+
+La línea de diagnóstico se esconde en modo simple, **pero reaparece sola ante
+cualquier error** (`html.hubo-error #diag`). Se destapa por las dos puertas por
+donde pasan los errores: `mostrarError` y `LOG.add("ERR", …)` — hay errores que
+solo pasan por el registro. Sin esto, una pantalla en blanco en el celular no
+deja ninguna pista, y no hay consola donde mirar: es el peor modo de falla del
+proyecto.
+
+### De la misma tanda
+
+- **El listado de partidas scrollea** (`max-height: 34vh`), así el botón de
+  analizar queda a la vista sin bajar por cuarenta partidas. **Provisorio:** la
+  lista entera se va a rediseñar, esto es solo para que deje de estorbar.
+- **La barra de progreso se esconde al terminar** —pendiente abierto desde la
+  v26—. Se muestra con el primer `progreso()` y se esconde en `ocupado(false)`,
+  que es el único lugar por donde pasan todos los finales, el bueno y los de
+  error. **No** se esconde al llegar a cero: un barrido pasa por `progreso(0)`
+  al arrancar cada partida.
+- **Los desplegables dejaron de parecer botones.** Tienen relleno y borde tenue;
+  los botones tienen borde lleno y fondo transparente. Y la flechita lleva
+  **colores explícitos por esquema**: dentro de un `data:` URI el SVG se carga
+  como una imagen aparte y **`currentColor` no hereda nada**, así que caía a
+  negro y sobre el fondo oscuro no se veía.
+
+### Lo que esto prepara
+
+Es la versión barata de lo que se busca con la migración de infraestructura: si
+el modo simple ya funciona con una configuración fija, cuando se migre solo hay
+que borrar las perillas que sobraron, y de paso se deja de sostener el análisis
+a distintas profundidades.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

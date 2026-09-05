@@ -24,13 +24,24 @@
            color: inherit; border-radius: 6px; cursor: pointer; }
   button:disabled { opacity: .35; cursor: default; }
   button.chico, select.chico { padding: 5px 10px; font-size: 14px; }
-  /* el select nativo se veía de otra familia al lado de los botones: mismo
-     borde, mismo alto, y la flechita dibujada acá para que no dependa del
-     navegador */
-  select.chico { border-color: currentColor; appearance: none;
+  /* Mismo alto y misma familia que los botones, pero NO iguales: un select con
+     borde lleno se lee como un botón y se toca esperando otra cosa. La
+     diferencia la hace el relleno —un campo tiene fondo, un botón no— más un
+     borde más tenue. La flechita se dibuja acá para que no dependa del
+     navegador. Provisorio: cuando exista el menú de configuración, estos
+     controles se van adentro y esto se replantea. */
+  select.chico { border-color: var(--linea);
+                 background-color: color-mix(in srgb, currentColor 9%, transparent);
+                 appearance: none;
                  padding-right: 26px; background-repeat: no-repeat;
                  background-position: right 9px center; background-size: 9px;
-                 background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='currentColor' stroke-width='1.5'/></svg>"); }
+                 background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23e7e0d4' stroke-width='1.5'/></svg>"); }
+  /* currentColor NO sirve acá: dentro de un data: URI el SVG se carga como una
+     imagen aparte y no hereda nada del documento, así que caía a negro y sobre
+     el fondo oscuro no se veía. Van dos colores explícitos, uno por esquema. */
+  @media (prefers-color-scheme: light) {
+    select.chico { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23444444' stroke-width='1.5'/></svg>"); }
+  }
   input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--linea);
     border-radius: 6px; background: transparent; color: inherit; max-width: 100%; }
   input#usuario { width: 145px; }
@@ -47,7 +58,11 @@
   /* red de seguridad: si aun así no entra, la tabla scrollea sola y no se
      recorta ningún número */
   .tw { overflow-x: auto; }
-  .lista { border: 1px solid var(--linea); border-radius: 8px; overflow: hidden; margin-top: 8px; }
+  /* Con scroll para que el botón de analizar quede a la vista sin bajar por
+     cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
+     solo para que deje de estorbar. */
+  .lista { border: 1px solid var(--linea); border-radius: 8px; margin-top: 8px;
+           max-height: 34vh; overflow-y: auto; }
   .lista > div { padding: 9px 11px; border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
   .lista > div:last-child { border-bottom: 0; }
   .lista > div.sel { font-weight: 700; }
@@ -57,6 +72,14 @@
      Es un fallo que no se ve en las pruebas: la clase está puesta, no surte
      efecto. */
   .oculto { display: none !important; }
+  /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
+     agrega las perillas de medición. Se marca en <html> para que baste CSS y
+     no haya que esconder cada cosa a mano desde JS. */
+  html:not(.dev) .solo-dev { display: none !important; }
+  /* La línea de diagnóstico se esconde en modo simple, PERO reaparece sola si
+     hubo un error: en el celular no hay consola, y una pantalla en blanco sin
+     ninguna pista es el peor modo de falla del proyecto. */
+  html.hubo-error #diag { display: block !important; }
 
   /* La barra de evaluación va vertical al costado del tablero. Horizontal se
      comía un renglón entero de una pantalla donde lo escaso es el alto, y al
@@ -163,10 +186,10 @@
 <!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
      sirve para avisar que el módulo falló. Acá vive también el registro, para
      que exista antes que cualquier otra cosa y capture lo que pase al arrancar. -->
-<div id="diag">cargando…</div>
+<div id="diag" class="solo-dev">cargando…</div>
 <div id="errores" class="oculto"></div>
 
-<div id="panelLog" class="oculto">
+<div id="panelLog" class="oculto solo-dev">
   <div class="fila">
     <button class="chico" id="logCopiar">Copiar</button>
     <button class="chico" id="logBajar">Descargar</button>
@@ -177,7 +200,24 @@
 </div>
 
 <script>
-  window.VERSION = "v32 · 04-09";
+  window.VERSION = "v33 · 04-09";
+
+  /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
+     vea un parpadeo de las perillas.
+     La URL es como se PRENDE y localStorage es como se QUEDA prendido: el link
+     guardado en el celular no lleva el parámetro, así que sin recordarlo habría
+     que escribir ?dev en cada visita. ?dev=0 apaga, igual que el botón. */
+  window.DEV = false;
+  try {
+    var par = new URLSearchParams(location.search);
+    if (par.has("dev")) {
+      window.DEV = par.get("dev") !== "0";
+      localStorage.setItem("dev", window.DEV ? "1" : "0");
+    } else {
+      window.DEV = localStorage.getItem("dev") === "1";
+    }
+  } catch (e) { /* incógnito, o URL rara: se queda en modo simple */ }
+  if (window.DEV) document.documentElement.classList.add("dev");
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -195,7 +235,12 @@
       this.lineas.push(t + "s " + nivel + " " + txt);
       if (this.lineas.length > this.TOPE) this.lineas.splice(0, this.lineas.length - this.TOPE);
       if (!panel.classList.contains("oculto")) this.pintar();
-      if (nivel === "ERR") this.guardar();
+      if (nivel === "ERR") {
+        this.guardar();
+        /* hay errores que solo pasan por el registro y nunca por mostrarError:
+           también tienen que destapar el diagnóstico */
+        document.documentElement.classList.add("hubo-error");
+      }
       else if (!this.pendiente) this.pendiente = setTimeout(function () { LOG.guardar(); }, 2000);
     },
     texto: function () {
@@ -264,6 +309,7 @@
 
   window.mostrarError = function (donde, e) {
     var t = (e && (e.message || e.reason && e.reason.message || e.reason)) || e;
+    document.documentElement.classList.add("hubo-error");
     caja.classList.remove("oculto");
     caja.textContent = (caja.textContent ? caja.textContent + "\n" : "") + donde + ": " + t;
     console.error(donde, e);
@@ -316,7 +362,7 @@
 
 <div id="zonaAnalizar" class="oculto">
   <h2>Análisis</h2>
-  <div class="fila">
+  <div class="fila solo-dev">
     <label>Profundidad
       <select id="prof">
         <option value="13">13 — rápida</option>
@@ -335,7 +381,7 @@
       </select>
     </label>
   </div>
-  <div class="fila" style="margin-top:6px; font-size:14px">
+  <div class="fila solo-dev" style="margin-top:6px; font-size:14px">
     <label>MultiPV
       <select id="optMpv">
         <option value="2" selected>2 — con Genial</option>
@@ -346,8 +392,10 @@
     <label><input type="checkbox" id="optLimpiar" checked> memoria limpia</label>
     <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
     <label><input type="checkbox" id="optBloques"> bloques</label>
+  </div>
+  <div class="fila" style="margin-top:6px; font-size:14px">
     <label>Modo
-      <select id="modo">
+      <select id="modo" class="chico">
         <option value="critico" selected>crítico (centipeones)</option>
         <option value="amigable">amigable (puntos de victoria)</option>
       </select>
@@ -358,15 +406,16 @@
     <button id="analizarMes" class="chico">Analizar el mes</button>
     <button id="detener" class="chico oculto">Detener</button>
   </div>
-  <div class="fila" style="margin-top:8px">
+  <div class="fila solo-dev" style="margin-top:8px">
     <button id="banco" class="chico">Comparar configuraciones</button>
     <button id="barrido" class="chico">Barrer motores y memoria</button>
+    <button id="salirDev" class="chico">Salir del modo dev</button>
   </div>
   <p id="estado"></p>
-  <div class="barra"><i id="progreso"></i></div>
+  <div class="barra oculto" id="barra"><i id="progreso"></i></div>
 </div>
 
-<div id="zonaBanco" class="oculto">
+<div id="zonaBanco" class="oculto solo-dev">
   <h2 id="tituloBanco">Comparación de configuraciones</h2>
   <p class="cap" id="capBanco"></p>
   <div class="tw"><table id="tablaBanco"></table></div>
@@ -810,7 +859,19 @@ const seguro = (donde, fn) => async (...a) => {
   catch (e) { window.mostrarError(donde, e); estado("Falló: " + (e.message || e)); }
 };
 const estado = t => { $("estado").textContent = t; };
-const progreso = f => { $("progreso").style.width = Math.round(f * 100) + "%"; };
+/* La barra se esconde cuando no hay nada corriendo. Antes se quedaba en cero y
+   se veía como una franja gris ancha bajo los botones —pendiente abierto desde
+   la v26—, que en modo simple es lo primero que se nota. Se muestra con el
+   primer progreso() y se va al terminar, no al llegar a cero: un barrido pasa
+   por progreso(0) al arrancar cada partida. */
+const progreso = f => {
+  $("barra").classList.remove("oculto");
+  $("progreso").style.width = Math.round(f * 100) + "%";
+};
+const esconderBarra = () => {
+  $("barra").classList.add("oculto");
+  $("progreso").style.width = "0%";
+};
 
 /* ============ caché de evaluaciones (IndexedDB) ============
    Guarda las evaluaciones del motor, no los veredictos. La clave lleva la
@@ -1195,6 +1256,26 @@ function aplicarModoEval(id) {
   });
 })();
 
+/* En modo simple las perillas no se esconden: se CONGELAN. Los valores son los
+   que ya salieron de las mediciones y están explicados en el traspaso —4 motores
+   y Hash 16 MB porque Hash 1 cambia veredictos, MultiPV 2 porque sin eso
+   "Genial" no se puede detectar, memoria limpia porque sin eso los resultados
+   dejan de ser repetibles—. Se fijan en el DOM y no en el código que analiza,
+   así hay una sola fuente de verdad y el resto de la app no se entera del modo.
+   "Modo" (crítico/amigable) NO está acá: decide qué tan duro te juzga la app,
+   así que es del usuario, no una perilla de medición. */
+const CONGELADO = { prof: "16", motores: "4", hashMotor: "16", optMpv: "2" };
+if (!window.DEV) {
+  for (const [id, v] of Object.entries(CONGELADO)) if ($(id)) $(id).value = v;
+  $("optLimpiar").checked = true;
+  $("optBarrido").checked = false;
+  $("optBloques").checked = false;
+}
+$("salirDev").onclick = seguro("salir de dev", () => {
+  try { localStorage.setItem("dev", "0"); } catch (e) { /* incógnito */ }
+  location.search = "";
+});
+
 (function iniciarTema() {
   let guardado = "madera";
   try { guardado = localStorage.getItem("tema") || "madera"; } catch (e) { /* incógnito */ }
@@ -1431,6 +1512,9 @@ $("usarPgn").onclick = seguro("pgn", () => {
 });
 
 function ocupado(si) {
+  /* al soltar el trabajo se esconde la barra: es el único lugar por donde pasan
+     todos los finales, el bueno y los de error */
+  if (!si) esconderBarra();
   $("analizar").disabled = si || !ELEGIDA;
   $("analizarMes").disabled = si || !PARTIDAS.length;
   $("banco").disabled = si || !ELEGIDA;
