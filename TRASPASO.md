@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.36**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.37**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -21,15 +21,27 @@ cambia de aplicación.
 
 **Repo:** GitHub Pages. **Archivos que la página pide:**
 
-- `analizador.html` — la aplicación entera, un solo archivo
+- `index.html` — la aplicación entera, un solo archivo
 - `chess.js` — chess.js 0.13.4 como módulo ES
 - `stockfish-18-lite-single.js` + su `.wasm` — el motor, ~7,3 MB, monohilo
 - `aperturas.json` — libro de aperturas: `{ posiciones: [...], nombres: {...} }`
 
-`index.html` es solo un redirect a `analizador.html`, porque la raíz de GitHub
-Pages tiene que existir. En la v18 se borraron cuatro archivos muertos
+**Desde la v0.37 la aplicación es `index.html`**, o sea la raíz: la URL quedó
+`…github.io/analizador-ajedrez/` en vez de terminar en `/analizador.html`.
+`analizador.html` sobrevive como redirect a la raíz, al revés de como estaba,
+porque la app vivió ahí muchas versiones y puede estar guardada así en el
+teléfono de alguien.
+
+**El redirect lleva un guardia, y no es paranoia.** Quien tenga en caché el
+`index.html` **viejo** —el que redirigía a `analizador.html`— entra en un bucle:
+ese index manda a `analizador.html` y el nuevo `analizador.html` manda a la
+raíz. Pasó de verdad al probarlo. El redirect va en JavaScript y no en un `meta
+refresh` para poder marcar el rebote en `sessionStorage`: así ocurre una sola
+vez y después queda un mensaje con el enlace, en vez de una pantalla que
+parpadea sola. GitHub Pages sirve el HTML con caché corta, así que el caso se
+resuelve solo en minutos; el guardia es para esos minutos. En la v18 se borraron cuatro archivos muertos
 (`analisis.js`, `motor.html`, `motor-1.html`, `motor-2.html`); están en el
-historial. Antes de borrar cualquier otro, confirmar que `analizador.html` no
+historial. Antes de borrar cualquier otro, confirmar que `index.html` no
 lo pide.
 
 ---

@@ -1,4 +1,4 @@
-/* Extrae el bloque de análisis de analizador.html y lo devuelve como módulo.
+/* Extrae el bloque de análisis de index.html y lo devuelve como módulo.
    El bloque no toca el DOM ni el motor, así que corre tal cual en node.
    Los dos marcadores son contrato: si se mueven, esto se rompe. */
 import fs from "node:fs";
@@ -7,7 +7,7 @@ import { Chess } from "../chess.js";
 const INICIO = "/* ============ evaluación ============ */";
 const FIN = "/* ===================== fin del bloque de análisis";
 
-const html = fs.readFileSync(new URL("../analizador.html", import.meta.url), "utf8");
+const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const ini = html.indexOf(INICIO), fin = html.indexOf(FIN);
 if (ini < 0 || fin < 0) throw new Error("no están los marcadores del bloque de análisis");
 

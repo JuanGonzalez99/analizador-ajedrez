@@ -6,7 +6,7 @@ import fs from "node:fs";
 const INICIO = "/* ============ tablas ============ */";
 const FIN = "/* ================== fin del bloque de tablas";
 
-const html = fs.readFileSync(new URL("../analizador.html", import.meta.url), "utf8");
+const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const ini = html.indexOf(INICIO), fin = html.indexOf(FIN);
 if (ini < 0 || fin < 0) throw new Error("no están los marcadores del bloque de tablas");
 

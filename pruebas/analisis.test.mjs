@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import A from "./extraer.mjs";
 
-const html = fs.readFileSync(new URL("../analizador.html", import.meta.url), "utf8");
+const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
 test("el bloque exporta lo que las pruebas necesitan", () => {
   for (const n of ["categorizar", "derivarFilas", "quedaComible", "winPct", "mediana"])

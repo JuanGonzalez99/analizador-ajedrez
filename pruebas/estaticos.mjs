@@ -1,11 +1,11 @@
-/* Chequeos estáticos sobre analizador.html. Correr: node pruebas/estaticos.mjs
+/* Chequeos estáticos sobre index.html. Correr: node pruebas/estaticos.mjs
    Agarran los errores que las pruebas de node no ven, porque viven en el DOM. */
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-const html = fs.readFileSync(new URL("../analizador.html", import.meta.url), "utf8");
+const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 const fallas = [];
 const chequear = (nombre, malas) => {
   if (malas.length) fallas.push(`${nombre}: ${malas.join(", ")}`);
@@ -82,7 +82,7 @@ const num = t => (t.match(/^v0?\.?(\d+)/) || [])[1];
 const vHtml = num((html.match(/window\.VERSION = "(v[\d.]+)/) || [])[1] || "");
 const vDoc = num((doc.match(/al día en la \*\*(v[\d.]+)\*\*/) || [])[1] || "");
 chequear("el traspaso está al día",
-  vHtml && vHtml === vDoc ? [] : [`analizador.html es ${vHtml} y TRASPASO.md dice ${vDoc}`]);
+  vHtml && vHtml === vDoc ? [] : [`index.html es ${vHtml} y TRASPASO.md dice ${vDoc}`]);
 
 if (fallas.length) { console.error("\nFALLA:\n- " + fallas.join("\n- ")); process.exit(1); }
 console.log("\nchequeos estáticos: todo bien");
