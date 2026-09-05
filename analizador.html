@@ -50,7 +50,42 @@
   #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
   .barra { height: 4px; background: var(--linea); border-radius: 2px; overflow: hidden; margin-top: 6px; }
   .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width .15s; }
-  table { border-collapse: collapse; width: 100%; font-size: 13.5px; }
+  /* Las secciones plegables del mes: el título es la fila que se toca, y con
+     todas cerradas se ve de un vistazo qué cortes hay. */
+  .seccion { border-top: 1px solid var(--linea); }
+  .seccion > summary { cursor: pointer; padding: 11px 2px; font-size: 15px;
+                       font-weight: 700; list-style: none; display: flex;
+                       align-items: center; justify-content: space-between; }
+  .seccion > summary::-webkit-details-marker { display: none; }
+  .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
+                              opacity: .5; font-size: 18px; transition: transform .15s; }
+  .seccion[open] > summary::after { transform: rotate(-90deg); }
+  .seccion > .cap { margin-top: 0; }
+  .seccion > .tw { margin-bottom: 12px; }
+
+  /* la leyenda larga, plegada: lo indispensable queda arriba y esto se abre */
+  .quemide > summary { cursor: pointer; font-size: 12.5px; color: var(--tenue);
+                       margin: 0 0 8px; list-style: none; }
+  .quemide > summary::-webkit-details-marker { display: none; }
+  .quemide > summary::before { content: "\203a"; display: inline-block;
+                               margin-right: 6px; transition: transform .15s; }
+  .quemide[open] > summary::before { transform: rotate(90deg); }
+
+  /* precisión y mediana de los dos jugadores, enfrentadas */
+  .marcador { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0 12px; }
+  .marcador > div { border: 1px solid var(--linea); border-radius: 6px; padding: 8px 10px;
+                    overflow: hidden; }
+  .marcador .et { font-size: 12px; color: var(--tenue); white-space: nowrap;
+                  overflow: hidden; text-overflow: ellipsis; }
+  .marcador .gr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums;
+                  line-height: 1.2; }
+  .marcador .pe { font-size: 11.5px; color: var(--tenue);
+                  font-variant-numeric: tabular-nums; }
+
+  /* los números de todas las tablas, tabulares: sin esto las columnas bailan
+     de fila en fila y cuesta compararlas de un vistazo */
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px;
+          font-variant-numeric: tabular-nums; }
   th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
   /* La etiqueta es lo único que puede cortar en varias líneas: si no, empuja la
      tabla más ancha que la pantalla y el porcentaje queda tapado en el celu. */
@@ -200,7 +235,7 @@
 </div>
 
 <script>
-  window.VERSION = "v33 · 04-09";
+  window.VERSION = "v34 · 04-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -430,25 +465,36 @@
     </select>
   </div>
   <p class="cap" id="capMes"></p>
+  <details class="quemide"><summary>Cómo se leen estos números</summary>
+    <p class="cap" id="capMesDetalle"></p></details>
+  <div class="metricas" id="mesCabecera"></div>
   <div class="tw"><table id="mesResumen"></table></div>
-  <h2>Riesgo por franja de ventaja</h2>
-  <p class="cap" id="capMesFranja"></p>
-  <div class="tw"><table id="mesFranja"></table></div>
-  <h2>Capturas que estaban disponibles</h2>
-  <p class="cap" id="capCapturas"></p>
-  <div class="tw"><table id="mesCapturas"></table></div>
 
-  <h2>Mecanismos</h2>
-  <p class="cap" id="capMecanismos"></p>
-  <div class="tw"><table id="mesMecanismos"></table></div>
-
-  <h2>Por pieza movida</h2>
-  <p class="cap" id="capPieza"></p>
-  <div class="tw"><table id="mesPieza"></table></div>
-
-  <h2>Por tramo de la partida</h2>
-  <p class="cap" id="capTramo"></p>
-  <div class="tw"><table id="mesTramo"></table></div>
+  <details class="seccion">
+    <summary>Riesgo por franja de ventaja</summary>
+    <p class="cap" id="capMesFranja"></p>
+    <div class="tw"><table id="mesFranja"></table></div>
+  </details>
+  <details class="seccion">
+    <summary>Capturas que estaban disponibles</summary>
+    <p class="cap" id="capCapturas"></p>
+    <div class="tw"><table id="mesCapturas"></table></div>
+  </details>
+  <details class="seccion">
+    <summary>Mecanismos</summary>
+    <p class="cap" id="capMecanismos"></p>
+    <div class="tw"><table id="mesMecanismos"></table></div>
+  </details>
+  <details class="seccion">
+    <summary>Por pieza movida</summary>
+    <p class="cap" id="capPieza"></p>
+    <div class="tw"><table id="mesPieza"></table></div>
+  </details>
+  <details class="seccion">
+    <summary>Por tramo de la partida</summary>
+    <p class="cap" id="capTramo"></p>
+    <div class="tw"><table id="mesTramo"></table></div>
+  </details>
 
   <h2>Partidas</h2>
   <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
@@ -493,10 +539,8 @@
 <div id="zonaResumen" class="oculto">
   <h2>Resumen</h2>
   <p class="cap" id="capResumen"></p>
+  <div class="marcador" id="marcador"></div>
   <div class="tw"><table id="resumen"></table></div>
-  <h2>Riesgo por franja de ventaja</h2>
-  <p class="cap" id="capFranja"></p>
-  <div class="tw"><table id="franja"></table></div>
 </div>
 
 <p class="credito">Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
@@ -603,9 +647,9 @@ const CATEGORIAS = {
   brillante:  { nombre: "Brillante",   icono: "!!", desc: "Un sacrificio que además es la mejor jugada." },
   genial:     { nombre: "Genial",      icono: "!",  desc: "La única que sostiene la posición, o la que cambia el rumbo." },
   mejor:      { nombre: "Mejor",       icono: "★",  desc: "La primera elección del motor." },
-  excelente:  { nombre: "Excelente",   icono: "👍", desc: "Casi tan buena como la mejor." },
+  excelente:  { nombre: "Excelente",   icono: "☆", desc: "Casi tan buena como la mejor." },
   bien:       { nombre: "Bien",        icono: "✓",  desc: "Una buena jugada, pero no la mejor." },
-  libro:      { nombre: "Libro",       icono: "📖", desc: "Jugada de apertura conocida." },
+  libro:      { nombre: "Libro",       icono: "▤", desc: "Jugada de apertura conocida." },
   imprecision:{ nombre: "Imprecisión", icono: "?!", desc: "Una jugada débil." },
   error:      { nombre: "Error",       icono: "?",  desc: "Empeora la posición." },
   omision:    { nombre: "Omisión",     icono: "✗",  desc: "Había mate o material y se dejó pasar." },
@@ -2109,28 +2153,38 @@ function pintarMes(prof) {
       ? "Todavía no hay nada analizado a esta profundidad."
       : "Ninguna de estas partidas es de ese usuario.";
     $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = "";
+    $("mesCabecera").innerHTML = ""; $("capMesDetalle").textContent = "";
     ["mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => $(t).innerHTML = "");
     pintarLista();
     return;
   }
   const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
+  /* La leyenda se parte en dos: arriba queda lo que hace falta para leer los
+     números —de dónde salen y con qué configuración—, y el resto se pliega.
+     Todo junto era un párrafo de seis renglones antes del primer número. */
   $("capMes").textContent = textoOrigen(d, prof) +
+    `Profundidad ${prof}, modo ${$("modo").value}.`;
+  $("capMesDetalle").textContent =
     (d.asistidas
       ? `Quedan afuera ${d.asistidas} partida(s) con asistencia en vivo, que no miden juego propio. `
       : "") +
-    `Profundidad ${prof}, modo ${$("modo").value}; los números de distinta ` +
-    "profundidad o de distinto modo no se comparan." +
+    "Los números de distinta profundidad o de distinto modo no se comparan." +
     " Mala = pérdida de 3 peones o más, medida siempre igual, sin importar el " +
     "modo de clasificación." + textoDesglose(todas);
+
+  /* Las tres cifras que resumen el mes van arriba y grandes; en la tabla se
+     quedan solo los recuentos por categoría, que es lo que la tabla hace bien.
+     Las tres tenían un "—" en la columna "Por partida" que no decía nada. */
+  const cuadro = (et, va) => `<div><div class="et">${et}</div><div class="va">${va}</div></div>`;
+  $("mesCabecera").innerHTML =
+    cuadro("Precisión", prec.toFixed(1)) +
+    cuadro("Mediana", mediana(todas.map(f => f.perdida)).toFixed(2)) +
+    cuadro("Jugadas", todas.length);
 
   const cuentaCat = k => todas.filter(f => f.cat === k).length;
   $("mesResumen").innerHTML = `
     <thead><tr><th></th><th>Total</th><th>Por partida</th></tr></thead>
     <tbody>
-      <tr><td><b>Precisión</b></td><td><b>${prec.toFixed(1)}</b></td><td>—</td></tr>
-      <tr><td>Mediana de pérdida</td><td>${mediana(todas.map(f => f.perdida)).toFixed(2)}</td><td>—</td></tr>
-      <tr><td>Jugadas</td><td>${todas.length}</td>
-          <td>${(todas.length / porPartida.length).toFixed(1)}</td></tr>
       ${ORDEN.map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
         `<td>${cuentaCat(k)}</td><td>${(cuentaCat(k) / porPartida.length).toFixed(1)}</td></tr>`).join("")}
     </tbody>`;
@@ -2372,24 +2426,18 @@ function pintarResumen(prof) {
   const filaCat = k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
     `<td>${B.filter(f => f.cat === k).length}</td><td>${N.filter(f => f.cat === k).length}</td></tr>`;
 
+  /* Precisión y mediana salen de la tabla y van arriba, grandes: son las dos
+     cifras que de verdad comparan a los jugadores, y entre diez filas de
+     recuentos —casi todas en cero en una partida sola— no se veían. */
+  const lado = (nom, fs) => `<div><div class="et">${nom}</div>` +
+    `<div class="gr">${prec(fs).toFixed(1)}</div>` +
+    `<div class="pe">mediana ${mediana(fs.map(f => f.perdida)).toFixed(2)}</div></div>`;
+  $("marcador").innerHTML = lado(cab.White || "Blancas", B) + lado(cab.Black || "Negras", N);
+
   $("resumen").innerHTML = `
     <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
-    <tbody>
-      <tr><td><b>Precisi\u00f3n</b></td><td><b>${prec(B).toFixed(1)}</b></td><td><b>${prec(N).toFixed(1)}</b></td></tr>
-      <tr><td>Mediana de p\u00e9rdida</td><td>${mediana(B.map(f => f.perdida)).toFixed(2)}</td>
-          <td>${mediana(N.map(f => f.perdida)).toFixed(2)}</td></tr>
-      ${ORDEN.map(filaCat).join("")}
-    </tbody>`;
+    <tbody>${ORDEN.map(filaCat).join("")}</tbody>`;
 
-  const cuenta = (fs, test) => {
-    const en = fs.filter(f => test(f.franja));
-    return en.length ? `${en.filter(f => f.perdida >= 3).length} de ${en.length}` : "\u2014";
-  };
-  $("capFranja").textContent =
-    "Compara situaciones, no jugadas: cu\u00e1ntas jugadas malas salieron de cada nivel de ventaja del que mov\u00eda.";
-  $("franja").innerHTML = `
-    <thead><tr><th>Ventaja antes de mover</th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
-    <tbody>${FRANJAS.map(([n, t]) => `<tr><td>${n}</td><td>${cuenta(B, t)}</td><td>${cuenta(N, t)}</td></tr>`).join("")}</tbody>`;
 }
 
 } catch (e) {

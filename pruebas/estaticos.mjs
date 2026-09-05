@@ -20,10 +20,21 @@ const usados = new Set([
 ]);
 chequear("ids referenciados existen", [...usados].filter(i => !ids.has(i)));
 
-/* 2. Toda tabla del panel de mes tiene su elemento de leyenda.
-      Convención: <table id="mesX"> va con <p class="cap" id="capX">. */
-const tablas = [...html.matchAll(/<table id="mes([A-Z][A-Za-z]*)"/g)].map(m => m[1]);
-chequear("cada tabla tiene leyenda", tablas.filter(t => !ids.has("cap" + t)));
+/* 2. Toda tabla tiene una leyenda justo antes.
+      Antes esto miraba los nombres: <table id="mesX"> tenía que ir con un id
+      "capX". Esa convención no describía la realidad —la leyenda de mesFranja
+      se llama capMesFranja, y la de mesResumen se llama capMes— y el chequeo
+      pasaba de casualidad, porque existían capFranja y capResumen, que eran las
+      leyendas de OTRAS tablas. Al borrar la tabla de franjas por partida, en la
+      v34, quedó al descubierto.
+      Ahora se mira la estructura y no el nombre: antes de cada tabla, cerca,
+      tiene que haber un elemento con class="cap". Cubre todas las tablas y no
+      solo las del mes. */
+const VENTANA = 200;
+const sinLeyenda = [...html.matchAll(/<table id="([^"]+)"/g)]
+  .filter(m => !html.slice(Math.max(0, m.index - VENTANA), m.index).includes('class="cap"'))
+  .map(m => m[1]);
+chequear("cada tabla tiene leyenda", sinLeyenda);
 
 /* 3. Todo lugar que asigna la partida elegida rehabilita los botones. */
 const asigna = [...html.matchAll(/^.*\bPARTIDA\s*=\s*(?!null).*$/gm)].map(m => m[0].trim());

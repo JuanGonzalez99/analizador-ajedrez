@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v33**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v34**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -478,6 +478,61 @@ Es la versión barata de lo que se busca con la migración de infraestructura: s
 el modo simple ya funciona con una configuración fija, cuando se migre solo hay
 que borrar las perillas que sobraron, y de paso se deja de sostener el análisis
 a distintas profundidades.
+
+## 4quinquies. Las tablas: vista Mes y vista Partida (v34)
+
+### La tabla de franjas salió del análisis por partida
+
+Era una pregunta de mes mostrada a escala de partida. Con ~17 jugadas por
+jugador, cada franja queda con dos o tres, y como debajo de 30 no se muestra
+porcentaje (§5.2), tres de las cuatro filas eran guiones. No estaba rota: no
+podía contestar nada con esos denominadores. **Decisión del usuario.** La del
+mes (`mesFranja`) sigue igual, que es donde la pregunta tiene sentido.
+
+### Precisión y mediana salen de la tabla
+
+En la vista Partida van arriba, como un marcador enfrentando a los dos
+jugadores; en la del mes, como tres cuadritos (precisión, mediana, jugadas).
+Eran las dos cifras que de verdad comparan y quedaban perdidas entre diez filas
+de recuentos casi todas en cero. En el mes, además, esas tres filas traían un
+"—" en la columna "Por partida" que no decía nada.
+
+**Los recuentos por categoría se quedan completos, con los ceros incluidos.**
+Se evaluó esconderlos y el usuario dijo que no: "Brillante: 0" también es un
+dato.
+
+### Los dos emoji, por símbolos
+
+`👍` pasó a `☆` (que hace pareja con el `★` de Mejor) y `📖` pasó a `▤`. Los
+emoji se dibujan distinto en cada teléfono y **no toman el color de la
+categoría**: eran los dos únicos íconos que quedaban en negro mientras los demás
+se pintaban. `▤` es menos literal que un libro; si molesta, se cambia.
+
+### El mes, en secciones que se abren
+
+Las cinco tablas de detalle son `<details class="seccion">`, cerradas por
+defecto: así la vista Mes se lee como un índice de qué cortes hay, en vez de un
+scroll largo. La leyenda de arriba se partió en dos —lo indispensable a la vista
+y el resto plegado en "Cómo se leen estos números"—, porque encadenaba origen,
+partidas asistidas, profundidad, modo, definición de mala y desglose en un
+párrafo de seis renglones antes del primer número.
+
+**Cuidado al tocar esto:** el chequeo 5 exige que cada `<table>` esté precedido
+inmediatamente por `<div class="tw">`. Dentro del `<details>` esa adyacencia se
+mantiene.
+
+### El chequeo 2 estaba verde por casualidad
+
+Pedía que `<table id="mesX">` tuviera un id `capX`. Esa convención **no describía
+la realidad**: la leyenda de `mesFranja` se llama `capMesFranja` y la de
+`mesResumen` se llama `capMes`. El chequeo pasaba porque existían `capFranja` y
+`capResumen` — que eran las leyendas de **otras** tablas, las de la vista
+Partida. Al borrar la tabla de franjas por partida quedó al descubierto.
+
+Ahora mira la estructura y no el nombre: antes de cada tabla, dentro de una
+ventana de 200 caracteres, tiene que haber un `class="cap"`. **Cubre todas las
+tablas y no solo las del mes.** Se verificó que falla borrando una leyenda a
+propósito, que es lo que el anterior no hacía.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
