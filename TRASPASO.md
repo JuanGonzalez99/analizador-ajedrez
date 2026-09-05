@@ -787,17 +787,13 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 
 ## 8. Pendientes de fondo, sin resolver
 
-### Chicos, de la v26
+### Chicos, de la v26 (queda uno de la lista original resuelto en la v33)
 
 - **`textoDesglose` dice "de este mes" siempre.** Con el interruptor en "todo
   lo analizado" la leyenda afirma "De las 189 jugadas malas de este mes" cuando
   los números son de dos meses. El número está bien, la frase no. Está escrito
   fijo de cuando el mes era la única fuente posible; hay que pasarle de dónde
   salen los datos, como hace `textoOrigen`.
-
-- **La barra de progreso queda visible después del barrido.** Se ve como una
-  franja gris ancha arriba de "Estadísticas". Hay que esconderla al terminar,
-  no solo ponerla en cero.
 
 - **Revisar la columna "% resto" de la tabla de mecanismos.** Pendiente abierto
   por el usuario en la v26, sin diagnóstico todavía: hay que mirarla y decidir.
