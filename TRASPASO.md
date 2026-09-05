@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v28**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v30**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -263,6 +263,77 @@ jugadas, que scrollea sola para que el tablero no se mueva de lugar.
 - **Las señales ya no reservan un renglón vacío.** Tenían `min-height: 18px`
   para que no saltara el layout; en una disposición densa un renglón que casi
   siempre está vacío cuesta más de lo que evita.
+
+### Navegar entre jugadas (v29)
+
+Pasar de una jugada a otra es lo que más se repite en esta pantalla, y era lo
+más incómodo: `‹` y `›` medían unos 40 px, estaban separados por "Mostrar la
+mejor" en el medio, y quedaban al final de la página, después de una lista que
+scrollea. Tres cosas que se sumaban.
+
+- **Se puede deslizar sobre el tablero.** Izquierda avanza, derecha retrocede.
+  El gesto pide un desplazamiento claramente horizontal —40 px y al menos vez y
+  media lo que se movió en vertical— porque si no, scrollear con el dedo apoyado
+  en el tablero pasaría jugadas sin querer. **No se llama `preventDefault` en
+  `touchmove` a propósito:** bloquearía el scroll vertical, que es como se llega
+  al resto de la vista.
+- **Los botones son uno solo, pegado y del ancho entero**, 48 px de alto, con
+  texto: "‹ Anterior" y "Siguiente ›". El resto de los controles baja a la fila
+  secundaria.
+- **Las flechas del teclado**, para cuando se abre en la computadora. Se ignoran
+  mientras se escribe en un campo.
+
+**Decisión tomada a conciencia:** un gesto no tiene affordance, así que el
+deslizamiento **no es descubrible** para quien no viene de chess.com o lichess.
+Se dejó sin señalizar igual, porque los botones siguen ahí: el gesto es un
+atajo, no el camino. Si al usarlo no resulta natural, lo acordado es agregar dos
+galones `‹ ›` muy tenues en los bordes del tablero, no un texto explicativo.
+
+### Ver la mejor jugada: dos maneras, a propósito (v30)
+
+Son dos cosas distintas y por eso están separadas:
+
+- **`VER_MEJOR`** es la **preferencia**. La enciende el botón "Mostrar la mejor"
+  y queda puesta de una jugada a la otra. Va a mudarse a un menú de ajustes
+  cuando exista.
+- **`MEJOR_EN`** es un **vistazo puntual**. Se toca el cuadrito "Mejor" de las
+  métricas y muestra la flecha solo en esa jugada. Guarda *en qué* jugada se
+  tocó, no un booleano, así que al cambiar de jugada se apaga solo.
+
+Tocar el cuadrito con la preferencia ya encendida **no hace nada**: no habría
+nada que mostrar, y apagarla desde ahí sería confuso.
+
+**Toda la navegación pasa por `irA(i)`** —botones, deslizamiento, flechas del
+teclado y clic en la lista—, que es el único lugar donde se apaga el vistazo.
+Antes cada una movía `IDX` por su cuenta. Si alguien agrega otra forma de
+navegar y no usa `irA`, el vistazo queda pegado de una jugada a la otra: es el
+motivo de que haya una sola puerta. Los tres lugares que reposicionan al cargar
+o rehacer una partida limpian `MEJOR_EN` aparte, porque guarda un número de
+jugada que en otra partida apunta a cualquier cosa.
+
+**Ojo con una confusión al probarlo:** cuando la jugada jugada *es* la mejor, no
+aparece flecha nueva y el cuadrito no se enciende. No está roto — no hay nada
+distinto que mostrar.
+
+### Dos arreglos de la misma tanda
+
+- **La jugada elegida se marca con fondo, no con contorno.** El contorno
+  redondeado se leía como un campo de texto editable. El fondo sale del color de
+  la propia categoría (`color-mix` sobre `currentColor`).
+- **El selector de tema está vestido como los botones**: mismo borde, mismo
+  alto, y la flechita dibujada acá en vez de la del navegador, que lo hacía ver
+  de otra familia.
+
+### Se sacó el aviso "al filo del umbral"
+
+Avisaba cuando la pérdida de una jugada caía a menos de 0,15 de uno de los
+cortes que deciden la categoría (0,5, 1 y 3), porque ahí el ruido del motor
+puede cambiarle la etiqueta. **El razonamiento sigue siendo cierto** y por eso
+queda escrito acá: una jugada pegada a un corte es una etiqueta poco firme. Lo
+que se sacó es el aviso en pantalla —texto en mayúsculas más un color propio en
+cada veredicto—, por decisión del usuario: costaba atención en todas las jugadas
+para un caso que rara vez cambia lo que uno hace. Se borraron `UMBRALES` y
+`alFilo`, que quedaban sin uso.
 
 ### Lo que falta de esta vista
 

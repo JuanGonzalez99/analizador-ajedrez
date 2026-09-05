@@ -23,7 +23,14 @@
   button { font: inherit; padding: 9px 15px; border: 1px solid currentColor; background: transparent;
            color: inherit; border-radius: 6px; cursor: pointer; }
   button:disabled { opacity: .35; cursor: default; }
-  button.chico { padding: 5px 10px; font-size: 14px; }
+  button.chico, select.chico { padding: 5px 10px; font-size: 14px; }
+  /* el select nativo se veía de otra familia al lado de los botones: mismo
+     borde, mismo alto, y la flechita dibujada acá para que no dependa del
+     navegador */
+  select.chico { border-color: currentColor; appearance: none;
+                 padding-right: 26px; background-repeat: no-repeat;
+                 background-position: right 9px center; background-size: 9px;
+                 background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='currentColor' stroke-width='1.5'/></svg>"); }
   input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--linea);
     border-radius: 6px; background: transparent; color: inherit; max-width: 100%; }
   input#usuario { width: 145px; }
@@ -61,6 +68,12 @@
   .evalbar.girada { justify-content: flex-start; }
   .evalbar > i { display: block; width: 100%; background: #f0ece2; transition: height .2s; }
 
+  /* Avanzar y retroceder es la misma tarea repetida muchas veces seguidas:
+     van pegadas, del mismo tamaño y ocupando el ancho entero. Antes eran dos
+     cuadraditos de 40 px separados por "Mostrar la mejor". */
+  .nav { display: flex; gap: 6px; margin-top: 10px; }
+  .nav button { flex: 1; height: 48px; font-size: 15px; }
+
   .metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
               gap: 6px; margin-top: 8px; }
   .metricas > div { border: 1px solid var(--linea); border-radius: 6px; padding: 6px 8px;
@@ -69,6 +82,11 @@
                   color: var(--tenue); }
   .metricas .va { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;
                   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* el cuadrito de la mejor jugada se toca para verla en el tablero, y se nota
+     que está encendido: si no, la flecha aparece sin que se sepa de dónde */
+  .metricas .tocable { cursor: pointer; user-select: none; }
+  .metricas .tocable.activo { border-color: currentColor;
+                              background: color-mix(in srgb, currentColor 12%, transparent); }
   .veredicto { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
                border: 1px solid var(--linea); border-left-width: 5px; border-radius: 8px; }
   .veredicto .ico { font-weight: 800; font-size: 17px; min-width: 26px; text-align: center; }
@@ -91,7 +109,10 @@
                  padding: 4px 6px; border-radius: 5px; min-width: 0; }
   .jugadas .jg .pt { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
-  .jugadas .jg.sel { outline: 2px solid currentColor; font-weight: 700; }
+  /* un contorno redondeado se leía como un campo de texto editable. Un fondo
+     del propio color de la categoría marca igual y no promete nada falso. */
+  .jugadas .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
+                     font-weight: 700; }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
   .revcab { display: flex; justify-content: space-between; gap: 10px; font-size: 13px;
@@ -130,7 +151,7 @@
 </div>
 
 <script>
-  window.VERSION = "v28 · 04-09";
+  window.VERSION = "v30 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -373,21 +394,22 @@
     <div class="ev" id="vEv"></div>
   </div>
   <div class="metricas">
-    <div><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
+    <div id="tileMejor" class="tocable" role="button" tabindex="0"
+         aria-label="Ver la mejor jugada en el tablero"><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
     <div><div class="et">Pérdida</div><div class="va" id="mPerdida"></div></div>
     <div><div class="et">Caída</div><div class="va" id="mCaida"></div></div>
   </div>
   <div class="senales" id="senales"></div>
   <div class="jugadas" id="jugadas"></div>
-  <div class="fila" style="margin-top:8px">
-    <button class="chico" id="ant">&lsaquo;</button>
-    <button class="chico" id="btnMejor">Mostrar la mejor</button>
-    <button class="chico" id="sig">&rsaquo;</button>
+  <div class="nav">
+    <button id="ant">&lsaquo; Anterior</button>
+    <button id="sig">Siguiente &rsaquo;</button>
   </div>
   <div class="fila" style="margin-top:6px">
+    <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
     <button class="chico" id="btnAmbos">Pintar las dos</button>
-    <select id="tema" aria-label="Tema del tablero"></select>
+    <select id="tema" class="chico" aria-label="Tema del tablero"></select>
   </div>
 </div>
 
@@ -512,11 +534,6 @@ const CATEGORIAS = {
   omision:    { nombre: "Omisión",     icono: "✗",  desc: "Había mate o material y se dejó pasar." },
   grave:      { nombre: "Error grave", icono: "??", desc: "Pierde material o la partida." }
 };
-
-/* los cortes que deciden la categoría. Una jugada pegada a uno de estos
-   números puede cambiar de etiqueta por ruido del motor: se avisa. */
-const UMBRALES = [0.5, 1, 3];
-const alFilo = perdida => UMBRALES.some(u => Math.abs(perdida - u) <= 0.15);
 
 const ORDEN = ["brillante", "genial", "mejor", "excelente", "bien", "libro",
                       "imprecision", "error", "omision", "grave"];
@@ -1170,6 +1187,21 @@ function dibujar(fen, jugada, mejor) {
 /* ============ interfaz ============ */
 const TOPE_MES = 50;
 let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
+
+/* Dos formas distintas de ver la mejor jugada, a propósito:
+   - VER_MEJOR es la preferencia, la enciende el botón de abajo y queda puesta.
+   - MEJOR_EN es un vistazo puntual: guarda EN QUÉ jugada se tocó el cuadrito
+     "Mejor", así al cambiar de jugada se apaga solo.
+   Todo lo que mueve de jugada pasa por irA(), que es el único lugar donde se
+   apaga el vistazo: si alguien agrega otra forma de navegar y no la usa, el
+   vistazo quedaría pegado de una jugada a la otra. */
+let MEJOR_EN = null;
+function irA(i) {
+  if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
+  IDX = i;
+  MEJOR_EN = null;
+  pintarRevision();
+}
 let VER_AMBOS = false;
 let MES = null;
 let MESES = [];        /* urls de todos los archivos mensuales del usuario */
@@ -1337,7 +1369,7 @@ $("analizar").onclick = seguro("analizar", async () => {
       progreso(hechas / total);
     }, opcionesDePantalla());
     progreso(1);
-    IDX = 0;
+    IDX = 0; MEJOR_EN = null;
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
@@ -1623,7 +1655,7 @@ $("modo").onchange = seguro("modo", () => {
   /* TODO no se rehace: cada fila flaca lleva las dos etiquetas. */
   if (R) {
     reDerivar(R);
-    IDX = Math.min(IDX, R.filas.length - 1);
+    IDX = Math.min(IDX, R.filas.length - 1); MEJOR_EN = null;
     pintarResumen(R.profBase || +$("prof").value);
     pintarRevision();
   }
@@ -1960,7 +1992,7 @@ function pintarLista() {
   $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
       R = MES.resultados[+d.dataset.i];
-      IDX = 0;
+      IDX = 0; MEJOR_EN = null;
       GIRADO = (R.cab.Black || "").toLowerCase() === USUARIO;
       pintarResumen(MES.prof);
       pintarRevision();
@@ -1979,12 +2011,9 @@ function pintarRevision() {
   $("vIco").textContent = c.icono;
   $("vIco").style.color = color;
   $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
-  const filo = alFilo(f.perdida) && f.cat !== "libro";
   $("vSub").textContent = c.desc +
     ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
-    ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria` +
-    (filo ? " \u00b7 AL FILO DEL UMBRAL" : "");
-  $("vSub").style.color = filo ? "var(--c-imprecision)" : "";
+    ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria`;
   $("vEv").textContent = f.evalTexto;
 
   /* el rival y su elo salen de las cabeceras del PGN; si la partida no las
@@ -2010,7 +2039,9 @@ function pintarRevision() {
   $("mMejor").title = f.mejor || "";
   $("mPerdida").textContent = f.perdida.toFixed(2);
   $("mCaida").textContent = f.caida.toFixed(0) + " pt";
-  $("tablero").innerHTML = dibujar(f.fen, f.uci, VER_MEJOR && f.mejor !== f.uci ? f.mejor : null);
+  const verMejor = (VER_MEJOR || MEJOR_EN === IDX) && f.mejor !== f.uci;
+  $("tablero").innerHTML = dibujar(f.fen, f.uci, verMejor ? f.mejor : null);
+  $("tileMejor").classList.toggle("activo", verMejor);
 
   /* por defecto solo se pintan las jugadas propias: las del rival distraen de
      lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
@@ -2034,7 +2065,7 @@ function pintarRevision() {
     `<div><span class="np">${num}</span>` +
     `${celda(p.w && p.w.x, p.w && p.w.i)}${celda(p.b && p.b.x, p.b && p.b.i)}</div>`).join("");
   $("jugadas").querySelectorAll("span[data-i]").forEach(s => {
-    s.onclick = () => { IDX = +s.dataset.i; pintarRevision(); };
+    s.onclick = () => irA(+s.dataset.i);
   });
   const sel = $("jugadas").querySelector(".sel");
   if (sel) sel.scrollIntoView({ block: "nearest" });
@@ -2050,9 +2081,53 @@ function pintarRevision() {
   $("ant").disabled = IDX === 0;
   $("sig").disabled = IDX === R.filas.length - 1;
 }
-$("ant").onclick = seguro("anterior", () => { if (IDX > 0) { IDX--; pintarRevision(); } });
-$("sig").onclick = seguro("siguiente", () => { if (IDX < R.filas.length - 1) { IDX++; pintarRevision(); } });
+/* Pasar jugadas es lo que más se repite en esta pantalla, así que además de
+   los botones se puede deslizar sobre el tablero, como en cualquier tablero
+   digital. Es un atajo, no el camino: los botones siguen ahí para el que no
+   descubre el gesto.
+   No se llama preventDefault en touchmove a propósito: bloquearía el scroll
+   vertical de la página, que es cómo se llega al resto de la vista. */
+let tocado = null;
+$("tablero").addEventListener("touchstart", ev => {
+  const t = ev.changedTouches[0];
+  tocado = { x: t.clientX, y: t.clientY };
+}, { passive: true });
+$("tablero").addEventListener("touchend", seguro("deslizar", ev => {
+  if (!tocado || !R) return;
+  const t = ev.changedTouches[0];
+  const dx = t.clientX - tocado.x, dy = t.clientY - tocado.y;
+  tocado = null;
+  /* pide un gesto claramente horizontal: si no, un scroll con el dedo apoyado
+     en el tablero pasaría jugadas sin querer */
+  if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  irA(dx < 0 ? IDX + 1 : IDX - 1);
+}), { passive: true });
+
+/* en la compu, las flechas. Se ignoran mientras se escribe en un campo. */
+document.addEventListener("keydown", seguro("teclas", ev => {
+  if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+  if (!R || $("zonaRevision").classList.contains("oculto")) return;
+  const t = ev.target.tagName;
+  if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
+  ev.preventDefault();
+  irA(ev.key === "ArrowRight" ? IDX + 1 : IDX - 1);
+}));
+
+$("ant").onclick = seguro("anterior", () => irA(IDX - 1));
+$("sig").onclick = seguro("siguiente", () => irA(IDX + 1));
 $("btnMejor").onclick = seguro("mejor", () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); });
+
+/* el vistazo del cuadrito. Si la preferencia ya está encendida no hay nada que
+   mostrar, así que apagarlo desde acá sería confuso: no hace nada. */
+const verDeUnaVez = seguro("vistazo a la mejor", () => {
+  if (VER_MEJOR) return;
+  MEJOR_EN = MEJOR_EN === IDX ? null : IDX;
+  pintarRevision();
+});
+$("tileMejor").onclick = verDeUnaVez;
+$("tileMejor").onkeydown = ev => {
+  if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); verDeUnaVez(ev); }
+};
 $("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
 $("btnAmbos").onclick = seguro("pintar", () => { VER_AMBOS = !VER_AMBOS; pintarRevision(); });
 
