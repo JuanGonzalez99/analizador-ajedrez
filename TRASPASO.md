@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.40**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.41**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -422,14 +422,11 @@ para un caso que rara vez cambia lo que uno hace. Se borraron `UMBRALES` y
 
 ### Lo que falta de esta vista
 
-- **La paleta.** Hay **tres verdes casi idénticos** —`#4a9d4a` Mejor, `#6bb06b`
-  Excelente, `#86b886` Bien— y en la lista de jugadas son puntos de 7 px: a ese
-  tamaño el color deja de informar. La escala semántica (verde bueno → rojo
-  malo) está bien; lo que hay que rehacer es la separación dentro de cada tramo.
-- **La vista Mes** sigue con la disposición vieja, seis tablas una abajo de la
-  otra. Es la otra mitad de la decisión de tener dos vistas equivalentes.
-- **La barra de progreso sigue visible después del barrido** (pendiente de la
-  v26). Ahora se nota más, porque quedó justo arriba de una vista más ordenada.
+La disposición está terminada. Lo que queda es la **paleta**, y está anotado
+entre los pendientes de interfaz (§8).
+
+*(La vista Mes en secciones se hizo en la v34 y la barra de progreso se escondió
+en la v33; las dos figuraban acá como pendientes hasta la v0.41.)*
 
 ## 4quater. Los dos modos de la app (v33)
 
@@ -914,7 +911,34 @@ describe en §6.
    solo sobre las partidas entre ellos. Los datos ya están: las partidas se
    descargan enteras y la precisión se calcula para ambos lados.
 
-8. **ELO estimado a partir de la precisión** contra el rating de los rivales.
+8. **Estadísticas que tomen el tiempo en cuenta.** Pedido por el usuario. **Los
+   datos están y se comprobó**: 14 de las 15 partidas del mes 2026-09 traen
+   `[%clk 0:05:00]` en el PGN (la que no, es la única *daily*), y chess.js ya
+   los parsea —`get_comments()` los devuelve por FEN—, así que **no hace falta
+   escribir un lector**. El tiempo por jugada sale de restar relojes
+   consecutivos y sumar el incremento del `TimeControl`.
+
+   Son **tres formas distintas** y conviene no mezclarlas:
+   - **Cuánto pensaste esa jugada**: tasas por tramo de segundos gastados.
+   - **Cuánto te quedaba en el reloj**: la pregunta del apuro. Es otra cosa y
+     probablemente más accionable.
+   - **Como apoyo**: una columna de segundos medianos en las tablas que ya
+     existen (por pieza, por tramo, por franja). Contesta "dónde se me va el
+     reloj" sin inventar tablas ni cortes, y es la única de las tres que no
+     tiene el problema de abajo.
+
+   **Dos advertencias, cualquiera de las dos invalida el resultado:**
+   - **No se pueden mezclar cadencias.** Diez segundos en un 5+0 es muchísimo y
+     en un 10+0 no tanto. Ese mes tenía 12 blitz, 2 rapid y 1 daily sin reloj:
+     un tramo "menos de 3 segundos" que las mezcle no significa nada. Es el
+     mismo problema de denominadores que sacó la columna "% resto". Hay que
+     declarar la cadencia o partir por ella.
+   - **Hay confundidor**, el mismo de siempre: se piensa más en las posiciones
+     difíciles. Si sale que "las jugadas que más pensé salen peor", puede ser
+     que pensar de más haga mal, o que las difíciles sean difíciles. Se separa
+     estratificando, igual que en §8.
+
+9. **ELO estimado a partir de la precisión** contra el rating de los rivales.
    Cuidado: el rating de chess.com es inestable y contra rivales flojos la
    precisión sube sola. Mostrar siempre el rango y la cantidad de partidas,
    nunca un número solo.
@@ -944,10 +968,32 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 
 ## 8. Pendientes de fondo, sin resolver
 
-### Chicos, de la v26
+*(Los cuatro pendientes chicos de la v26 se resolvieron: barra de progreso en la
+v33, `textoDesglose` y la columna "% resto" en la v0.36, y el historial de
+resultados en la v0.39.)*
 
-Los cuatro se resolvieron: barra de progreso (v33), `textoDesglose` y la
-columna "% resto" (v0.36), y el historial de resultados (v0.39).
+### De interfaz
+
+- **La paleta tiene luminosidades desparejas.** El ámbar de Imprecisión llama
+  más la atención que el verde de Bien sin que eso signifique nada. Los
+  símbolos de la v0.35 arreglaron la **legibilidad**, no el **volumen**. La
+  propuesta medida —seis colores a la misma luminosidad percibida— está en
+  §4quinquies con los ocho hex ya calculados, para no rehacer la cuenta.
+
+- **El listado de partidas está sin rediseñar.** Tiene un `max-height: 34vh`
+  puesto en la v33 para que el botón de analizar quede a la vista; es un parche,
+  no un diseño. Falta decidir cuántas mostrar, cómo se ven y cómo se busca.
+
+- **No hay pantalla de configuración.** Los dos `<select>` —tema del tablero y
+  dónde va la evaluación— viven sueltos en la fila de controles de la vista
+  Partida, y ahí adentro también tendría que ir la preferencia de "mostrar la
+  mejor" (§4bis). Es además el lugar donde irían los juegos de piezas
+  configurables, que están costurados pero sin hacer (§4bis).
+
+- **Las animaciones son una rama sin empezar.** Apareció al ver que el
+  deslizamiento del tablero no resulta intuitivo: un galón estático avisa que
+  *se puede*, pero enseñar *cómo* es trabajo de una transición. Es lo que le
+  daría el salto de "se ve bien" a "se siente bien".
 
 ### De fondo
 
