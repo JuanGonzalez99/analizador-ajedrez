@@ -63,6 +63,10 @@
   .tira .jugadas span { display: inline-block; padding: 4px 7px; margin-right: 2px; border-radius: 5px;
                         font-size: 13.5px; cursor: pointer; }
   .tira .jugadas span.sel { outline: 2px solid currentColor; font-weight: 700; }
+  .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
+  .credito a { color: inherit; }
+  .revcab { display: flex; justify-content: space-between; gap: 10px; font-size: 13px;
+            color: var(--tenue); margin-top: 10px; }
   .senales { font-size: 12.5px; color: var(--tenue); margin-top: 8px; min-height: 18px; }
   #diag { font: 12px/1.4 ui-monospace, monospace; color: var(--tenue); margin: 0 0 10px;
           cursor: pointer; user-select: none; }
@@ -94,7 +98,7 @@
 </div>
 
 <script>
-  window.VERSION = "v26 · 04-09";
+  window.VERSION = "v27 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -326,6 +330,7 @@
 
 <div id="zonaRevision" class="oculto">
   <h2>Revisión</h2>
+  <div class="revcab"><span id="revRival"></span><span id="revJugada"></span></div>
   <div class="evalbar"><i id="evalfill"></i></div>
   <div class="veredicto" id="veredicto">
     <div class="ico" id="vIco"></div>
@@ -342,6 +347,7 @@
     <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
     <button class="chico" id="btnAmbos">Pintar las dos</button>
+    <select id="tema" aria-label="Tema del tablero"></select>
   </div>
   <div class="senales" id="senales"></div>
 </div>
@@ -354,6 +360,10 @@
   <p class="cap" id="capFranja"></p>
   <div class="tw"><table id="franja"></table></div>
 </div>
+
+<p class="credito">Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
+  rel="noopener">Cburnett</a> de Colin M.L. Burnett,
+  <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener">CC BY-SA 3.0</a>.</p>
 
 <script type="module">
 let Chess;
@@ -698,6 +708,15 @@ try {
 window.MODULO_OK = true;
 const $ = id => document.getElementById(id);
 $("diag").textContent = window.VERSION + " · listo · tocá para ver el registro";
+
+/* La profundidad y el MultiPV se sacaron del encabezado de la partida: solo
+   importan cuando se comparan dos corridas, y ahí se mira el diagnóstico. */
+function anotarConfig() {
+  const o = opcionesDePantalla();
+  $("diag").textContent = window.VERSION + ` · prof ${$("prof").value} · mpv ${o.multipv}` +
+    ` · ${$("motores").value} motores · tocá para ver el registro`;
+}
+
 const ver = (id, si) => $(id).classList.toggle("oculto", !si);
 const log = (...a) => window.LOG.add("·", a.join(" "));
 
@@ -1015,7 +1034,45 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
 }
 
 /* ============ tablero ============ */
-const FORMA = { k: "\u2654", q: "\u2655", r: "\u2656", b: "\u2657", n: "\u2658", p: "\u2659" };
+
+/* Piezas Cburnett, de Colin M.L. Burnett, CC BY-SA 3.0, vía Wikimedia Commons.
+   Son las mismas que usa lichess. Reemplazaron a los glifos Unicode de la v26,
+   que dependían de la fuente del dispositivo: en algunos Android salían
+   cuadraditos, y donde salían eran el set hueco pensado para texto corrido, con
+   el trazo demasiado fino para leerse a 42 px.
+   Vienen en una caja de 45x45, así que se escalan a la casilla. */
+const LADO_PIEZA = 45;
+const PIEZAS = `<g id="cb-wk"><g fill="none" fill-rule="evenodd" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"> <path stroke-linejoin="miter" d="M22.5 11.63V6M20 8h5"/> <path fill="#fff" stroke-linecap="butt" stroke-linejoin="miter" d="M22.5 25s4.5-7.5 3-10.5c0 0-1-2.5-3-2.5s-3 2.5-3 2.5c-1.5 3 3 10.5 3 10.5"/> <path fill="#fff" d="M12.5 37c5.5 3.5 14.5 3.5 20 0v-7s9-4.5 6-10.5c-4-6.5-13.5-3.5-16 4V27v-3.5c-2.5-7.5-12-10.5-16-4-3 6 6 10.5 6 10.5v7"/> <path d="M12.5 30c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0m-20 3.5c5.5-3 14.5-3 20 0"/> </g></g><g id="cb-wq"><g style="fill:#ffffff;stroke:#000000;stroke-width:1.5;stroke-linejoin:round"> <path d="M 9,26 C 17.5,24.5 30,24.5 36,26 L 38.5,13.5 L 31,25 L 30.7,10.9 L 25.5,24.5 L 22.5,10 L 19.5,24.5 L 14.3,10.9 L 14,25 L 6.5,13.5 L 9,26 z"/> <path d="M 9,26 C 9,28 10.5,28 11.5,30 C 12.5,31.5 12.5,31 12,33.5 C 10.5,34.5 11,36 11,36 C 9.5,37.5 11,38.5 11,38.5 C 17.5,39.5 27.5,39.5 34,38.5 C 34,38.5 35.5,37.5 34,36 C 34,36 34.5,34.5 33,33.5 C 32.5,31 32.5,31.5 33.5,30 C 34.5,28 36,28 36,26 C 27.5,24.5 17.5,24.5 9,26 z"/> <path d="M 11.5,30 C 15,29 30,29 33.5,30" style="fill:none"/> <path d="M 12,33.5 C 18,32.5 27,32.5 33,33.5" style="fill:none"/> <circle cx="6" cy="12" r="2" /> <circle cx="14" cy="9" r="2" /> <circle cx="22.5" cy="8" r="2" /> <circle cx="31" cy="9" r="2" /> <circle cx="39" cy="12" r="2" /> </g></g><g id="cb-wr"><g style="opacity:1; fill:#ffffff; fill-opacity:1; fill-rule:evenodd; stroke:#000000; stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;" transform="translate(0,0.3)"> <path d="M 9,39 L 36,39 L 36,36 L 9,36 L 9,39 z " style="stroke-linecap:butt;" /> <path d="M 12,36 L 12,32 L 33,32 L 33,36 L 12,36 z " style="stroke-linecap:butt;" /> <path d="M 11,14 L 11,9 L 15,9 L 15,11 L 20,11 L 20,9 L 25,9 L 25,11 L 30,11 L 30,9 L 34,9 L 34,14" style="stroke-linecap:butt;" /> <path d="M 34,14 L 31,17 L 14,17 L 11,14" /> <path d="M 31,17 L 31,29.5 L 14,29.5 L 14,17" style="stroke-linecap:butt; stroke-linejoin:miter;" /> <path d="M 31,29.5 L 32.5,32 L 12.5,32 L 14,29.5" /> <path d="M 11,14 L 34,14" style="fill:none; stroke:#000000; stroke-linejoin:miter;" /> </g></g><g id="cb-wb"><g style="opacity:1; fill:none; fill-rule:evenodd; fill-opacity:1; stroke:#000000; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;" transform="translate(0,0.6)"> <g style="fill:#ffffff; stroke:#000000; stroke-linecap:butt;"> <path d="M 9,36 C 12.39,35.03 19.11,36.43 22.5,34 C 25.89,36.43 32.61,35.03 36,36 C 36,36 37.65,36.54 39,38 C 38.32,38.97 37.35,38.99 36,38.5 C 32.61,37.53 25.89,38.96 22.5,37.5 C 19.11,38.96 12.39,37.53 9,38.5 C 7.65,38.99 6.68,38.97 6,38 C 7.35,36.54 9,36 9,36 z"/> <path d="M 15,32 C 17.5,34.5 27.5,34.5 30,32 C 30.5,30.5 30,30 30,30 C 30,27.5 27.5,26 27.5,26 C 33,24.5 33.5,14.5 22.5,10.5 C 11.5,14.5 12,24.5 17.5,26 C 17.5,26 15,27.5 15,30 C 15,30 14.5,30.5 15,32 z"/> <path d="M 25 8 A 2.5 2.5 0 1 1 20,8 A 2.5 2.5 0 1 1 25 8 z"/> </g> <path d="M 17.5,26 L 27.5,26 M 15,30 L 30,30 M 22.5,15.5 L 22.5,20.5 M 20,18 L 25,18" style="fill:none; stroke:#000000; stroke-linejoin:miter;"/> </g></g><g id="cb-wn"><g style="opacity:1; fill:none; fill-opacity:1; fill-rule:evenodd; stroke:#000000; stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;" transform="translate(0,0.3)"> <path d="M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18" style="fill:#ffffff; stroke:#000000;" /> <path d="M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10" style="fill:#ffffff; stroke:#000000;" /> <path d="M 9.5 25.5 A 0.5 0.5 0 1 1 8.5,25.5 A 0.5 0.5 0 1 1 9.5 25.5 z" style="fill:#000000; stroke:#000000;" /> <path d="M 15 15.5 A 0.5 1.5 0 1 1 14,15.5 A 0.5 1.5 0 1 1 15 15.5 z" transform="matrix(0.866,0.5,-0.5,0.866,9.693,-5.173)" style="fill:#000000; stroke:#000000;" /> </g></g><g id="cb-wp"><path d="m 22.5,9 c -2.21,0 -4,1.79 -4,4 0,0.89 0.29,1.71 0.78,2.38 C 17.33,16.5 16,18.59 16,21 c 0,2.03 0.94,3.84 2.41,5.03 C 15.41,27.09 11,31.58 11,39.5 H 34 C 34,31.58 29.59,27.09 26.59,26.03 28.06,24.84 29,23.03 29,21 29,18.59 27.67,16.5 25.72,15.38 26.21,14.71 26.5,13.89 26.5,13 c 0,-2.21 -1.79,-4 -4,-4 z" style="opacity:1; fill:#ffffff; fill-opacity:1; fill-rule:nonzero; stroke:#000000; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:miter; stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;"/></g><g id="cb-bk"><g style="fill:none; fill-opacity:1; fill-rule:evenodd; stroke:#000000; stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;"> <path d="M 22.5,11.63 L 22.5,6" style="fill:none; stroke:#000000; stroke-linejoin:miter;" id="path6570"/> <path d="M 22.5,25 C 22.5,25 27,17.5 25.5,14.5 C 25.5,14.5 24.5,12 22.5,12 C 20.5,12 19.5,14.5 19.5,14.5 C 18,17.5 22.5,25 22.5,25" style="fill:#000000;fill-opacity:1; stroke-linecap:butt; stroke-linejoin:miter;"/> <path d="M 12.5,37 C 18,40.5 27,40.5 32.5,37 L 32.5,30 C 32.5,30 41.5,25.5 38.5,19.5 C 34.5,13 25,16 22.5,23.5 L 22.5,27 L 22.5,23.5 C 20,16 10.5,13 6.5,19.5 C 3.5,25.5 12.5,30 12.5,30 L 12.5,37" style="fill:#000000; stroke:#000000;"/> <path d="M 20,8 L 25,8" style="fill:none; stroke:#000000; stroke-linejoin:miter;"/> <path d="M 32,29.5 C 32,29.5 40.5,25.5 38.03,19.85 C 34.15,14 25,18 22.5,24.5 L 22.5,26.6 L 22.5,24.5 C 20,18 10.85,14 6.97,19.85 C 4.5,25.5 13,29.5 13,29.5" style="fill:none; stroke:#ffffff;"/> <path d="M 12.5,30 C 18,27 27,27 32.5,30 M 12.5,33.5 C 18,30.5 27,30.5 32.5,33.5 M 12.5,37 C 18,34 27,34 32.5,37" style="fill:none; stroke:#ffffff;"/> </g></g><g id="cb-bq"><g style="fill:#000000;stroke:#000000;stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round"> <path d="M 9,26 C 17.5,24.5 30,24.5 36,26 L 38.5,13.5 L 31,25 L 30.7,10.9 L 25.5,24.5 L 22.5,10 L 19.5,24.5 L 14.3,10.9 L 14,25 L 6.5,13.5 L 9,26 z" style="stroke-linecap:butt;fill:#000000" /> <path d="m 9,26 c 0,2 1.5,2 2.5,4 1,1.5 1,1 0.5,3.5 -1.5,1 -1,2.5 -1,2.5 -1.5,1.5 0,2.5 0,2.5 6.5,1 16.5,1 23,0 0,0 1.5,-1 0,-2.5 0,0 0.5,-1.5 -1,-2.5 -0.5,-2.5 -0.5,-2 0.5,-3.5 1,-2 2.5,-2 2.5,-4 -8.5,-1.5 -18.5,-1.5 -27,0 z" /> <path d="M 11.5,30 C 15,29 30,29 33.5,30" /> <path d="m 12,33.5 c 6,-1 15,-1 21,0" /> <circle cx="6" cy="12" r="2" /> <circle cx="14" cy="9" r="2" /> <circle cx="22.5" cy="8" r="2" /> <circle cx="31" cy="9" r="2" /> <circle cx="39" cy="12" r="2" /> <path d="M 11,38.5 A 35,35 1 0 0 34,38.5" style="fill:none; stroke:#000000;stroke-linecap:butt;" /> <g style="fill:none; stroke:#ffffff;"> <path d="M 11,29 A 35,35 1 0 1 34,29" /> <path d="M 12.5,31.5 L 32.5,31.5" /> <path d="M 11.5,34.5 A 35,35 1 0 0 33.5,34.5" /> <path d="M 10.5,37.5 A 35,35 1 0 0 34.5,37.5" /> </g> </g></g><g id="cb-br"><g style="opacity:1; fill:#000000; fill-opacity:1; fill-rule:evenodd; stroke:#000000; stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;" transform="translate(0,0.3)"> <path d="M 9,39 L 36,39 L 36,36 L 9,36 L 9,39 z " style="stroke-linecap:butt;" /> <path d="M 12.5,32 L 14,29.5 L 31,29.5 L 32.5,32 L 12.5,32 z " style="stroke-linecap:butt;" /> <path d="M 12,36 L 12,32 L 33,32 L 33,36 L 12,36 z " style="stroke-linecap:butt;" /> <path d="M 14,29.5 L 14,16.5 L 31,16.5 L 31,29.5 L 14,29.5 z " style="stroke-linecap:butt;stroke-linejoin:miter;" /> <path d="M 14,16.5 L 11,14 L 34,14 L 31,16.5 L 14,16.5 z " style="stroke-linecap:butt;" /> <path d="M 11,14 L 11,9 L 15,9 L 15,11 L 20,11 L 20,9 L 25,9 L 25,11 L 30,11 L 30,9 L 34,9 L 34,14 L 11,14 z " style="stroke-linecap:butt;" /> <path d="M 12,35.5 L 33,35.5 L 33,35.5" style="fill:none; stroke:#ffffff; stroke-width:1; stroke-linejoin:miter;" /> <path d="M 13,31.5 L 32,31.5" style="fill:none; stroke:#ffffff; stroke-width:1; stroke-linejoin:miter;" /> <path d="M 14,29.5 L 31,29.5" style="fill:none; stroke:#ffffff; stroke-width:1; stroke-linejoin:miter;" /> <path d="M 14,16.5 L 31,16.5" style="fill:none; stroke:#ffffff; stroke-width:1; stroke-linejoin:miter;" /> <path d="M 11,14 L 34,14" style="fill:none; stroke:#ffffff; stroke-width:1; stroke-linejoin:miter;" /> </g></g><g id="cb-bb"><g style="opacity:1; fill:none; fill-rule:evenodd; fill-opacity:1; stroke:#000000; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:round; stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;" transform="translate(0,0.6)"> <g style="fill:#000000; stroke:#000000; stroke-linecap:butt;"> <path d="M 9,36 C 12.39,35.03 19.11,36.43 22.5,34 C 25.89,36.43 32.61,35.03 36,36 C 36,36 37.65,36.54 39,38 C 38.32,38.97 37.35,38.99 36,38.5 C 32.61,37.53 25.89,38.96 22.5,37.5 C 19.11,38.96 12.39,37.53 9,38.5 C 7.65,38.99 6.68,38.97 6,38 C 7.35,36.54 9,36 9,36 z"/> <path d="M 15,32 C 17.5,34.5 27.5,34.5 30,32 C 30.5,30.5 30,30 30,30 C 30,27.5 27.5,26 27.5,26 C 33,24.5 33.5,14.5 22.5,10.5 C 11.5,14.5 12,24.5 17.5,26 C 17.5,26 15,27.5 15,30 C 15,30 14.5,30.5 15,32 z"/> <path d="M 25 8 A 2.5 2.5 0 1 1 20,8 A 2.5 2.5 0 1 1 25 8 z"/> </g> <path d="M 17.5,26 L 27.5,26 M 15,30 L 30,30 M 22.5,15.5 L 22.5,20.5 M 20,18 L 25,18" style="fill:none; stroke:#ffffff; stroke-linejoin:miter;"/> </g></g><g id="cb-bn"><g style="opacity:1; fill:none; fill-opacity:1; fill-rule:evenodd; stroke:#000000; stroke-width:1.5; stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;" transform="translate(0,0.3)"> <path d="M 22,10 C 32.5,11 38.5,18 38,39 L 15,39 C 15,30 25,32.5 23,18" style="fill:#000000; stroke:#000000;" /> <path d="M 24,18 C 24.38,20.91 18.45,25.37 16,27 C 13,29 13.18,31.34 11,31 C 9.958,30.06 12.41,27.96 11,28 C 10,28 11.19,29.23 10,30 C 9,30 5.997,31 6,26 C 6,24 12,14 12,14 C 12,14 13.89,12.1 14,10.5 C 13.27,9.506 13.5,8.5 13.5,7.5 C 14.5,6.5 16.5,10 16.5,10 L 18.5,10 C 18.5,10 19.28,8.008 21,7 C 22,7 22,10 22,10" style="fill:#000000; stroke:#000000;" /> <path d="M 9.5 25.5 A 0.5 0.5 0 1 1 8.5,25.5 A 0.5 0.5 0 1 1 9.5 25.5 z" style="fill:#ffffff; stroke:#ffffff;" /> <path d="M 15 15.5 A 0.5 1.5 0 1 1 14,15.5 A 0.5 1.5 0 1 1 15 15.5 z" transform="matrix(0.866,0.5,-0.5,0.866,9.693,-5.173)" style="fill:#ffffff; stroke:#ffffff;" /> <path d="M 24.55,10.4 L 24.1,11.85 L 24.6,12 C 27.75,13 30.25,14.49 32.5,18.75 C 34.75,23.01 35.75,29.06 35.25,39 L 35.2,39.5 L 37.45,39.5 L 37.5,39 C 38,28.94 36.62,22.15 34.25,17.66 C 31.88,13.17 28.46,11.02 25.06,10.5 L 24.55,10.4 z " style="fill:#ffffff; stroke:none;" /> </g></g><g id="cb-bp"><path d="m 22.5,9 c -2.21,0 -4,1.79 -4,4 0,0.89 0.29,1.71 0.78,2.38 C 17.33,16.5 16,18.59 16,21 c 0,2.03 0.94,3.84 2.41,5.03 C 15.41,27.09 11,31.58 11,39.5 H 34 C 34,31.58 29.59,27.09 26.59,26.03 28.06,24.84 29,23.03 29,21 29,18.59 27.67,16.5 25.72,15.38 26.21,14.71 26.5,13.89 26.5,13 c 0,-2.21 -1.79,-4 -4,-4 z" style="opacity:1; fill:#000000; fill-opacity:1; fill-rule:nonzero; stroke:#000000; stroke-width:1.5; stroke-linecap:round; stroke-linejoin:miter; stroke-miterlimit:4; stroke-dasharray:none; stroke-opacity:1;"/></g>`;
+
+/* Temas de tablero. Las casillas ya se pintaban con var(--claro)/var(--oscuro),
+   así que cambiar de tema es reescribir dos variables: no toca el dibujo. */
+const TEMAS = {
+  madera:  { nombre: "Madera",  claro: "#ded3bd", oscuro: "#9a7f5c" },
+  torneo:  { nombre: "Torneo",  claro: "#eeeed2", oscuro: "#769656" },
+  azul:    { nombre: "Azul",    claro: "#dee3e6", oscuro: "#8ca2ad" },
+  nogal:   { nombre: "Nogal",   claro: "#d9c7a7", oscuro: "#7a5c3e" },
+  gris:    { nombre: "Gris",    claro: "#dcdcdc", oscuro: "#9e9e9e" }
+};
+function aplicarTema(id) {
+  const t = TEMAS[id] || TEMAS.madera;
+  document.documentElement.style.setProperty("--claro", t.claro);
+  document.documentElement.style.setProperty("--oscuro", t.oscuro);
+  try { localStorage.setItem("tema", id); } catch (e) { /* modo incógnito */ }
+}
+
+/* Se aplica al cargar, y tiene que quedar DESPUÉS de TEMAS y de seguro: son
+   const, así que llamarlo antes es zona muerta temporal y la página no arranca
+   —pantalla en blanco, sin consola donde verlo. */
+(function iniciarTema() {
+  let guardado = "madera";
+  try { guardado = localStorage.getItem("tema") || "madera"; } catch (e) { /* incógnito */ }
+  if (!TEMAS[guardado]) guardado = "madera";
+  $("tema").innerHTML = Object.entries(TEMAS)
+    .map(([k, t]) => `<option value="${k}">${t.nombre}</option>`).join("");
+  $("tema").value = guardado;
+  aplicarTema(guardado);
+  $("tema").onchange = seguro("tema", () => aplicarTema($("tema").value));
+})();
 let GIRADO = false;
 function dibujar(fen, jugada, mejor) {
   const b = new Chess(fen).board();
@@ -1024,18 +1081,20 @@ function dibujar(fen, jugada, mejor) {
   const ry = r => (GIRADO ? 7 - r : r) * S + M;
   const cx = sq => fx("abcdefgh".indexOf(sq[0])) + S / 2;
   const cy = sq => ry(8 - +sq[1]) + S / 2;
-  let s = `<svg class="tab" viewBox="0 0 ${T + M * 2} ${T + M * 2}" xmlns="http://www.w3.org/2000/svg">`;
+  let s = `<svg class="tab" viewBox="0 0 ${T + M * 2} ${T + M * 2}" xmlns="http://www.w3.org/2000/svg">` +
+    `<defs>${PIEZAS}</defs>`;
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
     s += `<rect x="${fx(f)}" y="${ry(r)}" width="${S}" height="${S}" fill="${(r + f) % 2 === 0 ? "var(--claro)" : "var(--oscuro)"}"/>`;
-  /* misma silueta para los dos bandos: el bando se distingue por el relleno */
+  /* Cburnett trae la convención de siempre: siluetas distintas por pieza, las
+     blancas huecas y las negras rellenas. Reemplaza la regla de la v26 —misma
+     silueta para los dos bandos, el bando distinguido por el relleno—, que
+     existía solo porque los glifos Unicode no daban para más. */
+  const esc = S / LADO_PIEZA;
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
     const p = b[r][f];
     if (!p) continue;
-    s += `<text x="${fx(f) + S / 2}" y="${ry(r) + S / 2}" font-size="${S * 0.8}"
-      text-anchor="middle" dominant-baseline="central" font-family="serif"
-      fill="${p.color === "w" ? "#ffffff" : "#1a1a1a"}"
-      stroke="${p.color === "w" ? "#1a1a1a" : "#e8e8e8"}" stroke-width="1"
-      paint-order="stroke">${FORMA[p.type]}</text>`;
+    s += `<use href="#cb-${p.color}${p.type}" ` +
+      `transform="translate(${fx(f)} ${ry(r)}) scale(${esc.toFixed(4)})"/>`;
   }
   const flecha = (uci, color, ancho) => {
     if (!uci || uci.length < 4) return "";
@@ -1212,6 +1271,7 @@ $("detener").onclick = () => { CANCELAR = true; estado("Deteniendo\u2026"); };
 $("analizar").onclick = seguro("analizar", async () => {
   if (!ELEGIDA) return;
   ocupado(true);
+  anotarConfig();
   ver("zonaRevision", false); ver("zonaResumen", false); ver("zonaMes", false);
   progreso(0);
   try {
@@ -1245,6 +1305,7 @@ async function correrMes(desdeCero) {
   if (!PARTIDAS.length) return;
   if (!USUARIO) { estado("Para el mes hace falta buscar por usuario."); return; }
   if (desdeCero || !MES) MES = { hechas: 0, resultados: [], prof: +$("prof").value };
+  anotarConfig();
   const prof = MES.prof;
   /* Van a aparecer partidas nuevas, así que lo juntado queda corto. Se descarta
      y se vuelve a mirar el mes; si querés lo acumulado, el interruptor lo
@@ -1870,6 +1931,20 @@ function pintarRevision() {
     (filo ? " \u00b7 AL FILO DEL UMBRAL" : "");
   $("vSub").style.color = filo ? "var(--c-imprecision)" : "";
   $("vEv").textContent = f.evalTexto;
+
+  /* el rival y su elo salen de las cabeceras del PGN; si la partida no las
+     trae (un PGN pegado a mano puede no traerlas) se muestra lo que haya */
+  const yo = ladoDelUsuario(R);
+  if (yo) {
+    const rival = (yo === "w" ? R.cab.Black : R.cab.White) || "";
+    const elo = (yo === "w" ? R.cab.BlackElo : R.cab.WhiteElo) || "";
+    $("revRival").textContent = rival ? "vs " + rival + (elo ? " (" + elo + ")" : "") : "";
+  } else {
+    /* con un PGN pegado no se sabe de qué lado jugaba el usuario, así que no hay
+       "rival": se nombran los dos, que es más útil que dejar el renglón vacío */
+    $("revRival").textContent = [R.cab.White, R.cab.Black].filter(Boolean).join(" vs ");
+  }
+  $("revJugada").textContent = `jugada ${IDX + 1} de ${R.filas.length}`;
 
   $("evalfill").style.width = Math.max(2, Math.min(98, winPct(f.evalBlancas))) + "%";
   $("tablero").innerHTML = dibujar(f.fen, f.uci, VER_MEJOR && f.mejor !== f.uci ? f.mejor : null);

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v26**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v27**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -189,6 +189,50 @@ No volver a proponerlas sin datos nuevos:
 
 ---
 
+## 4bis. El tablero — piezas y temas (v27)
+
+### Las piezas son Cburnett, no glifos Unicode
+
+Hasta la v26 las piezas eran los glifos `♔`-`♙` dibujados como
+`<text>` con `font-family="serif"`. Dos problemas que no se arreglaban con CSS:
+**dependían de la fuente del dispositivo** —en algunos Android salían
+cuadraditos— y donde salían eran el set hueco pensado para texto corrido, con el
+trazo demasiado fino para leerse a 42 px.
+
+Desde la v27 son **Cburnett**, el mismo juego que usa lichess: doce `<g>` en un
+`<defs>` al principio del SVG, y cada pieza es un `<use href="#cb-wn">` escalado
+de su caja de 45×45 a la casilla. Pesan 11,4 KB en total, nada al lado del motor
+de 7,3 MB.
+
+**Atribución obligatoria, no es opcional:** Colin M.L. Burnett, CC BY-SA 3.0, vía
+Wikimedia Commons. La share-alike alcanza a las imágenes, no a la aplicación
+—son obras agregadas, no derivadas—. Si alguna vez se **modifican** los paths,
+lo modificado sigue bajo CC BY-SA 3.0.
+
+Esto reemplazó una regla de la v26 que decía *"misma silueta para los dos
+bandos: el bando se distingue por el relleno"*. Esa regla existía solo porque los
+glifos Unicode no daban para más; Cburnett trae la convención de siempre
+—siluetas distintas, blancas huecas y negras rellenas— y el usuario la eligió a
+propósito.
+
+### Los temas de tablero salen gratis
+
+Las casillas ya se pintaban con `var(--claro)` y `var(--oscuro)`, así que un tema
+es **reescribir dos variables CSS**: no toca el dibujo. Hay cinco (`TEMAS`), el
+elegido se guarda en `localStorage` y el selector vive al lado de "Girar
+tablero". Toda lectura y escritura de `localStorage` va en `try/catch`: en modo
+incógnito tira.
+
+### Lo que falta acá
+
+**Juegos de piezas configurables.** La costura está puesta —las piezas se buscan
+por `#cb-<color><tipo>`, así que un segundo set es un `<defs>` más y una opción
+en un `<select>`—, pero no se hizo, por dos razones: cada set nuevo hay que
+buscarlo y **verificarle la licencia de a uno** (los de lichess no comparten
+todos las mismas condiciones), y no existe una pantalla de ajustes donde meter el
+selector. Hacerla ahora sería hacerla dos veces, porque la disposición se está
+rehaciendo. Cuando la vista Partida esté firme, es una tanda corta.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -372,6 +416,21 @@ describe en §6.
    nunca un número solo.
 
 ### Estética
+
+El refactor de la interfaz arrancó en la v27. La decisión de fondo, tomada por
+el usuario: **la app va a tener dos vistas equivalentes, Partida y Mes**, en vez
+de subordinar una a la otra. La dirección visual elegida es densa —toda la
+información de la jugada en una pantalla, sin scrollear— y no la de tarjetas
+grandes. Se decidió mirando tres propuestas dibujadas a ancho de celular.
+
+Lo que falta de esa dirección, y es la próxima tanda: rehacer la disposición de
+`zonaRevision` (barra de evaluación vertical al costado del tablero, las tres
+métricas de la jugada, la lista de jugadas completa en vez de la tira
+horizontal).
+
+**Regla de trabajo que salió de acá:** proponer el enfoque y esperar el visto
+bueno antes de construir. Y antes de dibujar algo, mirar si ya existe público:
+el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 
 9. Pasada visual completa. **Tocar estilos y estructura visual, no la lógica de
    análisis.** Varias constantes que parecen arbitrarias costaron mediciones:
