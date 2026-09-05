@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.37**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.38**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -613,6 +613,54 @@ Ahora mira la estructura y no el nombre: antes de cada tabla, dentro de una
 ventana de 200 caracteres, tiene que haber un `class="cap"`. **Cubre todas las
 tablas y no solo las del mes.** Se verificó que falla borrando una leyenda a
 propósito, que es lo que el anterior no hacía.
+
+## 4sexies. Partida y Mes son dos vistas, y se conmutan (v0.38)
+
+Cierra la decisión tomada al empezar el refactor: **dos vistas equivalentes**, no
+una apilada debajo de la otra. Se ve una por vez.
+
+### Una sola puerta
+
+`mostrarVista()` es el **único** lugar que prende o apaga `zonaRevision`,
+`zonaResumen` y `zonaMes`. Antes cada final de análisis lo hacía por su cuenta;
+con dos vistas eso se desincroniza al primer descuido —quedan las dos visibles,
+o ninguna, o una pestaña que no corresponde—. **Hay una prueba que falla si
+aparece un `ver()` de esas zonas fuera de esa función.**
+
+`HAY.partida` y `HAY.mes` dicen qué vista tiene contenido. **El conmutador
+aparece solo cuando hay las dos**: con una sola no hay nada que conmutar y dos
+pestañas, una vacía, confunden. Y analizar una partida **ya no borra la vista
+del mes**: sus datos siguen siendo válidos, y perderla sería perder una pestaña.
+
+### Cómo se vuelve
+
+El agujero del primer plan era este: en Android lo que uno hace es el gesto de
+volver, y sin historial ese gesto **saca de la aplicación**. Peor que no tener
+vuelta.
+
+- **Solo el salto lista → partida empuja una entrada de historial**, sobre la
+  misma URL (para que una recarga no dé 404 en Pages). Es el único que tiene un
+  "de dónde venías"; conmutar con la pestaña es navegación deliberada.
+- El gesto de Android, la flecha del navegador, el botón "‹ Volver al mes" y la
+  pestaña Mes van **todos por el mismo camino**: si se llegó desde la lista,
+  `history.back()`.
+- El botón aparece **solo cuando hay a dónde volver**.
+
+### Tres trampas del scroll, las tres medidas
+
+1. **El anclaje de scroll del navegador.** Al esconder una zona grande, Chrome
+   reajusta la posición por su cuenta y peleaba con la nuestra: el tablero
+   terminaba **643 px por encima del borde** según desde dónde vinieras. El
+   `body` lleva `overflow-anchor: none`.
+2. **`requestAnimationFrame` no corre en una pestaña que no se está viendo**, así
+   que el salto no pasaba nunca. Va con `setTimeout(…, 0)`.
+3. **`history.scrollRestoration` por defecto es "auto"**: el navegador guarda su
+   propia posición por entrada y la restaura pisando la nuestra. Sin ponerlo en
+   `"manual"`, volver al mes devolvía a una posición vieja de otra navegación en
+   vez de a donde estabas.
+
+Verificado en el navegador: desde scroll 0, 600 y 1200, abrir una partida deja
+el tablero **entero** en pantalla y volver restaura la posición exacta.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

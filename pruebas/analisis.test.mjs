@@ -148,6 +148,33 @@ test("sin jugadas malas el desglose no dice nada", () => {
   assert.equal(T.textoDesglose([jugada(0.2, "mejor")]), "");
 });
 
+/* --- el conmutador Partida / Mes, v0.38 --- */
+
+test("solo mostrarVista prende y apaga las zonas de las dos vistas", () => {
+  /* Con dos vistas equivalentes, un ver() suelto en cualquier final de análisis
+     las desincroniza: quedan las dos visibles, o ninguna, o una pestaña que no
+     corresponde. Tiene que haber una sola puerta. */
+  const cuerpo = html.slice(html.indexOf("function mostrarVista"),
+                            html.indexOf("function volverAlMes"));
+  /* se cuenta por subcadena y no con expresión regular: el paréntesis obliga a
+     escapar y es justo donde se rompe sin que nadie lo note */
+  const contar = (texto, sub) => texto.split(sub).length - 1;
+  for (const z of ["zonaRevision", "zonaResumen", "zonaMes"]) {
+    const marca = `ver("${z}"`;
+    assert.equal(contar(html, marca), contar(cuerpo, marca),
+      `${z} se prende o apaga fuera de mostrarVista`);
+  }
+});
+
+test("solo el salto desde la lista del mes empuja historial", () => {
+  /* Conmutar con la pestaña es navegación deliberada y no tiene un "de dónde
+     venías"; empujarla también dejaría el historial lleno de entradas que no
+     significan nada. */
+  assert.equal((html.match(/history\.pushState/g) || []).length, 1);
+  assert.ok(html.includes('history.pushState({ vista: "partida" }, "", location.href)'),
+    "sobre la misma url, o una recarga da 404 en GitHub Pages");
+});
+
 /* --- de dónde salen los números, v0.36 --- */
 
 test("el desglose dice si los números son del mes o de todo lo analizado", () => {
