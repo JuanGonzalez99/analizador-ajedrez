@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.43**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.44**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -868,6 +868,74 @@ Las otras dos formas de §7.8: **el apuro** (cuánto quedaba en el reloj) y
 **cuánto pensaste**. El mismo bucle que calcula el gasto ya tiene `restan`; no
 se emite hasta que haya algo que lo use, porque cada campo pesa también en las
 filas flacas.
+
+## 4decies. Las leyendas se parten en dos (v0.44)
+
+Pedido por el usuario: *"son mucho para leer, más de una línea no lo va a leer
+nadie"*. La leyenda de "por tramo" eran **245 caracteres, cinco renglones** en
+un celular.
+
+### El criterio del corte, que no es el largo
+
+- **Arriba queda lo que cambia CÓMO se lee el número**: qué cuenta como mala, de
+  qué partidas sale, contra qué referencia se lee cada fila. Eso no se puede
+  plegar sin dejar el número sin universo (§5.1, §5.7, §5.12).
+- **Detrás del `?` va el porqué**: qué compara la tabla, para qué está cada
+  control, cuál es el confundidor. Se lee una vez y no hace falta tenerlo
+  delante en cada mirada.
+
+Lo escribe `pintarLeyenda(idCap, corto, ayuda)`, que las tres funciones que
+pintan tablas usan. Los dos textos van en el **mismo elemento** —un `.corto` y
+un `.ayudaPanel` dentro del `<p class="cap">`— para no inventar un id por tabla,
+y los dos se escriben con `textContent`: nada de lo que se interpola puede
+entrar como HTML.
+
+### Tres cambios que ganaron el renglón
+
+1. **"Mala = pierde 3+ peones"** en vez de "pérdida de 3 peones o más". Idea del
+   usuario. Ahorra 8 caracteres en las cuatro tablas.
+2. **"mediana" pasó al encabezado de la columna** (`Seg.` con un subtítulo), que
+   es donde no cuesta un renglón y queda al lado del número que califica.
+3. **La cadencia pasó al título de la sección**, y solo cuando hay más de una.
+   En el título se ve **con la sección plegada**: se sabe el alcance sin abrir.
+
+Se dibujaron cuatro variantes a 412 px antes de elegir. Resultado sobre "por
+tramo": **de 245 caracteres a 41**, de cinco renglones a uno.
+
+### Los nombres de cadencia son los de chess.com
+
+Decisión del usuario: *"5+0 no me parece amigable para aficionados"*. Se muestra
+**"5 min"**, y **"3 | 2"** cuando hay incremento —"3 min" perdería el
+incremento—, que es la convención de la aplicación de donde salen las partidas.
+
+Eso obligó a separar dos cosas que antes eran una: `leerCadencia` devuelve
+**`clave`** (`"300+0"`, exacta y normalizada, la unidad de comparación) y
+**`nombre`** (lo que se muestra). `unaSolaCadencia` agrupa por `clave`, así
+`"300"` y `"300+0"` no caen en dos grupos y `3 min` nunca se mezcla con `5 min`.
+
+### Dos cosas que solo se vieron al probarlo en el navegador
+
+- **El `?` plegaba la sección.** Vive dentro del `<summary>`: sin
+  `preventDefault` cerraba justo lo que se quería leer. Y si la sección estaba
+  cerrada, ahora se abre sola, porque si no el texto aparece donde no se ve.
+- **El título prometía un alcance que la tabla no tenía.** "Por pieza movida ·
+  5 min" con la tabla sin columna de segundos. El chip lo decide ahora
+  `tablaTasas`, que es la que sabe si dibujó la columna, y no el que la llama.
+
+Las dos tienen prueba.
+
+### Lo que falta
+
+**Cuatro leyendas siguen largas** y no se tocaron: `capMes` y `capMesDetalle`
+—la cabecera del mes, que es lo primero que se ve— y `capResumen` y `capBanco`,
+del banco de pruebas. No cuelgan de un `<summary>`, así que el `?` no tiene de
+dónde agarrarse: necesitan su propia decisión de diseño. **La lista está escrita
+en la prueba "cada tabla con leyenda tiene su ?"**, que además falla si aparece
+una tabla nueva sin `?`.
+
+**La de mecanismos quedó en dos renglones** (91 caracteres): lleva la referencia
+de §5.7 *y* el aviso de solapamiento de §5.11, y las dos son de las que no se
+pueden plegar. Es el caso donde el criterio y el renglón chocan de verdad.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

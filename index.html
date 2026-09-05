@@ -168,6 +168,22 @@
   .nav { display: flex; gap: 6px; margin-top: 10px; }
   .nav button { flex: 1; height: 48px; font-size: 15px; }
 
+  /* El ? vive en el título de la sección y abre el texto largo. Es un botón y
+     no un <summary> anidado: los detalles no se pueden anidar en el título de
+     otro. 44 px de área táctil aunque el círculo mida 21: es un celular. */
+  .ayuda { border: 1px solid var(--linea); background: none; border-radius: 50%;
+           width: 21px; height: 21px; font-size: 12px; line-height: 1; padding: 0;
+           color: var(--tenue); vertical-align: middle; margin-left: 2px;
+           position: relative; }
+  .ayuda::after { content: ""; position: absolute; inset: -12px; }
+  .ayuda[aria-expanded="true"] { background: var(--linea); color: inherit; }
+  .ayudaPanel { display: block; border-left: 2px solid var(--linea);
+                padding-left: 10px; margin-top: 6px; }
+  /* La cadencia al lado del título, y solo cuando hay más de una. En el título
+     porque se ve con la sección plegada: se sabe el alcance sin abrir. */
+  .cadChip { font-weight: 400; color: var(--tenue); }
+  th .sub { display: block; font-weight: 400; font-size: 10.5px; color: var(--tenue); }
+
   .marcadorMes { font-size: 14px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
   /* La cantidad de partidas es el DENOMINADOR, no el resultado: va en su propio
      renglón y en el gris de los datos de apoyo, para que el ojo caiga primero
@@ -258,7 +274,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.43 · 05-09";
+  window.VERSION = "v0.44 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -515,27 +531,27 @@
   <div class="tw"><table id="mesResumen"></table></div>
 
   <details class="seccion">
-    <summary>Riesgo por franja de ventaja</summary>
+    <summary>Riesgo por franja de ventaja <button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMesFranja"></p>
     <div class="tw"><table id="mesFranja"></table></div>
   </details>
   <details class="seccion">
-    <summary>Capturas que estaban disponibles</summary>
+    <summary>Capturas que estaban disponibles <button type="button" class="ayuda" data-ayuda="capCapturas" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capCapturas"></p>
     <div class="tw"><table id="mesCapturas"></table></div>
   </details>
   <details class="seccion">
-    <summary>Mecanismos</summary>
+    <summary>Mecanismos <button type="button" class="ayuda" data-ayuda="capMecanismos" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMecanismos"></p>
     <div class="tw"><table id="mesMecanismos"></table></div>
   </details>
   <details class="seccion">
-    <summary>Por pieza movida</summary>
+    <summary>Por pieza movida <span class="cadChip oculto" id="cadPieza"></span> <button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capPieza"></p>
     <div class="tw"><table id="mesPieza"></table></div>
   </details>
   <details class="seccion">
-    <summary>Por tramo de la partida</summary>
+    <summary>Por tramo de la partida <span class="cadChip oculto" id="cadTramo"></span> <button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capTramo"></p>
     <div class="tw"><table id="mesTramo"></table></div>
   </details>
@@ -782,10 +798,23 @@ function leerCadencia(cab) {
   const [b, i] = tc.split("+");
   const base = +b, inc = +(i || 0);
   if (!isFinite(base) || base <= 0 || !isFinite(inc) || inc < 0) return null;
-  /* El nombre es la unidad de comparación: "blitz" NO sirve, porque mete 3+0 y
-     5+0 en la misma bolsa y son casi el doble uno del otro (§7.8). */
-  const nombre = base % 60 === 0 ? `${base / 60}+${inc}` : `${base}s+${inc}`;
-  return { tc, base, inc, nombre };
+  /* Dos cosas distintas y por eso dos campos.
+
+     `clave` es la unidad de COMPARACIÓN, y es exacta: "blitz" no sirve, porque
+     mete 3+0 y 5+0 en la misma bolsa y son casi el doble uno del otro (§7.8).
+     Se normaliza para que "300" y "300+0", que son la misma cadencia escrita de
+     dos maneras, no queden en dos grupos.
+
+     `nombre` es lo que se MUESTRA, y usa la convención de chess.com —"5 min",
+     "3 | 2"— porque es la que el usuario ya ve en la aplicación de donde salen
+     las partidas. "5+0" es más preciso y no lo entiende un aficionado.
+     Sale de dos números y nunca del texto crudo del PGN, así que es seguro
+     escribirlo en la pantalla. */
+  const clave = `${base}+${inc}`;
+  const cuerpo = base % 60 === 0 ? `${base / 60}` : `${base} seg`;
+  const nombre = inc ? `${cuerpo} | ${inc}`
+               : base % 60 === 0 ? `${cuerpo} min` : cuerpo;
+  return { tc, base, inc, clave, nombre };
 }
 
 const HMS = /\[%clk\s+([\d:.]+)\]/;
@@ -2066,6 +2095,26 @@ function reDerivar(r) {
   (r.revs || []).forEach(x => { if (r.filas[x.i]) r.filas[x.i].rev = x.rev; });
 }
 
+/* Un solo manejador para todos los ?, delegado: las leyendas se repintan
+   enteras en cada `pintarMes`, así que un onclick por botón se perdería.
+   El botón vive dentro del <summary>: sin preventDefault, tocarlo plegaría la
+   sección justo cuando se quiere leer. Y si la sección está cerrada, se abre,
+   porque si no el texto se muestra donde no se ve. */
+document.addEventListener("click", e => {
+  const b = e.target.closest && e.target.closest("button.ayuda");
+  if (!b) return;
+  e.preventDefault();
+  const cap = $(b.dataset.ayuda);
+  if (!cap) return;
+  const panel = cap.querySelector(".ayudaPanel");
+  if (!panel) return;
+  const abrir = panel.classList.contains("oculto");
+  panel.classList.toggle("oculto", !abrir);
+  b.setAttribute("aria-expanded", abrir ? "true" : "false");
+  const sec = b.closest("details");
+  if (abrir && sec) sec.open = true;
+});
+
 $("modo").onchange = seguro("modo", () => {
   window.LOG.add("·", "modo " + $("modo").value);
   if (MES) { MES.resultados.forEach(reDerivar); pintarMes(MES.prof); }
@@ -2149,9 +2198,13 @@ const NMIN = 30;
    jugada del motor, así que por construcción pierden evaluación. */
 function tablaReparto(idTabla, idCap, texto, filas, encabezado) {
   const total = filas.reduce((a, f) => a + f.total, 0);
-  $(idCap).textContent = texto +
-    ` Sobre ${total} situaciones` +
-    (total < NMIN ? "; son muy pocas para porcentajes, van los casos." : ".");
+  /* Esta tabla NO lleva DEF_MALA: sus porcentajes son un reparto —"qué parte de
+     las veces hice cada cosa"— y no una tasa de jugadas malas. Lo que sí tiene
+     que decir arriba es sobre cuántas situaciones reparte (§5.1). */
+  pintarLeyenda(idCap,
+    [`Sobre ${total} situaciones`,
+     total < NMIN ? "muy pocas para porcentajes, van los casos" : ""],
+    [texto]);
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Veces</th><th>%</th><th>Malas</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.total}</td>` +
@@ -2170,11 +2223,15 @@ function tablaReparto(idTabla, idCap, texto, filas, encabezado) {
    contra una sola base bien definida y declarada con su denominador. */
 function tablaContrastes(idTabla, idCap, texto, filas, encabezado, base) {
   const p = base && base.total ? pct(base) : "";
+  /* La referencia queda arriba: sin ella cada fila es un porcentaje suelto y no
+     un contraste, que es exactamente lo que exige §5.7. */
   const ref = base && base.total
-    ? ` Referencia: ${base.malas} de tus ${base.total} jugadas salieron mal` +
-      (p === "—" ? "" : ` (${p}%)`) + ". Cada fila se lee contra ese número."
+    ? `Referencia: ${base.malas} de ${base.total}` + (p === "—" ? "" : ` (${p}%)`)
     : "";
-  $(idCap).textContent = texto + ref + DEF_MALA + textoSolape(filas);
+  const solape = textoSolape(filas);
+  pintarLeyenda(idCap,
+    [DEF_MALA, ref, solape ? "hay filas que se solapan" : ""],
+    [texto, ref ? "Cada fila se lee contra esa referencia." : "", solape]);
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.con.malas}</td>` +
@@ -2182,15 +2239,22 @@ function tablaContrastes(idTabla, idCap, texto, filas, encabezado, base) {
     </tbody>`;
 }
 
-function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
+function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo, idCad) {
   /* La columna de segundos aparece SOLO si hay de dónde sacarla. Una columna de
      guiones no dice "no se midió", dice "no hay", que no es lo mismo (§5.12);
      mejor que no esté y que la leyenda lo explique. */
   const conTiempo = filas.some(f => f.seg != null);
-  $(idCap).textContent = texto + DEF_MALA + (conTiempo ? textoTiempo(tiempo) : "");
+  pintarLeyenda(idCap,
+    [DEF_MALA, conTiempo ? cortoTiempo(tiempo) : ""],
+    [texto, conTiempo ? textoTiempo(tiempo) : ""]);
+  /* El chip lo decide ESTA función y no quien la llama: si la tabla no dibujó
+     la columna, el título no puede prometer un alcance que la tabla no tiene. */
+  if (idCad) chipCadencia(idCad, conTiempo ? tiempo : null);
+  /* "mediana" va en el encabezado y no en la leyenda: ahí no cuesta un renglón
+     y queda al lado del número que califica. */
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>` +
-      (conTiempo ? "<th>Seg.</th>" : "") + `</tr></thead>
+      (conTiempo ? '<th>Seg.<span class="sub">mediana</span></th>' : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
       `<td>${pct(f)}</td>` +
       (conTiempo ? `<td>${f.seg == null ? "\u2014" : f.seg.toFixed(1)}</td>` : "") +
@@ -2202,7 +2266,45 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
    misma que la categoría "Error grave": las categorías dependen del modo de
    clasificación y esta no. La agregan solas tablaTasas y tablaContrastes, para
    que ninguna tabla pueda quedarse sin decirlo. */
-const DEF_MALA = " Mala = pérdida de 3 peones o más.";
+const DEF_MALA = "Mala = pierde 3+ peones";
+
+/* Toda leyenda se parte en dos, y el corte NO es por largo:
+
+   - arriba queda lo que cambia CÓMO se lee el número —qué cuenta como mala, de
+     qué partidas sale, contra qué se compara—. Eso no se puede plegar sin que
+     el número quede sin universo (§5.1, §5.12);
+   - detrás del ? va el porqué —qué compara la tabla, para qué está cada
+     control, cuál es el confundidor—. Eso se lee una vez y no hace falta
+     tenerlo delante en cada mirada.
+
+   Antes iba todo junto: la de "por tramo" eran 245 caracteres, cinco renglones
+   en un celular, y nadie los leía. Decisión del usuario.
+
+   Los dos textos van en el MISMO elemento para no inventar un id por tabla, y
+   los dos se escriben con textContent: nada de lo que se interpola puede entrar
+   como HTML. */
+function pintarLeyenda(idCap, corto, ayuda) {
+  const c = $(idCap);
+  c.innerHTML = '<span class="corto"></span><span class="ayudaPanel oculto"></span>';
+  const limpiar = xs => xs.map(x => (x || "").trim()).filter(Boolean);
+  c.querySelector(".corto").textContent = limpiar(corto).join(" \u00b7 ");
+  c.querySelector(".ayudaPanel").textContent = limpiar(ayuda).join(" ");
+}
+
+/* La cadencia se nombra en el título SOLO cuando hay más de una. Si todas las
+   partidas son de la misma, repetirla en cada sección no informa: lo que hay
+   que saber es que quedaron partidas afuera, y eso ya lo dice el "N de M". */
+function chipCadencia(id, tiempo) {
+  const hay = tiempo && tiempo.cadencia && tiempo.otras.length;
+  $(id).textContent = hay ? "\u00b7 " + tiempo.cadencia.nombre : "";
+  ver(id, !!hay);
+}
+
+/* El denominador del tiempo, en corto: de cuántas partidas salen los segundos.
+   El detalle de cuáles quedaron afuera y por qué está en textoTiempo, que va
+   al panel del ?. */
+const cortoTiempo = t => t && t.cadencia
+  ? `${t.cadencia.partidas} de ${t.total} partidas` : "";
 
 /* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
@@ -2295,9 +2397,9 @@ function unaSolaCadencia(porPartida, cadencias) {
   const cuenta = new Map();
   cadencias.forEach((c, i) => {
     if (!c) return;
-    const a = cuenta.get(c.nombre) || { nombre: c.nombre, partidas: 0, jugadas: 0 };
+    const a = cuenta.get(c.clave) || { nombre: c.nombre, partidas: 0, jugadas: 0 };
     a.partidas++; a.jugadas += porPartida[i].length;
-    cuenta.set(c.nombre, a);
+    cuenta.set(c.clave, a);
   });
   /* Empatadas en partidas gana la que tiene más jugadas —más datos—, y recién
      si eso también empata, el nombre, para que el resultado no dependa del
@@ -2305,12 +2407,14 @@ function unaSolaCadencia(porPartida, cadencias) {
   const orden = [...cuenta.values()].sort((a, b) =>
     b.partidas - a.partidas || b.jugadas - a.jugadas || a.nombre.localeCompare(b.nombre));
   const manda = orden[0] || null;
+  const mandaClave = manda ? [...cuenta].find(([, v]) => v === manda)[0] : null;
   const filas = porPartida.map((fs, i) => {
     const c = cadencias[i];
-    if (manda && c && c.nombre === manda.nombre) return fs;
+    if (c && c.clave === mandaClave) return fs;
     return fs.map(f => f.seg == null ? f : Object.assign({}, f, { seg: null }));
   });
   return { porPartida: filas, cadencia: manda, otras: orden.slice(1),
+           total: cadencias.length,
            sinReloj: cadencias.filter(c => !c).length };
 }
 
@@ -2421,6 +2525,7 @@ function pintarDetalle(todas, porPartida, tiempo) {
     "material, qué se hizo. Es la pregunta de cuántas veces había material a " +
     "la vista y no se vio. La columna Malas es un control: la primera fila " +
     "tiene que dar cero, porque jugar la mejor jugada no puede perder nada.",
+    /* (este texto ahora vive detrás del ?, no encima de la tabla) */
     [Object.assign(tasa(conCap.filter(f => f.tomoBuena), "La vi y la tomé"),
                    { canario: true }),
      tasa(conCap.filter(f => !f.tomoBuena && f.esCaptura), "Tomé otra"),
@@ -2440,12 +2545,12 @@ function pintarDetalle(todas, porPartida, tiempo) {
     "de esas jugadas salió mal.",
     Object.keys(NOMBRE_PIEZA).map(k =>
       tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total),
-    "Pieza", tiempo);
+    "Pieza", tiempo, "cadPieza");
 
   tablaTasas("mesTramo", "capTramo",
     "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
     TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom)),
-    "Jugadas", tiempo);
+    "Jugadas", tiempo, "cadTramo");
 }
 
 /* De dónde salen los números de las tablas. La lista de partidas NO pasa por

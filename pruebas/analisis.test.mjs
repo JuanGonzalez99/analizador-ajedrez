@@ -141,18 +141,64 @@ test("esMala y pct son el único corte, y NMIN sigue en 30", () => {
   assert.equal(T.pct({ malas: 3, total: 30 }), "10.0");
 });
 
-test("toda leyenda de tabla dice qué cuenta como mala", () => {
+test("toda leyenda de tabla dice qué cuenta como mala, y lo dice arriba", () => {
   /* Se agrega sola en las dos funciones que pintan tablas, así que ninguna
-     tabla nueva puede quedarse sin decirlo. */
-  assert.ok(T.DEF_MALA.includes("3 peones"));
-  const pinta = html.match(/\$\(idCap\)\.textContent = [^;]+;/g) || [];
+     tabla nueva puede quedarse sin decirlo. Y va en el texto CORTO, no detrás
+     del ?: es lo que cambia cómo se lee el número. */
+  assert.ok(T.DEF_MALA.includes("3+ peones"));
+  const pinta = html.match(/pintarLeyenda\(idCap,\s*\n(?:.*\n){0,4}?\s*\[[^\]]*\]\);/g) || [];
   assert.equal(pinta.length, 3, "hay tres funciones que pintan leyenda");
-  assert.equal(pinta.filter(l => l.includes("DEF_MALA")).length, 2,
-    "las dos tablas de tasas la llevan");
+  const cortos = pinta.map(l => l.slice(0, l.indexOf("],")));
+  assert.equal(cortos.filter(l => l.includes("DEF_MALA")).length, 2,
+    "las dos tablas de tasas la llevan en el texto corto");
   /* La de reparto no: sus porcentajes no son tasas de jugadas malas. Pero tiene
      que decir su denominador igual, que es la regla §5.1. */
-  const reparto = pinta.find(l => !l.includes("DEF_MALA"));
+  const reparto = cortos.find(l => !l.includes("DEF_MALA"));
   assert.ok(reparto.includes("situaciones"), `sin denominador: ${reparto}`);
+});
+
+test("la leyenda corta se queda con el universo y el ? con el porqué", () => {
+  /* El corte no es de largo. Si "compara situaciones, no jugadas" volviera
+     arriba, la leyenda vuelve a ser un párrafo y nadie la lee. */
+  const cuerpo = html.slice(html.indexOf("function tablaTasas"),
+                            html.indexOf("function tablaTasas") + 1200);
+  const corto = cuerpo.slice(cuerpo.indexOf("pintarLeyenda(idCap,"));
+  assert.ok(corto.includes("[DEF_MALA, conTiempo ? cortoTiempo(tiempo)"),
+    "arriba: qué es mala y de cuántas partidas salen los segundos");
+  assert.ok(corto.includes("[texto, conTiempo ? textoTiempo(tiempo)"),
+    "detrás del ?: el texto explicativo y el detalle de las cadencias");
+});
+
+test("el titulo no nombra la cadencia si la tabla no muestra segundos", () => {
+  /* Se vio al probarlo: "Por pieza movida · 5 min" con la tabla sin columna de
+     segundos. El titulo prometia un alcance que la tabla no tenia. */
+  const c = html.slice(html.indexOf("function tablaTasas(idTabla"));
+  assert.ok(c.slice(0, 1400).includes("chipCadencia(idCad, conTiempo ? tiempo : null)"));
+  assert.ok(!/chipCadencia\("cad/.test(html), "el chip lo decide tablaTasas, no el llamador");
+});
+
+test("el ? no pliega la sección al tocarlo", () => {
+  /* El botón vive dentro del <summary>: sin preventDefault, tocarlo cierra
+     justo lo que se quiere leer. Pasó al probarlo. */
+  const h = html.slice(html.indexOf('e.target.closest("button.ayuda")'));
+  assert.ok(h.slice(0, 300).includes("e.preventDefault()"));
+  assert.ok(h.slice(0, 600).includes("sec.open = true"),
+    "si la sección está cerrada, el texto se mostraría donde no se ve");
+});
+
+test("cada tabla con leyenda tiene su ?", () => {
+  /* Las cuatro de abajo todavia no: no cuelgan de un <summary> —capMes y
+     capMesDetalle son la cabecera del mes, capResumen y capBanco son del banco
+     de pruebas— asi que el ? no tiene de donde agarrarse y necesitan su propia
+     decision de diseno. Esta lista es la deuda, escrita: si aparece una tabla
+     nueva sin ?, esto falla. */
+  const PENDIENTES = ["capMes", "capMesDetalle", "capResumen", "capBanco"];
+  const caps = [...html.matchAll(/<p class="cap" id="(\w+)">/g)].map(m => m[1]);
+  const botones = [...html.matchAll(/data-ayuda="(\w+)"/g)].map(m => m[1]);
+  assert.deepEqual(caps.filter(c => !botones.includes(c) && !PENDIENTES.includes(c)), [],
+    "hay una leyenda de tabla sin boton de ayuda");
+  assert.deepEqual(PENDIENTES.filter(c => !caps.includes(c)), [],
+    "un pendiente ya no existe: sacalo de la lista");
 });
 
 test("el desglose concilia la columna Malas con las categorías del resumen", () => {
@@ -283,20 +329,32 @@ test("el marcador del listado no necesita análisis", () => {
 
 test("la cadencia sale del TimeControl, y la correspondencia no cuenta", () => {
   assert.deepEqual(A.leerCadencia({ TimeControl: "300" }),
-    { tc: "300", base: 300, inc: 0, nombre: "5+0" });
+    { tc: "300", base: 300, inc: 0, clave: "300+0", nombre: "5 min" });
   assert.deepEqual(A.leerCadencia({ TimeControl: "180+2" }),
-    { tc: "180+2", base: 180, inc: 2, nombre: "3+2" });
+    { tc: "180+2", base: 180, inc: 2, clave: "180+2", nombre: "3 | 2" });
   /* "1/259200" es una partida por correspondencia: el reloj no mide lo mismo */
   assert.equal(A.leerCadencia({ TimeControl: "1/259200" }), null);
   assert.equal(A.leerCadencia({ TimeControl: "-" }), null);
   assert.equal(A.leerCadencia({}), null);
 });
 
-test("el nombre de la cadencia distingue 3+0 de 5+0", () => {
+test("la clave distingue 3 min de 5 min, y no se parte por como esta escrita", () => {
   /* "blitz" mete a los dos en la misma bolsa y son casi el doble uno del otro:
      si esto se compara por time_class, los segundos dejan de significar. */
-  assert.notEqual(A.leerCadencia({ TimeControl: "180" }).nombre,
-                  A.leerCadencia({ TimeControl: "300" }).nombre);
+  assert.notEqual(A.leerCadencia({ TimeControl: "180" }).clave,
+                  A.leerCadencia({ TimeControl: "300" }).clave);
+  /* y al reves: "300" y "300+0" son la misma cadencia escrita de dos maneras */
+  assert.equal(A.leerCadencia({ TimeControl: "300" }).clave,
+               A.leerCadencia({ TimeControl: "300+0" }).clave);
+});
+
+test("el nombre que se muestra es el de chess.com, no la notacion exacta", () => {
+  /* Decision del usuario: "5+0" no lo entiende un aficionado. */
+  assert.equal(A.leerCadencia({ TimeControl: "300" }).nombre, "5 min");
+  assert.equal(A.leerCadencia({ TimeControl: "600" }).nombre, "10 min");
+  /* con incremento no se puede decir "3 min": perderia el incremento */
+  assert.equal(A.leerCadencia({ TimeControl: "180+2" }).nombre, "3 | 2");
+  assert.equal(A.leerCadencia({ TimeControl: "30" }).nombre, "30 seg");
 });
 
 test("los segundos salen de restar relojes, con el incremento", () => {
@@ -341,10 +399,10 @@ test("el segundo viaja en la fila flaca", () => {
 test("manda la cadencia con mas partidas y las otras pierden el segundo", () => {
   const p = n => Array.from({ length: n }, () => ({ seg: 10 }));
   const t = T.unaSolaCadencia([p(2), p(2), p(2)],
-    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
-  assert.equal(t.cadencia.nombre, "5+0");
+    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
+  assert.equal(t.cadencia.nombre, "5 min");
   assert.equal(t.cadencia.partidas, 2);
-  assert.deepEqual(t.otras, [{ nombre: "10+0", partidas: 1, jugadas: 2 }]);
+  assert.deepEqual(t.otras, [{ nombre: "10 min", partidas: 1, jugadas: 2 }]);
   assert.deepEqual(t.porPartida[0].map(f => f.seg), [10, 10]);
   assert.deepEqual(t.porPartida[2].map(f => f.seg), [null, null]);
 });
@@ -352,7 +410,7 @@ test("manda la cadencia con mas partidas y las otras pierden el segundo", () => 
 test("la partida de otra cadencia sigue contando para las malas", () => {
   /* Pierde el tiempo, no las jugadas: son dos denominadores distintos. */
   const t = T.unaSolaCadencia([[{ seg: 10 }], [{ seg: 10 }], [{ seg: 99, perdida: 5 }]],
-    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
   assert.equal(t.porPartida[2].length, 1);
   assert.equal(t.porPartida[2][0].seg, null);
   assert.equal(t.porPartida[2][0].perdida, 5, "la jugada sigue entera");
@@ -362,7 +420,7 @@ test("no se toca la fila original al sacarle el segundo", () => {
   /* Es la misma fila que usa la pantalla de revision: mutarla la romperia. */
   const fila = { seg: 42 };
   const t = T.unaSolaCadencia([[{ seg: 1 }], [{ seg: 1 }], [fila]],
-    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
   assert.equal(fila.seg, 42);
   assert.equal(t.porPartida[2][0].seg, null);
 });
@@ -370,8 +428,8 @@ test("no se toca la fila original al sacarle el segundo", () => {
 test("una partida sin reloj no manda ni desaparece del texto", () => {
   /* La daily del mes no tiene cadencia comparable: no puede ganar el desempate
      ni quedar sin mencionar. */
-  const t = T.unaSolaCadencia([[{ seg: 5 }], [{}]], [{ nombre: "5+0" }, null]);
-  assert.equal(t.cadencia.nombre, "5+0");
+  const t = T.unaSolaCadencia([[{ seg: 5 }], [{}]], [{ clave: "300+0", nombre: "5 min" }, null]);
+  assert.equal(t.cadencia.nombre, "5 min");
   assert.equal(t.sinReloj, 1);
   assert.match(T.textoTiempo(t), /1 sin reloj/);
 });
@@ -379,10 +437,10 @@ test("una partida sin reloj no manda ni desaparece del texto", () => {
 test("la leyenda dice de que cadencia salen los segundos", () => {
   /* §5.1: un numero sin universo no se puede leer. */
   const t = T.unaSolaCadencia([[{ seg: 5 }], [{ seg: 5 }], [{ seg: 5 }]],
-    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+    [{ clave: "300+0", nombre: "5 min" }, { clave: "300+0", nombre: "5 min" }, { clave: "600+0", nombre: "10 min" }]);
   const txt = T.textoTiempo(t);
-  assert.match(txt, /las 2 partidas de 5\+0/);
-  assert.match(txt, /quedaron afuera 1 de 10\+0/);
+  assert.match(txt, /las 2 partidas de 5 min/);
+  assert.match(txt, /quedaron afuera 1 de 10 min/);
   assert.equal(T.textoTiempo(null), "");
 });
 
@@ -461,8 +519,12 @@ test("la tabla de mecanismos no trae la columna % resto", () => {
 });
 
 test("la referencia de los mecanismos va en la leyenda, con su denominador", () => {
-  assert.ok(html.includes("Referencia: ${base.malas} de tus ${base.total} jugadas"),
+  assert.ok(html.includes("Referencia: ${base.malas} de ${base.total}"),
     "sin la referencia el porcentaje de un mecanismo no dice nada (§5.7)");
+  /* y va arriba, no detras del ?: es con lo que se lee cada fila */
+  const c = html.slice(html.indexOf("function tablaContrastes(idTabla"));
+  const corto = c.slice(c.indexOf("pintarLeyenda(idCap,"));
+  assert.ok(corto.slice(0, corto.indexOf("],")).includes("ref"));
   assert.ok(html.includes('"Mecanismo", tasa(todas))'),
     "la base tiene que ser todas las jugadas del usuario, una sola y bien definida");
 });
