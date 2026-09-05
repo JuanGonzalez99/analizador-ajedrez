@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v31**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v32**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -322,9 +322,9 @@ Ninguna gana sola, así que se eligen y se guardan (`MODO_EVAL`, en
 
 | Modo | Ancho del tablero | Alto del bloque |
 |---|---|---|
-| `barra` — vertical ancha, número adentro | 309 | 309 |
-| `horizontal` — barra arriba, número adentro | **347** | 373 |
+| `horizontal` — barra arriba, número adentro **(default)** | **347** | 373 |
 | `tarjeta` — vertical fina, número en la tarjeta | 329 | 329 |
+| `barra` — vertical ancha, número adentro | 309 | 309 |
 
 **El tablero es cuadrado y lo limita el ancho, así que sacarle ancho le saca
 también alto.** La barra vertical comparte los renglones del tablero; la
@@ -332,18 +332,46 @@ horizontal se suma. Por eso la vertical sale más barata en alto aunque achique
 el tablero — y por eso la horizontal, que no tiene barra al costado, da el
 tablero **más grande** de las tres.
 
+**`horizontal` quedó de default**: elegido al probarlo en el celular, y es el que
+deja el tablero más grande. El bloque del tablero lleva `margin-bottom` para que
+la barra no termine pegada al borde de la tarjeta del veredicto.
+
 Cuando el número viaja en la barra, la tarjeta del veredicto no lo repite: si no
 quedaba dos veces en pantalla y en dos puntas opuestas, que es justo el problema
 que se estaba resolviendo. El número va en la punta del que va ganando, con
 tinta oscura sobre el relleno claro y clara sobre el fondo.
 
-### Galones en el margen del tablero
+### Galones en el margen del tablero — y son botones (v32)
 
 Avisan que el tablero se puede deslizar. Van dibujados **dentro del SVG, en el
 margen de coordenadas** —el borde de 15 px donde viven las letras y los
 números—, así que **no le sacan un píxel al tablero**. Quedan a media altura,
 donde no hay ninguna etiqueta: las de las filas 4 y 5 pasan a 21 px de ahí. No
-se tocan: son un aviso, no un botón.
+**se tocan.** No era el plan —nacieron como aviso— pero al probarlos el usuario
+dijo que "parecen más botones", así que se hicieron botones: si la gente los lee
+como control, que lo sean.
+
+La zona que recibe el toque es mucho mayor que el dibujo: **toda la altura del
+tablero y 10 unidades hacia adentro además del margen**, unos 24×347 px. Queda
+por debajo de los 44 px de ancho recomendados —el margen no da para más sin tapar
+casillas—, pero al ser tan alta y estar contra el borde de la pantalla se acierta
+bien, y los botones grandes de abajo siguen estando. Dos detalles que hacen falta:
+el rect va con `fill="transparent"` y no `"none"`, porque con `none` no recibe el
+toque; y **se comen los 10 px exteriores de las columnas a y h** — hoy da igual
+porque tocar el tablero no hace nada, pero si alguna vez se puede tocar una
+casilla hay que achicarlas.
+
+Escucha el contenedor, no cada galón: el SVG se redibuja entero en cada jugada y
+habría que volver a atar el evento cada vez.
+
+**Hay un guardia contra el doble salto:** al terminar un deslizamiento el
+navegador dispara además un `click`, y si el dedo levantaba sobre un galón se
+pasaban dos jugadas. El deslizamiento marca la hora y el galón ignora los clicks
+de los 400 ms siguientes.
+
+**Lo que sigue sin resolverse:** los galones avisan que hay algo ahí, pero no
+enseñan que el tablero se desliza. Eso lo enseña una transición, no un dibujo
+quieto, y las animaciones son una rama sin empezar.
 
 Se descartó a propósito la variante que **sí** era un botón —un galón con fondo
 circular sobre las casillas del borde—: resolvía mejor la navegación pero tapaba

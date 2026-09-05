@@ -62,7 +62,9 @@
      comía un renglón entero de una pantalla donde lo escaso es el alto, y al
      lado del tablero se lee igual de bien. Se llena desde abajo, que es donde
      están las blancas; si el tablero se gira, desde arriba. */
-  .revtab { display: flex; gap: 8px; align-items: stretch; margin-top: 10px; }
+  /* el margen de abajo separa el bloque del tablero de la tarjeta del veredicto:
+     sin él la barra de evaluación termina pegada al borde de la tarjeta */
+  .revtab { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
   .revtab > #tablero { flex: 1; min-width: 0; }
   /* el tablero trae margen propio para cuando va suelto; al lado de la barra
      sobra, y desalinea las dos por 10 px */
@@ -175,7 +177,7 @@
 </div>
 
 <script>
-  window.VERSION = "v31 · 04-09";
+  window.VERSION = "v32 · 04-09";
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
   var panel = document.getElementById("panelLog");
@@ -1168,20 +1170,21 @@ function aplicarTema(id) {
      vez de compartirlo, y el bloque entero pasa de 329 a 353 px.
    - "tarjeta": la barra fina de siempre, con el número al lado de ella en la
      tarjeta del veredicto en vez de en la otra punta.
-   Se elige y se guarda; el default es "barra". */
+   Se elige y se guarda; el default es "horizontal", que deja el tablero mas
+   grande de los tres y fue el elegido al probarlo en el celular. */
 const MODOS_EVAL = {
-  barra: "Eval en la barra",
   horizontal: "Eval horizontal",
-  tarjeta: "Eval en la tarjeta"
+  tarjeta: "Eval en la tarjeta",
+  barra: "Eval en la barra"
 };
-let MODO_EVAL = "barra";
+let MODO_EVAL = "horizontal";
 function aplicarModoEval(id) {
-  MODO_EVAL = MODOS_EVAL[id] ? id : "barra";
+  MODO_EVAL = MODOS_EVAL[id] ? id : "horizontal";
   try { localStorage.setItem("eval", MODO_EVAL); } catch (e) { /* incógnito */ }
 }
 (function iniciarModoEval() {
-  let guardado = "barra";
-  try { guardado = localStorage.getItem("eval") || "barra"; } catch (e) { /* incógnito */ }
+  let guardado = "horizontal";
+  try { guardado = localStorage.getItem("eval") || "horizontal"; } catch (e) { /* incógnito */ }
   $("verEval").innerHTML = Object.entries(MODOS_EVAL)
     .map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
   aplicarModoEval(guardado);
@@ -1242,13 +1245,28 @@ function dibujar(fen, jugada, mejor) {
      coordenadas del SVG —el borde de 15 px donde viven las letras y los
      números—, así que no le sacan un píxel al tablero. Quedan a media altura,
      donde no hay ninguna etiqueta: las de las filas 4 y 5 pasan a 21 px de ahí.
-     No se tocan: son un aviso, no un botón. */
+     Además de avisar, se tocan: el usuario los leyó como botones antes de que
+     lo fueran, así que lo son. */
   const mitad = M + T / 2;
   const galon = (x, hacia) =>
     `<path d="M ${x + hacia * 2.5} ${mitad - 7} L ${x - hacia * 2.5} ${mitad} L ${x + hacia * 2.5} ${mitad + 7}"
       fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
-      stroke-linejoin="round" opacity=".3"/>`;
+      stroke-linejoin="round" opacity=".38"/>`;
   s += galon(M / 2 - 1, 1) + galon(T + M + M / 2 + 1, -1);
+  /* La zona que recibe el toque es mucho más grande que el galón: toda la altura
+     del tablero, y 10 unidades hacia adentro además del margen. Aun así queda en
+     unos 24 px de ancho, por debajo de los 44 recomendados —el margen no da para
+     más sin tapar casillas—, pero al ser tan alta y estar contra el borde de la
+     pantalla se acierta bien. Los botones grandes de abajo siguen estando.
+     Transparente y no "none": con fill="none" no recibiría el toque.
+     Van al final para quedar por encima de todo a la hora de recibirlo.
+     OJO: se comen los 10 px exteriores de las columnas a y h. Hoy no molesta
+     porque tocar el tablero no hace nada; si alguna vez se puede tocar una
+     casilla, hay que reducirlas. */
+  const zona = (x, dir) =>
+    `<rect x="${x}" y="0" width="${M + 10}" height="${T + M * 2}" fill="transparent"
+      data-nav="${dir}" style="cursor:pointer"/>`;
+  s += zona(0, -1) + zona(T + M - 10, 1);
   return s + "</svg>";
 }
 
@@ -2201,7 +2219,7 @@ function pintarRevision() {
    descubre el gesto.
    No se llama preventDefault en touchmove a propósito: bloquearía el scroll
    vertical de la página, que es cómo se llega al resto de la vista. */
-let tocado = null;
+let tocado = null, recienDeslizado = 0;
 $("tablero").addEventListener("touchstart", ev => {
   const t = ev.changedTouches[0];
   tocado = { x: t.clientX, y: t.clientY };
@@ -2214,8 +2232,21 @@ $("tablero").addEventListener("touchend", seguro("deslizar", ev => {
   /* pide un gesto claramente horizontal: si no, un scroll con el dedo apoyado
      en el tablero pasaría jugadas sin querer */
   if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  /* el navegador dispara un click al terminar el toque; sin esta marca, un
+     deslizamiento que termina sobre un galón pasaría dos jugadas */
+  recienDeslizado = Date.now();
   irA(dx < 0 ? IDX + 1 : IDX - 1);
 }), { passive: true });
+
+/* Los galones. El SVG se redibuja entero en cada jugada, así que el que escucha
+   es el contenedor y no cada galón: si no, habría que volver a atar el evento
+   cada vez. */
+$("tablero").addEventListener("click", seguro("galón", ev => {
+  const z = ev.target.closest && ev.target.closest("[data-nav]");
+  if (!z) return;
+  if (Date.now() - recienDeslizado < 400) return;
+  irA(IDX + Number(z.getAttribute("data-nav")));
+}));
 
 /* en la compu, las flechas. Se ignoran mientras se escribe en un campo. */
 document.addEventListener("keydown", seguro("teclas", ev => {
