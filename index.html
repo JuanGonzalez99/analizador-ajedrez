@@ -168,6 +168,7 @@
   .nav { display: flex; gap: 6px; margin-top: 10px; }
   .nav button { flex: 1; height: 48px; font-size: 15px; }
 
+  .marcadorMes { font-size: 14px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
   .metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
               gap: 6px; margin-top: 8px; }
   .metricas > div { border: 1px solid var(--linea); border-radius: 6px; padding: 6px 8px;
@@ -251,7 +252,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.38 · 05-09";
+  window.VERSION = "v0.39 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -502,6 +503,7 @@
   <details class="quemide"><summary>Cómo se leen estos números</summary>
     <p class="cap" id="capMesDetalle"></p></details>
   <div class="metricas" id="mesCabecera"></div>
+  <p class="marcadorMes" id="mesMarcador"></p>
   <div class="tw"><table id="mesResumen"></table></div>
 
   <details class="seccion">
@@ -1896,7 +1898,9 @@ async function barrerCache(prof, opc, onProg) {
      `id|dN|variante|motor`, así que el id es lo que va antes de la primera raya */
   const idsEnCache = new Set((await cache.claves())
     .map(k => String(k).split("|")[0]));
-  const porPartida = [], hito = [];
+  /* El resultado va por PARTIDA y no en cada fila flaca: son diez o cien filas
+     por partida y el dato es uno solo. Va en paralelo a porPartida. */
+  const porPartida = [], resultados = [], hito = [];
   let partidas = 0, mesesConDatos = 0, otraProf = 0, asistidas = 0;
 
   for (let m = 0; m < MESES.length; m++) {
@@ -1930,6 +1934,7 @@ async function barrerCache(prof, opc, onProg) {
       const mias = filasDelUsuario(falso);
       if (!mias.length) continue;
       porPartida.push(mias.map(adelgazar));
+      resultados.push(resultadoDeLado(ladoDelUsuario(falso), g, d.cab));
       partidas++; enEste++;
     }
     if (enEste) { mesesConDatos++; hito.push(MESES[m].slice(-7).replace("/", "-")); }
@@ -1938,6 +1943,7 @@ async function barrerCache(prof, opc, onProg) {
   const filas = [];
   porPartida.forEach(fs => filas.push(...fs));
   return { filas, porPartida, partidas, meses: mesesConDatos, otraProf, asistidas,
+           marcador: contarResultados(resultados),
            prof, vte, desde: hito[0] || null, hasta: hito[hito.length - 1] || null };
 }
 
@@ -2084,6 +2090,33 @@ const DEF_MALA = " Mala = pérdida de 3 peones o más.";
    las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
 const pct = f => f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
 
+/* Ganó, perdió o empató, desde el lado del usuario. Prefiere el JSON de
+   chess.com y cae al encabezado Result del PGN, que es lo único que hay en una
+   partida pegada a mano.
+   Devuelve null cuando NO SE SABE —no se sabe de qué lado jugaba, o la partida
+   quedó sin terminar—, y eso no es lo mismo que un empate: contarlo como tablas
+   sería inventar un resultado. */
+function resultadoDeLado(lado, meta, cab) {
+  if (lado !== "w" && lado !== "b") return null;
+  if (meta && meta.white && meta.black) {
+    if (meta.white.result === "win") return lado === "w" ? "gane" : "perdi";
+    if (meta.black.result === "win") return lado === "b" ? "gane" : "perdi";
+    return "empate";
+  }
+  const r = cab && cab.Result;
+  if (r === "1-0") return lado === "w" ? "gane" : "perdi";
+  if (r === "0-1") return lado === "b" ? "gane" : "perdi";
+  if (r === "1/2-1/2") return "empate";
+  return null;
+}
+
+const contarResultados = rs => ({
+  gane: rs.filter(x => x === "gane").length,
+  empate: rs.filter(x => x === "empate").length,
+  perdi: rs.filter(x => x === "perdi").length,
+  sinDato: rs.filter(x => !x).length,
+});
+
 const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
 
@@ -2222,15 +2255,22 @@ function datosDeTablas() {
     const porPartida = TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) })));
     const todas = [];
     porPartida.forEach(fs => todas.push(...fs));
-    return { todas, porPartida, asistidas: TODO.asistidas, deTodo: true };
+    return { todas, porPartida, asistidas: TODO.asistidas,
+             marcador: TODO.marcador, deTodo: true };
   }
-  if (!MES) return { todas: [], porPartida: [], asistidas: 0, deTodo: false };
+  if (!MES) return { todas: [], porPartida: [], asistidas: 0,
+                     marcador: contarResultados([]), deTodo: false };
   const asistidas = MES.resultados.filter(esAsistida);
   const limpias = MES.resultados.filter(r => !esAsistida(r));
-  const porPartida = limpias.map(filasDelUsuario).filter(fs => fs.length);
+  /* el historial se cuenta sobre EXACTAMENTE las mismas partidas que los
+     promedios, o los dos números hablarían de universos distintos */
+  const conMias = limpias.filter(r => filasDelUsuario(r).length);
+  const porPartida = conMias.map(filasDelUsuario);
   const todas = [];
   porPartida.forEach(fs => todas.push(...fs));
-  return { todas, porPartida, asistidas: asistidas.length, deTodo: false };
+  const marcador = contarResultados(
+    conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab)));
+  return { todas, porPartida, asistidas: asistidas.length, marcador, deTodo: false };
 }
 
 /* De dónde salen los números, dicho arriba de todo. Sin esto dos tablas de
@@ -2258,6 +2298,7 @@ function pintarMes(prof) {
       : "Ninguna de estas partidas es de ese usuario.";
     $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = "";
     $("mesCabecera").innerHTML = ""; $("capMesDetalle").textContent = "";
+    ver("mesMarcador", false);
     ["mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => $(t).innerHTML = "");
     pintarLista();
     return;
@@ -2279,6 +2320,20 @@ function pintarMes(prof) {
   /* Las tres cifras que resumen el mes van arriba y grandes; en la tabla se
      quedan solo los recuentos por categoría, que es lo que la tabla hace bien.
      Las tres tenían un "—" en la columna "Por partida" que no decía nada. */
+  /* El historial en palabras y no como "8-4-3": esa abreviatura hay que
+     decodificarla, y encima el orden cambia según el país. */
+  const m = d.marcador;
+  const conResultado = m.gane + m.empate + m.perdi;
+  /* singular y plural: con una sola partida "1 empatadas" canta */
+  const cuantas = (k, una, muchas) => `${k} ${k === 1 ? una : muchas}`;
+  $("mesMarcador").textContent = conResultado
+    ? [cuantas(m.gane, "ganada", "ganadas"),
+       cuantas(m.empate, "empatada", "empatadas"),
+       cuantas(m.perdi, "perdida", "perdidas")].join(" · ") +
+      (m.sinDato ? ` · ${cuantas(m.sinDato, "sin resultado conocido", "sin resultado conocido")}` : "")
+    : "";
+  ver("mesMarcador", !!conResultado);
+
   const cuadro = (et, va) => `<div><div class="et">${et}</div><div class="va">${va}</div></div>`;
   $("mesCabecera").innerHTML =
     cuadro("Precisión", prec.toFixed(1)) +

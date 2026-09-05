@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.38**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.39**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -662,6 +662,39 @@ vuelta.
 Verificado en el navegador: desde scroll 0, 600 y 1200, abrir una partida deja
 el tablero **entero** en pantalla y volver restaura la posición exacta.
 
+## 4septies. Ganadas, empatadas y perdidas (v0.39)
+
+Debajo de las tres cifras del mes, en palabras: *"7 ganadas · 1 empatada · 6
+perdidas"*. **No como "7-1-6"**: esa abreviatura hay que decodificarla y encima
+el orden cambia según el país.
+
+### Las decisiones que hubo que tomar
+
+**El historial excluye las partidas asistidas**, igual que los promedios. No es
+prolijidad: en "todo lo analizado" esas partidas ni se guardan (`barrerCache`
+las descarta antes de acumular), así que contarlas solo en un modo daría dos
+totales distintos para lo mismo. Se cuenta sobre **exactamente** el mismo
+conjunto que los promedios (`conMias`), y la leyenda ya avisa cuántas quedaron
+afuera.
+
+**No saber el resultado no es empatar.** `resultadoDeLado` devuelve `null`
+cuando no se sabe de qué lado jugaba el usuario o la partida quedó sin terminar
+(`Result "*"`), y esos casos se cuentan aparte como "sin resultado conocido".
+Contarlos como tablas sería inventar un resultado.
+
+**El resultado va por partida, no en cada fila flaca.** Son decenas de filas por
+partida y el dato es uno solo: `barrerCache` lo guarda en un arreglo paralelo a
+`porPartida`. Por eso `CAMPOS_FLACOS` quedó como estaba.
+
+**Funciona con un PGN pegado a mano**, que no tiene el JSON de chess.com:
+`resultadoDeLado` cae al encabezado `Result` del PGN.
+
+### Verificado contra los datos crudos
+
+Sobre el mes de 2026-09: la API cruda da 8 ganadas, 1 empatada y 6 perdidas en
+15 partidas; la app muestra 7-1-6 en 14. La diferencia es **exactamente** la
+partida contra `Coach-DrWolf`, que es asistida y está en `ENTRENADORES`.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -872,14 +905,10 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 
 ## 8. Pendientes de fondo, sin resolver
 
-### Chicos, de la v26 (de los cuatro originales queda uno)
+### Chicos, de la v26
 
-- **Falta la estadística de partidas ganadas y perdidas.** Los datos están: el
-  JSON de cada mes trae `white.result` y `black.result`, y `ladoDelUsuario()`
-  ya dice de qué lado jugaba. Ojo con dos cosas: las filas flacas del barrido
-  no guardan el resultado, así que hay que sumarlo a `CAMPOS_FLACOS` o llevarlo
-  aparte por partida; y las partidas asistidas quedan afuera de los promedios
-  pero podrían contar para el historial, que es una decisión a tomar.
+Los cuatro se resolvieron: barra de progreso (v33), `textoDesglose` y la
+columna "% resto" (v0.36), y el historial de resultados (v0.39).
 
 ### De fondo
 

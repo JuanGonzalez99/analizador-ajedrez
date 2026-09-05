@@ -148,6 +148,48 @@ test("sin jugadas malas el desglose no dice nada", () => {
   assert.equal(T.textoDesglose([jugada(0.2, "mejor")]), "");
 });
 
+/* --- ganadas, empatadas y perdidas, v0.39 --- */
+
+test("el resultado se lee desde el lado del usuario", () => {
+  const gana = (quien) => ({ white: { result: quien === "w" ? "win" : "resigned" },
+                             black: { result: quien === "b" ? "win" : "resigned" } });
+  assert.equal(T.resultadoDeLado("w", gana("w")), "gane");
+  assert.equal(T.resultadoDeLado("b", gana("w")), "perdi");
+  assert.equal(T.resultadoDeLado("b", gana("b")), "gane");
+  assert.equal(T.resultadoDeLado("w", gana("b")), "perdi");
+});
+
+test("sin ganador es empate, cualquiera sea el motivo", () => {
+  for (const motivo of ["agreed", "repetition", "stalemate", "insufficient", "50move"])
+    assert.equal(T.resultadoDeLado("w", { white: { result: motivo }, black: { result: motivo } }),
+      "empate", motivo);
+});
+
+test("sin meta cae al encabezado Result del PGN", () => {
+  /* una partida pegada a mano no tiene el JSON de chess.com */
+  assert.equal(T.resultadoDeLado("b", null, { Result: "0-1" }), "gane");
+  assert.equal(T.resultadoDeLado("b", null, { Result: "1-0" }), "perdi");
+  assert.equal(T.resultadoDeLado("w", null, { Result: "1/2-1/2" }), "empate");
+});
+
+test("no saber el resultado no es empatar", () => {
+  /* Contar un desconocido como tablas sería inventar un resultado. Pasa con una
+     partida sin terminar, y con una en la que no se sabe de qué lado jugaba. */
+  assert.equal(T.resultadoDeLado("w", null, { Result: "*" }), null);
+  assert.equal(T.resultadoDeLado("w", null, {}), null);
+  assert.equal(T.resultadoDeLado(null, { white: { result: "win" }, black: { result: "resigned" } }), null);
+  const c = T.contarResultados(["gane", "empate", null, "perdi", null]);
+  assert.deepEqual(c, { gane: 1, empate: 1, perdi: 1, sinDato: 2 });
+});
+
+test("el historial se cuenta sobre las mismas partidas que los promedios", () => {
+  /* Si el historial contara las asistidas y los promedios no, habría dos
+     totales distintos para lo mismo. En "todo lo analizado" las asistidas ni
+     se guardan, así que la única opción coherente es excluirlas en los dos. */
+  assert.ok(html.includes("const conMias = limpias.filter(r => filasDelUsuario(r).length)"));
+  assert.ok(html.includes("conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab))"));
+});
+
 /* --- el conmutador Partida / Mes, v0.38 --- */
 
 test("solo mostrarVista prende y apaga las zonas de las dos vistas", () => {
