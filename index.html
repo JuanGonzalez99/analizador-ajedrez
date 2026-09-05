@@ -258,7 +258,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.42 · 05-09";
+  window.VERSION = "v0.43 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -767,6 +767,57 @@ const claveLibro = fen => fen.split(" ").slice(0, 4).join(" ");
 
 /* Lee el PGN y devuelve las jugadas y las posiciones. No usa el motor: es la
    parte que se puede rehacer gratis cuando el análisis viene de la caché. */
+/* ---------------------- el reloj ----------------------
+   Los PGN de chess.com traen el reloj de cada jugada como {[%clk 0:04:58.4]}, y
+   chess.js ya los parsea: `get_comments()` los devuelve por FEN. No hace falta
+   escribir ningún lector.
+
+   La cadencia sale del encabezado TimeControl: "300" es 5+0, "180+2" es 3+2.
+   Las partidas por correspondencia lo traen como "1/259200" —una jugada cada
+   tantos segundos—, y ahí el reloj no mide lo mismo ni de lejos: se devuelve
+   null y quedan afuera de todo lo que hable de tiempo. */
+function leerCadencia(cab) {
+  const tc = ((cab && cab.TimeControl) || "").trim();
+  if (!tc || tc === "-" || tc.includes("/")) return null;
+  const [b, i] = tc.split("+");
+  const base = +b, inc = +(i || 0);
+  if (!isFinite(base) || base <= 0 || !isFinite(inc) || inc < 0) return null;
+  /* El nombre es la unidad de comparación: "blitz" NO sirve, porque mete 3+0 y
+     5+0 en la misma bolsa y son casi el doble uno del otro (§7.8). */
+  const nombre = base % 60 === 0 ? `${base / 60}+${inc}` : `${base}s+${inc}`;
+  return { tc, base, inc, nombre };
+}
+
+const HMS = /\[%clk\s+([\d:.]+)\]/;
+
+/* Segundos que se pensó cada jugada, alineados con `jugadas`, con null donde no
+   hay reloj. Se resta el reloj propio anterior menos el actual, más el
+   incremento —que chess.com ya sumó antes de escribir el valor—.
+
+   Los relojes vienen redondeados, así que un gasto apenas negativo es ruido y
+   no un dato: se recorta en 0, igual que hace `perdida`. La primera jugada de
+   cada lado es el caso conocido: chess.com escribe el reloj inicial intacto,
+   así que da 0 aunque se haya pensado una décima. */
+function segundosPensados(base, jugadas, fens, cad) {
+  if (!cad) return jugadas.map(() => null);
+  const porFen = new Map(base.get_comments().map(c => [c.fen, c.comment]));
+  const queda = { w: cad.base, b: cad.base };
+  return jugadas.map((j, i) => {
+    const m = HMS.exec(porFen.get(fens[i + 1]) || "");
+    if (!m) return null;
+    const p = m[1].split(":").map(Number);
+    if (p.some(x => !isFinite(x))) return null;
+    const restan = p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2]
+                 : p.length === 2 ? p[0] * 60 + p[1] : p[0];
+    const gasto = queda[j.color] - restan + cad.inc;
+    queda[j.color] = restan;
+    /* Este mismo bucle tiene `restan`, que es "cuánto te quedaba" —la otra
+       pregunta del tiempo, §7.8—. No se emite hasta que haya algo que la use:
+       cada campo que se agrega acá pesa también en las filas flacas. */
+    return Math.max(0, Math.round(gasto * 10) / 10);
+  });
+}
+
 function prepararPartida(pgn) {
   const base = new Chess();
   if (!base.load_pgn(normalizarPgn(pgn), { sloppy: true }))
@@ -777,13 +828,16 @@ function prepararPartida(pgn) {
   const rep = new Chess();
   const fens = [rep.fen()];
   for (const j of jugadas) { rep.move(j); fens.push(rep.fen()); }
-  return { cab: base.header(), jugadas, fens };
+  const cab = base.header();
+  const cadencia = leerCadencia(cab);
+  return { cab, jugadas, fens, cadencia,
+           tiempos: segundosPensados(base, jugadas, fens, cadencia) };
 }
 
 /* Arma las filas a partir de las evaluaciones. Todo lo de acá es derivable, y
    por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
    categorización, las partidas ya analizadas no hay que volver a correrlas. */
-function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
+function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", tiempos = null) {
   let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
@@ -867,7 +921,10 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico") {
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
-      capBuena: !!capB, tomoBuena
+      capBuena: !!capB, tomoBuena,
+      /* segundos pensados en esta jugada, o null si la partida no traía reloj.
+         null NO es cero: es "no se sabe", y las medianas lo saltean. */
+      seg: (tiempos && tiempos[i] != null) ? tiempos[i] : null
     });
   }
   return { filas, apertura };
@@ -1250,9 +1307,9 @@ function esSospechosa(f) {
    Las cifras del resumen quedan TODAS a 13: mezclar profundidades en una misma
    mediana sería exactamente lo que prohíbe §D regla 11. Lo profundo se guarda
    aparte, por jugada, como segunda opinión sobre las sospechosas. */
-async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc) {
+async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc, tiempos) {
   const evs = await evaluarPosiciones(fens, 13, (h, t) => onProg(h, t, "barrido"), opc);
-  const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value);
+  const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value, tiempos);
 
   const sospechosas = d.filas.map((f, i) => i).filter(i => esSospechosa(d.filas[i]));
   const necesarias = new Set();
@@ -1300,7 +1357,7 @@ async function analizarHibrido(jugadas, fens, prof, onProg, opc) {
 }
 
 async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
-  const { cab, jugadas, fens } = prepararPartida(pgn);
+  const { cab, jugadas, fens, cadencia, tiempos } = prepararPartida(pgn);
   const libro = await cargarLibro();
   const vte = variante(opc);
   const prog = (h, t, fase) => { if (onProg) onProg(h, t, fase); };
@@ -1310,24 +1367,24 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   if (guardado && guardado.evs && guardado.evs.length === fens.length) {
     window.LOG.add("·", `caché: ${id} a profundidad ${prof}${vte ? " (" + vte + ")" : ""}`);
     prog(fens.length, fens.length, "caché");
-    const d = derivarFilas(jugadas, fens, guardado.evs, libro, 0, MODO());
+    const d = derivarFilas(jugadas, fens, guardado.evs, libro, 0, MODO(), tiempos);
     (guardado.revs || []).forEach(r => { if (d.filas[r.i]) d.filas[r.i].rev = r.rev; });
     return { filas: d.filas, cab, apertura: d.apertura, id, deCache: true,
-             jugadas, fens, evs: guardado.evs, revs: guardado.revs || [],
+             jugadas, fens, cadencia, tiempos, evs: guardado.evs, revs: guardado.revs || [],
              profBase: guardado.profBase || prof, revisadas: (guardado.revs || []).length };
   }
   if (guardado) window.LOG.add("!", "caché descartada por largo distinto en " + id);
 
   let r;
   if (opc.barrido && prof > 13) {
-    r = await analizarConBarrido(jugadas, fens, prof, libro, prog, opc);
+    r = await analizarConBarrido(jugadas, fens, prof, libro, prog, opc, tiempos);
   } else if (opc.multipv === "hibrido") {
     const h = await analizarHibrido(jugadas, fens, prof, prog, opc);
-    const d = derivarFilas(jugadas, fens, h.evs, libro, 0, $("modo").value);
+    const d = derivarFilas(jugadas, fens, h.evs, libro, 0, $("modo").value, tiempos);
     r = { filas: d.filas, apertura: d.apertura, evs: h.evs, revisadas: h.extra, profBase: prof };
   } else {
     const evs = await evaluarPosiciones(fens, prof, (h, t) => prog(h, t, "análisis"), opc);
-    const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value);
+    const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value, tiempos);
     r = { filas: d.filas, apertura: d.apertura, evs, revisadas: 0, profBase: prof };
   }
   if (!opc.sinCache) {
@@ -1336,7 +1393,7 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
       { evs: r.evs, n: r.evs.length, profBase: r.profBase, revs });
   }
   return { filas: r.filas, cab, apertura: r.apertura, id, deCache: false,
-           jugadas, fens, evs: r.evs,
+           jugadas, fens, cadencia, tiempos, evs: r.evs,
            revs: r.filas.map((f, i) => f.rev ? { i, rev: f.rev } : null).filter(Boolean),
            profBase: r.profBase, revisadas: r.revisadas };
 }
@@ -1933,7 +1990,7 @@ function pintarBanco(filas, prof, queCompara) {
    revisión, que sigue trabajando sobre el mes elegido. Un año entero de filas
    flacas pesa menos que un mes con todo. */
 const CAMPOS_FLACOS = ["n", "cats", "perdida", "precision", "franja", "pieza",
-                       "esCaptura", "colgada", "capBuena", "tomoBuena"];
+                       "esCaptura", "colgada", "capBuena", "tomoBuena", "seg"];
 
 function adelgazar(f) {
   const o = {};
@@ -1950,7 +2007,9 @@ async function barrerCache(prof, opc, onProg) {
     .map(k => String(k).split("|")[0]));
   /* El resultado va por PARTIDA y no en cada fila flaca: son diez o cien filas
      por partida y el dato es uno solo. Va en paralelo a porPartida. */
-  const porPartida = [], resultados = [], hito = [];
+  /* La cadencia, igual que el resultado, es UN dato por partida y no por fila:
+     va en un arreglo paralelo a porPartida y no dentro de cada fila flaca. */
+  const porPartida = [], resultados = [], cadencias = [], hito = [];
   let partidas = 0, mesesConDatos = 0, otraProf = 0, asistidas = 0;
 
   for (let m = 0; m < MESES.length; m++) {
@@ -1971,11 +2030,12 @@ async function barrerCache(prof, opc, onProg) {
         if (idsEnCache.has(id)) otraProf++;
         continue;
       }
-      let d;
+      let d, prep;
       try {
-        const prep = prepararPartida(g.pgn);
+        prep = prepararPartida(g.pgn);
         if (guardado.evs.length !== prep.fens.length) continue;
-        d = derivarFilas(prep.jugadas, prep.fens, guardado.evs, libro, 0, $("modo").value);
+        d = derivarFilas(prep.jugadas, prep.fens, guardado.evs, libro, 0, $("modo").value,
+                         prep.tiempos);
         d.cab = prep.cab;
       } catch (e) { continue; }
 
@@ -1985,6 +2045,7 @@ async function barrerCache(prof, opc, onProg) {
       if (!mias.length) continue;
       porPartida.push(mias.map(adelgazar));
       resultados.push(resultadoDeLado(ladoDelUsuario(falso), g, d.cab));
+      cadencias.push(prep.cadencia);
       partidas++; enEste++;
     }
     if (enEste) { mesesConDatos++; hito.push(MESES[m].slice(-7).replace("/", "-")); }
@@ -1992,14 +2053,14 @@ async function barrerCache(prof, opc, onProg) {
 
   const filas = [];
   porPartida.forEach(fs => filas.push(...fs));
-  return { filas, porPartida, partidas, meses: mesesConDatos, otraProf, asistidas,
+  return { filas, porPartida, cadencias, partidas, meses: mesesConDatos, otraProf, asistidas,
            marcador: contarResultados(resultados),
            prof, vte, desde: hito[0] || null, hasta: hito[hito.length - 1] || null };
 }
 
 function reDerivar(r) {
   if (!r || !r.evs) return;
-  const d = derivarFilas(r.jugadas, r.fens, r.evs, LIBRO, 0, $("modo").value);
+  const d = derivarFilas(r.jugadas, r.fens, r.evs, LIBRO, 0, $("modo").value, r.tiempos);
   r.filas = d.filas;
   r.apertura = d.apertura;
   (r.revs || []).forEach(x => { if (r.filas[x.i]) r.filas[x.i].rev = x.rev; });
@@ -2121,12 +2182,19 @@ function tablaContrastes(idTabla, idCap, texto, filas, encabezado, base) {
     </tbody>`;
 }
 
-function tablaTasas(idTabla, idCap, texto, filas, encabezado) {
-  $(idCap).textContent = texto + DEF_MALA;
+function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
+  /* La columna de segundos aparece SOLO si hay de dónde sacarla. Una columna de
+     guiones no dice "no se midió", dice "no hay", que no es lo mismo (§5.12);
+     mejor que no esté y que la leyenda lo explique. */
+  const conTiempo = filas.some(f => f.seg != null);
+  $(idCap).textContent = texto + DEF_MALA + (conTiempo ? textoTiempo(tiempo) : "");
   $(idTabla).innerHTML = `
-    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
+    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>` +
+      (conTiempo ? "<th>Seg.</th>" : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
-      `<td>${pct(f)}</td></tr>`).join("")}
+      `<td>${pct(f)}</td>` +
+      (conTiempo ? `<td>${f.seg == null ? "\u2014" : f.seg.toFixed(1)}</td>` : "") +
+      `</tr>`).join("")}
     </tbody>`;
 }
 
@@ -2202,7 +2270,60 @@ function textoMarcador(m) {
 }
 
 const esMala = f => f.perdida >= 3;
-const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
+/* Además de la tasa de malas, la mediana de segundos pensados. Van juntas
+   porque son la misma agrupación —las jugadas de dama, las del final— vista de
+   dos maneras, y separarlas obligaría a filtrar dos veces lo mismo.
+   Los segundos tienen su PROPIO denominador (`conSeg`) y no `total`: las
+   partidas de otra cadencia cuentan para las malas y no para el tiempo. */
+const tasa = (fs, nombre) => {
+  const segs = [];
+  for (const f of fs) if (f.seg != null) segs.push(f.seg);
+  return { nombre, malas: fs.filter(esMala).length, total: fs.length,
+           conSeg: segs.length,
+           seg: segs.length >= NMIN ? mediana(segs) : null };
+};
+
+/* Los segundos de una cadencia no se pueden mezclar con los de otra: diez
+   segundos en un 5+0 es muchísimo y en un 10+0 no tanto (§7.8). Así que todo lo
+   que hable de tiempo habla de UNA cadencia —la que más partidas tiene— y de
+   las demás se dice cuántas quedaron afuera, nunca se callan (§5.12).
+
+   Las partidas que sobran conservan sus jugadas para las malas: lo único que
+   pierden es el `seg`. Y la fila original NO se toca, porque es la misma que
+   usa la pantalla de revisión: la que hay que cambiar se copia. */
+function unaSolaCadencia(porPartida, cadencias) {
+  const cuenta = new Map();
+  cadencias.forEach((c, i) => {
+    if (!c) return;
+    const a = cuenta.get(c.nombre) || { nombre: c.nombre, partidas: 0, jugadas: 0 };
+    a.partidas++; a.jugadas += porPartida[i].length;
+    cuenta.set(c.nombre, a);
+  });
+  /* Empatadas en partidas gana la que tiene más jugadas —más datos—, y recién
+     si eso también empata, el nombre, para que el resultado no dependa del
+     orden en que vinieron las partidas. */
+  const orden = [...cuenta.values()].sort((a, b) =>
+    b.partidas - a.partidas || b.jugadas - a.jugadas || a.nombre.localeCompare(b.nombre));
+  const manda = orden[0] || null;
+  const filas = porPartida.map((fs, i) => {
+    const c = cadencias[i];
+    if (manda && c && c.nombre === manda.nombre) return fs;
+    return fs.map(f => f.seg == null ? f : Object.assign({}, f, { seg: null }));
+  });
+  return { porPartida: filas, cadencia: manda, otras: orden.slice(1),
+           sinReloj: cadencias.filter(c => !c).length };
+}
+
+/* La frase que acompaña a cualquier tabla con segundos. Sin esto la columna
+   sería un número sin universo, que es justo lo que prohíbe §5.1. */
+function textoTiempo(t) {
+  if (!t || !t.cadencia) return "";
+  const otras = t.otras.map(o => `${o.partidas} de ${o.nombre}`);
+  if (t.sinReloj) otras.push(`${t.sinReloj} sin reloj`);
+  return ` Los segundos son la mediana de lo que se pensó esa jugada, y salen ` +
+    `solo de las ${t.cadencia.partidas} partidas de ${t.cadencia.nombre}` +
+    (otras.length ? `; quedaron afuera ${otras.join(" y ")}.` : ".");
+}
 
 /* un mecanismo contra su propia tasa base: las jugadas que lo tienen y el resto */
 /* Por qué la columna "Malas" no coincide con la fila "Error grave" del resumen.
@@ -2293,7 +2414,7 @@ function paresDeErrores(porPartida) {
   return { trasMala, resto };
 }
 
-function pintarDetalle(todas, porPartida) {
+function pintarDetalle(todas, porPartida, tiempo) {
   const conCap = todas.filter(f => f.capBuena);
   tablaReparto("mesCapturas", "capCapturas",
     "De las veces que la mejor jugada del motor era una captura que ganaba " +
@@ -2319,12 +2440,12 @@ function pintarDetalle(todas, porPartida) {
     "de esas jugadas salió mal.",
     Object.keys(NOMBRE_PIEZA).map(k =>
       tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total),
-    "Pieza");
+    "Pieza", tiempo);
 
   tablaTasas("mesTramo", "capTramo",
     "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
     TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom)),
-    "Jugadas");
+    "Jugadas", tiempo);
 }
 
 /* De dónde salen los números de las tablas. La lista de partidas NO pasa por
@@ -2336,25 +2457,28 @@ function datosDeTablas() {
   const modo = $("modo").value;
   if (FUENTE === "todo" && TODO) {
     const cat = f => (f.cats && f.cats[modo]) || f.cat;
-    const porPartida = TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) })));
+    const crudo = TODO.porPartida.map(fs => fs.map(f => Object.assign({}, f, { cat: cat(f) })));
+    const t = unaSolaCadencia(crudo, TODO.cadencias || crudo.map(() => null));
+    const porPartida = t.porPartida;
     const todas = [];
     porPartida.forEach(fs => todas.push(...fs));
-    return { todas, porPartida, asistidas: TODO.asistidas,
+    return { todas, porPartida, asistidas: TODO.asistidas, tiempo: t,
              marcador: TODO.marcador, deTodo: true };
   }
-  if (!MES) return { todas: [], porPartida: [], asistidas: 0,
+  if (!MES) return { todas: [], porPartida: [], asistidas: 0, tiempo: null,
                      marcador: contarResultados([]), deTodo: false };
   const asistidas = MES.resultados.filter(esAsistida);
   const limpias = MES.resultados.filter(r => !esAsistida(r));
   /* el historial se cuenta sobre EXACTAMENTE las mismas partidas que los
      promedios, o los dos números hablarían de universos distintos */
   const conMias = limpias.filter(r => filasDelUsuario(r).length);
-  const porPartida = conMias.map(filasDelUsuario);
+  const t = unaSolaCadencia(conMias.map(filasDelUsuario), conMias.map(r => r.cadencia || null));
+  const porPartida = t.porPartida;
   const todas = [];
   porPartida.forEach(fs => todas.push(...fs));
   const marcador = contarResultados(
     conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab)));
-  return { todas, porPartida, asistidas: asistidas.length, marcador, deTodo: false };
+  return { todas, porPartida, asistidas: asistidas.length, tiempo: t, marcador, deTodo: false };
 }
 
 /* De dónde salen los números, dicho arriba de todo. Sin esto dos tablas de
@@ -2433,7 +2557,7 @@ function pintarMes(prof) {
     FRANJAS.map(([nom, t]) => tasa(todas.filter(f => t(f.franja)), nom)),
     "Ventaja antes de mover");
 
-  pintarDetalle(todas, porPartida);
+  pintarDetalle(todas, porPartida, d.tiempo);
   pintarLista();
 }
 

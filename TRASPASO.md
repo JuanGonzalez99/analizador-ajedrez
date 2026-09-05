@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.42**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.43**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -786,6 +786,88 @@ error — que es exactamente cuando hace falta.
 **La lección se repite:** una clase puesta no es un efecto conseguido. Es el
 mismo error que con `.evalbar` en la v31, y las dos veces se vio mirando la
 pantalla, no el código.
+
+## 4nonies. El reloj: dónde se va el tiempo (v0.43)
+
+Primera de las tres formas de §7.8, y la que se eligió empezar porque **es la
+única que no puede engañar**: no afirma que el tiempo cause nada, solo dice
+dónde se va. Además su plomería es la que después necesitan las otras dos.
+
+### Lo que se ve
+
+Una columna **Seg.** en las tablas "por pieza" y "por tramo": la **mediana** de
+segundos pensados en las jugadas de esa fila. No hay tabla nueva ni corte nuevo.
+
+### El dato se verificó, no se supuso
+
+Sobre un PGN real del usuario (5+0, 62 jugadas): chess.js devolvió los 62
+comentarios y se leyeron los 62 relojes. Además ese PGN traía un segundo campo
+que no estaba en §7.8, **`[%timestamp N]`**, que son las décimas de segundo
+gastadas en la jugada —o sea la respuesta ya calculada—. Se usó como control
+independiente: **la resta de relojes coincide con él en 60 de 62 jugadas**. Las
+dos que no son `1. e4` y `1... Nf6`, donde chess.com escribe el reloj inicial
+intacto y el timestamp dice 0,1 s: es el redondeo del arranque.
+
+**Se usa `%clk` y no `%timestamp`**, aunque el segundo sea directo: `%clk` es el
+único que además contesta *cuánto te quedaba* —la otra pregunta de §7.8— y ya
+estaba verificado sobre 14 partidas; el `%timestamp` se vio en un solo archivo.
+
+### La cadencia, que era el problema de fondo
+
+Lo señaló el usuario por su cuenta, y es la advertencia que §7.8 ya tenía
+escrita: **diez segundos en un 5+0 es muchísimo y en un 10+0 no tanto.** Si las
+tablas mezclan cadencias, los segundos no significan nada.
+
+**No alcanza con `time_class`.** "Blitz" mete 3+0 y 5+0 en la misma bolsa y son
+casi el doble uno del otro. La unidad de comparación es el `TimeControl` exacto:
+`leerCadencia()` lo lee y arma el nombre `5+0`, `3+2`. Las de correspondencia
+(`"1/259200"`) devuelven `null` y quedan afuera de todo lo que hable de tiempo.
+
+Se evaluaron tres salidas y se eligió mirando el volumen real del usuario:
+
+| | |
+|---|---|
+| un selector de cadencia | lo propuso el usuario. Con ~15 partidas por mes, elegir deja grupos por debajo del mínimo de 30 y se ven guiones. Suma además un tercer `<select>` suelto a la fila de controles, que §8 ya marca como problema |
+| **la cadencia dominante, y decirlo** | **elegida.** Cero controles nuevos. En 2026-09 el 80% de las partidas son de una sola cadencia: el selector serviría para elegir entre un grupo de 12 y uno de 2 |
+| porcentaje del reloj en vez de segundos | no hay que separar nada y entran todas, pero "el 3% de tu reloj" se lee peor que "8,7 s", y con incremento el reloj inicial deja de ser un denominador claro |
+
+El selector queda anotado para **cuando exista la pantalla de configuración**
+(§8), y tiene más sentido en "todo lo analizado", que junta meses y ahí sí hay
+muestra para varias cadencias.
+
+### Las decisiones que hubo que tomar
+
+**Las partidas de otra cadencia no se borran: pierden el `seg` y nada más.**
+Siguen contando para las malas. Son dos denominadores distintos y por eso `tasa`
+devuelve `conSeg` aparte de `total`.
+
+**`unaSolaCadencia()` no muta las filas.** Son las mismas que usa la pantalla de
+revisión: a la que hay que cambiarle el `seg` se le hace una copia. Hay una
+prueba que lo mira.
+
+**`null` no es cero.** Una jugada sin reloj no "se pensó al instante": no se
+sabe. Las medianas saltean los `null` (§5.12).
+
+**La columna aparece solo si hay de dónde sacarla.** Una columna entera de
+guiones se lee como "no hay", no como "no se midió"; si no hay segundos, no hay
+columna, y la leyenda lo explica.
+
+**La mediana usa el mismo mínimo de 30 que los porcentajes.** Un corte solo, no
+dos.
+
+**Un reloj que sube no da un gasto negativo.** chess.com redondea y el resto a
+veces cae abajo de cero: se recorta en 0, igual que hace `perdida`.
+
+**El segundo entró a `CAMPOS_FLACOS`**, o "todo lo analizado" perdería la
+columna sin decir por qué. La **cadencia**, en cambio, es un dato por partida y
+va en un arreglo paralelo a `porPartida`, igual que el resultado (§4septies).
+
+### Lo que falta
+
+Las otras dos formas de §7.8: **el apuro** (cuánto quedaba en el reloj) y
+**cuánto pensaste**. El mismo bucle que calcula el gasto ya tiene `restan`; no
+se emite hasta que haya algo que lo use, porque cada campo pesa también en las
+filas flacas.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

@@ -279,6 +279,141 @@ test("el marcador del listado no necesita análisis", () => {
   assert.ok(!/\bMES\.|cache\./.test(bloque));
 });
 
+/* --- el reloj, v0.43 --- */
+
+test("la cadencia sale del TimeControl, y la correspondencia no cuenta", () => {
+  assert.deepEqual(A.leerCadencia({ TimeControl: "300" }),
+    { tc: "300", base: 300, inc: 0, nombre: "5+0" });
+  assert.deepEqual(A.leerCadencia({ TimeControl: "180+2" }),
+    { tc: "180+2", base: 180, inc: 2, nombre: "3+2" });
+  /* "1/259200" es una partida por correspondencia: el reloj no mide lo mismo */
+  assert.equal(A.leerCadencia({ TimeControl: "1/259200" }), null);
+  assert.equal(A.leerCadencia({ TimeControl: "-" }), null);
+  assert.equal(A.leerCadencia({}), null);
+});
+
+test("el nombre de la cadencia distingue 3+0 de 5+0", () => {
+  /* "blitz" mete a los dos en la misma bolsa y son casi el doble uno del otro:
+     si esto se compara por time_class, los segundos dejan de significar. */
+  assert.notEqual(A.leerCadencia({ TimeControl: "180" }).nombre,
+                  A.leerCadencia({ TimeControl: "300" }).nombre);
+});
+
+test("los segundos salen de restar relojes, con el incremento", () => {
+  const pgn = '[White "a"]\n[Black "b"]\n[TimeControl "300+2"]\n\n' +
+    "1. e4 {[%clk 0:05:00]} e5 {[%clk 0:04:52]} 2. Nf3 {[%clk 0:04:55]} Nc6 {[%clk 0:04:50]}";
+  const { tiempos } = A.prepararPartida(pgn);
+  /* blancas: 300 -> 300, gasto 0 + 2 de incremento = 2 */
+  assert.deepEqual(tiempos, [2, 10, 7, 4]);
+});
+
+test("sin reloj los segundos son null, que no es cero", () => {
+  /* §5.12: cero diria que se penso al instante; null dice que no se midio. */
+  const pgn = '[White "a"]\n[Black "b"]\n[TimeControl "300"]\n\n1. e4 e5 2. Nf3';
+  assert.deepEqual(A.prepararPartida(pgn).tiempos, [null, null, null]);
+});
+
+test("un reloj que sube no da un gasto negativo", () => {
+  /* Los relojes de chess.com vienen redondeados y a veces el resto da abajo de
+     cero. Eso es ruido, no que se haya ganado tiempo. */
+  const pgn = '[White "a"]\n[Black "b"]\n[TimeControl "300"]\n\n' +
+    "1. e4 {[%clk 0:05:01]} e5 {[%clk 0:04:59]}";
+  assert.deepEqual(A.prepararPartida(pgn).tiempos, [0, 1]);
+});
+
+test("las filas llevan el segundo de su jugada", () => {
+  const pgn = '[White "a"]\n[Black "b"]\n[TimeControl "300"]\n\n' +
+    "1. e4 {[%clk 0:04:58]} e5 {[%clk 0:04:55]}";
+  const { jugadas, fens, tiempos } = A.prepararPartida(pgn);
+  const evs = fens.map(() => ({ cp: 0, mate: null, mejor: "a2a3", segunda: null }));
+  const { filas } = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} },
+                                   0, "critico", tiempos);
+  assert.deepEqual(filas.map(f => f.seg), [2, 5]);
+});
+
+test("el segundo viaja en la fila flaca", () => {
+  /* Si no, "todo lo analizado" perderia la columna sin decir por que. */
+  assert.ok(html.includes('"tomoBuena", "seg"'));
+});
+
+/* --- una sola cadencia, v0.43 --- */
+
+test("manda la cadencia con mas partidas y las otras pierden el segundo", () => {
+  const p = n => Array.from({ length: n }, () => ({ seg: 10 }));
+  const t = T.unaSolaCadencia([p(2), p(2), p(2)],
+    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+  assert.equal(t.cadencia.nombre, "5+0");
+  assert.equal(t.cadencia.partidas, 2);
+  assert.deepEqual(t.otras, [{ nombre: "10+0", partidas: 1, jugadas: 2 }]);
+  assert.deepEqual(t.porPartida[0].map(f => f.seg), [10, 10]);
+  assert.deepEqual(t.porPartida[2].map(f => f.seg), [null, null]);
+});
+
+test("la partida de otra cadencia sigue contando para las malas", () => {
+  /* Pierde el tiempo, no las jugadas: son dos denominadores distintos. */
+  const t = T.unaSolaCadencia([[{ seg: 10 }], [{ seg: 10 }], [{ seg: 99, perdida: 5 }]],
+    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+  assert.equal(t.porPartida[2].length, 1);
+  assert.equal(t.porPartida[2][0].seg, null);
+  assert.equal(t.porPartida[2][0].perdida, 5, "la jugada sigue entera");
+});
+
+test("no se toca la fila original al sacarle el segundo", () => {
+  /* Es la misma fila que usa la pantalla de revision: mutarla la romperia. */
+  const fila = { seg: 42 };
+  const t = T.unaSolaCadencia([[{ seg: 1 }], [{ seg: 1 }], [fila]],
+    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+  assert.equal(fila.seg, 42);
+  assert.equal(t.porPartida[2][0].seg, null);
+});
+
+test("una partida sin reloj no manda ni desaparece del texto", () => {
+  /* La daily del mes no tiene cadencia comparable: no puede ganar el desempate
+     ni quedar sin mencionar. */
+  const t = T.unaSolaCadencia([[{ seg: 5 }], [{}]], [{ nombre: "5+0" }, null]);
+  assert.equal(t.cadencia.nombre, "5+0");
+  assert.equal(t.sinReloj, 1);
+  assert.match(T.textoTiempo(t), /1 sin reloj/);
+});
+
+test("la leyenda dice de que cadencia salen los segundos", () => {
+  /* §5.1: un numero sin universo no se puede leer. */
+  const t = T.unaSolaCadencia([[{ seg: 5 }], [{ seg: 5 }], [{ seg: 5 }]],
+    [{ nombre: "5+0" }, { nombre: "5+0" }, { nombre: "10+0" }]);
+  const txt = T.textoTiempo(t);
+  assert.match(txt, /las 2 partidas de 5\+0/);
+  assert.match(txt, /quedaron afuera 1 de 10\+0/);
+  assert.equal(T.textoTiempo(null), "");
+});
+
+test("la mediana de segundos respeta el minimo de 30", () => {
+  /* El mismo corte que los porcentajes, y por el mismo motivo. */
+  const fs = n => Array.from({ length: n }, () => ({ seg: 4, perdida: 0 }));
+  assert.equal(T.tasa(fs(T.NMIN - 1), "x").seg, null);
+  assert.equal(T.tasa(fs(T.NMIN), "x").seg, 4);
+});
+
+test("el universo de tiempo llega a las tablas que lo muestran", () => {
+  /* Se rompió de verdad: las tablas se arman en pintarDetalle, que no tenía el
+     dato, y quedó un `d.tiempo` sobre una `d` que ahí no existe. Las pruebas de
+     unidad no lo vieron porque solo se rompe al pintar. */
+  assert.ok(html.includes("function pintarDetalle(todas, porPartida, tiempo)"));
+  assert.ok(html.includes("pintarDetalle(todas, porPartida, d.tiempo)"));
+  const cuerpo = html.slice(html.indexOf("function pintarDetalle"),
+                            html.indexOf("function datosDeTablas"));
+  assert.ok(!/\bd\.tiempo\b/.test(cuerpo), "pintarDetalle no tiene ninguna `d`");
+});
+
+test("los segundos tienen su propio denominador", () => {
+  /* Las partidas de otra cadencia cuentan para las malas y no para el tiempo:
+     si compartieran denominador, uno de los dos numeros mentiria. */
+  const fs = [...Array(40)].map((_, i) => ({ seg: i < 30 ? 4 : null, perdida: 0 }));
+  const t = T.tasa(fs, "x");
+  assert.equal(t.total, 40);
+  assert.equal(t.conSeg, 30);
+  assert.equal(t.seg, 4);
+});
+
 /* --- el conmutador Partida / Mes, v0.38 --- */
 
 test("solo mostrarVista prende y apaga las zonas de las dos vistas", () => {
