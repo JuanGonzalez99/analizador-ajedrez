@@ -219,6 +219,59 @@ test("el historial se cuenta sobre las mismas partidas que los promedios", () =>
   assert.ok(html.includes("conMias.map(r => resultadoDeLado(ladoDelUsuario(r), r.meta, r.cab))"));
 });
 
+/* --- el marcador del listado del mes, v0.42 --- */
+
+test("el lado se saca del JSON del mes, sin importar mayúsculas", () => {
+  const g = { white: { username: "JuanGonzalez99" }, black: { username: "Rival" } };
+  assert.equal(T.ladoEnJuego(g, "juangonzalez99"), "w");
+  assert.equal(T.ladoEnJuego(g, "RIVAL"), "b");
+});
+
+test("si el usuario no juega la partida, no hay lado", () => {
+  /* y sin lado resultadoDeLado devuelve null, que es "no se sabe" y no "empate" */
+  const g = { white: { username: "uno" }, black: { username: "otro" } };
+  assert.equal(T.ladoEnJuego(g, "tercero"), null);
+  assert.equal(T.ladoEnJuego(g, ""), null);
+  assert.equal(T.ladoEnJuego({}, "uno"), null);
+  assert.equal(T.resultadoDeLado(T.ladoEnJuego(g, "tercero"), g, null), null);
+});
+
+test("el marcador se escribe en palabras, en singular y en plural", () => {
+  assert.equal(T.textoMarcador({ gane: 7, empate: 3, perdi: 5, sinDato: 0 }),
+    "7 ganadas · 3 empatadas · 5 perdidas");
+  assert.equal(T.textoMarcador({ gane: 1, empate: 1, perdi: 1, sinDato: 0 }),
+    "1 ganada · 1 empatada · 1 perdida");
+});
+
+test("las partidas sin resultado conocido se nombran, no se callan", () => {
+  /* §5.12: callarlas deja creyendo que se contaron y dieron cero. */
+  assert.equal(T.textoMarcador({ gane: 2, empate: 0, perdi: 1, sinDato: 1 }),
+    "2 ganadas · 0 empatadas · 1 perdida · 1 sin resultado conocido");
+  assert.equal(T.textoMarcador({ gane: 0, empate: 0, perdi: 0, sinDato: 2 }),
+    "2 sin resultado conocido");
+});
+
+test("sin ninguna partida el marcador no dice nada", () => {
+  assert.equal(T.textoMarcador(T.contarResultados([])), "");
+});
+
+test("los dos marcadores usan las mismas palabras y dicen de qué partidas hablan", () => {
+  /* Si cada uno escribiera su texto, se irían separando. Y como cuentan
+     partidas distintas —el listado todas las del mes, la vista Mes solo las
+     analizadas y sin asistencia— el del listado lleva su denominador (§5.1). */
+  assert.ok(html.includes('const marcadorMes = textoMarcador(d.marcador);'));
+  assert.ok(html.includes('`${cuantas(PARTIDAS.length, "partida", "partidas")} del mes`'));
+});
+
+test("el marcador del listado no necesita análisis", () => {
+  /* Sale del JSON que ya se descargó. Si alguna vez pasara por MES o por la
+     caché, dejaría de verse antes de analizar, que es todo el punto. */
+  const bloque = html.slice(html.indexOf("async function cargarMes"),
+                            html.indexOf('$("partidas").innerHTML = PARTIDAS.map'));
+  assert.ok(bloque.includes("PARTIDAS.map(g => resultadoDeLado(ladoEnJuego(g, USUARIO), g, null))"));
+  assert.ok(!/\bMES\.|cache\./.test(bloque));
+});
+
 /* --- el conmutador Partida / Mes, v0.38 --- */
 
 test("solo mostrarVista prende y apaga las zonas de las dos vistas", () => {

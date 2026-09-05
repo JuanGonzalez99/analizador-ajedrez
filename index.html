@@ -252,7 +252,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.41 · 05-09";
+  window.VERSION = "v0.42 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -423,7 +423,9 @@
 </div>
 
 <div id="zonaMeses" class="oculto"><h2>Mes</h2><select id="meses"></select></div>
-<div id="zonaPartidas" class="oculto"><h2>Partida</h2><div id="partidas" class="lista"></div></div>
+<div id="zonaPartidas" class="oculto"><h2>Partida</h2>
+  <p class="marcadorMes oculto" id="partidasMarcador"></p>
+  <div id="partidas" class="lista"></div></div>
 
 <div id="zonaAnalizar" class="oculto">
   <h2>Análisis</h2>
@@ -1628,6 +1630,7 @@ $("fuente").onchange = seguro("fuente", async () => {
 
 async function cargarMes(url) {
   $("partidas").innerHTML = "<div>Cargando…</div>";
+  $("partidasMarcador").textContent = ""; ver("partidasMarcador", false);
   ver("zonaPartidas", true);
   HAY.mes = false; mostrarVista(VISTA);
   MES = null;
@@ -1635,6 +1638,19 @@ async function cargarMes(url) {
   PARTIDAS = (j.games || []).reverse();
   window.LOG.add("·", `mes ${url.slice(-7)}: ${PARTIDAS.length} partidas`);
   if (!PARTIDAS.length) { $("partidas").innerHTML = "<div>Ese mes no tiene partidas.</div>"; return; }
+  /* Ganadas, empatadas y perdidas del mes SIN analizar nada: el resultado ya
+     viene en el JSON de chess.com, que es el mismo que después usa el marcador
+     de la vista Mes. Por eso aparece apenas se elige el mes y no cuesta motor.
+     Dice "del mes" porque cuenta TODAS —analizadas o no, con asistencia o sin
+     ella— y el de la vista Mes cuenta menos: van a dar distinto, y cada uno
+     tiene que decir sobre qué partidas habla (§5.1). De las que no se sepa el
+     resultado, se dice cuántas son en vez de callarlas (§5.12). */
+  const marcador = textoMarcador(contarResultados(
+    PARTIDAS.map(g => resultadoDeLado(ladoEnJuego(g, USUARIO), g, null))));
+  $("partidasMarcador").textContent =
+    `${cuantas(PARTIDAS.length, "partida", "partidas")} del mes` +
+    (marcador ? ` · ${marcador}` : "");
+  ver("partidasMarcador", true);
   $("partidas").innerHTML = PARTIDAS.map((g, i) => {
     const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
     const res = g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "\u00bd-\u00bd";
@@ -2142,6 +2158,40 @@ const contarResultados = rs => ({
   sinDato: rs.filter(x => !x).length,
 });
 
+/* De qué lado jugaba el usuario, leído del JSON del mes de chess.com.
+   `ladoDelUsuario` contesta lo mismo mirando las cabeceras del PGN ya parseado,
+   pero el listado del mes todavía no parseó nada: tiene el JSON y nada más.
+   El usuario entra por parámetro y no por la global, para que la función sea
+   pura y se pueda probar. */
+function ladoEnJuego(g, usuario) {
+  if (!usuario) return null;
+  const u = usuario.toLowerCase();
+  const b = ((g && g.white && g.white.username) || "").toLowerCase();
+  const n = ((g && g.black && g.black.username) || "").toLowerCase();
+  return b === u ? "w" : n === u ? "b" : null;
+}
+
+/* singular y plural: con una sola partida "1 empatadas" canta */
+const cuantas = (k, una, muchas) => `${k} ${k === 1 ? una : muchas}`;
+
+/* El historial en palabras y no como "8-4-3": esa abreviatura hay que
+   decodificarla, y encima el orden cambia según el país.
+   Lo escriben dos lugares —el listado del mes y la vista Mes—, y comparten esta
+   función para que digan lo mismo con las mismas palabras. El denominador NO va
+   acá: cada uno cuenta partidas distintas y lo dice por su cuenta (§5.1).
+   Las que no tienen resultado conocido se nombran igual: callarlas dejaría
+   creyendo que se contaron (§5.12). */
+function textoMarcador(m) {
+  const partes = [];
+  if (m.gane + m.empate + m.perdi)
+    partes.push(cuantas(m.gane, "ganada", "ganadas"),
+                cuantas(m.empate, "empatada", "empatadas"),
+                cuantas(m.perdi, "perdida", "perdidas"));
+  if (m.sinDato)
+    partes.push(cuantas(m.sinDato, "sin resultado conocido", "sin resultado conocido"));
+  return partes.join(" \u00b7 ");
+}
+
 const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => ({ nombre, malas: fs.filter(esMala).length, total: fs.length });
 
@@ -2345,19 +2395,14 @@ function pintarMes(prof) {
   /* Las tres cifras que resumen el mes van arriba y grandes; en la tabla se
      quedan solo los recuentos por categoría, que es lo que la tabla hace bien.
      Las tres tenían un "—" en la columna "Por partida" que no decía nada. */
-  /* El historial en palabras y no como "8-4-3": esa abreviatura hay que
-     decodificarla, y encima el orden cambia según el país. */
-  const m = d.marcador;
-  const conResultado = m.gane + m.empate + m.perdi;
-  /* singular y plural: con una sola partida "1 empatadas" canta */
-  const cuantas = (k, una, muchas) => `${k} ${k === 1 ? una : muchas}`;
-  $("mesMarcador").textContent = conResultado
-    ? [cuantas(m.gane, "ganada", "ganadas"),
-       cuantas(m.empate, "empatada", "empatadas"),
-       cuantas(m.perdi, "perdida", "perdidas")].join(" · ") +
-      (m.sinDato ? ` · ${cuantas(m.sinDato, "sin resultado conocido", "sin resultado conocido")}` : "")
-    : "";
-  ver("mesMarcador", !!conResultado);
+  /* El marcador lo escribe textoMarcador, la misma que usa el listado del mes:
+     si las palabras se eligieran en dos lugares, se irían separando.
+     Este cuenta las analizadas y sin asistencia —las mismas partidas que los
+     promedios, y lo dice la leyenda de arriba—; el del listado cuenta todas
+     las del mes. Son dos denominadores distintos a propósito. */
+  const marcadorMes = textoMarcador(d.marcador);
+  $("mesMarcador").textContent = marcadorMes;
+  ver("mesMarcador", !!marcadorMes);
 
   const cuadro = (et, va) => `<div><div class="et">${et}</div><div class="va">${va}</div></div>`;
   $("mesCabecera").innerHTML =
