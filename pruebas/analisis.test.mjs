@@ -911,6 +911,37 @@ test("Omisión por material la decide el motor, no la heurística", () => {
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
 });
 
+/* --- el volcado de medición, v0.57 --- */
+
+test("la medición no pasa por el registro", () => {
+  /* El registro es un buffer rotativo de 500 líneas compartido con todo, y
+     analizar un mes ya escribe una por partida: un volcado por jugada se
+     comería sus propios datos. Va al portapapeles y listo. */
+  const med = html.slice(html.indexOf("function medicionGenial()"),
+                         html.indexOf("function reDerivar"));
+  assert.ok(!med.includes("LOG.add"), "la medición no puede escribir en el registro");
+  assert.ok(med.includes("navigator.clipboard"), "tiene que ir al portapapeles");
+});
+
+test("la medición sale del mes analizado y avisa si no hay", () => {
+  /* Las filas flacas no llevan huecoSegunda ni legales, así que "todo lo
+     analizado" no sirve como fuente. Y sin mes tiene que avisar, no romper. */
+  const med = html.slice(html.indexOf("function medicionGenial()"),
+                         html.indexOf("function reDerivar"));
+  assert.ok(med.includes("if (!MES || !MES.resultados.length)"), "sin mes tiene que avisar");
+  assert.ok(!med.includes("TODO"), "no puede salir de las filas flacas");
+  assert.ok(med.includes("filasDelUsuario"), "solo las jugadas del usuario");
+});
+
+test("el histograma se ordena por número y no por texto", () => {
+  /* Ordenado como texto quedaba "150-199" antes que "25-49". Por eso el mapa
+     guarda el índice del cubo y el nombre se arma al imprimir. */
+  const med = html.slice(html.indexOf("function medicionGenial()"),
+                         html.indexOf("function reDerivar"));
+  assert.ok(med.includes("sort((a, b) => a[0] - b[0])"), "volvió el orden por texto");
+  assert.ok(med.includes("const nombreCubo ="));
+});
+
 /* --- el hueco crudo, para poder medir, v0.56.1 --- */
 
 test("la fila lleva el hueco crudo entre la mejor y la segunda", () => {

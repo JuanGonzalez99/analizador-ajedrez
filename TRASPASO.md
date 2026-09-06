@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.56.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.57**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1821,6 +1821,21 @@ resultados en la v0.39.)*
   **No están en `CAMPOS_FLACOS` a propósito:** ninguna tabla los usa todavía y
   un año de filas flacas tiene que pesar poco. Medir sobre las filas completas
   de un mes alcanza para decidir.
+
+  **Cómo se sacan los números (v0.57):** el botón "Copiar medición de Genial",
+  solo en modo DEV, vuelca al portapapeles un histograma del hueco entre la
+  mejor y la segunda, la lista de las que salieron Genial, y la de las que
+  rescataría un corte más bajo. Sale del mes ANALIZADO, no de lo juntado.
+
+  **No va al registro y es a propósito:** el registro es un buffer rotativo de
+  500 líneas compartido con todo lo demás, y analizar un mes ya escribe una
+  línea por partida; un volcado por jugada se comería sus propios datos.
+
+  **Lo que este volcado NO responde:** cuáles habría marcado chess.com. Sin esas
+  etiquetas mide qué tan seguido dispara nuestra regla y dónde cae el corte —o
+  sea, si 150 está en un hueco natural de la distribución o en el medio de un
+  montón—, pero no si acierta. Para lo segundo hacen falta las etiquetas de
+  ellos, que hoy solo se consiguen mirando partida por partida.
 
 - **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
   frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la

@@ -291,7 +291,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.56.1 · 06-09";
+  window.VERSION = "v0.57 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -522,6 +522,7 @@
     <button id="detener" class="chico oculto">Detener</button>
   </div>
   <div class="fila solo-dev" style="margin-top:8px">
+    <button id="medir" class="chico">Copiar medición de Genial</button>
     <button id="banco" class="chico">Comparar configuraciones</button>
     <button id="barrido" class="chico">Barrer motores y memoria</button>
     <button id="salirDev" class="chico">Salir del modo dev</button>
@@ -2242,6 +2243,82 @@ async function barrerCache(prof, opc, onProg) {
            marcador: contarResultados(desenlaces.map(d => d.res)),
            prof, vte, desde: hito[0] || null, hasta: hito[hito.length - 1] || null };
 }
+
+/* MEDICIÓN DE GENIAL. Vuelca al portapapeles los números crudos de las jugadas
+   del mes analizado, para poder decidir los cortes con datos en vez de con tres
+   jugadas elegidas a dedo (§8).
+
+   NO va al registro y es a propósito: el registro es un buffer rotativo de 500
+   líneas compartido con todo lo demás, y analizar un mes ya escribe una línea
+   por partida. Un volcado por jugada se comería sus propios datos.
+
+   Sale del mes ANALIZADO y no de "todo lo analizado", porque las filas flacas
+   no llevan `huecoSegunda` ni `legales` —no los usa ninguna tabla— y un año de
+   filas tiene que pesar poco.
+
+   Lo que este volcado NO puede responder: cuáles habría marcado chess.com. Sin
+   esas etiquetas mide qué tan seguido dispara nuestra regla y dónde cae el
+   corte, no si acierta. */
+function medicionGenial() {
+  if (!MES || !MES.resultados.length) return "No hay un mes analizado.";
+  const CUBOS = [0, 25, 50, 75, 100, 150, 200, 300, Infinity];
+  /* se guarda el ÍNDICE del cubo y no su nombre: ordenado como texto quedaba
+     "150-199" antes que "25-49" y el histograma no se podía leer */
+  const cubo = v => {
+    for (let i = CUBOS.length - 2; i >= 0; i--) if (v >= CUBOS[i]) return i;
+    return 0;
+  };
+  const nombreCubo = i => CUBOS[i + 1] === Infinity ? `${CUBOS[i]}+`
+                                                    : `${CUBOS[i]}-${CUBOS[i + 1] - 1}`;
+  const hist = new Map(), geniales = [], cerca = [];
+  let jugadas = 0, candidatas = 0, sinSegunda = 0, recapTapadas = 0;
+
+  MES.resultados.forEach((r, p) => {
+    filasDelUsuario(r).forEach(f => {
+      jugadas++;
+      /* candidata = jugaste la mejor del motor; es la puerta de Genial */
+      const esMejor = f.mejor === f.uci;
+      if (!esMejor) return;
+      candidatas++;
+      if (f.huecoSegunda === null) { sinSegunda++; return; }
+      const k = cubo(f.huecoSegunda) * 2 + (f.esRecaptura ? 1 : 0);
+      hist.set(k, (hist.get(k) || 0) + 1);
+      const linea = `p${p + 1} ${f.n}${f.turno === "w" ? "." : "..."} ${f.san}` +
+        ` hueco=${f.huecoSegunda} legales=${f.legales}` +
+        ` recap=${f.esRecaptura ? "si" : "no"} antes=${f.franja.toFixed(2)} cat=${f.cat}`;
+      if (f.cat === "genial") geniales.push(linea);
+      /* las que un corte más bajo rescataría: son las que deciden si bajarlo
+         es seguro, y sin verlas el histograma no alcanza */
+      else if (!f.esRecaptura && f.huecoSegunda >= 40 && f.huecoSegunda < 150) cerca.push(linea);
+      if (f.esRecaptura && f.huecoSegunda >= 150) recapTapadas++;
+    });
+  });
+
+  const CORTE = 200;   /* el volcado tiene que entrar en un portapapeles */
+  const lista = (t, xs) => `\n\n${t} (${xs.length})\n` +
+    xs.slice(0, CORTE).map(x => "  " + x).join("\n") +
+    (xs.length > CORTE ? `\n  … y ${xs.length - CORTE} más` : "");
+
+  return `medición de Genial · ${window.VERSION}\n` +
+    `${MES.resultados.length} partidas · ${jugadas} jugadas mías · profundidad ${MES.prof}\n` +
+    `modo ${nombreModo()} · mate a la vista ${$("mateVista").value}\n` +
+    `\njugadas donde jugué la mejor del motor: ${candidatas}` +
+    ` (sin segunda del motor: ${sinSegunda})\n` +
+    `recapturas que el filtro de la v0.56 sacó de Genial: ${recapTapadas}\n` +
+    `\nhueco entre la mejor y la segunda, entre esas candidatas:\n` +
+    [...hist.entries()].sort((a, b) => a[0] - b[0])
+      .map(([k, v]) => `  ${(nombreCubo(k >> 1) + (k & 1 ? " (recaptura)" : "")).padEnd(22)} ${v}`)
+      .join("\n") +
+    lista("GENIALES", geniales) +
+    lista("CERCA (no recaptura, hueco 40-149: las que rescataría un corte más bajo)", cerca);
+}
+
+$("medir").onclick = seguro("medir", () => {
+  const t = medicionGenial();
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(
+    () => estado("Medición copiada."), () => alert(t));
+  else alert(t);
+});
 
 function reDerivar(r) {
   if (!r || !r.evs) return;
