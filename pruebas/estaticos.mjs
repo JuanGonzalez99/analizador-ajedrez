@@ -30,11 +30,17 @@ chequear("ids referenciados existen", [...usados].filter(i => !ids.has(i)));
       Ahora se mira la estructura y no el nombre: antes de cada tabla, cerca,
       tiene que haber un elemento con class="cap". Cubre todas las tablas y no
       solo las del mes. */
-const VENTANA = 200;
-const sinLeyenda = [...html.matchAll(/<table id="([^"]+)"/g)]
-  .filter(m => !html.slice(Math.max(0, m.index - VENTANA), m.index).includes('class="cap"'))
-  .map(m => m[1]);
-chequear("cada tabla tiene leyenda", sinLeyenda);
+/* Sin ventana de N caracteres: se mira el tramo que va desde la tabla ANTERIOR
+   hasta esta. Ahí adentro tiene que haber un class="cap", o sea una leyenda
+   propia y no la de la tabla de arriba. La ventana de 200 caracteres se rompía
+   sola cuando algo se metía en el medio —pasó al agregar el interruptor de la
+   v0.48— sin que hubiera nada mal. */
+const tablas = [...html.matchAll(/<table id="([^"]+)"/g)];
+const sinLeyenda = tablas.filter((m, i) => {
+  const desde = i ? tablas[i - 1].index : 0;
+  return !html.slice(desde, m.index).includes('class="cap"');
+}).map(m => m[1]);
+chequear("cada tabla tiene su propia leyenda", sinLeyenda);
 
 /* 3. Todo lugar que asigna la partida elegida rehabilita los botones. */
 const asigna = [...html.matchAll(/^.*\bPARTIDA\s*=\s*(?!null).*$/gm)].map(m => m[0].trim());

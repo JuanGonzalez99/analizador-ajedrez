@@ -137,8 +137,65 @@ test("esMala y pct son el único corte, y NMIN sigue en 30", () => {
   assert.equal(T.NMIN, 30);
   assert.equal(T.esMala(jugada(3, "grave")), true);
   assert.equal(T.esMala(jugada(2.99, "error")), false);
-  assert.equal(T.pct({ malas: 3, total: 29 }), "\u2014", "debajo de 30 va guion");
+  /* desde la v0.48 el porcentaje NO se esconde con pocos casos: se muestra y se
+     marca. NMIN ya no decide si se ve, decide desde donde se marca. */
+  assert.equal(T.pct({ malas: 3, total: 29 }), "10.3");
   assert.equal(T.pct({ malas: 3, total: 30 }), "10.0");
+  assert.equal(T.pct({ malas: 0, total: 0 }), "\u2014", "sin casos no hay porcentaje");
+});
+
+/* --- el numero flojo se marca en vez de esconderse, v0.48 --- */
+
+test("con casos de sobra el porcentaje va solo", () => {
+  assert.equal(T.textoPct({ malas: 3, total: 30 }, "rango"), "10.0%");
+  assert.equal(T.textoPct({ malas: 3, total: 30 }, "gris"), "10.0%");
+});
+
+test("con pocos casos aparece el margen, no un guion", () => {
+  /* 3 de 21: el rango va de 5 a 35. El guion escondia el numero y ademas no
+     distinguia una fila de 21 de una de 29. */
+  const t = T.textoPct({ malas: 3, total: 21 }, "rango");
+  assert.match(t, /^14\.3% /);
+  assert.match(t, /\(5\u201335\)/);
+  assert.ok(t.includes('class="rango"'));
+});
+
+test("la otra forma de marcarlo es el gris, sin margen", () => {
+  const t = T.textoPct({ malas: 3, total: 21 }, "gris");
+  assert.ok(t.includes('class="flojo"'));
+  assert.ok(!t.includes("("), "en gris no va el margen");
+});
+
+test("el margen no se sale de 0 a 100", () => {
+  /* Es la razon de usar Wilson y no el margen de manual: ese, sin ningun caso
+     o con todos, da tasas negativas o de mas de 100. */
+  for (const [k, n] of [[0, 5], [5, 5], [0, 100], [1, 2]]) {
+    const r = T.rangoWilson(k, n);
+    assert.ok(r.lo >= 0 && r.hi <= 100, `${k}/${n} -> ${r.lo}..${r.hi}`);
+    assert.ok(r.lo <= r.hi);
+  }
+});
+
+test("mas casos, margen mas angosto", () => {
+  const ancho = (k, n) => { const r = T.rangoWilson(k, n); return r.hi - r.lo; };
+  assert.ok(ancho(3, 21) > ancho(14, 100));
+  assert.ok(ancho(14, 100) > ancho(140, 1000));
+});
+
+test("la explicacion del margen sale solo si hay algun margen", () => {
+  /* Explicar algo que no esta en pantalla es ruido. */
+  assert.equal(T.ayudaFlojos([{ malas: 3, total: 30 }], "rango"), "");
+  assert.ok(T.ayudaFlojos([{ malas: 3, total: 21 }], "rango").length > 0);
+  assert.equal(T.ayudaFlojos([], "rango"), "");
+  /* y explica la forma que esta puesta, no la otra */
+  assert.equal(T.ayudaFlojos([{ malas: 3, total: 21 }], "gris"), T.AYUDA_GRIS);
+  assert.equal(T.ayudaFlojos([{ malas: 3, total: 21 }], "rango"), T.AYUDA_RANGO);
+});
+
+test("la explicacion es corta", () => {
+  /* Pedido del usuario: ni "podria ser 5% o 35%" ni un parrafo entero. */
+  assert.ok(T.AYUDA_RANGO.length < 320, T.AYUDA_RANGO.length);
+  assert.ok(T.AYUDA_RANGO.includes("centro"), "tiene que decir que el numero es el centro");
 });
 
 test("toda leyenda de tabla dice qué cuenta como mala, y lo dice arriba", () => {
@@ -146,7 +203,9 @@ test("toda leyenda de tabla dice qué cuenta como mala, y lo dice arriba", () =>
      tabla nueva puede quedarse sin decirlo. Y va en el texto CORTO, no detrás
      del ?: es lo que cambia cómo se lee el número. */
   assert.ok(T.DEF_MALA.includes("3+ peones"));
-  const pinta = html.match(/pintarLeyenda\(idCap,\s*\n(?:.*\n){0,4}?\s*\[[^\]]*\]\);/g) || [];
+  /* el regex tolera la llamada en una linea o en varias: la forma del codigo
+     no es lo que esta prueba tiene que vigilar */
+  const pinta = html.match(/pintarLeyenda\(idCap,[\s\S]{0,200}?\[[^\]]*\],/g) || [];
   assert.equal(pinta.length, 3, "hay tres funciones que pintan leyenda");
   const cortos = pinta.map(l => l.slice(0, l.indexOf("],")));
   assert.equal(cortos.filter(l => l.includes("DEF_MALA")).length, 2,
@@ -503,7 +562,7 @@ test("el desglose no lleva columna de malas", () => {
   /* Reparte PARTIDAS y no jugadas: una columna vacia ahi se leeria como
      "cero malas", que seria falso. */
   const f = html.slice(html.indexOf("function tablaReparto"));
-  assert.ok(f.slice(0, 1200).includes("const conMalas = filas.some(f => f.malas != null)"));
+  assert.ok(f.slice(0, 2000).includes("const conMalas = filas.some(f => f.malas != null)"));
   const filas = T.filasDesenlace([{ res: "gane", motivo: "mate" }]);
   assert.equal(filas[0].malas, null);
 });
@@ -613,11 +672,26 @@ test("la cabecera dice cuantas partidas quedaron afuera, y por que", () => {
   assert.ok(largo.includes("correspondencia"), "las daily tambien hay que nombrarlas");
 });
 
-test("la mediana de segundos respeta el minimo de 30", () => {
-  /* El mismo corte que los porcentajes, y por el mismo motivo. */
+test("la mediana NO usa el minimo de los porcentajes", () => {
+  /* Se lo puse por consistencia en la v0.43 y la consistencia estaba mal
+     elegida: una mediana es mucho mas robusta que una tasa de casos raros.
+     Queda un piso bajo para que dos valores no pasen por resumen. */
   const fs = n => Array.from({ length: n }, () => ({ seg: 4, perdida: 0 }));
-  assert.equal(T.tasa(fs(T.NMIN - 1), "x").seg, null);
-  assert.equal(T.tasa(fs(T.NMIN), "x").seg, 4);
+  assert.ok(T.NMIN_MEDIANA < T.NMIN);
+  assert.equal(T.tasa(fs(T.NMIN_MEDIANA - 1), "x").seg, null);
+  assert.equal(T.tasa(fs(T.NMIN_MEDIANA), "x").seg, 4);
+  assert.equal(T.tasa(fs(10), "x").seg, 4, "10 tiempos ya son una mediana");
+});
+
+test("las tablas de reparto no tienen minimo", () => {
+  /* El porcentaje ahi es composicion de un conjunto cerrado: el denominador ES
+     la poblacion, no una muestra. No hay nada que estimar. */
+  const f = html.slice(html.indexOf("function tablaReparto"));
+  const cuerpo = f.slice(0, f.indexOf("\n}"));
+  assert.ok(!cuerpo.includes("NMIN"), "volvio el minimo a una tabla de reparto");
+  assert.ok(cuerpo.includes("total ? (100 * f.total / total)"));
+  assert.ok(cuerpo.includes('.toFixed(1) + "%"'),
+    "el signo va igual que en las tablas de tasas, bajo el mismo encabezado");
 });
 
 test("el universo de tiempo llega a las tablas que lo muestran", () => {

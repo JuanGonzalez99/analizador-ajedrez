@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.47**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.48**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1095,6 +1095,85 @@ según la ventaja que tenías", que es un corte legítimo y gratis. Es válido
 porque desde la v0.46 toda la vista es una sola cadencia; **si alguna vez vuelve
 a haber cadencias mezcladas en la misma vista, esta columna miente.**
 
+## 4terdecies. El número flojo se marca, no se esconde (v0.48)
+
+Lo abrió el usuario mirando el desglose de desenlaces: *"no le veo sentido a la
+restricción de porcentaje a esa tabla. Por más que hayan sido 10 partidas, el
+porcentaje es un dato, no una tendencia"*. Y de ahí a repensar el mínimo entero.
+
+### La distinción que faltaba: dos clases de porcentaje
+
+- **Composición de un conjunto cerrado.** "De mis 10 partidas, 3 las perdí por
+  tiempo." El denominador **es** la población de la que se habla. No se estima
+  nada: 30% es exactamente cierto de esas 10 partidas. Un mínimo ahí no protege
+  de nada. → tablas de reparto: desenlaces, capturas.
+- **Tasa como estimación de una propensión.** "De mis jugadas de dama, el 14%
+  sale mal." Las 21 jugadas no son el tema: son la muestra con la que se quiere
+  decir algo sobre cómo se juega. → tablas de tasas: pieza, tramo, mecanismos,
+  franja.
+
+El mínimo se escribió para la segunda y se estaba aplicando a la primera.
+
+### Los tres cambios
+
+1. **Las tablas de reparto perdieron el mínimo.** Siempre muestran el
+   porcentaje, sin margen, y la ayuda dice por qué: "reparte estas mismas
+   partidas, no estima nada, las cuenta".
+2. **La mediana de segundos salió del mínimo de 30** y tiene el suyo,
+   `NMIN_MEDIANA = 5`. El de 30 se lo había puesto yo en la v0.43 por
+   consistencia, y la consistencia estaba mal elegida: una mediana es mucho más
+   robusta que una tasa de casos raros. 2 malas de 21 es ruido; 12 tiempos
+   ordenados, no.
+3. **En las tablas de tasas el guion se fue.** El número se muestra siempre y
+   debajo de `NMIN` va marcado.
+
+### Por qué el margen y no el guion
+
+El guion **no escondía nada**: al lado están los casos y el total, y cualquiera
+divide. Lo que hacía era cobrar una división y, peor, **tratar igual una fila de
+21 jugadas y una de 29**, que no son igual de flojas.
+
+```
+antes   Dejé comible la pieza que moví   5   15    —
+ahora   Dejé comible la pieza que moví   5   15   33.3% (15–58)
+```
+
+Ese `(15–58)` dice lo que el guion no podía: el número podría ser 15% o podría
+ser 58%, así que no sirve para decidir nada. Y al lado, un `13.3%` sin
+paréntesis se lee como firme.
+
+### El cálculo
+
+`rangoWilson(k, n)`. **Wilson y no el margen de manual** `p ± z·√(p(1-p)/n)`:
+ese, con pocos casos, se va abajo de cero o arriba de cien —"una tasa de -3%" no
+se puede mostrar— y se rompe del todo cuando no hubo ningún caso, que es
+justamente la fila `0 de 15` que sí queremos poder mostrar como `0.0% (0–20)`.
+
+`z = 1,96` es el 95%: repetido muchas veces, el rango contiene la tasa real unas
+95 de cada 100. **Con pocas jugadas la etiqueta es aproximada** —una simulación
+de 100.000 corridas sobre 21 jugadas dio 98 y no 95— porque no existe media
+jugada mala y los rangos saltan de a escalones.
+
+### El interruptor
+
+Hay dos formas de marcar y **no está claro cuál gana**, así que se dejó
+configurable: `con su margen` (por defecto) o `en gris`. Vive **dentro del
+plegable "Cómo se leen estos números"**, que es donde corresponde —es una
+preferencia sobre cómo leer números, no un filtro de datos— y no suma un control
+a la fila de arriba. Se guarda en `localStorage`.
+
+**El interruptor está para decidir con la app usada y no de memoria**, que es la
+regla de la casa. Y el usuario lo pidió pensando más lejos: el mismo mecanismo
+puede servir para decidir cómo mostrar otros números dudosos.
+
+### Un chequeo estático que se arregló de paso
+
+"Cada tabla tiene leyenda" miraba una **ventana de 200 caracteres** antes de
+cada tabla. Agregar el interruptor la corrió y el chequeo falló sin que hubiera
+nada mal. Ahora mira el tramo **desde la tabla anterior hasta esta**: no tiene
+número mágico y además es más fuerte, porque exige leyenda **propia** y no la de
+la tabla de arriba.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -1102,9 +1181,14 @@ Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
 1. **Todo porcentaje va con su denominador.** "La mayoría de mis errores salen
    de X" no significa nada sin saber qué porcentaje del juego transcurre en X.
    Las tablas muestran siempre casos y total, no solo el porcentaje.
-2. **Debajo de 30 jugadas no se muestra porcentaje**, se muestra un guion. Con
-   pocas jugadas malas, cualquier corte deja celdas de dos casos, y un "7,3%"
-   sobre 41 jugadas invita a conclusiones que el dato no aguanta.
+2. **Un porcentaje flojo se marca, no se esconde** (v0.48; antes: debajo de 30
+   jugadas iba un guion). El guion no escondía nada —al lado están los casos y
+   el total, cualquiera divide— y metía en la misma bolsa una fila de 21
+   jugadas y una de 29. Ahora el número se muestra siempre y debajo de `NMIN`
+   va con su margen: `14.3% (5–35)`. Ver §4terdecies.
+   **Y esta regla es solo para TASAS.** Un porcentaje de composición —"de mis
+   10 partidas, 3 fueron por tiempo"— no estima nada: el denominador es la
+   población, no una muestra. Ahí no hay margen ni mínimo.
 3. **Números de distinta profundidad no se comparan.** Ni entre sí ni con los
    que muestra chess.com. La profundidad va escrita en el encabezado de cada
    tabla. Lo mismo el modo de clasificación.

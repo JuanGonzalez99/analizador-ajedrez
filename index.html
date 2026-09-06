@@ -186,6 +186,13 @@
                 padding-left: 10px; margin-top: 6px; }
   th .sub { display: block; font-weight: 400; font-size: 10.5px; color: var(--tenue); }
 
+  /* El paréntesis del margen: más chico y tenue que el porcentaje, porque es
+     su contexto y no otro número. Y el gris para la otra forma de marcarlo. */
+  .rango { font-size: 11px; color: var(--tenue); white-space: nowrap; }
+  .flojo { color: var(--tenue); }
+  .marcaFlojo { display: block; font-size: 12.5px; color: var(--tenue); margin: 6px 0 10px; }
+  .marcaFlojo select { margin-top: 4px; }
+
   .marcadorMes { font-size: 14px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
   /* La cantidad de partidas es el DENOMINADOR, no el resultado: va en su propio
      renglón y en el gris de los datos de apoyo, para que el ojo caiga primero
@@ -276,7 +283,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.47 · 05-09";
+  window.VERSION = "v0.48 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -528,7 +535,13 @@
   </div>
   <p class="cap" id="capMes"></p>
   <details class="quemide"><summary>Cómo se leen estos números</summary>
-    <p class="cap" id="capMesDetalle"></p></details>
+    <p class="cap" id="capMesDetalle"></p>
+    <label class="marcaFlojo">Porcentajes con pocas jugadas:
+      <select id="marcaFlojo" class="chico">
+        <option value="rango">con su margen — 14.3% (5–35)</option>
+        <option value="gris">en gris</option>
+      </select>
+    </label></details>
   <div class="metricas" id="mesCabecera"></div>
   <p class="marcadorMes" id="mesMarcador"></p>
   <div class="tw"><table id="mesResumen"></table></div>
@@ -1615,6 +1628,12 @@ let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJ
    manda la que más partidas tiene. Es una PREFERENCIA y no una orden: si el mes
    que se abre no tiene esa cadencia, se cae a la dominante (elegirCadencia). */
 let CADENCIA = null;
+/* Cómo se marca un porcentaje de pocos casos: "rango" o "gris". Configurable
+   porque las dos formas tienen sentido y no está claro cuál gana; el
+   interruptor está para decidirlo usando la app y no de memoria. Vive donde
+   viven las otras preferencias de pantalla, en localStorage. */
+let MARCA_FLOJO = "rango";
+try { MARCA_FLOJO = localStorage.getItem("marcaFlojo") || "rango"; } catch (e) { /* incógnito */ }
 
 /* Dos formas distintas de ver la mejor jugada, a propósito:
    - VER_MEJOR es la preferencia, la enciende el botón de abajo y queda puesta.
@@ -2143,6 +2162,14 @@ document.querySelectorAll("details.seccion").forEach(sec => {
   });
 });
 
+$("marcaFlojo").value = MARCA_FLOJO;
+$("marcaFlojo").onchange = seguro("marca de flojos", () => {
+  MARCA_FLOJO = $("marcaFlojo").value;
+  try { localStorage.setItem("marcaFlojo", MARCA_FLOJO); } catch (e) { /* incógnito */ }
+  window.LOG.add("\u00b7", "marca de flojos: " + MARCA_FLOJO);
+  if (MES || TODO) pintarMes(MES ? MES.prof : TODO.prof);
+});
+
 $("cadencia").onchange = seguro("cadencia", () => {
   CADENCIA = $("cadencia").value || null;
   window.LOG.add("\u00b7", "cadencia " + CADENCIA);
@@ -2220,6 +2247,9 @@ function variante(opc) {
    sobre 41 jugadas invita a comparaciones que el dato no aguanta. */
 /* ============ tablas ============ */
 const NMIN = 30;
+/* Piso propio para las medianas: no comparten el de los porcentajes porque no
+   son la misma clase de número (v0.48). */
+const NMIN_MEDIANA = 5;
 
 /* Una fila por mecanismo, con la tasa del resto de las jugadas al lado. Antes
    eran dos filas —"sí" y "no"— y había que restarlas de a ojo para leer el
@@ -2241,10 +2271,15 @@ function tablaReparto(idTabla, idCap, texto, filas, encabezado,
   /* Esta tabla NO lleva DEF_MALA: sus porcentajes son un reparto —"qué parte de
      las veces hice cada cosa"— y no una tasa de jugadas malas. Lo que sí tiene
      que decir arriba es sobre cuántas situaciones reparte (§5.1). */
-  pintarLeyenda(idCap,
-    [`Sobre ${cuantas(total, unidad[0], unidad[1])}`,
-     total < NMIN ? "muy pocas para porcentajes, van los casos" : ""],
-    [texto]);
+  /* SIN mínimo, y es a propósito. Acá el porcentaje es una COMPOSICIÓN de un
+     conjunto cerrado —"de mis 10 partidas, 3 fueron por tiempo"— y no la
+     estimación de una propensión: el denominador ES la población de la que se
+     habla, no una muestra de ella. 30% es exactamente cierto de esas 10
+     partidas y no hay nada que estimar. El mínimo se escribió para las tasas y
+     se estaba aplicando acá por inercia; lo detectó el usuario. */
+  pintarLeyenda(idCap, [`Sobre ${cuantas(total, unidad[0], unidad[1])}`],
+    [texto, `El porcentaje reparte estas mismas ${unidad[1]}, así que no lleva ` +
+            "margen: no estima nada, las cuenta."]);
   /* "Malas" solo cuando la fila es de jugadas. El desglose de desenlaces
      reparte PARTIDAS, y ahí la columna no significa nada: una columna vacía se
      lee como "cero malas", que sería falso. */
@@ -2253,7 +2288,9 @@ function tablaReparto(idTabla, idCap, texto, filas, encabezado,
     <thead><tr><th>${encabezado}</th><th>Veces</th><th>%</th>` +
       (conMalas ? "<th>Malas</th>" : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.total}</td>` +
-      `<td>${total >= NMIN ? (100 * f.total / total).toFixed(1) : "\u2014"}</td>` +
+      /* con el signo, igual que las tablas de tasas: el mismo encabezado "%"
+         no puede tener números con signo en una tabla y sin él en otra */
+      `<td>${total ? (100 * f.total / total).toFixed(1) + "%" : "\u2014"}</td>` +
       (conMalas ? `<td>${f.canario && !f.malas ? "\u2014" : f.malas}</td>` : "") +
       `</tr>`).join("")}
     </tbody>`;
@@ -2277,11 +2314,12 @@ function tablaContrastes(idTabla, idCap, texto, filas, encabezado, base) {
   const solape = textoSolape(filas);
   pintarLeyenda(idCap,
     [DEF_MALA, ref, solape ? "hay filas que se solapan" : ""],
-    [texto, ref ? "Cada fila se lee contra esa referencia." : "", solape]);
+    [texto, ref ? "Cada fila se lee contra esa referencia." : "", solape,
+     ayudaFlojos(filas.map(f => f.con), MARCA_FLOJO)]);
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th></tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.con.malas}</td>` +
-      `<td>${f.con.total}</td><td>${pct(f.con)}</td></tr>`).join("")}
+      `<td>${f.con.total}</td><td>${textoPct(f.con, MARCA_FLOJO)}</td></tr>`).join("")}
     </tbody>`;
 }
 
@@ -2292,14 +2330,14 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
   const conTiempo = filas.some(f => f.seg != null);
   pintarLeyenda(idCap,
     [DEF_MALA],
-    [texto, conTiempo ? textoTiempo(tiempo) : ""]);
+    [texto, conTiempo ? textoTiempo(tiempo) : "", ayudaFlojos(filas, MARCA_FLOJO)]);
   /* "mediana" va en el encabezado y no en la leyenda: ahí no cuesta un renglón
      y queda al lado del número que califica. */
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>%</th>` +
       (conTiempo ? '<th>Seg.<span class="sub">mediana</span></th>' : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
-      `<td>${pct(f)}</td>` +
+      `<td>${textoPct(f, MARCA_FLOJO)}</td>` +
       (conTiempo ? `<td>${f.seg == null ? "\u2014" : f.seg.toFixed(1)}</td>` : "") +
       `</tr>`).join("")}
     </tbody>`;
@@ -2334,9 +2372,67 @@ function pintarLeyenda(idCap, corto, ayuda) {
   c.querySelector(".ayudaPanel").textContent = limpiar(ayuda).join(" ");
 }
 
-/* Debajo de NMIN jugadas no se muestra porcentaje, se muestra un guion. Todas
-   las tablas pasan por acá para que el corte sea uno solo y no se olvide. */
-const pct = f => f.total >= NMIN ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
+/* Hasta la v0.47, debajo de NMIN no se mostraba el porcentaje: iba un guion.
+   Ese guion no escondía nada —al lado están los casos y el total, cualquiera
+   divide— y además metía en la misma bolsa una fila de 21 jugadas y una de 29,
+   que no son igual de flojas. Desde la v0.48 el número se muestra SIEMPRE y lo
+   que cambia es cómo se marca cuando es flojo. Decisión del usuario.
+
+   NMIN sigue existiendo: ya no esconde, decide a partir de dónde marcar. */
+
+/* El rango de tasas reales compatibles con lo observado (Wilson).
+
+   Se usa Wilson y no el margen de manual `p ± z·√(p(1-p)/n)` porque ese, con
+   pocos casos, se va abajo de cero o arriba de cien —"una tasa de -3%" no se
+   puede mostrar— y encima se rompe del todo cuando no hubo ningún caso.
+
+   z = 1,96 es el 95%: repetido muchas veces, el rango contiene la tasa real
+   unas 95 de cada 100 veces. Con pocas jugadas la etiqueta es aproximada,
+   porque no existe media jugada mala y los rangos saltan de a escalones. */
+function rangoWilson(k, n, z = 1.96) {
+  if (!n) return { lo: 0, hi: 100 };
+  const p = k / n, d = 1 + z * z / n;
+  const c = (p + z * z / (2 * n)) / d;
+  const h = z / d * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n));
+  return { lo: Math.max(0, c - h) * 100, hi: Math.min(1, c + h) * 100 };
+}
+
+/* Cómo se marca un porcentaje flojo. Configurable porque las dos formas tienen
+   sentido y no está claro cuál gana; el interruptor está para decidirlo con la
+   app usada y no de memoria (§ regla de método: medir antes de elegir).
+   Se interpolan solo números, así que el HTML es seguro. */
+function textoPct(f, como) {
+  if (!f.total) return "\u2014";
+  const p = (100 * f.malas / f.total).toFixed(1);
+  if (f.total >= NMIN) return p + "%";
+  if (como === "gris") return `<span class="flojo">${p}%</span>`;
+  const r = rangoWilson(f.malas, f.total);
+  return `${p}% <span class="rango">(${Math.round(r.lo)}\u2013${Math.round(r.hi)})</span>`;
+}
+
+/* El texto crudo, sin marcas, para las pruebas y para cualquier lugar que
+   necesite el número y no la celda. */
+const pct = f => f.total ? (100 * f.malas / f.total).toFixed(1) : "\u2014";
+
+/* La explicación del paréntesis, en el ? y solo cuando hay algún paréntesis
+   que explicar. Corta a propósito: decisión del usuario. */
+const AYUDA_RANGO =
+  "El paréntesis es cuánto puede moverse el número: con pocas jugadas el " +
+  "porcentaje es inestable. \"14.3% (5\u201335)\" quiere decir que tu tasa real " +
+  "puede ser cualquier cosa entre 5% y 35%, y que el 14.3% es apenas el centro. " +
+  "Cuanto más angosto el paréntesis, más firme el número.";
+
+/* Ni el paréntesis ni el gris se explican si no hay ninguno en la tabla: una
+   explicación de algo que no está en pantalla es ruido. */
+/* `como` entra por parámetro y no por la global, igual que en textoPct: así la
+   función es pura y se puede probar sin navegador. */
+const ayudaFlojos = (filas, como) =>
+  filas.some(f => f && f.total && f.total < NMIN)
+    ? (como === "gris" ? AYUDA_GRIS : AYUDA_RANGO) : "";
+
+const AYUDA_GRIS =
+  "Los porcentajes en gris salen de menos de " + NMIN + " jugadas: el número " +
+  "está, pero con tan pocos casos se mueve mucho y no conviene sacarle punta.";
 
 /* Ganó, perdió o empató, desde el lado del usuario. Prefiere el JSON de
    chess.com y cae al encabezado Result del PGN, que es lo único que hay en una
@@ -2477,7 +2573,12 @@ const tasa = (fs, nombre) => {
   for (const f of fs) if (f.seg != null) segs.push(f.seg);
   return { nombre, malas: fs.filter(esMala).length, total: fs.length,
            conSeg: segs.length,
-           seg: segs.length >= NMIN ? mediana(segs) : null };
+           /* NO el mínimo de 30: ese es para porcentajes. Una mediana es mucho
+              más robusta que una tasa de casos raros —2 malas de 21 es ruido,
+              12 tiempos ordenados no—, y el corte de 30 se lo puse por
+              consistencia mal aplicada en la v0.43. Queda un piso bajo para que
+              una "mediana" de dos valores no pase por resumen. */
+           seg: segs.length >= NMIN_MEDIANA ? mediana(segs) : null };
 };
 
 /* La cadencia NO es un detalle de la columna de segundos: es el alcance de toda
