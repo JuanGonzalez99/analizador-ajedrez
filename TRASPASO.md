@@ -19,7 +19,14 @@ Se usa casi siempre desde un celular Android, en Chrome. Eso condiciona todo:
 pantalla angosta, memoria limitada, y la pestaña se suspende si el usuario
 cambia de aplicación.
 
-**Repo:** GitHub Pages. **Archivos que la página pide:**
+**Repo:** GitHub Pages, sirviendo `main`. **Los commits van derecho a `main`,
+sin rama ni pull request** —decisión del usuario—: es el único que trabaja acá,
+no revisa diffs y no puede probar nada hasta que esté publicado, así que la rama
+solo agregaba un paso. **El costo hay que tenerlo presente: cada push es un
+deploy en vivo**, así que las pruebas y el chequeo estático se corren ANTES de
+pushear, siempre, y los cambios de pantalla se miran en un navegador.
+
+**Archivos que la página pide:**
 
 - `index.html` — la aplicación entera, un solo archivo
 - `chess.js` — chess.js 0.13.4 como módulo ES
@@ -71,14 +78,14 @@ toca el DOM ni el motor al cargarse, así que se sacan del HTML y corren en node
 | Extractor | Bloque | Qué tiene |
 |---|---|---|
 | `pruebas/extraer.mjs` | análisis | `derivarFilas`, `categorizar`, `quedaComible`, `capturaBuena`, `winPct`… |
-| `pruebas/extraer-tablas.mjs` | tablas | `pct`, `esMala`, `tasa`, `contraste`, `textoDesglose`, `textoSolape` |
+| `pruebas/extraer-tablas.mjs` | tablas | `textoPct`, `rangoWilson`, `esMala`, `tasa`, `contraste`, `censoCadencias`, `desenlace`, `textoDesglose`… |
 
 **Los cuatro marcadores son contrato: si se mueven, se rompe el arnés.** Los
 extractores detectan solos qué exportar, así que agregar una función no obliga
 a tocar nada.
 
 Lo que no se puede probar así es el motor y el DOM. Para eso está
-`pruebas/estaticos.mjs`, con cinco chequeos que ya agarraron errores reales:
+`pruebas/estaticos.mjs`, con ocho chequeos que ya agarraron errores reales:
 
 1. Todo `id` referenciado en JS existe en el HTML.
 2. Toda tabla tiene su elemento de leyenda.
@@ -89,10 +96,21 @@ Lo que no se puede probar así es el motor y el DOM. Para eso está
    pedazos, así que un error de sintaxis en la interfaz o en el motor no lo
    agarraba nada y aparecía como pantalla en blanco en el celu.
 7. El traspaso dice en qué versión está al día, y coincide con el HTML.
+8. **Ningún `/* … */` adentro de un `innerHTML = \`…\``.** Ahí no es un
+   comentario, es texto, y se imprime en la pantalla. Rompió cinco tablas en la
+   v0.50 (§4terdecies).
 
-**Aun así, nada de esto ve la pantalla.** Los dos errores más caros de esta
-tanda —una columna recortada en el celu y una tabla que contestaba la pregunta
-equivocada— aparecieron mirando el celular, no corriendo pruebas.
+**Aun así, nada de esto ve la pantalla.** Los errores más caros del proyecto
+—una columna recortada en el celu, una tabla que contestaba la pregunta
+equivocada, un comentario impreso en el medio de cinco tablas— aparecieron
+mirando el celular, no corriendo pruebas.
+
+**Regla que salió de eso (v0.51): un cambio que toca lo que se dibuja se MIRA en
+la pantalla, no solo se mide.** El comentario impreso se escapó porque se
+verificó el cambio de forma estrecha —midiendo la alineación de una columna— y
+no se miró la página. Se puede levantar la app en un navegador headless con
+Playwright, simular la API de chess.com y sacar capturas; así se verificó cada
+tanda de la v0.42 a la v0.51.
 
 ---
 
@@ -101,10 +119,11 @@ equivocada— aparecieron mirando el celular, no corriendo pruebas.
 | Zona | Qué hay |
 |---|---|
 | `<script>` clásico | registro, captura de errores, panel de diagnóstico |
-| bloque de análisis | evaluación, geometría, categorías, `derivarFilas`, `repartir` |
+| bloque de análisis | evaluación, geometría, categorías, `derivarFilas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`) |
 | motor | clase `Motor`, grupo de motores, `evaluarPosiciones` |
 | caché | IndexedDB |
 | análisis | `analizarPartida`, barrido, híbrido |
+| bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace` |
 | interfaz | tablero SVG, mes, banco de pruebas, revisión, resúmenes |
 
 **El registro está en un script clásico a propósito:** corre aunque el módulo
@@ -513,8 +532,8 @@ a distintas profundidades.
 ### La tabla de franjas salió del análisis por partida
 
 Era una pregunta de mes mostrada a escala de partida. Con ~17 jugadas por
-jugador, cada franja queda con dos o tres, y como debajo de 30 no se muestra
-porcentaje (§5.2), tres de las cuatro filas eran guiones. No estaba rota: no
+jugador, cada franja queda con dos o tres, y como entonces debajo de 30 no se
+mostraba porcentaje, tres de las cuatro filas eran guiones. No estaba rota: no
 podía contestar nada con esos denominadores. **Decisión del usuario.** La del
 mes (`mesFranja`) sigue igual, que es donde la pregunta tiene sentido.
 
@@ -827,7 +846,7 @@ Se evaluaron tres salidas y se eligió mirando el volumen real del usuario:
 
 | | |
 |---|---|
-| un selector de cadencia | lo propuso el usuario. Con ~15 partidas por mes, elegir deja grupos por debajo del mínimo de 30 y se ven guiones. Suma además un tercer `<select>` suelto a la fila de controles, que §8 ya marca como problema |
+| un selector de cadencia | lo propuso el usuario. Con ~15 partidas por mes, elegir deja grupos muy chicos *(entonces se veían guiones; desde la v0.50, márgenes anchos)*. Suma además un tercer `<select>` suelto a la fila de controles, que §8 ya marca como problema |
 | **la cadencia dominante, y decirlo** | **elegida.** Cero controles nuevos. En 2026-09 el 80% de las partidas son de una sola cadencia: el selector serviría para elegir entre un grupo de 12 y uno de 2 |
 | porcentaje del reloj en vez de segundos | no hay que separar nada y entran todas, pero "el 3% de tu reloj" se lee peor que "8,7 s", y con incremento el reloj inicial deja de ser un denominador claro |
 
@@ -852,8 +871,10 @@ sabe. Las medianas saltean los `null` (§5.12).
 guiones se lee como "no hay", no como "no se midió"; si no hay segundos, no hay
 columna, y la leyenda lo explica.
 
-**La mediana usa el mismo mínimo de 30 que los porcentajes.** Un corte solo, no
-dos.
+**La mediana usaba el mismo mínimo de 30 que los porcentajes.** *(Duró hasta la
+v0.48: era consistencia mal aplicada. Una mediana es mucho más robusta que una
+tasa de casos raros. Hoy tiene su propio piso, `NMIN_MEDIANA = 5`, y los
+porcentajes no tienen ninguno — §4terdecies.)*
 
 **Un reloj que sube no da un gasto negativo.** chess.com redondea y el resto a
 veces cae abajo de cero: se recorta en 0, igual que hace `perdida`.
@@ -1028,9 +1049,11 @@ puesto, esos números **ya no corresponden con lo anotado**: hay que volver a
 medirlos por cadencia antes de sacar conclusiones de ellos. No es motivo para no
 hacerlo; es motivo para no leer §8 como si siguiera vigente tal cual.
 
-**El mínimo de 30 se vuelve el cuello de botella.** Filtrar achica todo: un mes
-repartido 6/5/3 va a mostrar guiones en casi todo. El selector muestra la
-cantidad de partidas de cada cadencia justamente para que eso se vea venir.
+**Filtrar achica todo.** Un mes repartido 6/5/3 deja muy pocas jugadas por fila.
+El selector muestra la cantidad de partidas de cada cadencia justamente para que
+eso se vea venir. *(Cuando se escribió esto, el costo eran guiones; desde la
+v0.50 no hay corte y el costo son márgenes anchísimos, que dicen lo mismo pero
+mejor.)*
 
 ### Lo que no se hizo
 
@@ -1125,7 +1148,8 @@ El mínimo se escribió para la segunda y se estaba aplicando a la primera.
    robusta que una tasa de casos raros. 2 malas de 21 es ruido; 12 tiempos
    ordenados, no.
 3. **En las tablas de tasas el guion se fue.** El número se muestra siempre y
-   debajo de `NMIN` va marcado.
+   debajo de `NMIN` va marcado. *(Dos versiones después se cayó también ese
+   corte: hoy el margen va en todas las filas. Ver más abajo.)*
 
 ### Por qué el margen y no el guion
 
@@ -1344,8 +1368,9 @@ desplome desde posición ganada. Eso podría ser un filtro y no está aprovechad
 
 Tres formas distintas, y no son intercambiables:
 
-- **tasa** (`tablaTasas`): columna "% de estas jugadas que salió mal", contra el
-  mínimo de 30 jugadas. Lleva pegada la definición de jugada mala.
+- **tasa** (`tablaTasas`): columna **Tasa**, "qué parte de estas jugadas salió
+  mal", **siempre con su margen** (§4terdecies). Lleva pegada la definición de
+  jugada mala.
 - **contraste** (`tablaContrastes`): igual, más **una referencia en la leyenda**
   —cuántas de todas tus jugadas salieron mal, con su denominador— contra la que
   se lee cada fila. Sin esa referencia un mecanismo no dice nada (§5.7). Avisa
@@ -1355,9 +1380,10 @@ Tres formas distintas, y no son intercambiables:
   porcentajes suman 100. No lleva la definición de jugada mala, porque sus
   porcentajes no son de jugadas malas; sí declara su denominador.
 
-**Todo porcentaje pasa por `pct()`**, que aplica el mínimo de 30. Hay una prueba
-que falla si alguna tabla vuelve a calcularlo por su cuenta — que es justo lo
-que le había pasado a la tabla de franjas.
+**Toda tasa pasa por `textoPct()`**, que le pone su margen. Hay una prueba que
+falla si alguna tabla vuelve a calcularla por su cuenta — que es justo lo que le
+había pasado a la tabla de franjas. *(Hasta la v0.47 la función era `pct()` y lo
+que aplicaba era el mínimo de 30.)*
 
 ### Qué cuenta como jugada mala
 
@@ -1444,8 +1470,15 @@ describe en §6.
    solo sobre las partidas entre ellos. Los datos ya están: las partidas se
    descargan enteras y la precisión se calcula para ambos lados.
 
-8. **Estadísticas que tomen el tiempo en cuenta.** Pedido por el usuario. **Los
-   datos están y se comprobó**: 14 de las 15 partidas del mes 2026-09 traen
+8. **Estadísticas que tomen el tiempo en cuenta.** Pedido por el usuario.
+   **HECHA la primera de las tres, en la v0.43** —"dónde se va el reloj", la
+   columna Seg.— y con ella toda la plomería: `leerCadencia`,
+   `segundosPensados`, el `seg` en la fila y en las filas flacas. Ver §4nonies.
+   **Faltan las otras dos** (el apuro y cuánto pensaste) y, del mismo pedido,
+   "la jugada larga que no sirvió". El bucle que calcula el gasto ya tiene
+   `restan`, que es lo que necesita el apuro; no se emite hasta que haya algo
+   que lo use. Lo que sigue vale como registro de por dónde se empezó:
+   **Los datos están y se comprobó**: 14 de las 15 partidas del mes 2026-09 traen
    `[%clk 0:05:00]` en el PGN (la que no, es la única *daily*), y chess.js ya
    los parsea —`get_comments()` los devuelve por FEN—, así que **no hace falta
    escribir un lector**. El tiempo por jugada sale de restar relojes
@@ -1495,11 +1528,20 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 
 9. Pasada visual completa. **Tocar estilos y estructura visual, no la lógica de
    análisis.** Varias constantes que parecen arbitrarias costaron mediciones:
-   están comentadas en el código y los comentarios explican por qué. En esta
-   pasada entra también el repaso de los textos de las leyendas, que se fueron
-   escribiendo de a una y nunca se leyeron juntas.
+   están comentadas en el código y los comentarios explican por qué.
+   *(El repaso de los textos de las leyendas, que figuraba acá, se hizo en la
+   v0.44–v0.45: se leyeron juntas, se partieron en corto y `?`, y se les sacó el
+   eco. Ver §4decies. Quedan largas `capResumen` y `capBanco`, las dos del banco
+   de pruebas, o sea modo dev.)*
 
 ## 8. Pendientes de fondo, sin resolver
+
+> ⚠ **Las mediciones de esta sección se tomaron con las cadencias mezcladas y
+> sin márgenes.** Desde la v0.46 la vista Mes habla de una sola cadencia, y
+> desde la v0.50 toda tasa va con su margen. Las dos cosas cambian estos
+> números: varios de los hallazgos de abajo probablemente tengan un margen tan
+> ancho que no sostengan nada. **Antes de sacar conclusiones de esta sección hay
+> que volver a medirla**, por cadencia y mirando el ancho del paréntesis.
 
 *(Los cuatro pendientes chicos de la v26 se resolvieron: barra de progreso en la
 v33, `textoDesglose` y la columna "% resto" en la v0.36, y el historial de
@@ -1523,6 +1565,12 @@ resultados en la v0.39.)*
   mejor" (§4bis). Es además el lugar donde irían los juegos de piezas
   configurables, que están costurados pero sin hacer (§4bis).
 
+  **El selector de cadencia (v0.46) NO es de este grupo y no se movió acá a
+  propósito**: no es una preferencia sino el **alcance de los datos**, igual que
+  "El mes seleccionado / Todo lo analizado", así que va al lado de ese y no en
+  una pantalla aparte. La regla que salió: lo que cambia *qué datos se miran*
+  va a la vista; lo que cambia *cómo se ven* va a configuración.
+
 - **Las animaciones son una rama sin empezar.** Apareció al ver que el
   deslizamiento del tablero no resulta intuitivo: un galón estático avisa que
   *se puede*, pero enseñar *cómo* es trabajo de una transición. Es lo que le
@@ -1544,8 +1592,11 @@ resultados en la v0.39.)*
     razón de que no la devuelva es que **haya una sola jugada legal** — o sea
     la posición más forzada posible cae en el estrato equivocado. Se arregla
     con `legales`, que se calcula ahí al lado;
-  - con 78 jugadas partidas en dos estratos, uno queda debajo del mínimo de 30.
-    **Necesita la funcionalidad 6 primero.**
+  - con 78 jugadas partidas en dos estratos, cada uno queda muy chico. *(Esto
+    decía "necesita la funcionalidad 6 primero", porque un estrato caía debajo
+    del mínimo de 30 y no se mostraba. Desde la v0.50 no hay mínimo: los dos
+    estratos se pueden mostrar ya, con su margen, y el margen va a decir solo
+    si alcanzan o no. El bloqueo dejó de ser técnico y pasó a ser de muestra.)*
 
   Hay un paso previo barato: ver si el confundidor existe, comparando qué
   porcentaje de cada grupo son posiciones de una sola buena. Si da parecido, no
@@ -1610,6 +1661,16 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 - **`npm test` antes de dar nada por bueno**, y una prueba nueva por cada
   arreglo. Los errores que no agarran son siempre los del DOM y los de la
   pregunta equivocada: para eso hay que mirar el celu.
+- **Un cambio que toca lo que se dibuja se MIRA en la pantalla, no solo se
+  mide.** Se puede levantar la app en un navegador headless, simular la API de
+  chess.com y sacar capturas (§2). Verificar de forma estrecha —medir justo lo
+  que se tocó— dejó pasar un comentario impreso en el medio de cinco tablas.
+- **Se pushea derecho a `main`, sin rama ni PR** (§1), así que **cada push es un
+  deploy en vivo**: pruebas, chequeos estáticos y una mirada a la pantalla van
+  antes, no después.
+- **Cuando dos formas se defienden solas, ponerlas las dos y decidir usando la
+  app.** Se hizo con margen contra gris (§4terdecies): el interruptor duró dos
+  versiones, cumplió su función y se fue.
 - **Verificar que cada parche se haya aplicado.** Un reemplazo de texto que no
   encuentra su objetivo falla en silencio y deja una leyenda vieja diciendo algo
   falso. Ya pasó. Los scripts de edición conviene que aborten si no encuentran
