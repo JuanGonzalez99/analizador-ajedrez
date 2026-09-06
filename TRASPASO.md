@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.49**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.50**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1154,17 +1154,49 @@ justamente la fila `0 de 15` que sí queremos poder mostrar como `0.0% (0–20)`
 de 100.000 corridas sobre 21 jugadas dio 98 y no 95— porque no existe media
 jugada mala y los rangos saltan de a escalones.
 
-### El interruptor
+### El interruptor existió doce horas, y cumplió su función (v0.48 → v0.50)
 
-Hay dos formas de marcar y **no está claro cuál gana**, así que se dejó
-configurable: `con su margen` (por defecto) o `en gris`. Vive **dentro del
-plegable "Cómo se leen estos números"**, que es donde corresponde —es una
-preferencia sobre cómo leer números, no un filtro de datos— y no suma un control
-a la fila de arriba. Se guarda en `localStorage`.
+Se dejó configurable —`margen` o `gris`— porque no estaba claro cuál ganaba, y
+para decidirlo **con la app usada y no de memoria**. El usuario la usó y decidió:
+gana el margen. El interruptor, el modo gris y `localStorage.marcaFlojo` se
+fueron. Queda como método: cuando dos formas se defienden solas, ponerlas las
+dos y mirar.
 
-**El interruptor está para decidir con la app usada y no de memoria**, que es la
-regla de la casa. Y el usuario lo pidió pensando más lejos: el mismo mecanismo
-puede servir para decidir cómo mostrar otros números dudosos.
+### Y después se cayó el corte entero (v0.50)
+
+El usuario aplicó su propio argumento contra mi número: *"¿solo pone el rango
+para métricas con menos de 30 muestras? ¿Eso lo hace confiable? ¿Cuánto umbral
+tiene una métrica con 35 muestras?"*. Tiene razón:
+
+```
+ 3 de  29  =  10.3%   (3.6 a 26.4)   ancho 22.8 pts   ← mostraba el margen
+ 3 de  30  =  10.0%   (3.5 a 25.6)   ancho 22.2 pts   ← lo escondía
+ 4 de  35  =  11.4%   (4.5 a 26.0)   ancho 21.4 pts   ← lo escondía
+```
+
+**Misma incertidumbre, tratamiento opuesto.** 30 no marca ninguna frontera: es
+un número redondo. Y una tasa no se pone firme hasta los cientos de jugadas —20
+de 200 todavía va de 6,6 a 14,9—, así que con los volúmenes de un jugador
+aficionado **casi ninguna fila es firme** y el corte estaba avalando como firmes
+un montón de números que no lo son.
+
+**Se sacó el corte: el margen va siempre.** Sin umbral no hay arbitrariedad, y
+el ancho del paréntesis pasa a ser el semáforo. `50.0% (24–76)` sobre 10 jugadas
+y `50.0% (39–61)` sobre 74 son el mismo 50% y se ve cuál sirve.
+
+El costo, asumido: **todas las filas pasan a dos renglones** y las tablas crecen
+de alto. `NMIN` desapareció del código; el único piso que queda es
+`NMIN_MEDIANA = 5`, que es de otra clase de número.
+
+### La columna se llama "Tasa"
+
+Un `%` solo, en una columna ancha, flota sin decir de qué es. `Tasa` nombra la
+cantidad y de paso le da cuerpo al encabezado. **La tabla de reparto se queda
+con `%` a propósito**: ahí el número no es una tasa sino qué parte del total es
+cada fila.
+
+Medido a 412 px con 1, 2 y 3 dígitos y con los tres mezclados: encabezado y
+números alinean en todos los casos.
 
 ### El margen va abajo del número, y es por alineación (v0.49)
 
@@ -1214,11 +1246,10 @@ Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
 1. **Todo porcentaje va con su denominador.** "La mayoría de mis errores salen
    de X" no significa nada sin saber qué porcentaje del juego transcurre en X.
    Las tablas muestran siempre casos y total, no solo el porcentaje.
-2. **Un porcentaje flojo se marca, no se esconde** (v0.48; antes: debajo de 30
-   jugadas iba un guion). El guion no escondía nada —al lado están los casos y
-   el total, cualquiera divide— y metía en la misma bolsa una fila de 21
-   jugadas y una de 29. Ahora el número se muestra siempre y debajo de `NMIN`
-   va con su margen: `14.3% (5–35)`. Ver §4terdecies.
+2. **Toda tasa va con su margen, siempre y sin corte** (v0.50). No hay mínimo
+   de jugadas: `18.2% (10–30)`. El ancho del paréntesis es el semáforo —"(7–14)"
+   se lee firme y "(3–31)" se lee "no sé nada"— y eso es más información que
+   cualquier binario. Ver §4terdecies.
    **Y esta regla es solo para TASAS.** Un porcentaje de composición —"de mis
    10 partidas, 3 fueron por tiempo"— no estima nada: el denominador es la
    población, no una muestra. Ahí no hay margen ni mínimo.

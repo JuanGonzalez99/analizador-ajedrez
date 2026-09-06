@@ -92,10 +92,11 @@ test("la tabla de mecanismos es de contrastes, no de filas sí/no", () => {
     assert.ok(!html.includes(fila), `quedó la fila ${fila}`);
 });
 
-test("todo porcentaje pasa por pct(), que aplica el mínimo de 30", () => {
-  /* Regla §5.2: debajo de NMIN va un guion. Si alguna tabla vuelve a calcular
-     el porcentaje por su cuenta, el corte se le escapa. */
-  assert.ok(/f\.total >= NMIN/.test(html));
+test("toda tasa pasa por textoPct(), que le pone su margen", () => {
+  /* Si alguna tabla vuelve a calcular la tasa por su cuenta, se le escapa el
+     margen y queda un numero pelado que se lee como firme. */
+  assert.ok(html.includes("function textoPct(f) {"));
+  assert.ok(!/\bNMIN\b(?!_MEDIANA)/.test(html), "no quedan cortes por cantidad");
 });
 
 /* --- PGN sin línea en blanco entre cabeceras y jugadas, v0.40 --- */
@@ -133,12 +134,9 @@ import T from "./extraer-tablas.mjs";
 
 const jugada = (perdida, cat) => ({ perdida, cat });
 
-test("esMala y pct son el único corte, y NMIN sigue en 30", () => {
-  assert.equal(T.NMIN, 30);
+test("esMala es el único corte que queda por cantidad", () => {
   assert.equal(T.esMala(jugada(3, "grave")), true);
   assert.equal(T.esMala(jugada(2.99, "error")), false);
-  /* desde la v0.48 el porcentaje NO se esconde con pocos casos: se muestra y se
-     marca. NMIN ya no decide si se ve, decide desde donde se marca. */
   assert.equal(T.pct({ malas: 3, total: 29 }), "10.3");
   assert.equal(T.pct({ malas: 3, total: 30 }), "10.0");
   assert.equal(T.pct({ malas: 0, total: 0 }), "\u2014", "sin casos no hay porcentaje");
@@ -146,9 +144,16 @@ test("esMala y pct son el único corte, y NMIN sigue en 30", () => {
 
 /* --- el numero flojo se marca en vez de esconderse, v0.48 --- */
 
-test("con casos de sobra el porcentaje va solo", () => {
-  assert.equal(T.textoPct({ malas: 3, total: 30 }, "rango"), "10.0%");
-  assert.equal(T.textoPct({ malas: 3, total: 30 }, "gris"), "10.0%");
+test("el margen va SIEMPRE, no solo con pocos casos", () => {
+  /* Habia un corte en 30 y se cayo con el mismo argumento que el guion: "3 de
+     29" mostraba margen de 22,8 puntos y "3 de 30" lo escondia con 22,2. La
+     misma incertidumbre y tratamiento opuesto. */
+  assert.match(T.textoPct({ malas: 3, total: 30 }), /\(3\u201326\)/);
+  assert.match(T.textoPct({ malas: 32, total: 320 }), /\(7\u201314\)/);
+  /* y el ancho del parentesis es el semaforo: firme se ve angosto */
+  const ancho = t => { const m = t.match(/\((\d+)\u2013(\d+)\)/); return +m[2] - +m[1]; };
+  assert.ok(ancho(T.textoPct({ malas: 32, total: 320 })) <
+            ancho(T.textoPct({ malas: 3, total: 30 })));
 });
 
 test("con pocos casos aparece el margen, no un guion", () => {
@@ -158,6 +163,16 @@ test("con pocos casos aparece el margen, no un guion", () => {
   assert.match(t, /^14\.3%/);
   assert.match(t, /\(5\u201335\)/);
   assert.ok(t.includes('class="rango"'));
+});
+
+test("la columna de tasas se llama Tasa, y la de reparto sigue siendo %", () => {
+  /* Son dos cosas distintas: una estima una propension y la otra reparte un
+     conjunto cerrado. Y un "%" solo, en una columna ancha, flotaba sin decir de
+     que era. */
+  assert.equal((html.match(/<th>Tasa<\/th>/g) || []).length, 2);
+  const rep = html.slice(html.indexOf("function tablaReparto"));
+  assert.ok(rep.slice(0, rep.indexOf("\n}")).includes("<th>%</th>"),
+    "el reparto no es una tasa");
 });
 
 test("el margen va en su propio renglon, o se desalinea la columna", () => {
@@ -173,10 +188,12 @@ test("el margen va en su propio renglon, o se desalinea la columna", () => {
   assert.ok(!T.textoPct({ malas: 3, total: 21 }, "rango").includes('% <span'));
 });
 
-test("la otra forma de marcarlo es el gris, sin margen", () => {
-  const t = T.textoPct({ malas: 3, total: 21 }, "gris");
-  assert.ok(t.includes('class="flojo"'));
-  assert.ok(!t.includes("("), "en gris no va el margen");
+test("el modo gris se fue, y con el el interruptor", () => {
+  /* Se dejo configurable para decidir con la app usada. Se decidio. */
+  assert.ok(!html.includes("MARCA_FLOJO"));
+  assert.ok(!html.includes("marcaFlojo"));
+  assert.ok(!html.includes('class="flojo"'));
+  assert.equal(T.textoPct.length, 1, "textoPct ya no recibe el modo");
 });
 
 test("el margen no se sale de 0 a 100", () => {
@@ -195,14 +212,12 @@ test("mas casos, margen mas angosto", () => {
   assert.ok(ancho(14, 100) > ancho(140, 1000));
 });
 
-test("la explicacion del margen sale solo si hay algun margen", () => {
-  /* Explicar algo que no esta en pantalla es ruido. */
-  assert.equal(T.ayudaFlojos([{ malas: 3, total: 30 }], "rango"), "");
-  assert.ok(T.ayudaFlojos([{ malas: 3, total: 21 }], "rango").length > 0);
-  assert.equal(T.ayudaFlojos([], "rango"), "");
-  /* y explica la forma que esta puesta, no la otra */
-  assert.equal(T.ayudaFlojos([{ malas: 3, total: 21 }], "gris"), T.AYUDA_GRIS);
-  assert.equal(T.ayudaFlojos([{ malas: 3, total: 21 }], "rango"), T.AYUDA_RANGO);
+test("la explicacion del margen va en las dos tablas de tasas", () => {
+  /* Ahora todas las filas lo llevan, asi que la explicacion es siempre
+     pertinente y no hace falta decidir si corresponde. */
+  const veces = (html.match(/AYUDA_RANGO\]\);/g) || []).length;
+  assert.equal(veces, 2, "tablaTasas y tablaContrastes");
+  assert.ok(!html.includes("ayudaFlojos"), "ya no hace falta decidir");
 });
 
 test("la explicacion es corta", () => {
@@ -685,12 +700,11 @@ test("la cabecera dice cuantas partidas quedaron afuera, y por que", () => {
   assert.ok(largo.includes("correspondencia"), "las daily tambien hay que nombrarlas");
 });
 
-test("la mediana NO usa el minimo de los porcentajes", () => {
-  /* Se lo puse por consistencia en la v0.43 y la consistencia estaba mal
-     elegida: una mediana es mucho mas robusta que una tasa de casos raros.
-     Queda un piso bajo para que dos valores no pasen por resumen. */
+test("la mediana tiene su propio piso, y es el unico que queda", () => {
+  /* Los porcentajes ya no tienen corte. El de la mediana sobrevive porque una
+     mediana de dos valores es un valor suelto disfrazado de resumen. */
   const fs = n => Array.from({ length: n }, () => ({ seg: 4, perdida: 0 }));
-  assert.ok(T.NMIN_MEDIANA < T.NMIN);
+  assert.equal(T.NMIN, undefined, "NMIN se fue con el corte de los porcentajes");
   assert.equal(T.tasa(fs(T.NMIN_MEDIANA - 1), "x").seg, null);
   assert.equal(T.tasa(fs(T.NMIN_MEDIANA), "x").seg, 4);
   assert.equal(T.tasa(fs(10), "x").seg, 4, "10 tiempos ya son una mediana");
