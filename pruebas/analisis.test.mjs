@@ -155,9 +155,22 @@ test("con pocos casos aparece el margen, no un guion", () => {
   /* 3 de 21: el rango va de 5 a 35. El guion escondia el numero y ademas no
      distinguia una fila de 21 de una de 29. */
   const t = T.textoPct({ malas: 3, total: 21 }, "rango");
-  assert.match(t, /^14\.3% /);
+  assert.match(t, /^14\.3%/);
   assert.match(t, /\(5\u201335\)/);
   assert.ok(t.includes('class="rango"'));
+});
+
+test("el margen va en su propio renglon, o se desalinea la columna", () => {
+  /* Al lado del numero, lo que se pega a la derecha de la celda es el
+     parentesis: el porcentaje de esa fila queda corrido respecto de los demas,
+     y el encabezado "%" termina alineado con el parentesis. Medido en el
+     navegador: al lado, tres numeros terminan en x=334 y el cuarto en 299;
+     abajo, los cuatro y el encabezado en 334. Lo reporto el usuario. */
+  assert.match(html, /\.rango \{[^}]*display: block;/);
+  /* y sin espacio entre el numero y el span: con display:block ese espacio
+     abriria el renglon del parentesis con un hueco */
+  assert.ok(html.includes('${p}%<span class="rango">'));
+  assert.ok(!T.textoPct({ malas: 3, total: 21 }, "rango").includes('% <span'));
 });
 
 test("la otra forma de marcarlo es el gris, sin margen", () => {

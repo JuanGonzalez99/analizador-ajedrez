@@ -186,9 +186,19 @@
                 padding-left: 10px; margin-top: 6px; }
   th .sub { display: block; font-weight: 400; font-size: 10.5px; color: var(--tenue); }
 
-  /* El paréntesis del margen: más chico y tenue que el porcentaje, porque es
-     su contexto y no otro número. Y el gris para la otra forma de marcarlo. */
-  .rango { font-size: 11px; color: var(--tenue); white-space: nowrap; }
+  /* El paréntesis del margen: más chico y tenue que el porcentaje, porque es su
+     contexto y no otro número. Y el gris para la otra forma de marcarlo.
+
+     Va en su PROPIO renglón, y no al lado, por alineación. Al lado, lo que se
+     pega a la derecha de la celda es el paréntesis, así que el porcentaje de esa
+     fila queda corrido respecto del de las demás —y el encabezado "%", que
+     también se alinea a la derecha, termina alineado con el paréntesis y no con
+     los números—. Medido: al lado, tres números terminan en x=334 y el cuarto en
+     299; abajo, los cuatro y el encabezado en 334.
+     Reservarle un ancho fijo al paréntesis alineaba los números pero dejaba el
+     encabezado peor todavía (en 334 contra 291). */
+  .rango { display: block; line-height: 1.1; font-size: 11px;
+           color: var(--tenue); white-space: nowrap; }
   .flojo { color: var(--tenue); }
   .marcaFlojo { display: block; font-size: 12.5px; color: var(--tenue); margin: 6px 0 10px; }
   .marcaFlojo select { margin-top: 4px; }
@@ -283,7 +293,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.48 · 05-09";
+  window.VERSION = "v0.49 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2407,7 +2417,7 @@ function textoPct(f, como) {
   if (f.total >= NMIN) return p + "%";
   if (como === "gris") return `<span class="flojo">${p}%</span>`;
   const r = rangoWilson(f.malas, f.total);
-  return `${p}% <span class="rango">(${Math.round(r.lo)}\u2013${Math.round(r.hi)})</span>`;
+  return `${p}%<span class="rango">(${Math.round(r.lo)}\u2013${Math.round(r.hi)})</span>`;
 }
 
 /* El texto crudo, sin marcas, para las pruebas y para cualquier lugar que

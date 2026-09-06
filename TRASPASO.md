@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.48**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.49**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1165,6 +1165,39 @@ a la fila de arriba. Se guarda en `localStorage`.
 **El interruptor está para decidir con la app usada y no de memoria**, que es la
 regla de la casa. Y el usuario lo pidió pensando más lejos: el mismo mecanismo
 puede servir para decidir cómo mostrar otros números dudosos.
+
+### El margen va abajo del número, y es por alineación (v0.49)
+
+Lo reportó el usuario desde el celular: *"hay filas con números fijos y otras
+con márgenes, y queda raro. Además, no queda alineado con la columna %"*.
+
+Las dos cosas eran **el mismo problema**. Con el paréntesis al lado, lo que se
+pega a la derecha de la celda es el paréntesis, así que el porcentaje de esa
+fila queda corrido respecto de los demás; y el encabezado `%`, que también se
+alinea a la derecha, termina alineado con el paréntesis en vez de con los
+números.
+
+**Se midió en el navegador antes de elegir**, sobre los números reales del
+usuario:
+
+| | encabezado `%` | los cuatro porcentajes |
+|---|---|---|
+| al lado (v0.48) | 334 | 334, 334, 334, **299** |
+| centrado *(idea del usuario)* | **304** | 315, 315, 315, **299** |
+| reservándole ancho al paréntesis | **334** | 291, 291, 291, 291 |
+| **abajo (elegida)** | 334 | 334, 334, 334, 334 |
+
+**Centrar no alcanzaba**: el problema no es de qué lado se alinea la celda sino
+que las celdas tienen anchos distintos. Y **reservarle un ancho fijo al
+paréntesis** alineaba los números pero dejaba el encabezado peor todavía — era
+la alternativa que yo consideraba válida, y la medición la descartó.
+
+Abajo, además, no gasta ancho —que es lo escaso en un celular—, deja el
+paréntesis subordinado al número en vez de compitiendo al lado, y repite un
+patrón que ya estaba en la app: el encabezado `Seg. / mediana`.
+
+`.rango` tiene que seguir siendo `display: block` y **sin espacio antes del
+`<span>`**, o el renglón del paréntesis abre con un hueco. Hay prueba de las dos.
 
 ### Un chequeo estático que se arregló de paso
 
