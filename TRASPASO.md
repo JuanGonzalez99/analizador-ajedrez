@@ -1837,6 +1837,67 @@ resultados en la v0.39.)*
   montón—, pero no si acierta. Para lo segundo hacen falta las etiquetas de
   ellos, que hoy solo se consiguen mirando partida por partida.
 
+#### La medición, ya hecha: 17 partidas, 483 jugadas propias (v0.57)
+
+**Esto ya se corrió. No hace falta repetirlo para volver a discutir el corte.**
+De 152 jugadas donde el usuario jugó la mejor del motor —las candidatas a
+Genial— salieron **18 Geniales, 1,06 por partida**.
+
+**1. El filtro de recaptura vale mucho más de lo que parecía.** Sacó **10**
+Geniales: sin él serían 28. Y el mecanismo quedó medido y no supuesto:
+
+| | pasan el corte de 150 |
+|---|---|
+| no recapturas | 21 de 130 = **16,2%** |
+| recapturas | 10 de 20 = **50,0%** |
+
+Una recaptura tiene **3,1 veces** más chances de pasar el corte. Es la
+confirmación numérica de que `unicaBuena` mide "la posición estaba forzada".
+
+**2. La mitad del cruce de banda no dispara.** Los 18 Geniales tienen hueco
+≥ 151, o sea que **ninguno se disparó solo por cruce**, en 17 partidas. Su único
+disparo observado en todo lo mirado es `14… Nc4` de la partida de referencia, y
+fue un falso positivo contra chess.com: historial completo de 1 disparo y 1
+error. La explicación es que una jugada que da vuelta la banda casi siempre es
+además la única buena, así que `unicaBuena` ya la agarra: el cruce no está mal,
+está de más.
+
+**Se dejó puesto por decisión del usuario** —revisar más adelante, no es
+prioritario—. Sacarlo es una línea, y esta nota existe para no volver a medirlo.
+
+**3. El corte de 150 no tiene dónde apoyarse.** Distribución del hueco entre las
+candidatas que no son recapturas:
+
+```
+0-24       60  ████████████████████████████████████████████████████████████
+25-49      19  ███████████████████
+50-74      11  ███████████
+75-99       9  █████████
+100-149    10  ██████████
+150-199     7  ███████
+200-299     3  ███
+300+       11  ███████████
+```
+
+No hay ningún escalón: a los lados del corte hay 10 y 7. **Los datos no dicen
+dónde ponerlo**, cualquier valor entre 50 y 300 se apoya igual de mal. Y bajarlo
+sale caro: 100 → 28 Geniales, 75 → 37, 50 → 48.
+
+**4. Queda probado que no se los puede reproducir calibrando este corte.**
+chess.com marcó Genial jugadas con hueco **95 y 47**; agarrarlas pide un corte
+de ~50, que triplica nuestros Geniales. Pero en la partida de referencia ellos
+dieron 3 y 2 por jugador, casi lo mismo que nosotros. Las dos cosas no pueden
+ser ciertas si su regla fuera un umbral sobre este número. **Su "única jugada
+buena" mide otra cosa**, y mover el 150 no acerca a nada: solo cambia cuántos
+hay. Por eso se dejó donde está.
+
+**5. Pregunta de gusto que quedó abierta.** 13 de los 18 Geniales (72%) caen en
+posiciones **ya decididas** —9 ganando por más de 2, 4 perdiendo—, y 4 de 18
+tenían 4 jugadas legales o menos. No se filtró porque chess.com hace lo mismo
+(marcaron `31. Nxg4` con +6,12 y `25. Kxd4` con 4 legales), así que sería una
+diferencia deliberada con ellos, como la del mate estirado. Es del usuario
+decidir si "Genial" tiene sentido cuando la partida ya está resuelta.
+
 - **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
   frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la
   jugada. chess.com escribe una por jugada: *"Tu caballo ahora es vulnerable.
