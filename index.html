@@ -290,7 +290,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.52 · 06-09";
+  window.VERSION = "v0.53 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -503,6 +503,15 @@
       <select id="modo" class="chico">
         <option value="critico" selected>crítico (centipeones)</option>
         <option value="amigable">amigable (puntos de victoria)</option>
+      </select>
+    </label>
+    <label>Mate a la vista
+      <select id="mateVista" class="chico">
+        <option value="1">solo mate en 1</option>
+        <option value="2">hasta mate en 2</option>
+        <option value="3" selected>hasta mate en 3</option>
+        <option value="5">hasta mate en 5</option>
+        <option value="99">cualquiera</option>
       </select>
     </label>
   </div>
@@ -763,6 +772,19 @@ const CORTES = {
   amigable: { excelente: 2,   imprecision: 5,   error: 10, grave: 20, medida: f => f.caida }
 };
 
+/* MATE A LA VISTA. Hasta cuántas jugadas de mate cuentan como una oportunidad
+   que se podía ver.
+
+   No es una perilla de medición: es la misma pregunta que "Modo" —qué tan duro
+   te juzga la app— y por eso es del usuario. Un mate en 8 marcado como omisión
+   a 570 de Elo no enseña nada, porque nadie a ese nivel lo iba a encontrar; un
+   mate en 2 soltado sí. El valor sube a medida que el jugador mejora, así que
+   funciona como un dial de entrenamiento y no como un umbral fijo.
+
+   Es también lo que impide que la regla de abajo se dispare de más: sin corte,
+   toda partida ganada se llenaría de omisiones por mates de quince jugadas. */
+const MATE_A_LA_VISTA = 3;
+
 /* bandas de la posición, en peones y desde el lado del que mueve */
 const banda = x => x <= -2 ? "perdiendo" : x >= 2 ? "ganando" : "parejo";
 
@@ -771,7 +793,15 @@ function categorizar(d, modo = "critico") {
   const x = c.medida(d);
 
   if (d.esLibro) return "libro";
-  if (d.oportunidad && x >= c.error) return "omision";
+  /* Un mate forzado soltado es Omisión valga lo que valga en centipeones.
+     El corte de pérdida está SATURADO justo donde la omisión más importa: si
+     vas ganando por mate y lo soltás, la evaluación casi no se mueve —en la
+     partida que lo destapó, 0,20 peones— así que nunca llegaba al corte de 1 y
+     la omisión no se disparaba NUNCA. La app veía el mate y hasta lo escribía
+     en la señal; lo que fallaba era la etiqueta.
+     CUÁL mate cuenta como oportunidad lo decide MATE_A_LA_VISTA, arriba, no
+     esta línea: acá ya llega decidido. */
+  if (d.oportunidad && (d.oportunidad.tipo === "mate" || x >= c.error)) return "omision";
   if (x >= c.grave) return "grave";
   if (x >= c.error) return "error";
   if (x >= c.imprecision) return "imprecision";
@@ -889,7 +919,8 @@ function prepararPartida(pgn) {
 /* Arma las filas a partir de las evaluaciones. Todo lo de acá es derivable, y
    por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
    categorización, las partidas ya analizadas no hay que volver a correrlas. */
-function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", tiempos = null) {
+function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", tiempos = null,
+                      mateALaVista = MATE_A_LA_VISTA) {
   let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
@@ -938,7 +969,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
 
     let oportunidad = null;
     const eMate = evs[i].mate;
-    if (eMate !== null && eMate !== undefined && eMate > 0) {
+    if (eMate !== null && eMate !== undefined && eMate > 0 && eMate <= mateALaVista) {
       const sig = evs[i + 1].mate;
       if (!(sig !== null && sig !== undefined && sig < 0)) oportunidad = { tipo: "mate", n: eMate };
     }
@@ -1345,6 +1376,10 @@ async function evaluarPosiciones(fens, prof, onProg, opc = {}) {
   return evs;
 }
 
+/* El dial del usuario, leído del DOM igual que MODO(). El bloque de análisis no
+   puede leerlo solo: es puro a propósito, así que lo recibe por parámetro. */
+const MATE_VISTA = () => +$("mateVista").value || MATE_A_LA_VISTA;
+
 /* ============ aperturas ============ */
 let LIBRO = null;
 async function cargarLibro() {
@@ -1374,7 +1409,7 @@ function esSospechosa(f) {
    aparte, por jugada, como segunda opinión sobre las sospechosas. */
 async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc, tiempos) {
   const evs = await evaluarPosiciones(fens, 13, (h, t) => onProg(h, t, "barrido"), opc);
-  const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value, tiempos);
+  const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value, tiempos, MATE_VISTA());
 
   const sospechosas = d.filas.map((f, i) => i).filter(i => esSospechosa(d.filas[i]));
   const necesarias = new Set();
@@ -1391,7 +1426,7 @@ async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc, tiemp
     for (const i of sospechosas) {
       if (!mapa.has(i) || !mapa.has(i + 1)) continue;
       const sub = derivarFilas([jugadas[i]], [fens[i], fens[i + 1]],
-        [mapa.get(i), mapa.get(i + 1)], libro, i).filas[0];
+        [mapa.get(i), mapa.get(i + 1)], libro, i, "critico", null, MATE_VISTA()).filas[0];
       d.filas[i].rev = { prof, perdida: sub.perdida, cat: sub.cat };
       revisadas++;
     }
@@ -1432,7 +1467,7 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
   if (guardado && guardado.evs && guardado.evs.length === fens.length) {
     window.LOG.add("·", `caché: ${id} a profundidad ${prof}${vte ? " (" + vte + ")" : ""}`);
     prog(fens.length, fens.length, "caché");
-    const d = derivarFilas(jugadas, fens, guardado.evs, libro, 0, MODO(), tiempos);
+    const d = derivarFilas(jugadas, fens, guardado.evs, libro, 0, MODO(), tiempos, MATE_VISTA());
     (guardado.revs || []).forEach(r => { if (d.filas[r.i]) d.filas[r.i].rev = r.rev; });
     return { filas: d.filas, cab, apertura: d.apertura, id, deCache: true,
              jugadas, fens, cadencia, tiempos, evs: guardado.evs, revs: guardado.revs || [],
@@ -1445,11 +1480,11 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
     r = await analizarConBarrido(jugadas, fens, prof, libro, prog, opc, tiempos);
   } else if (opc.multipv === "hibrido") {
     const h = await analizarHibrido(jugadas, fens, prof, prog, opc);
-    const d = derivarFilas(jugadas, fens, h.evs, libro, 0, $("modo").value, tiempos);
+    const d = derivarFilas(jugadas, fens, h.evs, libro, 0, $("modo").value, tiempos, MATE_VISTA());
     r = { filas: d.filas, apertura: d.apertura, evs: h.evs, revisadas: h.extra, profBase: prof };
   } else {
     const evs = await evaluarPosiciones(fens, prof, (h, t) => prog(h, t, "análisis"), opc);
-    const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value, tiempos);
+    const d = derivarFilas(jugadas, fens, evs, libro, 0, $("modo").value, tiempos, MATE_VISTA());
     r = { filas: d.filas, apertura: d.apertura, evs, revisadas: 0, profBase: prof };
   }
   if (!opc.sinCache) {
@@ -2106,7 +2141,7 @@ async function barrerCache(prof, opc, onProg) {
         prep = prepararPartida(g.pgn);
         if (guardado.evs.length !== prep.fens.length) continue;
         d = derivarFilas(prep.jugadas, prep.fens, guardado.evs, libro, 0, $("modo").value,
-                         prep.tiempos);
+                         prep.tiempos, MATE_VISTA());
         d.cab = prep.cab;
       } catch (e) { continue; }
 
@@ -2132,7 +2167,7 @@ async function barrerCache(prof, opc, onProg) {
 
 function reDerivar(r) {
   if (!r || !r.evs) return;
-  const d = derivarFilas(r.jugadas, r.fens, r.evs, LIBRO, 0, $("modo").value, r.tiempos);
+  const d = derivarFilas(r.jugadas, r.fens, r.evs, LIBRO, 0, $("modo").value, r.tiempos, MATE_VISTA());
   r.filas = d.filas;
   r.apertura = d.apertura;
   (r.revs || []).forEach(x => { if (r.filas[x.i]) r.filas[x.i].rev = x.rev; });
@@ -2179,6 +2214,25 @@ $("cadencia").onchange = seguro("cadencia", () => {
   /* no hay que rehacer nada: las filas ya están, lo único que cambia es cuáles
      entran. Por eso el cambio es instantáneo, igual que el de modo. */
   if (MES || TODO) pintarMes(MES ? MES.prof : TODO.prof);
+});
+
+/* Mismo camino que Modo, con una diferencia que hay que tener presente: "todo
+   lo analizado" SÍ se descarta. Las filas flacas llevan las dos etiquetas de
+   Modo precalculadas, pero no llevan las evaluaciones, así que con otro corte de
+   mate no se pueden reetiquetar: hay que volver a barrer la caché. El barrido no
+   toca el motor, así que cuesta milisegundos, pero no es gratis y por eso se
+   avisa en el registro. */
+$("mateVista").onchange = seguro("mate a la vista", () => {
+  window.LOG.add("·", "mate a la vista: " + $("mateVista").value);
+  if (TODO) { TODO = null; window.LOG.add("·", "barrido descartado: cambió el corte de mate"); }
+  if (FUENTE === "todo") { FUENTE = "mes"; $("fuente").value = "mes"; }
+  if (MES) { MES.resultados.forEach(reDerivar); pintarMes(MES.prof); }
+  if (R) {
+    reDerivar(R);
+    IDX = Math.min(IDX, R.filas.length - 1); MEJOR_EN = null;
+    pintarResumen(R.profBase || +$("prof").value);
+    pintarRevision();
+  }
 });
 
 $("modo").onchange = seguro("modo", () => {

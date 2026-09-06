@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.52**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.53**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1470,6 +1470,49 @@ situaciones a **cuatro**:
 
 Solo las dos últimas cuentan como oportunidad perdida.
 
+### El mate soltado y el dial "mate a la vista" (v0.53)
+
+La omisión tenía un segundo agujero, y del lado opuesto: **un mate forzado
+soltado no se marcaba nunca.**
+
+La causa es que `categorizar` exigía las dos cosas —oportunidad Y pérdida de 1
+peón o más—, y **la pérdida está saturada justo donde la omisión más importa**.
+La evaluación se topea en 1000 cuando hay mate (`TOPE`, §"aBlancas"), así que
+soltar un mate en 8 para quedar en +9,80 mueve la pérdida **0,20**. Nunca
+llegaba al corte. La app veía el mate y hasta lo escribía en la señal —"había
+mate forzado en 8"— y la etiqueta decía "Bien".
+
+Ahora la oportunidad de mate no pasa por el corte de pérdida:
+
+```js
+if (d.oportunidad && (d.oportunidad.tipo === "mate" || x >= c.error)) return "omision";
+```
+
+La de material sigue pasando, y a propósito: material disponible que no costó
+nada no es una omisión.
+
+**Qué mate cuenta lo decide el usuario**, con el dial `mateVista`, que arranca
+en 3. No es una perilla de medición sino la misma pregunta que "Modo" —qué tan
+duro te juzga la app—, y por eso es suya: *un mate en 8 marcado como omisión a
+570 de Elo no enseña nada, porque nadie a ese nivel lo iba a encontrar; un mate
+en 2 soltado sí*. Sube a medida que el jugador mejora, o sea que funciona como
+un dial de entrenamiento. Es además lo que impide que toda partida ganada se
+llene de omisiones por mates de quince jugadas.
+
+El dial se lee del DOM **fuera** del bloque de análisis, con `MATE_VISTA()`, y
+entra a `derivarFilas` por parámetro: el bloque sigue siendo puro y probable en
+node. Los siete llamados tienen que pasarlo, y hay una prueba que los cuenta,
+porque uno olvidado se queda con el valor por defecto en silencio.
+
+**Cambiarlo descarta "todo lo analizado"**, al revés que cambiar de Modo. Las
+filas flacas llevan las dos etiquetas de Modo precalculadas pero no llevan las
+evaluaciones, así que con otro corte no se pueden reetiquetar: hay que volver a
+barrer la caché. El barrido no toca el motor, así que cuesta milisegundos.
+
+**Dónde nos separamos de chess.com a propósito:** ellos marcan Miss cuando el
+mate se ALARGA (jugada 40 de la partida de referencia, de mate en 8 a mate en
+13); nosotros exigimos que se pierda. Alargar un mate no cuesta la partida.
+
 ## 7. Trabajo acordado, en orden
 
 ### Hecho (v18 a v25)
@@ -1657,10 +1700,56 @@ resultados en la v0.39.)*
   torre 4,5 en uno; peón 6,0 y torre 10,6 en el otro). Un mes de cada uno no
   alcanza para saber si son estilos distintos o dos muestras chicas.
 
-- **"Genial" se dispara ~2 veces por partida**, demasiado para una categoría que
-  debería marcar algo excepcional. La sospecha es que la mitad que se dispara
-  por cambio de banda de evaluación es muy generosa: en partidas de principiante
-  la evaluación cruza el ±2 todo el tiempo.
+- **"Genial" marca las jugadas equivocadas, no demasiadas.** Esto decía que se
+  disparaba ~2 veces por partida y que era mucho. **Medido contra chess.com,
+  es falso:** en la partida de referencia damos 3 y 2 por jugador, idéntico a
+  ellos, en los dos modos. La frecuencia está bien; lo que falla es *cuáles*.
+
+  De las cinco, tres coinciden (5. dxe5, 25. Kxd4, 31. Nxg4). Nuestros dos
+  falsos positivos son `10… fxe6`, una recaptura con peón, y `14… Nc4`, que sale
+  por cruce de banda con la primera y la segunda a 33 centipeones. Las dos que
+  nos faltan son `7… Nxe4` y `16… Nxf1`.
+
+  Su criterio publicado dice tres disparadores —*perdiendo → igualada*,
+  *igualada → ganando*, o *la única jugada buena*— más generosidad según el
+  rating. **Los tres son los que ya tenemos**: los dos primeros son nuestro
+  `cruce` y el tercero es `unicaBuena`. No hay que rediseñar, hay que calibrar.
+
+  Tres cosas que la medición ya cerró, para no volver a probarlas:
+  - **Filtrar por venir ya ganando no sirve.** Mataría `5. dxe5` (+2,05) y
+    `31. Nxg4` (+6,12), que son dos de las tres que sí coinciden. Bajaría la
+    coincidencia de 3/5 a 1/5.
+  - **Bajar el corte de 150 tampoco.** A profundidad 20 —la de chess.com— las
+    dos que ellos marcan dan 95 y 47, y las dos que no marcan dan 160 y 96.
+    Están entreverados: ningún corte los separa.
+  - **`16… Nxf1` no es falta de profundidad.** La diferencia da 0 a prof. 16,
+    47 a 20, 40 a 24 y 57 a 30. El hueco no existe a ninguna profundidad.
+
+  **La hipótesis viva** es que las cinco de chess.com son *capturas que no son
+  recapturas*, y los dos falsos positivos son justo los que no cumplen eso: uno
+  es recaptura, el otro no captura nada. Ajusta las siete jugadas, con dos
+  advertencias: son tres condiciones ajustadas a siete puntos —sobreajuste puro
+  hasta que se pruebe contra un mes— y la de "única capturadora" hay que contarla
+  con `gananciaDeCaptura`, no con las jugadas legales: en `5. dxe5` hay dos
+  capturas posibles y `Nxe5` pierde 2 puntos, así que buena hay una sola.
+
+  El filtro de recaptura es lo único listo para aplicar: `10… fxe6` da 160 a
+  profundidad 20, o sea que dispararía a cualquier profundidad, y chess.com no
+  la marca.
+
+- **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
+  frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la
+  jugada. chess.com escribe una por jugada: *"Tu caballo ahora es vulnerable.
+  Tuviste la oportunidad de capturar un peón y ganar material después de los
+  intercambios subsiguientes."* Casi todo lo que hace falta ya está en la fila
+  (`senales`, `mejor`, `colgada`, `capBuena`, `perdida`); falta redactarlo.
+
+- **No se puede jugar una variante y verla evaluada.** chess.com lo tiene como
+  "Reintentar": ponés otra jugada en la posición y te dice qué pasa. Es lo que
+  destapó que `Nxe5` pierde 2 puntos en la jugada 5. Acá el motor ya está
+  cargado en la página y el tablero ya sabe de jugadas legales, así que lo que
+  falta es el camino: aceptar una jugada que no es la de la partida, evaluar esa
+  posición sola y mostrar el resultado sin ensuciar el análisis guardado.
 
 - **La lista de cuentas de entrenador tiene un solo nombre.** Falta el resto.
   Tiene que ser coincidencia **exacta**, no por prefijo: los nombres de usuario

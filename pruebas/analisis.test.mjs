@@ -911,6 +911,70 @@ test("Omisión por material la decide el motor, no la heurística", () => {
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
 });
 
+/* --- el mate soltado y el dial "mate a la vista", v0.53 --- */
+
+/* Los tres casos usan las evaluaciones REALES de la jugada 40 de la partida
+   MewoneX-Santico26: mate en 8 antes, cp -980 después. Las jugadas son de
+   relleno —derivarFilas solo necesita que existan— y el libro va vacío para que
+   "libro" no gane antes que nada. */
+const EVS_MATE_40 = () => [
+  { cp: null, mate: 8, mejor: "d4d5", segunda: null },
+  { cp: -980, mate: null, mejor: "a7a6", segunda: null },
+  { cp: 980, mate: null, mejor: "a2a3", segunda: null },
+];
+const SIN_LIBRO = { pos: new Set(), nombres: {} };
+
+test("soltar un mate a la vista es Omisión aunque la pérdida sea mínima", () => {
+  /* La evaluación está topeada en 1000 cuando hay mate, así que soltarlo mueve
+     la pérdida apenas 0,20 y nunca alcanzaba el corte de 1. La app veía el mate
+     —lo escribía en la señal— y aun así etiquetaba "Bien". */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const f = A.derivarFilas(jugadas, fens, EVS_MATE_40(), SIN_LIBRO, 0, "critico", null, 99).filas[0];
+  assert.equal(f.perdida, 0.2, "la pérdida no cambia, cambia la etiqueta");
+  assert.equal(f.cat, "omision");
+  assert.ok(f.senales.some(s => s.includes("mate forzado en 8")), f.senales.join(" | "));
+});
+
+test("un mate más largo que el dial no es una oportunidad", () => {
+  /* Es lo que impide que toda partida ganada se llene de omisiones, y lo que
+     pidió el usuario: un mate en 8 a 570 de Elo no se iba a ver. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const f = A.derivarFilas(jugadas, fens, EVS_MATE_40(), SIN_LIBRO, 0, "critico", null, 3).filas[0];
+  assert.equal(f.cat, "bien");
+  assert.deepEqual(f.senales, [], "sin oportunidad tampoco hay cartel");
+});
+
+test("si el mate sigue en pie no hay omisión, solo se demoró", () => {
+  /* Decisión tomada a propósito, y es donde nos separamos de chess.com: ellos
+     marcan Miss cuando el mate pasa de 8 a 13; nosotros exigimos que se pierda.
+     Alargarlo no cuesta la partida. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const evs = EVS_MATE_40();
+  evs[1] = { cp: null, mate: -7, mejor: "a7a6", segunda: null };
+  const f = A.derivarFilas(jugadas, fens, evs, SIN_LIBRO, 0, "critico", null, 99).filas[0];
+  assert.notEqual(f.cat, "omision");
+  assert.deepEqual(f.senales, []);
+});
+
+test("el dial arranca en 3 y el bloque de análisis no lo lee del DOM", () => {
+  assert.ok(html.includes("const MATE_A_LA_VISTA = 3;"), "cambió el valor inicial");
+  assert.ok(html.includes('const MATE_VISTA = () => +$("mateVista").value || MATE_A_LA_VISTA;'));
+  assert.ok(html.includes(
+    'if (d.oportunidad && (d.oportunidad.tipo === "mate" || x >= c.error)) return "omision";'));
+  const ini = html.indexOf("/* ============ evaluación ============ */");
+  const fin = html.indexOf("/* ===================== fin del bloque de análisis");
+  assert.ok(!html.slice(ini, fin).includes("mateVista"),
+    "el bloque es puro: el dial entra por parámetro, no leyendo el DOM");
+});
+
+test("todos los llamados a derivarFilas pasan el dial", () => {
+  /* Uno que se olvide se queda con el valor por defecto en silencio, y esa
+     pantalla mostraría otra etiqueta que el resto de la app. */
+  const llamados = html.split("derivarFilas(").length - 1 - 1;  /* menos la definición */
+  const conDial = html.split("MATE_VISTA()").length - 1;
+  assert.equal(conDial, llamados, `${llamados} llamados pero ${conDial} pasan el dial`);
+});
+
 /* --- tomar el material con la pieza equivocada, v0.52 --- */
 
 test("recapturar con otra pieza no es omisión: el material se cobró igual", () => {
