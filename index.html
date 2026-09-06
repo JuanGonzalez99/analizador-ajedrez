@@ -290,7 +290,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.51 · 05-09";
+  window.VERSION = "v0.52 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -926,6 +926,15 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const colgada = quedaComible(fens[i + 1], j.to);
     const capB = capturaBuena(fens[i], evs[i].mejor);
     const tomoBuena = esMejor && !!capB;
+    /* Tomar el MISMO material con otra pieza no es dejarlo pasar. Salía con una
+       recaptura de dama: en esa posición había Kxd1 y Nxd1 —las dos comen la
+       dama, y no hay otra jugada legal—, y jugar la que el motor no elegía se
+       contaba como omisión, con un cartel que anunciaba los 9 puntos de una
+       dama que en realidad cobraste. Lo que se perdió ahí fue 1,36, y eso ya lo
+       dice "Error"; la omisión mentía.
+       Se compara la casilla de destino, que es donde estaba el material. */
+    const tomoConOtra = !!capB && !esMejor && !!j.captured &&
+                        j.to === evs[i].mejor.slice(2, 4);
 
     let oportunidad = null;
     const eMate = evs[i].mate;
@@ -939,7 +948,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
        que capturar otra cosa tapaba la omisión; y la que decidía si había algo
        era la heurística de material a un ply, que llamaba ganadoras a capturas
        que el motor desaconseja. */
-    if (!oportunidad && !tomoBuena && capB)
+    if (!oportunidad && !tomoBuena && !tomoConOtra && capB)
       oportunidad = { tipo: "material", san: capB.san, gana: capB.gana };
 
     const entrega = esMejor
@@ -967,13 +976,17 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
         ? `había mate forzado en ${oportunidad.n}`
         : `había ${oportunidad.san}, que ganaba ${oportunidad.gana}`);
     }
+    /* Tomaste el material, pero con la pieza equivocada. No es una omisión, así
+       que el costo lo dice la pérdida y no el valor de lo capturado. */
+    if (tomoConOtra && perdida >= 0.5)
+      senales.push(`la tomaste con otra pieza: la mejor era ${capB.san}`);
 
     filas.push({
       n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, cats, perdida, precision, caida,
       evalBlancas: despues, evalTexto: textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
-      capBuena: !!capB, tomoBuena,
+      capBuena: !!capB, tomoBuena, tomoConOtra,
       /* segundos pensados en esta jugada, o null si la partida no traía reloj.
          null NO es cero: es "no se sabe", y las medianas lo saltean. */
       seg: (tiempos && tiempos[i] != null) ? tiempos[i] : null
@@ -2047,7 +2060,8 @@ function pintarBanco(filas, prof, queCompara) {
    revisión, que sigue trabajando sobre el mes elegido. Un año entero de filas
    flacas pesa menos que un mes con todo. */
 const CAMPOS_FLACOS = ["n", "cats", "perdida", "precision", "franja", "pieza",
-                       "esCaptura", "colgada", "capBuena", "tomoBuena", "seg"];
+                       "esCaptura", "colgada", "capBuena", "tomoBuena",
+                       "tomoConOtra", "seg"];
 
 function adelgazar(f) {
   const o = {};
@@ -2725,12 +2739,15 @@ function pintarDetalle(todas, porPartida, tiempo) {
     "De las veces que la mejor jugada del motor era una captura que ganaba " +
     "material, qué se hizo. Es la pregunta de cuántas veces había material a " +
     "la vista y no se vio. La columna Malas es un control: la primera fila " +
-    "tiene que dar cero, porque jugar la mejor jugada no puede perder nada.",
+    "tiene que dar cero, porque jugar la mejor jugada no puede perder nada. " +
+    "La segunda fila NO es material perdido: cobraste lo mismo, con otra " +
+    "pieza; lo que cueste eso lo dice la columna Malas.",
     /* (este texto ahora vive detrás del ?, no encima de la tabla) */
     [Object.assign(tasa(conCap.filter(f => f.tomoBuena), "La vi y la tomé"),
                    { canario: true }),
-     tasa(conCap.filter(f => !f.tomoBuena && f.esCaptura), "Tomé otra"),
-     tasa(conCap.filter(f => !f.tomoBuena && !f.esCaptura), "No capturé")],
+     tasa(conCap.filter(f => f.tomoConOtra), "La tomé con otra pieza"),
+     tasa(conCap.filter(f => !f.tomoBuena && !f.tomoConOtra && f.esCaptura), "Tomé otra"),
+     tasa(conCap.filter(f => !f.tomoBuena && !f.tomoConOtra && !f.esCaptura), "No capturé")],
     "Situación");
 
   const { trasMala } = paresDeErrores(porPartida);

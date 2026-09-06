@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.51**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.52**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1442,6 +1442,34 @@ Lo mismo vale para la categoría "Omisión" desde la v23. Y la omisión se dispa
 por **no haber jugado esa captura**, no por no haber capturado nada: antes,
 capturar otra cosa la tapaba.
 
+**Con una excepción, desde la v0.52: tomar el mismo material con otra pieza.**
+El endurecimiento de la v23 se había pasado de largo. Pedía la jugada EXACTA del
+motor, así que una recaptura hecha con la pieza equivocada contaba como material
+dejado pasar, y eso es falso: el material se cobró.
+
+El caso que lo destapó es real y está en las pruebas. Tras `6...Qxd1+` hay
+**exactamente dos jugadas legales y las dos comen la dama**: `Kxd1`, que es la
+del motor, y `Nxd1`, que es la que se jugó. Salía "Omisión" con el cartel
+*"había Kxd1, que ganaba 9"* —nueve puntos que en realidad se cobraron—, cuando
+lo que costó elegir la otra fue **1,36**: el caballo de c3 deja de defender e4 y
+entra `Nxe4`. O sea que la jugada era un **Error**, y como Error se etiqueta
+ahora.
+
+Se mira la **casilla de destino**, que es donde estaba el material, y vive en una
+variable aparte, `tomoConOtra`. Aparte y no un `tomoBuena` más flojo, por el
+canario: "La vi y la tomé" tiene que dar **cero** jugadas malas, y tomar con la
+pieza equivocada sí puede perder. Por eso la tabla de capturas pasó de tres
+situaciones a **cuatro**:
+
+| Situación | Qué es |
+|---|---|
+| La vi y la tomé | se jugó la del motor — canario, va en cero |
+| La tomé con otra pieza | mismo material, otra unidad — **no** es omisión |
+| Tomé otra | se capturó en otra casilla |
+| No capturé | no se capturó nada |
+
+Solo las dos últimas cuentan como oportunidad perdida.
+
 ## 7. Trabajo acordado, en orden
 
 ### Hecho (v18 a v25)
@@ -1607,6 +1635,14 @@ resultados en la v0.39.)*
   en las dos filas, pero no está resuelto: sigue habiendo dos filas que en
   parte miden lo mismo. Hacerlas excluyentes se descartó, porque obliga a
   elegir arbitrariamente cuál gana.
+
+- **Falta el dibujo de la curva de quién va ganando.** Hoy la evaluación se ve
+  jugada por jugada —la barra, horizontal o vertical— y nunca como una línea a
+  lo largo de la partida, así que no se ve de un vistazo dónde se dio vuelta.
+  El dato ya está en las filas y no cuesta una corrida más: `evalBlancas` es la
+  evaluación después de cada jugada, en centipeones y desde las blancas. Falta
+  decidir cómo se dibuja —el eje comprimido, porque un +9 aplasta todo lo
+  demás—, dónde va, y si las categorías se marcan encima como puntos.
 
 - **La fila "Tomé otra" no dice cuánto costó.** Sabemos que se capturó otra
   cosa, no qué se perdió por no tomar la buena. Solo se puede saber si la buena

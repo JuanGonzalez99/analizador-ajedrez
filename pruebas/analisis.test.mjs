@@ -3,6 +3,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import A from "./extraer.mjs";
+import { Chess } from "../chess.js";
 
 const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
@@ -527,7 +528,7 @@ test("las filas llevan el segundo de su jugada", () => {
 
 test("el segundo viaja en la fila flaca", () => {
   /* Si no, "todo lo analizado" perderia la columna sin decir por que. */
-  assert.ok(html.includes('"tomoBuena", "seg"'));
+  assert.ok(html.includes('"tomoConOtra", "seg"'));
 });
 
 /* --- desglose de desenlaces, v0.47 --- */
@@ -858,8 +859,11 @@ test("no queda rastro de la definición vieja, de material", () => {
 
 test("tomoBuena exige haber jugado la mejor del motor", () => {
   /* Es lo que hace imposible la fila contradictoria: si jugaste la mejor, la
-     pérdida es cero, así que "la vi y la tomé" no puede contar jugadas malas. */
+     pérdida es cero, así que "la vi y la tomé" no puede contar jugadas malas.
+     Por eso tomoConOtra es una variable APARTE y no un tomoBuena más flojo:
+     tomar con la pieza equivocada sí puede perder, y hundiría el canario. */
   assert.ok(html.includes("const tomoBuena = esMejor && !!capB;"));
+  assert.ok(html.includes("const tomoConOtra = !!capB && !esMejor && !!j.captured &&"));
 });
 
 test("el canario vive en la columna Malas, no en el porcentaje", () => {
@@ -874,9 +878,10 @@ test("el canario vive en la columna Malas, no en el porcentaje", () => {
   assert.ok(!cuerpoPct.includes("canario"), "pct() ya no tiene que saber del canario");
 });
 
-test("la tabla de capturas reparte las tres cosas que se pueden hacer", () => {
+test("la tabla de capturas reparte las cuatro cosas que se pueden hacer", () => {
   assert.ok(html.includes('tablaReparto("mesCapturas"'));
-  for (const fila of ['"La vi y la tomé"', '"Tomé otra"', '"No capturé"'])
+  for (const fila of ['"La vi y la tomé"', '"La tomé con otra pieza"',
+                      '"Tomé otra"', '"No capturé"'])
     assert.ok(html.includes(fila), `falta la fila ${fila}`);
   assert.ok(html.includes("{ canario: true }"), "la fila 1 tiene que ser canario");
   /* La fila de contraste se fue: en un reparto no tiene sentido, porque las
@@ -884,20 +889,71 @@ test("la tabla de capturas reparte las tres cosas que se pueden hacer", () => {
   assert.ok(!html.includes('"No había buena captura"'));
 });
 
-test("las tres filas del reparto son excluyentes y cubren todo el grupo", () => {
-  const en = [f => f.tomoBuena, f => !f.tomoBuena && f.esCaptura,
-              f => !f.tomoBuena && !f.esCaptura];
-  for (const f of [{ tomoBuena: true, esCaptura: true },
-                   { tomoBuena: false, esCaptura: true },
-                   { tomoBuena: false, esCaptura: false }])
+test("las cuatro filas del reparto son excluyentes y cubren todo el grupo", () => {
+  const en = [f => f.tomoBuena,
+              f => f.tomoConOtra,
+              f => !f.tomoBuena && !f.tomoConOtra && f.esCaptura,
+              f => !f.tomoBuena && !f.tomoConOtra && !f.esCaptura];
+  /* tomoConOtra implica esCaptura y no-tomoBuena, así que los casos posibles
+     son estos cinco y no las ocho combinaciones sueltas. */
+  for (const f of [{ tomoBuena: true, tomoConOtra: false, esCaptura: true },
+                   { tomoBuena: false, tomoConOtra: true, esCaptura: true },
+                   { tomoBuena: false, tomoConOtra: false, esCaptura: true },
+                   { tomoBuena: false, tomoConOtra: false, esCaptura: false },
+                   { tomoBuena: true, tomoConOtra: false, esCaptura: false }])
     assert.equal(en.filter(t => t(f)).length, 1, `${JSON.stringify(f)} cae en una sola fila`);
 });
 
 /* --- Omisión con el mismo juez, v23 --- */
 
 test("Omisión por material la decide el motor, no la heurística", () => {
-  assert.ok(html.includes("if (!oportunidad && !tomoBuena && capB)"));
+  assert.ok(html.includes("if (!oportunidad && !tomoBuena && !tomoConOtra && capB)"));
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
+});
+
+/* --- tomar el material con la pieza equivocada, v0.52 --- */
+
+test("recapturar con otra pieza no es omisión: el material se cobró igual", () => {
+  /* Partida real (MewoneX-Santico26, 7. Nxd1). Tras 6...Qxd1+ hay exactamente
+     DOS jugadas legales y las dos comen la dama: Kxd1, que es la del motor, y
+     Nxd1, que es la que se jugó. Elegir la otra cuesta 1,36 —el caballo de c3
+     deja de defender e4 y entra Nxe4—, y eso es un Error. No es material
+     dejado pasar: la dama se cobró. La posición la verifica chess.js, no la
+     memoria. */
+  const antes = "rnb1k2r/ppp1bppp/5n2/4N3/4P3/2N5/PPP2PPP/R1BqKB1R w KQkq - 0 7";
+  const j = new Chess(antes);
+  assert.deepEqual(j.moves().sort(), ["Kxd1", "Nxd1"]);
+  const hecho = j.move("Nxd1");
+  const evs = [{ cp: 137, mate: null, mejor: "e1d1", segunda: { cp: 7, mate: null, mov: "c3d1" } },
+               { cp: -1, mate: null, mejor: "f6e4", segunda: null }];
+  const { filas } = A.derivarFilas([hecho], [antes, j.fen()], evs,
+                                   { pos: new Set(), nombres: {} }, 12, "critico", null);
+  const f = filas[0];
+  assert.equal(f.perdida, 1.36, "la pérdida es real y no cambia");
+  assert.equal(f.tomoConOtra, true);
+  assert.equal(f.cat, "error", "Error sí; Omisión no");
+  assert.ok(!f.senales.some(s => s.includes("ganaba")),
+    "no puede anunciar los 9 puntos de una dama que se cobró: " + f.senales.join(" | "));
+  assert.ok(f.senales.some(s => s.includes("la mejor era Kxd1")), f.senales.join(" | "));
+});
+
+test("capturar en OTRA casilla sigue siendo omisión", () => {
+  /* El arreglo mira la casilla de destino, así que tiene que dejar intacto el
+     caso que la omisión existe para agarrar: había material en un lado y se
+     capturó en otro. Torre blanca en d1 y dama negra colgada en d8; en vez de
+     Rxd8 se toma un peón en a7 con la torre de a1. */
+  const antes = "3qk3/p6p/8/8/8/8/7P/R2RK3 w - - 0 1";
+  const j = new Chess(antes);
+  const hecho = j.move("Rxa7");
+  assert.ok(hecho, "Rxa7 tiene que ser legal");
+  const evs = [{ cp: 300, mate: null, mejor: "d1d8", segunda: null },
+               { cp: -100, mate: null, mejor: "d8d1", segunda: null }];
+  const { filas } = A.derivarFilas([hecho], [antes, j.fen()], evs,
+                                   { pos: new Set(), nombres: {} }, 0, "critico", null);
+  const f = filas[0];
+  assert.equal(f.tomoConOtra, false, "otra casilla no es la misma casilla");
+  assert.equal(f.cat, "omision");
+  assert.ok(f.senales.some(s => s.includes("ganaba")), f.senales.join(" | "));
 });
 
 test("capturaGanadora se fue, porque ya no la usa nadie", () => {
@@ -994,7 +1050,7 @@ test("la fila flaca lleva lo que las tablas usan y nada más", () => {
   const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
   assert.ok(campos, "se perdió CAMPOS_FLACOS");
   for (const c of ["cats", "perdida", "precision", "franja", "pieza", "esCaptura",
-                   "colgada", "capBuena", "tomoBuena", "n"])
+                   "colgada", "capBuena", "tomoBuena", "tomoConOtra", "n"])
     assert.ok(campos.includes(`"${c}"`), `falta ${c}, alguna tabla se va a romper`);
   for (const pesado of ["fens", "evs", "jugadas", "senales", "fen", "meta"])
     assert.ok(!campos.includes(`"${pesado}"`), `${pesado} no tiene por qué viajar`);
