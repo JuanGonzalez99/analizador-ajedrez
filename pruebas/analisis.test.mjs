@@ -911,6 +911,52 @@ test("Omisión por material la decide el motor, no la heurística", () => {
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
 });
 
+/* --- jugada forzada, v0.54 --- */
+
+test("con una sola jugada legal la fila queda marcada como forzada", () => {
+  /* Rey blanco en h1, en jaque de la dama en g2, y la única legal es comerla.
+     La posición la verifica chess.js, no la memoria. */
+  const antes = "k7/8/8/8/8/8/6q1/7K w - - 0 1";
+  const j = new Chess(antes);
+  assert.deepEqual(j.moves(), ["Kxg2"], "la posición tiene que tener UNA sola legal");
+  const hecho = j.move("Kxg2");
+  const evs = [{ cp: -900, mate: null, mejor: "h1g2", segunda: null },
+               { cp: 900, mate: null, mejor: "a8b8", segunda: null }];
+  const f = A.derivarFilas([hecho], [antes, j.fen()], evs,
+                           { pos: new Set(), nombres: {} }, 0, "critico", null).filas[0];
+  assert.equal(f.forzada, true);
+  /* la categoría de siempre sigue estando: las tablas cuentan lo que contaban */
+  assert.ok(f.cat && f.cat !== "forzada", `la categoría siguió siendo ${f.cat}`);
+});
+
+test("con dos o más jugadas legales no es forzada", () => {
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const evs = fens.map(() => ({ cp: 0, mate: null, mejor: "a2a3", segunda: null }));
+  const { filas } = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} });
+  assert.deepEqual(filas.map(f => f.forzada), [false, false]);
+});
+
+test("forzada no es una categoría: no se cuenta en ninguna tabla", () => {
+  /* Es la condición que puso el usuario. Si entrara en ORDEN o en CATEGORIAS
+     sumaría "Mejor" que no son mérito, y el denominador de las tasas incluiría
+     jugadas donde no había ninguna decisión que tomar. */
+  assert.ok(!A.ORDEN.includes("forzada"), "se coló en el orden de las categorías");
+  assert.ok(!("forzada" in A.CATEGORIAS), "se coló en CATEGORIAS");
+  const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
+  assert.ok(!campos.includes('"forzada"'), "no tiene por qué viajar a las tablas");
+});
+
+test("los dos lugares que pintan una jugada usan el mismo presentador", () => {
+  /* La tarjeta del veredicto y la tira de jugadas. Si uno se olvida, la misma
+     jugada sale forzada en un lado y Mejor en el otro. */
+  assert.ok(html.includes("const c = presentar(f);"), "la tarjeta del veredicto");
+  assert.ok(html.includes("const p = presentar(x);"), "la tira de jugadas");
+  assert.ok(!html.includes("CATEGORIAS[x.cat].icono"), "quedó el camino viejo en la tira");
+  assert.ok(!html.includes("const c = CATEGORIAS[f.cat];"), "quedó el camino viejo en la tarjeta");
+  /* y en una forzada no se muestran los números: no hubo elección que juzgar */
+  assert.ok(html.includes('$("vSub").textContent = f.forzada ? c.desc'));
+});
+
 /* --- el mate soltado y el dial "mate a la vista", v0.53 --- */
 
 /* Los tres casos usan las evaluaciones REALES de la jugada 40 de la partida

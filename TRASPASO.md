@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.53**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.54**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1470,6 +1470,33 @@ situaciones a **cuatro**:
 
 Solo las dos últimas cuentan como oportunidad perdida.
 
+### Forzada: cuando no hubo decisión (v0.54)
+
+Una jugada con **una sola jugada legal** no es buena ni mala: no la elegiste, te
+tocó. Desde la v0.54 la revisión la muestra como **Forzada**, con flecha y color
+neutro, en vez de "Mejor".
+
+**No es una categoría, y eso es la mitad del diseño.** `FORZADA` vive fuera de
+`CATEGORIAS` y fuera de `ORDEN` a propósito, y `forzada` no está en
+`CAMPOS_FLACOS`. Contarla mentiría en las dos direcciones: sumaría "Mejor" que
+no son mérito, y el denominador de las tasas incluiría jugadas donde no había
+ninguna decisión que tomar. Las tablas siguen viendo la categoría de siempre; lo
+único que cambia es lo que se lee mirando la partida.
+
+Los **dos** lugares que dibujan una jugada —la tarjeta del veredicto y la tira
+de jugadas— pasan por `presentar(f)`, que devuelve nombre, ícono y clave de
+color. Es una función y no dos ramas sueltas porque si uno se olvida, la misma
+jugada sale Forzada en un lado y Mejor en el otro; hay una prueba que lo fija.
+
+En la tarjeta, una forzada **no muestra los números**: "pierde 0,00" invita a
+juzgar algo que no se decidió.
+
+`legales` ya se calculaba para la regla de Genial, así que el dato no cuesta
+nada nuevo. Nota para calibrar expectativas: **en la partida de referencia hay
+cero jugadas forzadas** —103 jugadas—, así que es una etiqueta rara. La captura
+de chess.com que la mostró venía de su modo "Reintentar", explorando una
+variante, no de la partida.
+
 ### El mate soltado y el dial "mate a la vista" (v0.53)
 
 La omisión tenía un segundo agujero, y del lado opuesto: **un mate forzado
@@ -1736,6 +1763,19 @@ resultados en la v0.39.)*
   El filtro de recaptura es lo único listo para aplicar: `10… fxe6` da 160 a
   profundidad 20, o sea que dispararía a cualquier profundidad, y chess.com no
   la marca.
+
+  **La hipótesis de "capturas que no son recapturas" está MUERTA como regla, y
+  cómo murió es la lección.** Ajustaba las siete jugadas que estábamos mirando,
+  y eso convencía. Corrida sobre las 103 de la partida dispara **once** veces
+  contra las cinco de chess.com: agarra las cinco, sí, pero agrega seis falsos
+  positivos (`6… Qxd1+`, `10. Bxe6`, `25… Rxh4`, `32. Nxg5+`, `33. Nxf3` y el
+  `14… Nc4` que ya teníamos). Una captura que no es recaptura es una jugada
+  corriente, no una hazaña.
+
+  El error fue probar la hipótesis **solo contra las jugadas que la habían
+  sugerido**. Regla que sale de acá: *una regla candidata se corre sobre la
+  partida entera antes de creerle, aunque ajuste perfecto en los casos que la
+  inspiraron.*
 
 - **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
   frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la

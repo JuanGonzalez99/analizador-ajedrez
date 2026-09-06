@@ -13,6 +13,7 @@
     --c-excelente: #6bb06b; --c-bien: #86b886; --c-libro: #b08d63;
     --c-imprecision: #d4a017; --c-error: #e08030;
     --c-omision: #d0453b; --c-grave: #c0392b;
+    --c-forzada: #8a8578;
   }
   * { box-sizing: border-box; }
   /* overflow-anchor: none porque la app intercambia zonas enteras —Partida y
@@ -290,7 +291,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.53 · 06-09";
+  window.VERSION = "v0.54 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -752,6 +753,23 @@ const CATEGORIAS = {
 const ORDEN = ["brillante", "genial", "mejor", "excelente", "bien", "libro",
                       "imprecision", "error", "omision", "grave"];
 
+/* FORZADA no es una categoría y por eso NO está en CATEGORIAS ni en ORDEN.
+   Cuando hay una sola jugada legal no hay nada que juzgar: no la elegiste, te
+   tocó. Contarla entre las categorías mentiría en las dos direcciones —sumaría
+   "Mejor" que no son mérito, y el denominador de las tasas incluiría jugadas
+   donde no había decisión que tomar—.
+   Vive solo en la pantalla de revisión, que es donde sirve: mirando la partida
+   querés saber que ahí no había nada que pensar. Las tablas siguen viendo la
+   categoría de siempre, y por eso `forzada` tampoco viaja en la fila flaca. */
+const FORZADA = { nombre: "Forzada", icono: "\u2192",
+                  desc: "Era la única jugada legal." };
+
+/* Lo que se dibuja para una fila: la forzada tapa a la categoría, y devuelve
+   también la clave del color para que los dos lugares que pintan —la tarjeta
+   del veredicto y la tira de jugadas— no se separen nunca. */
+const presentar = f => f.forzada ? { ...FORZADA, clave: "forzada" }
+                                 : { ...CATEGORIAS[f.cat], clave: f.cat };
+
 /*
   DOS MODOS. Cambian SOLO las etiquetas: la pérdida en centipeones y la mediana
   son las mismas en los dos, para que la línea de base del apéndice siga
@@ -1018,6 +1036,8 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
       capBuena: !!capB, tomoBuena, tomoConOtra,
+      /* una sola jugada legal: no hubo decisión. Solo lo usa la revisión. */
+      forzada: legales === 1,
       /* segundos pensados en esta jugada, o null si la partida no traía reloj.
          null NO es cero: es "no se sabe", y las medianas lo saltean. */
       seg: (tiempos && tiempos[i] != null) ? tiempos[i] : null
@@ -3069,15 +3089,18 @@ function pintarLista() {
 /* ============ revisión de una partida ============ */
 function pintarRevision() {
   const f = R.filas[IDX];
-  const c = CATEGORIAS[f.cat];
-  const color = `var(--c-${f.cat})`;
+  const c = presentar(f);
+  const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
   $("vIco").textContent = c.icono;
   $("vIco").style.color = color;
   $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
-  $("vSub").textContent = c.desc +
-    ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
-    ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria`;
+  /* En una forzada los números sobran: no hubo elección, así que "pierde 0.00"
+     invita a juzgar algo que no se decidió. */
+  $("vSub").textContent = f.forzada ? c.desc
+    : c.desc +
+      ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
+      ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria`;
   /* si el número ya viaja en la barra, la tarjeta no lo repite */
   $("vEv").textContent = MODO_EVAL === "tarjeta" ? f.evalTexto : "";
 
@@ -3150,14 +3173,15 @@ function pintarRevision() {
   const celda = (x, i) => {
     if (!x) return "<span></span>";
     const mia = !lado || VER_AMBOS || x.turno === lado;
-    const col = mia ? `var(--c-${x.cat})` : "var(--tenue)";
+    const p = presentar(x);
+    const col = mia ? `var(--c-${p.clave})` : "var(--tenue)";
     /* El símbolo de la categoría en vez de un punto de color. El punto obligaba
        a distinguir tonos a 7 px, y tres de las diez categorías comparten un
        verde que solo cambia de luminosidad: eran indistinguibles. El símbolo se
        lee a cualquier tamaño y no depende del color, así que también sirve para
        quien no distingue verde de rojo. El color se queda como refuerzo. */
     return `<span class="jg ${i === IDX ? "sel" : ""}" data-i="${i}" style="color:${col}` +
-      `${mia ? "" : ";opacity:.55"}"><span class="sm">${CATEGORIAS[x.cat].icono}</span>` +
+      `${mia ? "" : ";opacity:.55"}"><span class="sm">${p.icono}</span>` +
       `<span class="sa">${x.san}</span></span>`;
   };
   /* se agrupa por número de jugada, no de a dos por posición: si la partida
