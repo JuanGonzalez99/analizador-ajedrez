@@ -291,7 +291,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.56 · 06-09";
+  window.VERSION = "v0.56.1 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -978,12 +978,19 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const esLibro = libro.pos.has(clave);
     if (esLibro && libro.nombres[clave]) apertura = libro.nombres[clave];
 
-    let unicaBuena = false;
+    /* El hueco CRUDO entre la mejor y la segunda del motor, en centipeones, o
+       null si el motor no devolvió segunda. Antes se calculaba, se comparaba
+       contra 150 y se tiraba; guardarlo deja probar otros cortes sin volver a
+       correr el motor, que es lo único caro de todo esto.
+       El 150 está elegido para disparar "Genial" y no significa nada más, así
+       que para cualquier otra pregunta hay que mirar el número, no el sí/no. */
+    let huecoSegunda = null;
     if (evs[i].segunda) {
       const a1 = aBlancas(evs[i], turno);
       const a2 = aBlancas({ cp: evs[i].segunda.cp, mate: evs[i].segunda.mate }, turno);
-      unicaBuena = Math.abs(a1 - a2) >= 150;
+      huecoSegunda = Math.abs(a1 - a2);
     }
+    const unicaBuena = huecoSegunda !== null && huecoSegunda >= 150;
     const legales = new Chess(fens[i]).moves().length;
     /* Recaptura: el rival COMIÓ en una casilla y vos comés de vuelta ahí.
 
@@ -1070,6 +1077,13 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       capBuena: !!capB, tomoBuena, tomoConOtra,
       /* una sola jugada legal: no hubo decisión. Solo lo usa la revisión. */
       forzada: legales === 1, esRecaptura,
+      /* Para medir, no para mostrar: ninguna tabla los usa todavía y por eso NO
+         están en CAMPOS_FLACOS —un año de filas flacas tiene que pesar poco—.
+         Van los DOS y no solo el hueco: `huecoSegunda` queda en null cuando el
+         motor no devuelve segunda, y una razón de que no la devuelva es que
+         haya UNA SOLA jugada legal. Sin `legales` al lado, la posición más
+         forzada posible cae en el grupo de "no sé", que es el equivocado. */
+      huecoSegunda, legales,
       /* segundos pensados en esta jugada, o null si la partida no traía reloj.
          null NO es cero: es "no se sabe", y las medianas lo saltean. */
       seg: (tiempos && tiempos[i] != null) ? tiempos[i] : null

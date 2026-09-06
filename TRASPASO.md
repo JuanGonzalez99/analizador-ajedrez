@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.56**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.56.1**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1807,11 +1807,20 @@ resultados en la v0.39.)*
   - `7… Nxe4` (hueco 95) y `16… Nxf1` (hueco 47) no las marcamos, y **ningún
     corte las rescata sin meter a `14… Nc4`** (hueco 96). Ver arriba.
 
-  Las tres necesitan un mes de partidas, no otra vuelta sobre esta. Lo que hace
-  falta emitir para poder medirlas está a dos palabras: la diferencia CRUDA
-  entre la primera y la segunda —hoy solo queda el sí/no de 150—, que además ya
-  la pide la estratificación por dificultad. `esRecaptura` y `legales` ya viajan
-  en la fila.
+  Las tres necesitan un mes de partidas, no otra vuelta sobre esta. **Desde la
+  v0.56.1 los datos para medirlas ya viajan en la fila**: `huecoSegunda` —la
+  diferencia CRUDA entre la primera y la segunda, que antes se calculaba y se
+  tiraba—, `legales`, y `esRecaptura` desde la v0.56.
+
+  Van `huecoSegunda` **y** `legales`, no solo el hueco: el hueco queda en `null`
+  cuando el motor no devuelve segunda, y una razón de que no la devuelva es que
+  haya una sola jugada legal, o sea que la posición más forzada posible caería
+  en el grupo de "no sé". Es la misma advertencia que estaba anotada acá abajo
+  para la estratificación por dificultad, que ahora también queda desbloqueada.
+
+  **No están en `CAMPOS_FLACOS` a propósito:** ninguna tabla los usa todavía y
+  un año de filas flacas tiene que pesar poco. Medir sobre las filas completas
+  de un mes alcanza para decidir.
 
 - **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
   frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la
@@ -1879,7 +1888,34 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 - **Nunca afirmar de memoria una posición de ajedrez.** Verificarla con
   chess.js. Ya se escribió una prueba con una torre supuestamente defendida que
   en realidad estaba colgada.
-- **La versión se muestra en pantalla** y va en cada línea del registro. Subirla
-  en cada cambio, o los reportes del usuario no se pueden ubicar.
+- **La versión se muestra en pantalla** y va en cada línea del registro. Es una
+  **coordenada de depuración**, no marketing: existe para ubicar un reporte del
+  usuario en el historial. De ahí sale todo el criterio, y la regla dura es que
+  **todo deploy tiene que ser identificable**.
+
+  Tres niveles, desde la v0.56.1:
+
+  | nivel | cuándo | ejemplo |
+  |---|---|---|
+  | **parche** `0.56.1` | no cambia lo que se ve ni lo que significan los números: arreglo interno, prueba, comentario, un texto | v0.55, que el dial no eche al usuario de la vista |
+  | **menor** `0.57` | cambia una etiqueta, una tabla, un criterio, o aparece un control nuevo | v0.52, v0.53, v0.54, v0.56 |
+  | **mayor** `1.0` | hay que reaprender algo, o lo guardado deja de servir | ninguno todavía |
+
+  El mayor **lo decide el usuario**, no quien programa. Los candidatos naturales
+  ya están en la lista de pendientes: partir el archivo (§2) y cambiar el
+  esquema de la caché. Así el número mayor significa algo concreto —"lo que
+  tenías guardado cambió de forma"— en vez de ser un estado de ánimo.
+
+  Elegir entre menor y parche queda de quien programa, **y hay que decirle al
+  usuario cuál es la versión nueva**: es lo que va a buscar en la pantalla para
+  saber si ya le llegó el cambio.
+
+  Nunca se renumera hacia atrás: los registros viejos dicen v0.51 y tienen que
+  seguir significando eso. Y la fecha se queda al lado (`v0.57 · 06-09`), que ya
+  desambigua dos pushes del mismo día.
+
+  El chequeo estático 8 compara la versión contra la del último commit y falla
+  si `index.html` cambió y la versión no subió. Si `index.html` no cambió no
+  pide nada: el archivo servido es idéntico y no hay reporte que ubicar.
 - **Este documento se actualiza en el mismo commit que el cambio que describe.**
   Vive en el repo justamente para eso.

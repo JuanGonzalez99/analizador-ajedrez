@@ -911,6 +911,48 @@ test("Omisión por material la decide el motor, no la heurística", () => {
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
 });
 
+/* --- el hueco crudo, para poder medir, v0.56.1 --- */
+
+test("la fila lleva el hueco crudo entre la mejor y la segunda", () => {
+  /* Antes se calculaba, se comparaba contra 150 y se tiraba. El 150 está
+     elegido para disparar "Genial" y no significa nada más, así que sin el
+     número no se puede probar ningún otro corte sin volver a correr el motor. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const evs = [
+    { cp: 200, mate: null, mejor: "e2e4", segunda: { cp: 60, mate: null, mov: "d2d4" } },
+    { cp: -200, mate: null, mejor: "e7e5", segunda: null },
+    { cp: 200, mate: null, mejor: "g1f3", segunda: null },
+  ];
+  const { filas } = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} });
+  assert.equal(filas[0].huecoSegunda, 140, "200 contra 60");
+  assert.equal(filas[1].huecoSegunda, null, "sin segunda no hay hueco, y null no es cero");
+  /* el sí/no sigue saliendo del mismo número */
+  assert.ok(html.includes("const unicaBuena = huecoSegunda !== null && huecoSegunda >= 150;"));
+});
+
+test("va legales junto al hueco, no el hueco solo", () => {
+  /* El hueco queda en null cuando el motor no devuelve segunda, y una razón de
+     que no la devuelva es que haya UNA SOLA jugada legal: sin `legales` al
+     lado, la posición más forzada posible cae en el grupo de "no sé". */
+  const antes = "k7/8/8/8/8/8/6q1/7K w - - 0 1";
+  const j = new Chess(antes);
+  const hecho = j.move("Kxg2");
+  const evs = [{ cp: -900, mate: null, mejor: "h1g2", segunda: null },
+               { cp: 900, mate: null, mejor: "a8b8", segunda: null }];
+  const f = A.derivarFilas([hecho], [antes, j.fen()], evs,
+                           { pos: new Set(), nombres: {} }).filas[0];
+  assert.equal(f.huecoSegunda, null);
+  assert.equal(f.legales, 1, "acá el null es 'no había nada que elegir'");
+});
+
+test("los datos para medir no viajan en la fila flaca", () => {
+  /* Ninguna tabla los usa todavía y un año de filas flacas tiene que pesar
+     poco. Medir sobre las filas completas de un mes alcanza para decidir. */
+  const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
+  for (const c of ["huecoSegunda", "legales", "esRecaptura", "forzada"])
+    assert.ok(!campos.includes(`"${c}"`), `${c} no tiene por qué viajar a las tablas`);
+});
+
 /* --- la recaptura no es Genial, v0.56 --- */
 
 test("una recaptura no es Genial, pero comer lo que se acaba de mover sí puede serlo", () => {

@@ -96,11 +96,46 @@ const doc = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");
    mismo contador de siempre —no se reinició nada, v35 es v0.35—, solo que
    escrito como un número de versión de verdad. Las dos formas se aceptan
    porque las secciones viejas del traspaso nombran commits reales. */
-const num = t => (t.match(/^v0?\.?(\d+)/) || [])[1];
-const vHtml = num((html.match(/window\.VERSION = "(v[\d.]+)/) || [])[1] || "");
-const vDoc = num((doc.match(/al día en la \*\*(v[\d.]+)\*\*/) || [])[1] || "");
+/* "v35" y "v0.35" son la misma versión —el contador nunca se reinició—, así que
+   se normalizan antes de comparar. Desde la v0.56.1 hay un TERCER número para
+   los parches, y por eso ya no alcanza con mirar el primero: v0.56 y v0.56.1
+   son dos deploys distintos y el traspaso tiene que decir cuál. */
+const norm = t => {
+  const s = String(t || "").replace(/^v/, "");
+  return /^\d+$/.test(s) ? "0." + s : s;
+};
+const vHtml = norm((html.match(/window\.VERSION = "(v[\d.]+)/) || [])[1]);
+const vDoc = norm((doc.match(/al día en la \*\*(v[\d.]+)\*\*/) || [])[1]);
 chequear("el traspaso está al día",
   vHtml && vHtml === vDoc ? [] : [`index.html es ${vHtml} y TRASPASO.md dice ${vDoc}`]);
+
+/* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
+      La versión es lo que ubica un reporte del usuario en el historial (§10) y
+      cada push es un deploy en vivo, así que dos deploys distintos no pueden
+      decir lo mismo. Se compara contra HEAD y no contra una lista, para que no
+      haya nada que mantener a mano. Si index.html no cambió no se pide nada:
+      el archivo servido es idéntico y no hay reporte que ubicar. */
+const previo = spawnSync("git", ["show", "HEAD:index.html"],
+                         { encoding: "utf8", maxBuffer: 1 << 28 });
+if (previo.status !== 0) {
+  console.log("  --  la versión subió (sin git o sin HEAD: no se puede comparar)");
+} else if (previo.stdout === html) {
+  console.log("  ok  la versión subió (index.html no cambió: no hace falta)");
+} else {
+  const vAntes = norm((previo.stdout.match(/window\.VERSION = "(v[\d.]+)/) || [])[1]);
+  /* compara de a números, así 0.56.1 > 0.56 y 0.100 > 0.99 */
+  const mayor = (a, b) => {
+    const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+      const d = (pa[i] || 0) - (pb[i] || 0);
+      if (d) return d > 0;
+    }
+    return false;
+  };
+  chequear("la versión subió",
+    vAntes && vHtml && mayor(vHtml, vAntes) ? []
+      : [`index.html cambió pero la versión sigue en ${vHtml} (el último commit es ${vAntes})`]);
+}
 
 if (fallas.length) { console.error("\nFALLA:\n- " + fallas.join("\n- ")); process.exit(1); }
 console.log("\nchequeos estáticos: todo bien");
