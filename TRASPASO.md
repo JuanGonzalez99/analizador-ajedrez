@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.54**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.55**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1531,10 +1531,17 @@ entra a `derivarFilas` por parámetro: el bloque sigue siendo puro y probable en
 node. Los siete llamados tienen que pasarlo, y hay una prueba que los cuenta,
 porque uno olvidado se queda con el valor por defecto en silencio.
 
-**Cambiarlo descarta "todo lo analizado"**, al revés que cambiar de Modo. Las
-filas flacas llevan las dos etiquetas de Modo precalculadas pero no llevan las
-evaluaciones, así que con otro corte no se pueden reetiquetar: hay que volver a
-barrer la caché. El barrido no toca el motor, así que cuesta milisegundos.
+**Cambiarlo obliga a rebarrer "todo lo analizado"**, al revés que cambiar de
+Modo. Las filas flacas llevan las dos etiquetas de Modo precalculadas pero no
+llevan las evaluaciones, así que con otro corte no se pueden reetiquetar. El
+barrido no toca el motor —lee la caché de evaluaciones y nada más—, así que se
+paga en milisegundos y **la caché no se toca**: no hay que reanalizar nada.
+
+Desde la v0.55 se rebarre **en el lugar**: mover un dial no es pedir cambiar de
+vista, y antes te devolvía a "el mes seleccionado" sin que lo hubieras pedido
+—lo que además hacía parecer que había que volver a analizar—. El barrido salió
+a `juntarTodo()`, que usan los dos caminos que lo necesitan: elegir la fuente y
+mover el dial. Una función y no dos copias, porque dos copias se desincronizan.
 
 **Dónde nos separamos de chess.com a propósito:** ellos marcan Miss cuando el
 mate se ALARGA (jugada 40 de la partida de referencia, de mate en 8 a mate en

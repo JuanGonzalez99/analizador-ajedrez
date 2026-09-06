@@ -291,7 +291,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.54 · 06-09";
+  window.VERSION = "v0.55 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1785,28 +1785,39 @@ $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
   };
 });
 
+/* Arma "todo lo analizado" barriendo la caché. Vive acá afuera porque lo
+   necesitan DOS caminos: elegir la fuente, y mover el dial de mate —que
+   invalida lo juntado sin que el usuario haya pedido cambiar de lugar—.
+   No toca el motor (§"el barrido no toca el motor"): son milisegundos.
+   Devuelve false si no se pudo, y el que llama decide qué hacer con eso. */
+async function juntarTodo() {
+  if (!MESES.length) { estado("Primero buscá un usuario."); return false; }
+  ocupado(true);
+  const t0 = performance.now();
+  let bien = true;
+  try {
+    const prof = MES ? MES.prof : +$("prof").value;
+    TODO = await barrerCache(prof, opcionesDePantalla(),
+      (m, n) => { estado(`Juntando lo analizado… mes ${m + 1} de ${n}`); progreso(m / n); });
+    window.LOG.add("·", `barrido: ${TODO.partidas} partidas de ${TODO.meses} mes(es) ` +
+      `en ${Math.round(performance.now() - t0)} ms` +
+      (TODO.otraProf ? ` · ${TODO.otraProf} a otra profundidad` : ""));
+  } catch (e) {
+    window.LOG.add("!", "barrido: " + (e.message || e));
+    estado("No se pudo juntar lo analizado.");
+    bien = false;
+  }
+  ocupado(false);
+  progreso(0);
+  estado("");
+  return bien;
+}
+
 $("fuente").onchange = seguro("fuente", async () => {
   FUENTE = $("fuente").value;
   window.LOG.add("·", "fuente " + FUENTE);
-  if (FUENTE === "todo" && !TODO) {
-    if (!MESES.length) { estado("Primero buscá un usuario."); $("fuente").value = FUENTE = "mes"; return; }
-    ocupado(true);
-    const t0 = performance.now();
-    try {
-      const prof = MES ? MES.prof : +$("prof").value;
-      TODO = await barrerCache(prof, opcionesDePantalla(),
-        (m, n) => { estado(`Juntando lo analizado… mes ${m + 1} de ${n}`); progreso(m / n); });
-      window.LOG.add("·", `barrido: ${TODO.partidas} partidas de ${TODO.meses} mes(es) ` +
-        `en ${Math.round(performance.now() - t0)} ms` +
-        (TODO.otraProf ? ` · ${TODO.otraProf} a otra profundidad` : ""));
-    } catch (e) {
-      window.LOG.add("!", "barrido: " + (e.message || e));
-      estado("No se pudo juntar lo analizado.");
-      $("fuente").value = FUENTE = "mes";
-    }
-    ocupado(false);
-    progreso(0);
-    estado("");
+  if (FUENTE === "todo" && !TODO && !await juntarTodo()) {
+    $("fuente").value = FUENTE = "mes";
   }
   /* Se puede mirar lo acumulado sin haber analizado el mes que está cargado:
      es justamente para lo que sirve. */
@@ -2236,17 +2247,21 @@ $("cadencia").onchange = seguro("cadencia", () => {
   if (MES || TODO) pintarMes(MES ? MES.prof : TODO.prof);
 });
 
-/* Mismo camino que Modo, con una diferencia que hay que tener presente: "todo
-   lo analizado" SÍ se descarta. Las filas flacas llevan las dos etiquetas de
-   Modo precalculadas, pero no llevan las evaluaciones, así que con otro corte de
-   mate no se pueden reetiquetar: hay que volver a barrer la caché. El barrido no
-   toca el motor, así que cuesta milisegundos, pero no es gratis y por eso se
-   avisa en el registro. */
-$("mateVista").onchange = seguro("mate a la vista", () => {
+/* Mismo camino que Modo, con una diferencia: lo juntado no se puede reetiquetar.
+   Las filas flacas llevan las dos etiquetas de Modo precalculadas pero NO las
+   evaluaciones, así que con otro corte de mate hay que rebarrer la caché.
+   Se rebarre EN EL LUGAR: mover un dial no es pedir cambiar de vista, y antes
+   te devolvía a "el mes seleccionado" sin que lo hubieras pedido. El barrido no
+   toca el motor, así que se paga en milisegundos. */
+$("mateVista").onchange = seguro("mate a la vista", async () => {
   window.LOG.add("·", "mate a la vista: " + $("mateVista").value);
-  if (TODO) { TODO = null; window.LOG.add("·", "barrido descartado: cambió el corte de mate"); }
-  if (FUENTE === "todo") { FUENTE = "mes"; $("fuente").value = "mes"; }
-  if (MES) { MES.resultados.forEach(reDerivar); pintarMes(MES.prof); }
+  if (TODO) {
+    TODO = null;
+    window.LOG.add("·", "rebarriendo: cambió el corte de mate");
+    if (FUENTE === "todo" && !await juntarTodo()) { $("fuente").value = FUENTE = "mes"; }
+  }
+  if (MES) MES.resultados.forEach(reDerivar);
+  if (MES || (FUENTE === "todo" && TODO)) pintarMes(MES ? MES.prof : TODO.prof);
   if (R) {
     reDerivar(R);
     IDX = Math.min(IDX, R.filas.length - 1); MEJOR_EN = null;

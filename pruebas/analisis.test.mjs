@@ -911,6 +911,27 @@ test("Omisión por material la decide el motor, no la heurística", () => {
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
 });
 
+/* --- el dial no te mueve de lugar, v0.55 --- */
+
+test("mover el dial de mate rebarre en el lugar, no te devuelve al mes", () => {
+  /* Mover un dial no es pedir cambiar de vista. Antes te sacaba de "todo lo
+     analizado" sin que lo hubieras pedido, y parecía que había que reanalizar. */
+  const man = html.slice(html.indexOf('$("mateVista").onchange'),
+                         html.indexOf('$("modo").onchange'));
+  assert.ok(man.includes("await juntarTodo()"), "tiene que rebarrer solo");
+  assert.ok(!man.includes('FUENTE = "mes"; $("fuente").value = "mes"'),
+    "quedó el camino que te echaba de la vista");
+});
+
+test("el barrido vive en una función y no duplicado en dos manejadores", () => {
+  /* Dos copias se desincronizan: una arregla un error de barrido y la otra no. */
+  assert.equal(html.split("await barrerCache(").length - 1, 1, "hay más de un barrido");
+  assert.ok(html.includes("async function juntarTodo()"));
+  const fuente = html.slice(html.indexOf('$("fuente").onchange'),
+                            html.indexOf("async function cargarMes"));
+  assert.ok(fuente.includes("await juntarTodo()"), "la fuente también usa la función");
+});
+
 /* --- jugada forzada, v0.54 --- */
 
 test("con una sola jugada legal la fila queda marcada como forzada", () => {
