@@ -291,7 +291,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.55 · 06-09";
+  window.VERSION = "v0.56 · 06-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -834,7 +834,24 @@ function categorizar(d, modo = "critico") {
      que el apéndice marca como más peligroso: el cruce a posición ganada. */
   const cruce = banda(d.antesMio) !== banda(d.despuesMio) &&
                 banda(d.despuesMio) !== "perdiendo";
-  if (d.esMejor && (d.unicaBuena || cruce) && d.legales >= 2) return "genial";
+  /* Una RECAPTURA no es un hallazgo, y era el falso positivo que destapó el
+     usuario: recapturar con un peón salía "Genial".
+
+     El motivo es que `unicaBuena` mide "la posición estaba forzada" —la mejor le
+     saca 150 centipeones a la segunda— y eso es lo CONTRARIO de "encontraste
+     algo difícil". Después de que te comen algo, recuperar vale más que
+     cualquier otra jugada, así que el hueco de 150 se abre solo.
+
+     Medido contra chess.com: `10… fxe6` da 152 a profundidad 16 y 160 a la 20,
+     o sea que dispararía a cualquier profundidad —no es que midamos poco
+     hondo—, y ellos no la marcan. Es lo único de todo lo que probamos que
+     aguantó los dos caminos.
+
+     Se aplica a las DOS mitades de la regla. La evidencia es sobre `unicaBuena`,
+     porque es por donde entró, pero una recaptura tampoco es un hallazgo cuando
+     cambia de banda: la ibas a jugar igual. */
+  if (d.esMejor && (d.unicaBuena || cruce) && d.legales >= 2 && !d.esRecaptura)
+    return "genial";
 
   if (d.esMejor) return "mejor";
   if (x < c.excelente) return "excelente";
@@ -938,7 +955,7 @@ function prepararPartida(pgn) {
    por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
    categorización, las partidas ya analizadas no hay que volver a correrlas. */
 function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", tiempos = null,
-                      mateALaVista = MATE_A_LA_VISTA) {
+                      mateALaVista = MATE_A_LA_VISTA, previa = null) {
   let apertura = "";
   const filas = [];
   for (let i = 0; i < jugadas.length; i++) {
@@ -968,6 +985,21 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       unicaBuena = Math.abs(a1 - a2) >= 150;
     }
     const legales = new Chess(fens[i]).moves().length;
+    /* Recaptura: el rival COMIÓ en una casilla y vos comés de vuelta ahí.
+
+       Las tres condiciones son necesarias. Pedir solo que las dos jugadas
+       terminen en la misma casilla es demasiado ancho y tapa un caso legítimo:
+       en 1.e4 d5 2.exd5, el peón negro se acaba de mover a d5 y comerlo NO es
+       una recaptura, es cobrar una pieza que se colgó — y cobrar algo colgado
+       sí puede ser un hallazgo. Lo que hace forzada a una recaptura es que ya
+       perdiste el material y solo estás recuperándolo.
+
+       `previa` es para el llamado de la segunda opinión, que pasa una jugada
+       suelta y ahí no existe `jugadas[i - 1]`: sin eso, una recaptura revisada
+       a más profundidad se colaría como Genial sin que nadie lo vea. */
+    const anterior = i > 0 ? jugadas[i - 1] : previa;
+    const esRecaptura = !!(j.captured && anterior && anterior.captured &&
+                           anterior.to === j.to);
 
     /* Los tres mecanismos se calculan SIEMPRE, no solo cuando la jugada salió
        mal: para saber si un mecanismo es peligroso hace falta también cuántas
@@ -1011,7 +1043,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
        etiquetas de una vez —categorizar() es aritmética, no toca chess.js— y
        así "todo lo analizado" puede cambiar de modo sin rehacer el barrido. */
     const d = { perdida, caida, esMejor, esLibro, entrega, unicaBuena,
-                oportunidad, legales, antesMio, despuesMio };
+                oportunidad, legales, antesMio, despuesMio, esRecaptura };
     const cats = { critico: categorizar(d, "critico"),
                    amigable: categorizar(d, "amigable") };
     const cat = cats[modo] || cats.critico;
@@ -1037,7 +1069,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       pieza: j.piece, esCaptura: !!j.captured, colgada,
       capBuena: !!capB, tomoBuena, tomoConOtra,
       /* una sola jugada legal: no hubo decisión. Solo lo usa la revisión. */
-      forzada: legales === 1,
+      forzada: legales === 1, esRecaptura,
       /* segundos pensados en esta jugada, o null si la partida no traía reloj.
          null NO es cero: es "no se sabe", y las medianas lo saltean. */
       seg: (tiempos && tiempos[i] != null) ? tiempos[i] : null
@@ -1446,7 +1478,8 @@ async function analizarConBarrido(jugadas, fens, prof, libro, onProg, opc, tiemp
     for (const i of sospechosas) {
       if (!mapa.has(i) || !mapa.has(i + 1)) continue;
       const sub = derivarFilas([jugadas[i]], [fens[i], fens[i + 1]],
-        [mapa.get(i), mapa.get(i + 1)], libro, i, "critico", null, MATE_VISTA()).filas[0];
+        [mapa.get(i), mapa.get(i + 1)], libro, i, "critico", null, MATE_VISTA(),
+        jugadas[i - 1] || null).filas[0];
       d.filas[i].rev = { prof, perdida: sub.perdida, cat: sub.cat };
       revisadas++;
     }

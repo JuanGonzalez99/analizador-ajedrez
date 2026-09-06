@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.55**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.56**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1767,9 +1767,24 @@ resultados en la v0.39.)*
   con `gananciaDeCaptura`, no con las jugadas legales: en `5. dxe5` hay dos
   capturas posibles y `Nxe5` pierde 2 puntos, así que buena hay una sola.
 
-  El filtro de recaptura es lo único listo para aplicar: `10… fxe6` da 160 a
-  profundidad 20, o sea que dispararía a cualquier profundidad, y chess.com no
-  la marca.
+  **El filtro de recaptura se aplicó en la v0.56** y es lo único de todo lo que
+  probamos que aguantó: `10… fxe6` da 152 a profundidad 16 y 160 a la 20, o sea
+  que dispararía a cualquier profundidad, y chess.com no la marca. Sobre la
+  partida entera saca esa jugada y **ninguna otra** —hay 8 recapturas y solo esa
+  era Genial—, así que es quirúrgico y no un hachazo. Quedamos en 4 contra sus 5.
+
+  **Cuidado con la definición, que la tuve mal un rato.** Recaptura es *el rival
+  comió en una casilla y vos comés de vuelta ahí*: hacen falta las tres
+  condiciones. Pedir solo que las dos jugadas terminen en la misma casilla es
+  demasiado ancho —en `1.e4 d5 2.exd5` el peón se acababa de mover a d5 y
+  comerlo no es recaptura, es cobrar algo colgado, que sí puede ser un
+  hallazgo—. Con la definición ancha daban 11 recapturas; con la correcta, 8.
+  Hay una prueba con las dos jugadas de la misma partida, `2.exd5` y `2…Qxd5`,
+  idénticas en todo lo demás, para que nadie la vuelva a ensanchar.
+
+  El filtro tapa las **dos** mitades de la regla. La evidencia es sobre
+  `unicaBuena`, que es por donde entró, pero una recaptura tampoco es un
+  hallazgo cuando cambia de banda: la ibas a jugar igual.
 
   **La hipótesis de "capturas que no son recapturas" está MUERTA como regla, y
   cómo murió es la lección.** Ajustaba las siete jugadas que estábamos mirando,
@@ -1783,6 +1798,20 @@ resultados en la v0.39.)*
   sugerido**. Regla que sale de acá: *una regla candidata se corre sobre la
   partida entera antes de creerle, aunque ajuste perfecto en los casos que la
   inspiraron.*
+
+  **Lo que sigue faltando, después de la v0.56.** Quedamos en 4 contra las 5 de
+  chess.com, con un falso positivo y dos que no marcamos:
+  - `14… Nc4` sale por **cruce de banda** con la primera y la segunda a 33
+    centipeones. Es el único falso positivo que queda, y confirma la sospecha
+    vieja: esa mitad de la regla es la generosa.
+  - `7… Nxe4` (hueco 95) y `16… Nxf1` (hueco 47) no las marcamos, y **ningún
+    corte las rescata sin meter a `14… Nc4`** (hueco 96). Ver arriba.
+
+  Las tres necesitan un mes de partidas, no otra vuelta sobre esta. Lo que hace
+  falta emitir para poder medirlas está a dos palabras: la diferencia CRUDA
+  entre la primera y la segunda —hoy solo queda el sí/no de 150—, que además ya
+  la pide la estratificación por dificultad. `esRecaptura` y `legales` ya viajan
+  en la fila.
 
 - **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
   frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la

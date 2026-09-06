@@ -911,6 +911,46 @@ test("Omisión por material la decide el motor, no la heurística", () => {
   assert.ok(!html.includes("capDisp"), "quedó la variable de la definición vieja");
 });
 
+/* --- la recaptura no es Genial, v0.56 --- */
+
+test("una recaptura no es Genial, pero comer lo que se acaba de mover sí puede serlo", () => {
+  /* El par que fija las dos mitades del arreglo, en la MISMA partida:
+       2. exd5  come un peón que se acaba de mover a d5 → NO es recaptura
+       2… Qxd5  come de vuelta donde el rival comió    → SÍ es recaptura
+     Las dos son la mejor del motor y las dos tienen la segunda a 200
+     centipeones, así que lo único que las separa es el filtro. Si la definición
+     de recaptura fuera "terminar en la misma casilla" —como la tuve un rato—
+     las dos quedarían afuera, y cobrar algo colgado sí puede ser un hallazgo. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 d5 2. exd5 Qxd5");
+  const evs = [
+    { cp: 0,    mate: null, mejor: "e2e4", segunda: null },
+    { cp: 0,    mate: null, mejor: "d7d5", segunda: null },
+    { cp: 200,  mate: null, mejor: "e4d5", segunda: { cp: 0, mate: null, mov: "g1f3" } },
+    { cp: -200, mate: null, mejor: "d8d5", segunda: { cp: -400, mate: null, mov: "g8f6" } },
+    { cp: 200,  mate: null, mejor: "b1c3", segunda: null },
+  ];
+  /* libro vacío a propósito: esto es una escandinava y "libro" le ganaría a todo */
+  const { filas } = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} },
+                                   0, "critico", null, 3);
+  assert.equal(filas[2].esRecaptura, false, "exd5 no es recaptura");
+  assert.equal(filas[3].esRecaptura, true, "Qxd5 sí lo es");
+  assert.equal(filas[2].cat, "genial", "la que no es recaptura pasa");
+  assert.equal(filas[3].cat, "mejor", "la recaptura queda en Mejor");
+});
+
+test("el filtro tapa las dos mitades de la regla, no solo unicaBuena", () => {
+  /* Una recaptura tampoco es un hallazgo cuando cambia de banda: la ibas a
+     jugar igual. La condición va sobre el `if` entero. */
+  assert.ok(html.includes(
+    'if (d.esMejor && (d.unicaBuena || cruce) && d.legales >= 2 && !d.esRecaptura)'));
+});
+
+test("la segunda opinión recibe la jugada anterior", () => {
+  /* Ese llamado pasa UNA jugada suelta, así que no tiene jugadas[i - 1]. Sin
+     esto, una recaptura revisada a más profundidad se colaría como Genial. */
+  assert.ok(html.includes("MATE_VISTA(),\n        jugadas[i - 1] || null).filas[0];"));
+});
+
 /* --- el dial no te mueve de lugar, v0.55 --- */
 
 test("mover el dial de mate rebarre en el lugar, no te devuelve al mes", () => {
