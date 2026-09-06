@@ -30,6 +30,18 @@ chequear("ids referenciados existen", [...usados].filter(i => !ids.has(i)));
       Ahora se mira la estructura y no el nombre: antes de cada tabla, cerca,
       tiene que haber un elemento con class="cap". Cubre todas las tablas y no
       solo las del mes. */
+/* 2bis. Ningún comentario adentro de un template literal de HTML.
+
+   Pasó de verdad y se vio desde el celular: un `/* ... *\/` puesto adentro de
+   los backticks no es un comentario, es TEXTO, y se imprime en la pantalla en
+   el medio de la tabla. Rompió cinco tablas a la vez, y ni las pruebas de
+   unidad ni la medición de alineación lo agarraron, porque las dos miraban
+   filas y celdas y el texto caía fuera de ellas. Lo vio el usuario. */
+const enTemplate = [...html.matchAll(/innerHTML = `([\s\S]*?)`;/g)]
+  .flatMap(m => [...m[1].matchAll(/\/\*[\s\S]*?\*\//g)]
+    .map(c => c[0].replace(/\s+/g, " ").slice(0, 50) + "…"));
+chequear("sin comentarios adentro del HTML", enTemplate);
+
 /* Sin ventana de N caracteres: se mira el tramo que va desde la tabla ANTERIOR
    hasta esta. Ahí adentro tiene que haber un class="cap", o sea una leyenda
    propia y no la de la tabla de arriba. La ventana de 200 caracteres se rompía

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.50**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.51**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1197,6 +1197,27 @@ cada fila.
 
 Medido a 412 px con 1, 2 y 3 dígitos y con los tres mezclados: encabezado y
 números alinean en todos los casos.
+
+### El comentario que se imprimió en pantalla (v0.51)
+
+Al hacer ese cambio metí el comentario que explica por qué dice "Tasa"
+**adentro del template literal**. Ahí `/* … */` no es un comentario: es texto, y
+se imprimió en el medio de la tabla. Había otro igual en `tablaReparto`, así que
+**cinco tablas mostraban un párrafo de código en pantalla**. Lo vio el usuario.
+
+**Ni las pruebas ni la verificación en el navegador lo agarraron**, y eso es lo
+que hay que aprender: las pruebas miran cadenas del fuente, y la medición de
+alineación miraba `thead th` y `tbody tr` —el texto suelto caía justo afuera de
+las dos—. Además, en esa tanda verifiqué el cambio *estrechamente*, midiendo la
+alineación, y no miré la pantalla.
+
+Hay chequeo estático: **"sin comentarios adentro del HTML"**, que busca
+`/* … */` dentro de cualquier `innerHTML = \`…\``. Se comprobó que falla
+reintroduciendo el error a propósito: un chequeo que pasa con el código limpio
+pero no atrapa el caso real no sirve de nada.
+
+**Regla que sale de acá:** un cambio que toca lo que se dibuja se mira en la
+pantalla, no solo se mide.
 
 ### El margen va abajo del número, y es por alineación (v0.49)
 

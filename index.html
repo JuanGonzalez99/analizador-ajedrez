@@ -290,7 +290,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.50 · 05-09";
+  window.VERSION = "v0.51 · 05-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2274,12 +2274,12 @@ function tablaReparto(idTabla, idCap, texto, filas, encabezado,
      reparte PARTIDAS, y ahí la columna no significa nada: una columna vacía se
      lee como "cero malas", que sería falso. */
   const conMalas = filas.some(f => f.malas != null);
+  /* El porcentaje va con el signo, igual que las tablas de tasas: el mismo
+     encabezado no puede tener números con signo en una tabla y sin él en otra. */
   $(idTabla).innerHTML = `
     <thead><tr><th>${encabezado}</th><th>Veces</th><th>%</th>` +
       (conMalas ? "<th>Malas</th>" : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.total}</td>` +
-      /* con el signo, igual que las tablas de tasas: el mismo encabezado "%"
-         no puede tener números con signo en una tabla y sin él en otra */
       `<td>${total ? (100 * f.total / total).toFixed(1) + "%" : "\u2014"}</td>` +
       (conMalas ? `<td>${f.canario && !f.malas ? "\u2014" : f.malas}</td>` : "") +
       `</tr>`).join("")}
@@ -2323,11 +2323,11 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
     [texto, conTiempo ? textoTiempo(tiempo) : "", AYUDA_RANGO]);
   /* "mediana" va en el encabezado y no en la leyenda: ahí no cuesta un renglón
      y queda al lado del número que califica. */
+  /* "Tasa" y no "%": un "%" solo, en una columna ancha, flota sin decir de qué
+     es. Nombrar la cantidad además le da cuerpo al encabezado, así que deja de
+     verse suelto. La tabla de REPARTO se queda con "%" a propósito: ahí el
+     número no es una tasa sino qué parte del total es cada fila. */
   $(idTabla).innerHTML = `
-    /* "Tasa" y no "%": un "%" solo, en una columna ancha, flota sin decir de
-       qué es. Nombrar la cantidad además le da cuerpo al encabezado, así que
-       deja de verse suelto. La tabla de REPARTO se queda con "%" a propósito:
-       ahí el número no es una tasa sino qué parte del total es cada fila. */
     <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>Tasa</th>` +
       (conTiempo ? '<th>Seg.<span class="sub">mediana</span></th>' : "") + `</tr></thead>
     <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
