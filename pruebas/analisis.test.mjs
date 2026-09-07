@@ -1584,7 +1584,7 @@ test("el remate se lee del tablero, no del encabezado del PGN", () => {
   assert.equal(fin("1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#"), "1-0");
   assert.equal(fin("1. f3 e5 2. g4 Qh4#"), "0-1", "el mate de las negras es 0-1");
   assert.equal(fin("1. e3 a5 2. Qh5 Ra6 3. Qxa5 h5 4. Qxc7 Rah6 5. h4 f6 6. Qxd7+ Kf7" +
-                   " 7. Qxb7 Qd3 8. Qxb8 Qh7 9. Qxc8 Kg6 10. Qe6"), "½-½",
+                   " 7. Qxb7 Qd3 8. Qxb8 Qh7 9. Qxc8 Kg6 10. Qe6"), "tablas",
                "el ahogado son tablas");
   assert.equal(fin("1. e4 e5"), null, "una posición viva no tiene remate");
 });
@@ -1592,9 +1592,9 @@ test("el remate se lee del tablero, no del encabezado del PGN", () => {
 test("las tablas por material insuficiente también son un remate", () => {
   /* Sale del FEN igual que el ahogado: dos reyes solos no es una posición que
      el motor esté evaluando, es una partida terminada. */
-  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/8/4K3 w - - 0 60"), "½-½");
+  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/8/4K3 w - - 0 60"), "tablas");
   /* y la regla de las 50 jugadas, que viaja en el propio FEN */
-  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/4Q3/4K3 w - - 100 80"), "½-½");
+  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/4Q3/4K3 w - - 100 80"), "tablas");
   assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/4Q3/4K3 w - - 99 80"), null,
                "a 99 la partida sigue");
 });
@@ -1619,9 +1619,35 @@ test("con la partida terminada la barra muestra el resultado y se llena entera",
   assert.equal(ultima.evalTexto, "1-0", "el resultado le gana a 'mate' y a 'M0'");
   /* y ninguna otra fila lo lleva: una posición terminal corta la partida */
   assert.deepEqual(filas.slice(0, -1).map(f => f.remate), filas.slice(0, -1).map(() => null));
-  /* el tope de 2 y 98 se salta solo con remate: existe para que la barra nunca
-     se vea vacía mientras la partida sigue, y con la partida terminada eso
-     sería mentira */
-  assert.ok(html.includes('const pct = f.remate ? { "1-0": 100, "0-1": 0 }[f.remate] ?? 50'));
-  assert.ok(html.includes(': Math.max(2, Math.min(98, winPct(f.evalBlancas)));'));
+  assert.equal(A.llenadoBarra(ultima), 100, "y la barra va entera");
+});
+
+test("el remate devuelve una CLAVE, y el texto vive en un solo lugar", () => {
+  /* "½-½" duró una versión: el glifo es diminuto a los 9,5 px del número de la
+     barra. Separar la clave del texto es lo que hizo que cambiarlo por "Tablas"
+     fuera una línea y no una cacería. */
+  assert.deepEqual(A.TEXTO_REMATE, { "1-0": "1-0", "0-1": "0-1", tablas: "Tablas" });
+});
+
+test("un mate forzado llena la barra entera, aunque la partida siga", () => {
+  /* La evaluación se topea en 1000, así que un mate en 5 y un +9,90 pintan casi
+     la misma barra: 97,5 contra 97,2. Es la MISMA saturación que obligó a
+     inventar "Omisión" en la v0.53, pero en la barra. Llenarla entera desatura
+     lo único que la escala no puede expresar. */
+  assert.ok(Math.abs(A.winPct(1000) - A.winPct(990)) < 0.5,
+            "las dos evaluaciones son indistinguibles: ese es el problema");
+  assert.equal(A.llenadoBarra({ mateDe: "w", evalBlancas: 1000 }), 100);
+  assert.equal(A.llenadoBarra({ mateDe: "b", evalBlancas: -1000 }), 0);
+  /* y sin mate vuelve el tope, que es lo que deja ver que el mate se soltó */
+  const soltado = A.llenadoBarra({ mateDe: null, evalBlancas: 980 });
+  assert.ok(soltado > 90 && soltado < 98, `quedó en ${soltado}`);
+});
+
+test("los tres llenados de la barra, y su orden de precedencia", () => {
+  /* El remate le gana al mate forzado: la última jugada de un mate tiene las dos
+     cosas y lo que corresponde mostrar es el resultado. */
+  assert.equal(A.llenadoBarra({ remate: "1-0", mateDe: "w" }), 100);
+  assert.equal(A.llenadoBarra({ remate: "0-1", mateDe: "b" }), 0);
+  assert.equal(A.llenadoBarra({ remate: "tablas" }), 50, "las tablas parten la barra al medio");
+  assert.equal(A.llenadoBarra({ remate: null, mateDe: null, evalBlancas: 0 }), 50);
 });

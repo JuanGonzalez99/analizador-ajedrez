@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.61**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.62**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1803,8 +1803,18 @@ usuario la ve como parte de "los textos de las categorías son genéricos" (§8)
 
 Con la partida terminada la barra mostraba `mate` o `+0.00`, que es la
 evaluación de una posición que ya no se juega. Ahora muestra **el resultado**
-—`1-0`, `0-1` o `½-½`— y se llena **entera** del color del que ganó, o partida
-al medio en tablas.
+—`1-0`, `0-1` o `Tablas`— y se llena **entera** del color del que ganó, o
+partida al medio en tablas.
+
+**Se llama "Tablas" y no "½-½", y costó una versión.** El `½-½` de la v0.61 se
+puso sin dibujarlo: el glifo `½` es diminuto a los **9,5 px** del número de la
+barra y se leía apretado. Se dibujaron las seis formas al tamaño real —`½-½`,
+`Tablas`, `Empate`, `=`, `½`, `½ – ½`— y el usuario eligió mirándolas. Rompe la
+simetría con `1-0` y `0-1` a propósito: esos dos se leen y `½-½` no.
+
+`remateEnTablero` devuelve una **clave** (`"1-0"`, `"0-1"`, `"tablas"`) y el
+texto vive en `TEXTO_REMATE`. Eso es lo que hizo que cambiarlo fuera una línea
+en vez de una cacería, y hay una prueba que lo fija.
 
 **La línea que decide cuándo se pisa la evaluación es de fondo, no cosmética:
 solo cuando la partida terminó EN EL TABLERO.** Ahí no hay evaluación que
@@ -1836,6 +1846,38 @@ la posición: chess.js la mira sobre las jugadas jugadas y acá se arranca de un
 posición suelta. Unas tablas por repetición o por acuerdo siguen mostrando la
 evaluación, igual que un abandono. Hay una prueba que fija la limitación, para
 que sea una decisión escrita y no una sorpresa.
+
+### El mate forzado también llena la barra (v0.62)
+
+Lo propuso el usuario para *"que quede visual que la partida se le escapó al que
+tenía el mate"*, y al dibujarlo apareció un argumento más fuerte que ese.
+
+**Un mate en 5 y un +9,90 pintaban casi la misma barra: 97,5% contra 97,2%.**
+La evaluación se topea en 1000 (`TOPE`), así que arriba de todo se aplasta. Es
+**la misma saturación** que obligó a inventar "Omisión" en la v0.53 —soltar un
+mate movía la pérdida 0,20 y nunca llegaba al corte—, solo que en la barra y sin
+que nadie la hubiera mirado. Llenarla entera **desatura lo único que la escala
+no puede expresar**, así que no es una decisión estética: es la misma corrección
+aplicada en otro lugar.
+
+Y hace visible lo que el usuario quería: la barra estaba llena, el mate se
+soltó, y se despega.
+
+**El argumento en contra, anotado para no rediscutirlo:** el tope de 2 y 98
+existe justo para que quede la astilla que dice "todavía se juega", y con un
+mate forzado la partida efectivamente sigue y se puede soltar. Pesa menos porque
+el número sigue diciendo `M5`, y porque **ver que se escapó es más útil que que
+te recuerden que se puede escapar**.
+
+**LA CURVA NO SE TOCA, y es decisión y no olvido.** Tiene la misma saturación,
+pero ahí el borde es donde la línea se hace invisible: se dibujaría pegada al
+marco y se dejaría de ver la forma. El mismo criterio da distinto resultado
+porque el dibujo es distinto.
+
+Los tres llenados viven juntos en `llenadoBarra`, que es puro y por eso se
+prueba en node sin un DOM. El orden importa: **el remate le gana al mate
+forzado**, porque la última jugada de un mate tiene las dos cosas y lo que
+corresponde mostrar es el resultado.
 
 *(Queda abierto si el resultado tiene que aparecer también en las partidas que
 NO terminan en el tablero —abandono, tiempo, repetición, acuerdo—. Ahí sí habría
@@ -2241,8 +2283,16 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 
 - **Antes de cambiar una tabla, mostrar cómo va a quedar y esperar el ok.** Las
   tablas son el producto: cada una codifica una pregunta, así que cambiarla es
-  cambiar la pregunta y esa decisión es del usuario. Para lo que no toca tablas,
-  aplicar y contar.
+  cambiar la pregunta y esa decisión es del usuario.
+- **Y lo mismo vale para CUALQUIER decisión visual, no solo las tablas.** Esta
+  regla decía "para lo que no toca tablas, aplicar y contar", y por ese hueco se
+  coló el `½-½` de la v0.61: no era una tabla, así que se aplicó sin dibujarlo,
+  y el usuario lo rechazó al verlo. La forma de una marca, el texto de una
+  etiqueta, cuánto se llena una barra: se **dibuja al tamaño real**, se muestran
+  las alternativas y se espera el ok. Sale barato —el arnés (§2) lo hace en
+  segundos— y ya se ganó dos veces: las marcas de la curva (v0.59) y el nombre
+  de las tablas (v0.62). Lo que se aplica y se cuenta es lo que no se ve:
+  arreglos internos, pruebas, rendimiento.
 - **Un cambio invasivo por tanda.** Si además hay que refactorizar, va solo.
 - **`npm test` antes de dar nada por bueno**, y una prueba nueva por cada
   arreglo. Los errores que no agarran son siempre los del DOM y los de la

@@ -306,7 +306,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.61 · 07-09";
+  window.VERSION = "v0.62 · 07-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -974,8 +974,45 @@ function textoEval(ev, turno) {
 function remateEnTablero(fen) {
   const c = new Chess(fen);
   if (c.in_checkmate()) return c.turn() === "w" ? "0-1" : "1-0";
-  if (c.in_draw()) return "\u00bd-\u00bd";
+  if (c.in_draw()) return "tablas";
   return null;
+}
+
+/* Devuelve una CLAVE y no el texto, y el texto vive acá. Es para que cambiar
+   cómo se llama sea una línea y no una cacería: "½-½" duró una versión —el
+   glifo es diminuto a los 9,5 px del número de la barra y se leía apretado—
+   y "Tablas" se eligió mirando las seis formas dibujadas al tamaño real.
+   Rompe la simetría con 1-0 y 0-1, a propósito: esos dos se leen y ½-½ no. */
+const TEXTO_REMATE = { "1-0": "1-0", "0-1": "0-1", tablas: "Tablas" };
+
+/* Cuánto se llena la barra de evaluación, de 0 a 100 y desde las blancas.
+
+   El tope de 2 y 98 existe para que la barra nunca se vea vacía: con la
+   evaluación en su máximo queda siempre una astilla del otro color, y esa
+   astilla dice "todavía se puede dar vuelta". Los dos casos que se lo saltean
+   son los dos donde eso sería mentira o inútil:
+
+   1. LA PARTIDA TERMINADA. Ya no hay nada que dar vuelta.
+
+   2. EL MATE FORZADO, y este es el que no era obvio. La evaluación se topea en
+      1000 (`TOPE`), así que un mate en 5 y un +9,90 pintan casi la misma barra:
+      97,5% contra 97,2%. Es LA MISMA SATURACIÓN que obligó a inventar "Omisión"
+      en la v0.53 —soltar un mate movía la pérdida 0,20 y nunca llegaba al
+      corte—, solo que en la barra y sin que nadie la hubiera mirado. Llenarla
+      entera desatura lo único que la escala no puede expresar, y hace visible
+      el mate que se escapa: la barra estaba llena y se despega.
+
+      La partida sigue viva y el mate se puede soltar, sí. Eso lo dice el
+      número, que sigue siendo "M5"; ver que se escapó es más útil que que te
+      recuerden que se puede escapar.
+
+   LA CURVA NO SE TOCA, y es una decisión y no un olvido: ahí el borde es donde
+   la línea se hace invisible —se dibujaría pegada al marco y se dejaría de ver
+   la forma—, así que el mismo criterio da distinto resultado. */
+function llenadoBarra(f) {
+  if (f.remate) return { "1-0": 100, "0-1": 0 }[f.remate] ?? 50;
+  if (f.mateDe) return f.mateDe === "w" ? 100 : 0;
+  return Math.max(2, Math.min(98, winPct(f.evalBlancas)));
 }
 
 const claveLibro = fen => fen.split(" ").slice(0, 4).join(" ");
@@ -1225,12 +1262,20 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
        se cuenta por cientos de miles. */
     const remate = i === jugadas.length - 1 ? remateEnTablero(fens[i + 1]) : null;
 
+    /* Quién tiene el mate forzado DESPUÉS de la jugada, visto desde las blancas.
+       `mateDespues` viene del que mueve después, así que positivo es que matea
+       él y negativo que lo matean a él. Solo lo usa la barra: ninguna tabla lo
+       mira, y por eso no entra a CAMPOS_FLACOS. */
+    const mateDe = (mateDespues === null || mateDespues === undefined) ? null
+                 : (mateDespues > 0 ? rival : (rival === "w" ? "b" : "w"));
+
     filas.push({
       n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, cats, perdida, precision, caida,
       /* con la partida terminada en el tablero, la barra muestra el RESULTADO y
          no la evaluación: no hay evaluación que perder, y "M0" o "+0.00" no es
          lo que uno quiere leer cuando la partida ya se terminó */
-      remate, evalBlancas: despues, evalTexto: remate || textoEval(evs[i + 1], rival),
+      remate, mateDe, evalBlancas: despues,
+      evalTexto: remate ? TEXTO_REMATE[remate] : textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
       capBuena: !!capB, tomoBuena, tomoConOtra,
@@ -3543,14 +3588,9 @@ function pintarRevision() {
   /* La barra se llena con lo que le toca a las blancas, y acompaña al tablero
      cuando se gira. El número va en la punta del que va ganando, que es donde
      lo busca el ojo. */
-  /* El tope de 2 y 98 existe para que la barra nunca se vea vacía: con la
-     evaluación en su máximo siempre queda una astilla del otro color, y esa
-     astilla dice "todavía se juega".
-     CON LA PARTIDA TERMINADA ESO ES MENTIRA, y por eso el remate se salta el
-     tope: en un mate la barra va entera del color del que ganó, y en tablas
-     queda partida al medio. Ya no hay nada que se pueda dar vuelta. */
-  const pct = f.remate ? { "1-0": 100, "0-1": 0 }[f.remate] ?? 50
-                       : Math.max(2, Math.min(98, winPct(f.evalBlancas)));
+  /* Los tres casos y sus porqués están en `llenadoBarra`, que es puro y por eso
+     se puede probar en node sin un DOM. */
+  const pct = llenadoBarra(f);
   const gananBlancas = pct >= 50;
   const modo = MODO_EVAL;
 

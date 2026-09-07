@@ -199,6 +199,9 @@ await foto("revision-tablero-y-curva");
 await avanzar(13);
 await foto("revision-final");
 await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "curva.png") });
+/* la barra sola: cómo termina la partida se juega en 16 px de alto, y en la
+   captura de la pantalla entera esa franja es demasiado chica para juzgarla */
+await pg.locator("#evalh").screenshot({ path: path.join(SALIDA, "barra" + SUFIJO + ".png") });
 /* la jugada ANTERIOR a la última: en la partida que termina en mate es la que
    permite el mate, o sea la otra mitad del arreglo de la v0.60 */
 await pg.click("#ant");
