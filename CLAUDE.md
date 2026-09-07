@@ -16,9 +16,12 @@ describe. §10 tiene las reglas de trabajo.
   etiqueta, la forma de una marca, cuánto se llena una barra. Se dibuja con el
   arnés (`npm run mirar`), se mandan las alternativas y él elige mirando. Ya
   evitó dos cambios que no le gustaban y destapó uno que se había colado.
-- **Las capturas se sacan al tamaño de un celular**, no de una pantalla alta:
-  su viewport ronda los **412 × 760 CSS**. Una captura de 1500 px de alto no
-  deja dimensionar cuánto se ve de verdad.
+- **Las capturas se sacan al tamaño de un celular**, no de una pantalla alta.
+  Medido sobre una captura suya, sacando la escala del tablero (que mide 360 CSS
+  de ancho): su viewport es de **≈420 × 810 CSS** con la barra de direcciones
+  escondida, y ~745 de alto cuando está visible. **Dibujar a 412 × 760**, que es
+  el caso apretado. Una captura de 1500 px de alto no deja dimensionar cuánto se
+  ve de verdad.
 - Se escribe en **castellano rioplatense**, igual que el código y el traspaso.
 
 ## Lo básico

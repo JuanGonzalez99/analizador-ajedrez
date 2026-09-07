@@ -1651,3 +1651,77 @@ test("los tres llenados de la barra, y su orden de precedencia", () => {
   assert.equal(A.llenadoBarra({ remate: "tablas" }), 50, "las tablas parten la barra al medio");
   assert.equal(A.llenadoBarra({ remate: null, mateDe: null, evalBlancas: 0 }), 50);
 });
+
+/* --- cómo terminó la partida, en la pantalla de revisión (v0.63) --- */
+
+test("comoTermino cubre también las partidas que NO terminan en el tablero", () => {
+  /* Era el agujero: un abandono o una perdida por tiempo terminan en una
+     posición viva, así que `remateEnTablero` no las ve y la barra muestra la
+     evaluación —con razón—, pero nada decía que la partida había terminado. */
+  assert.deepEqual(T.comoTermino({ Result: "1-0" },
+    { white: { result: "win" }, black: { result: "resigned" } }),
+    { res: "1-0", motivo: "abandono" });
+  assert.deepEqual(T.comoTermino({ Result: "0-1" },
+    { white: { result: "timeout" }, black: { result: "win" } }),
+    { res: "0-1", motivo: "tiempo" });
+});
+
+test("el motivo lo escribe el que NO ganó, y en tablas lo traen los dos", () => {
+  /* chess.com le pone "win" al ganador y el detalle al otro. Es la misma regla
+     que `motivoDesenlace`, pero sin necesitar de qué lado jugaba el usuario:
+     un PGN pegado no lo sabe y aun así el resultado se puede mostrar. */
+  assert.equal(T.comoTermino({ Result: "1/2-1/2" },
+    { white: { result: "agreed" }, black: { result: "agreed" } }).motivo, "acuerdo");
+  assert.equal(T.comoTermino({ Result: "1/2-1/2" },
+    { white: { result: "50move" }, black: { result: "50move" } }).motivo,
+    "regla de 50 jugadas");
+});
+
+test("sin resultado conocido no se inventa nada", () => {
+  /* Callarse es mejor que inventar: ahí la cabecera queda como estaba. */
+  assert.equal(T.comoTermino({ Result: "*" }, null), null);
+  assert.equal(T.comoTermino({}, null), null);
+  assert.equal(T.comoTermino(null, null), null);
+  /* y con un PGN pegado hay resultado pero no motivo: degrada, no se rompe */
+  assert.deepEqual(T.comoTermino({ Result: "1-0" }, null), { res: "1-0", motivo: null });
+});
+
+test("el cierre cuenta JUGADAS DE AJEDREZ, no filas", () => {
+  /* `filas.length` son medias jugadas: en la partida de prueba da 36 cuando en
+     ajedrez son 18. El número sale del `n` de la última fila, que es el mismo
+     que muestra la tarjeta del veredicto. Es lo que deja UN SOLO sistema de
+     numeración en toda la vista. */
+  const filas = [{ n: 1 }, { n: 1 }, { n: 2 }, { n: 2 }, { n: 3 }];
+  const html_ = T.cierreDeLaTira({ res: "1-0", motivo: "abandono" }, filas);
+  assert.ok(html_.includes("3 jugadas"), html_);
+  assert.ok(!html_.includes("5 jugadas"), "5 son las filas, no las jugadas");
+});
+
+test("el cierre calla el motivo cuando no lo hay, y no aparece sin resultado", () => {
+  assert.equal(T.cierreDeLaTira(null, [{ n: 3 }]), "");
+  assert.equal(T.cierreDeLaTira({ res: "1-0", motivo: null }, []), "");
+  const sinMotivo = T.cierreDeLaTira({ res: "1-0", motivo: null }, [{ n: 3 }]);
+  assert.ok(sinMotivo.includes("<b>1-0</b> <small>"), sinMotivo);
+});
+
+test("la cabecera perdió el contador de medias jugadas", () => {
+  /* Contaba plies, así que la misma posición tenía dos números en la misma
+     pantalla: la tarjeta "18… Kg8" y el contador "36 de 36". */
+  assert.ok(!html.includes("jugada ${IDX + 1} de"), "volvió el contador");
+  assert.ok(!html.includes('id="revJugada"'), "y su elemento");
+  assert.ok(html.includes('$("revFin").textContent = fin ? fin.res : "";'));
+});
+
+test("el nombre del rival cede y el resultado no", () => {
+  /* El nombre de chess.com puede tener 25 caracteres: sin el recorte parte el
+     renglón en dos y empuja el tablero hacia abajo. Medido: con el recorte,
+     0 de 30 combinaciones de nombre y resultado envuelven. */
+  assert.ok(html.includes(".revcab .rival { flex: 1 1 auto; min-width: 0; overflow: hidden;"));
+  assert.ok(html.includes(".revcab .fin { flex: 0 0 auto; white-space: nowrap;"));
+});
+
+test("en la última jugada la lista baja hasta el cierre", () => {
+  /* Sin esto el cierre no se ve NUNCA: el scroll deja la jugada elegida pegada
+     al fondo del recuadro y el cierre queda justo abajo, fuera de vista. */
+  assert.ok(html.includes("if (IDX === R.filas.length - 1) cont.scrollTop = cont.scrollHeight;"));
+});

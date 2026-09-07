@@ -256,6 +256,14 @@
                    align-items: center; padding: 3px 7px;
                    border-bottom: 1px solid var(--linea); }
   .jugadas > div:last-child { border-bottom: 0; }
+  /* Cómo terminó la partida, cerrando la tira: es donde lo escribe una planilla.
+     No suma alto a la pantalla porque vive adentro de la lista, que ya scrollea. */
+  .jugadas .cierre { display: block; text-align: center; padding: 7px 10px;
+                     font-size: 12.5px; color: var(--tenue);
+                     border-top: 1px solid var(--linea); }
+  .jugadas .cierre b { font-weight: 700;
+                       color: color-mix(in srgb, currentColor 95%, transparent); }
+  .jugadas .cierre small { font-size: 11.5px; opacity: .75; }
   .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
   .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
                  padding: 4px 6px; border-radius: 5px; min-width: 0; }
@@ -270,8 +278,16 @@
                      font-weight: 700; }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
-  .revcab { display: flex; justify-content: space-between; gap: 10px; font-size: 13px;
-            color: var(--tenue); margin-top: 10px; }
+  .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: 13px;
+            color: var(--tenue); margin-top: 10px; align-items: center; }
+  /* El nombre CEDE y se recorta; el resultado nunca. El nombre de chess.com
+     puede tener hasta 25 caracteres, así que sin esto un rival de nombre largo
+     parte el renglón en dos y empuja el tablero hacia abajo. Medido: con el
+     recorte, 0 de 30 combinaciones de nombre y resultado envuelven. */
+  .revcab .rival { flex: 1 1 auto; min-width: 0; overflow: hidden;
+                   text-overflow: ellipsis; white-space: nowrap; }
+  .revcab .fin { flex: 0 0 auto; white-space: nowrap; font-weight: 700;
+                 color: color-mix(in srgb, currentColor 95%, transparent); }
   /* sin min-height: en la disposición densa un renglón reservado que casi
      siempre está vacío cuesta más de lo que evita. Cuando no hay señales el
      bloque se esconde entero. */
@@ -306,7 +322,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.62 · 07-09";
+  window.VERSION = "v0.63 · 07-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -614,7 +630,8 @@
 <div id="zonaRevision" class="oculto">
   <button class="chico oculto" id="volverMes">&lsaquo; Volver al mes</button>
   <h2>Revisión</h2>
-  <div class="revcab"><span id="revRival"></span><span id="revJugada"></span></div>
+  <div class="revcab"><span id="revRival" class="rival"></span>
+    <span id="revFin" class="fin"></span></div>
   <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
   <div class="revtab">
     <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
@@ -3038,6 +3055,57 @@ function desenlace(lado, meta, cab) {
   return { res, motivo: motivoDesenlace(res, lado, meta) };
 }
 
+/* CÓMO TERMINÓ LA PARTIDA, para la pantalla de revisión.
+
+   No es `remateEnTablero`, que mira el FEN y solo sabe de mate, ahogado,
+   material insuficiente y 50 jugadas. Esta sale del ENCABEZADO y del JSON de
+   chess.com, así que también cubre las que terminan con la posición viva —
+   abandono, tiempo, acuerdo, repetición—, que era el agujero: ahí la barra
+   muestra la evaluación, y con razón, pero nada decía que la partida terminó.
+
+   Tampoco es `desenlace`, del bloque de tablas, que contesta "cómo terminó"
+   desde el lado del usuario para contar el mes ("Perdí por abandono"). Acá el
+   resultado va en notación y sin lado, porque se muestra al lado del nombre del
+   rival y no adentro de una frase.
+
+   EL MOTIVO LO ESCRIBE SIEMPRE EL QUE NO GANÓ: chess.com le pone "win" al
+   ganador y el detalle al otro. En tablas ninguno ganó y los dos traen el
+   motivo, así que mirar al blanco alcanza. Es la misma regla que usa
+   `motivoDesenlace`, pero sin necesitar de qué lado jugaba el usuario: un PGN
+   pegado no lo sabe, y aun así el resultado se puede mostrar.
+
+   Devuelve null cuando no se sabe el resultado (`*` o sin encabezado): callarse
+   es mejor que inventar, y ahí la cabecera queda como estaba. */
+const RESULTADOS = { "1-0": "1-0", "0-1": "0-1", "1/2-1/2": "Tablas" };
+function comoTermino(cab, meta) {
+  const res = RESULTADOS[(cab && cab.Result) || ""] || null;
+  if (!res) return null;
+  let motivo = null;
+  if (meta && meta.white && meta.black) {
+    const crudo = meta.white.result === "win" ? meta.black.result : meta.white.result;
+    motivo = MOTIVOS[crudo] || null;
+  }
+  return { res, motivo };
+}
+
+/* La fila que cierra la tira de jugadas: cómo terminó la partida, donde lo
+   escribe una planilla. No suma alto a la pantalla porque vive adentro de la
+   lista, que ya scrollea.
+
+   El largo va en chico y al final: el orden es el de importancia —qué pasó, por
+   qué, y de paso cuánto duró— y el tamaño lo repite.
+
+   SE CUENTA EN JUGADAS DE AJEDREZ Y NO EN FILAS. `filas.length` son medias
+   jugadas: en la partida de prueba da 36 cuando en ajedrez son 18. El número
+   sale del `n` de la última fila, que es el mismo que muestra la tarjeta. */
+function cierreDeLaTira(fin, filas) {
+  if (!fin || !filas.length) return "";
+  const jugadas = filas[filas.length - 1].n;
+  return `<div class="cierre"><b>${fin.res}</b>` +
+    (fin.motivo ? ` \u00b7 ${fin.motivo}` : "") +
+    ` <small>\u00b7 ${jugadas} jugadas</small></div>`;
+}
+
 const VERBO = { gane: "Gané", empate: "Empaté", perdi: "Perdí" };
 
 /* Las filas del desglose: una por combinación de resultado y motivo, agrupadas
@@ -3583,7 +3651,14 @@ function pintarRevision() {
        "rival": se nombran los dos, que es más útil que dejar el renglón vacío */
     $("revRival").textContent = [R.cab.White, R.cab.Black].filter(Boolean).join(" vs ");
   }
-  $("revJugada").textContent = `jugada ${IDX + 1} de ${R.filas.length}`;
+  /* El contador "jugada N de M" se fue en la v0.62bis. Contaba MEDIAS jugadas,
+     así que la misma posición tenía dos números en la misma pantalla: la
+     tarjeta decía "18… Kg8" y el contador "36 de 36". Y lo que hacía —ubicarte
+     en la partida— lo hacen mejor la tarjeta, que da la jugada en el idioma del
+     ajedrez, y la raya del "estás acá" de la curva, que la da en proporción.
+     Al sacarlo queda UN SOLO sistema de numeración en toda la vista. */
+  const fin = comoTermino(R.cab, R.meta);
+  $("revFin").textContent = fin ? fin.res : "";
 
   /* La barra se llena con lo que le toca a las blancas, y acompaña al tablero
      cuando se gira. El número va en la punta del que va ganando, que es donde
@@ -3663,7 +3738,8 @@ function pintarRevision() {
   $("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS, MARCA_CURVA);
   $("jugadas").innerHTML = [...pares.entries()].map(([num, p]) =>
     `<div><span class="np">${num}</span>` +
-    `${celda(p.w && p.w.x, p.w && p.w.i)}${celda(p.b && p.b.x, p.b && p.b.i)}</div>`).join("");
+    `${celda(p.w && p.w.x, p.w && p.w.i)}${celda(p.b && p.b.x, p.b && p.b.i)}</div>`).join("") +
+    cierreDeLaTira(fin, R.filas);
   $("jugadas").querySelectorAll("span[data-i]").forEach(s => {
     s.onclick = () => irA(+s.dataset.i);
   });
@@ -3678,6 +3754,11 @@ function pintarRevision() {
     else if (arriba + alto > cont.scrollTop + cont.clientHeight)
       cont.scrollTop = arriba + alto - cont.clientHeight;
   }
+
+  /* En la última jugada la lista baja del todo, o el cierre no se ve NUNCA: el
+     scroll de arriba deja la jugada elegida pegada al fondo del recuadro, y el
+     cierre queda justo abajo, fuera de vista. Se descubrió mirándolo. */
+  if (IDX === R.filas.length - 1) cont.scrollTop = cont.scrollHeight;
 
   const notas = f.senales.slice();
   if (f.rev) notas.push(`a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +

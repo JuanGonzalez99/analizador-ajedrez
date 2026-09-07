@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.62**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.63**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1879,10 +1879,82 @@ prueba en node sin un DOM. El orden importa: **el remate le gana al mate
 forzado**, porque la última jugada de un mate tiene las dos cosas y lo que
 corresponde mostrar es el resultado.
 
-*(Queda abierto si el resultado tiene que aparecer también en las partidas que
-NO terminan en el tablero —abandono, tiempo, repetición, acuerdo—. Ahí sí habría
-que sacarlo del encabezado `Result`, y habría que decidir si pisa la evaluación
-o si va en otro lado, por ejemplo al lado de "jugada 79 de 79".)*
+### Cómo terminó, también cuando NO terminó en el tablero (v0.63)
+
+Un abandono o una perdida por tiempo terminan con la posición **viva**, así que
+`remateEnTablero` no las ve y la barra muestra la evaluación —con razón, ese
+−8,16 dice qué tan perdido estabas—. Pero **nada decía que la partida había
+terminado**. Ese era el agujero.
+
+Se llena en dos lugares, y contestan preguntas distintas:
+
+| dónde | qué dice | cuándo se ve |
+|---|---|---|
+| **cabecera**, al lado del rival | `1-0`, `0-1` o `Tablas` | siempre, en cualquier jugada |
+| **cierre de la tira de jugadas** | `1-0 · abandono · 40 jugadas` | al llegar al final |
+
+**`comoTermino` no es `remateEnTablero` ni `desenlace`.** La primera mira el FEN
+y solo sabe de mate, ahogado, material insuficiente y 50 jugadas. `desenlace`
+contesta desde el lado del usuario para contar el mes ("Perdí por abandono").
+Esta sale del encabezado `Result` y del JSON de chess.com, y devuelve el
+resultado **en notación y sin lado**, porque se muestra al lado del nombre del
+rival y no adentro de una frase.
+
+**El motivo lo escribe siempre el que no ganó** —chess.com le pone "win" al
+ganador y el detalle al otro—, y en tablas ninguno ganó y los dos lo traen, así
+que mirar al blanco alcanza. Es la regla de `motivoDesenlace` pero **sin
+necesitar de qué lado jugaba el usuario**: un PGN pegado no lo sabe, y aun así
+el resultado se puede mostrar. Sin `meta` no hay motivo y el cierre queda en
+`1-0 · 40 jugadas`; sin `Result` no aparece nada, porque callarse es mejor que
+inventar.
+
+**El cierre cuenta jugadas de ajedrez y no filas.** `filas.length` son medias
+jugadas: en la partida de prueba da 36 cuando en ajedrez son 18. Sale del `n` de
+la última fila, que es el mismo número que muestra la tarjeta.
+
+**La lista baja hasta el fondo en la última jugada, y sin eso el cierre NO SE VE
+NUNCA.** El scroll de siempre deja la jugada elegida pegada al fondo del
+recuadro, y el cierre queda justo abajo, fuera de vista — o sea invisible
+exactamente en la única jugada donde importa. Se descubrió mirándolo.
+
+#### El contador "jugada N de M" se fue
+
+Contaba **medias jugadas**, así que la misma posición tenía dos números en la
+misma pantalla: la tarjeta decía `18… Kg8` y el contador `36 de 36`.
+
+Y lo que hacía —ubicarte en la partida— lo hacen mejor las dos cosas que ya
+están: la **tarjeta**, que da la jugada en el idioma del ajedrez, y la **raya
+del "estás acá" de la curva**, que la da en proporción. Al sacarlo queda **un
+solo sistema de numeración** en toda la vista.
+
+Se probó acortarlo antes de sacarlo (`1/79`, `1 de 79`, apilado con la palabra
+abajo) y ahí apareció el argumento que decidió: **`1-0  36/36` se lee como dos
+resultados**, dos pares de números pegados del mismo peso. La palabra "jugada"
+estaba haciendo de separador, así que el contador solo convivía con el resultado
+siendo largo, que era justo lo que se quería evitar.
+
+#### El nombre del rival cede, el resultado no
+
+El nombre de chess.com puede tener 25 caracteres, así que la cabecera pasó a
+tres celdas: el nombre se recorta con puntos suspensivos y el resultado nunca.
+Medido sobre 30 combinaciones de nombre y resultado: **0 envuelven**. Sin eso,
+un rival de nombre largo parte el renglón y empuja el tablero hacia abajo.
+
+#### Dos pendientes que quedaron abiertos acá
+
+- **Dónde tiene que vivir "cómo terminó".** El cierre de la tira solo se ve al
+  llegar al final de la lista, y el largo que muestra —"40 jugadas"— repite el
+  número que la propia lista tiene un renglón más arriba. Lo marcó el usuario:
+  *"si el listado ya cierra con 40, y esto se ve recién al final del listado, no
+  me cierra"*. Se publicó igual para no frenar, pero la ubicación está por
+  decidirse.
+- **`regla de 50 jugadas · 61 jugadas`.** Cuando el motivo es ese, la palabra
+  "jugadas" aparece dos veces en el renglón **con dos significados distintos**:
+  el largo de la regla y el largo de la partida. Se dibujaron cuatro salidas
+  —callar el largo en ese caso, acortar el motivo, reescribirlo como "sin comer
+  ni mover peón", o dejarlo— y se dejó como está por ahora. La de callar el
+  largo es la que no fuerza nada: no toca el vocabulario que comparte la tabla
+  del mes ni inventa un segundo nombre para lo mismo.
 
 ## 7. Trabajo acordado, en orden
 
