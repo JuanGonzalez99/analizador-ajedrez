@@ -132,10 +132,23 @@ try {
 await pg.waitForTimeout(800);
 
 const foto = async n => { await pg.waitForTimeout(300); await pg.screenshot({ path: path.join(SALIDA, n + ".png") }); };
-const avanzar = async n => { for (let i = 0; i < n; i++) await pg.click("#sig"); };
+/* frena solo al llegar a la última: el botón se deshabilita ahí, y sin esto
+   el arnés se muere de timeout clickeando algo que no responde */
+const avanzar = async n => {
+  for (let i = 0; i < n; i++) {
+    if (await pg.locator("#sig").isDisabled()) return;
+    await pg.click("#sig");
+  }
+};
 
 await foto("revision-1");
 await avanzar(20);
+/* las tres formas de marca, sobre la misma jugada: es lo único que cambia */
+for (const forma of ["punto", "puntoChico", "raya"]) {
+  await pg.selectOption("#marcasCurva", forma);
+  await pg.waitForTimeout(200);
+  await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "marcas-" + forma + ".png") });
+}
 /* el tablero, el veredicto y la curva en una sola pantalla: es la pregunta de
    si algo nuevo empuja la lista de jugadas fuera de la vista */
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
@@ -144,6 +157,28 @@ await foto("revision-tablero-y-curva");
 await avanzar(13);
 await foto("revision-final");
 await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "curva.png") });
+
+/* Parado JUSTO en una jugada marcada: es donde se ve si la marca queda tapada
+   por la raya del "estás acá", que es la única que nunca puede desaparecer.
+   La jugada NO se elige a ojo: se lee la posición de una marca del HTML y se
+   toca la curva ahí, que es lo mismo que haría el dedo. */
+await pg.selectOption("#marcasCurva", "punto");
+await pg.waitForTimeout(200);
+const donde = await pg.evaluate(() => {
+  const pt = document.querySelector("#curva .pt");
+  return pt ? parseFloat(pt.style.left) / 100 : null;
+});
+if (donde === null) { console.log("OJO: la curva no tiene ni una marca"); }
+else {
+  const caja = await pg.locator("#curva").boundingBox();
+  await pg.mouse.click(caja.x + caja.width * donde, caja.y + caja.height / 2);
+  await pg.waitForTimeout(250);
+  await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "marcas-encima-punto.png") });
+  await pg.selectOption("#marcasCurva", "raya");
+  await pg.waitForTimeout(250);
+  await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "marcas-encima-raya.png") });
+}
+await pg.selectOption("#marcasCurva", "punto");
 
 console.log("listo: capturas/");
 await b.close();

@@ -1412,17 +1412,25 @@ test("el toque sobre la curva cae en la jugada de abajo", () => {
   assert.equal(A.jugadaEnLaCurva(0.5, 0), 0, "sin jugadas no hay a dónde ir");
 });
 
-test("la curva no lleva ni un círculo: se deforma en el eje x", () => {
-  /* La tira se estira al ancho que haya con preserveAspectRatio="none", así que
-     un círculo saldría óvalo y de un ancho distinto en cada partida. La línea y
-     las marcas se defienden con non-scaling-stroke, que deja el grosor en
-     píxeles de pantalla. */
-  const f = html.slice(html.indexOf("function dibujarCurva"),
-                       html.indexOf("/* Temas de tablero"));
-  assert.ok(!f.includes("<circle"), "un círculo acá sale deformado");
-  assert.equal((f.match(/non-scaling-stroke/g) || []).length, 6,
-               "las seis cosas que llevan trazo la necesitan");
+test("los puntos de la curva NO van adentro del SVG", () => {
+  /* Con preserveAspectRatio="none" la tira se estira al ancho que haya y todo
+     se deforma en el eje x: un <circle> saldría óvalo, y de un ancho distinto en
+     cada partida según cuántas jugadas tenga. Por eso los puntos son elementos
+     HTML posicionados en porcentaje, que se miden contra el contenedor. */
+  const conComentarios = html.slice(html.indexOf("function dibujarCurva"),
+                                    html.indexOf("/* Temas de tablero"));
+  /* sin los comentarios: el de acá al lado NOMBRA a <circle> para explicar por
+     qué no se usa, y buscar el texto pelado se agarraba de esa explicación */
+  const f = conComentarios.replace(/\/\*[\s\S]*?\*\//g, "");
+  assert.ok(!f.includes("<circle"), "un círculo adentro del SVG sale deformado");
   assert.ok(f.includes('preserveAspectRatio="none"'));
+  assert.ok(f.includes('border-radius: 50%') === false, "el redondeo va en el CSS");
+  assert.ok(html.includes(".curva .pt { position: absolute; border-radius: 50%"),
+            "el punto se redondea desde el CSS, sobre un elemento sin deformar");
+  /* lo que sí queda adentro del SVG se defiende con non-scaling-stroke, que deja
+     el grosor en píxeles de pantalla: la línea, la mitad, las dos del "estás
+     acá" y las dos de la raya */
+  assert.equal((f.match(/non-scaling-stroke/g) || []).length, 6);
 });
 
 test("el 'estás acá' no usa ninguno de los colores de las categorías", () => {
@@ -1431,14 +1439,54 @@ test("el 'estás acá' no usa ninguno de los colores de las categorías", () => 
      funda oscura, los dos tonos que ya usa la barra. */
   const f = html.slice(html.indexOf("function dibujarCurva"),
                        html.indexOf("/* Temas de tablero"));
-  const aca = f.slice(f.indexOf("const aca ="));
+  const aca = f.slice(f.indexOf("const aca ="), f.indexOf("if (modo === \"raya\")"));
   assert.ok(!aca.includes("var(--c-"), "el marcador no toma un color de categoría");
   assert.ok(aca.includes('stroke="#2b2b2b"') && aca.includes('stroke="#f0ece2"'),
             "la funda oscura y la línea clara son los dos tonos de la barra");
 });
 
+test("las marcas se dibujan DESPUÉS del 'estás acá', en las tres formas", () => {
+  /* Si no, la marca de la jugada que se está mirando queda tapada justo por la
+     raya que dice que la estás mirando, que es la única que nunca puede
+     desaparecer. Pasaba con la raya en la v0.58 y se vio en el celu. */
+  const f = html.slice(html.indexOf("function dibujarCurva"),
+                       html.indexOf("/* Temas de tablero"));
+  const aca = f.indexOf("const aca =");
+  assert.ok(aca > 0);
+  assert.ok(f.indexOf('if (modo === "raya")') > aca, "la raya se dibuja después");
+  assert.ok(f.indexOf('class="pt"') > aca, "y el punto también");
+});
+
 test("la curva se pinta con la misma regla de lado que la tira de jugadas", () => {
   /* Si se separaran, la curva marcaría jugadas del rival que la tira pinta en
      gris, o al revés. Comparten `lado` y VER_AMBOS, calculados una sola vez. */
-  assert.ok(html.includes('$("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS);'));
+  assert.ok(html.includes('$("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS, MARCA_CURVA);'));
+});
+
+test("las tres formas de marca se guardan, como el tema y el modo de eval", () => {
+  /* Es una preferencia de "cómo se ven", igual que esas dos, así que vive en el
+     mismo renglón de controles y se guarda igual. Cuando exista la pantalla de
+     configuración (§8) se mudan las tres juntas. */
+  assert.ok(html.includes('const MARCAS_CURVA = {'));
+  for (const k of ["punto", "puntoChico", "raya"])
+    assert.ok(new RegExp(`\\b${k}:`).test(html), `falta la forma ${k}`);
+  assert.ok(html.includes('localStorage.setItem("marcaCurva"'), "se guarda");
+  assert.ok(html.includes('localStorage.getItem("marcaCurva")'), "y se lee al arrancar");
+  assert.ok(html.includes('<select id="marcasCurva"'), "y tiene su selector");
+});
+
+test("una marca nunca se corta contra el borde de la tira", () => {
+  /* Media marca cortada se lee como una marca más chica, y entonces el tamaño
+     dejaría de significar lo mismo en todas. El margen de cada forma es su
+     medio tamaño: el punto con aro mide 10 px de punta a punta sobre una tira
+     de 46, o sea 11%. */
+  const m = html.match(/const MARGEN_MARCA = \{([^}]*)\}/);
+  assert.ok(m, "se perdió MARGEN_MARCA");
+  const v = Object.fromEntries(m[1].trim().split(",")
+    .map(x => x.split(":").map(y => y.trim())).filter(x => x.length === 2));
+  assert.deepEqual(Object.keys(v).sort(), ["punto", "puntoChico", "raya"],
+                   "las tres formas tienen su margen");
+  for (const [k, n] of Object.entries(v))
+    assert.ok(+n > 0 && +n < 50, `el margen de ${k} tiene que dejar tira usable`);
+  assert.ok(+v.punto > +v.puntoChico, "el punto con aro es más grande y pide más margen");
 });

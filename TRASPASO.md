@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.58**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.59**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1374,12 +1374,13 @@ Marcar las diez alfombra la tira: "Mejor", "Excelente", "Bien", "Libro" y
 nada. Quedan las seis que vale la pena buscar —Brillante, Genial, Imprecisión,
 Error, Omisión y Error grave—, en `CATS_EN_LA_CURVA`.
 
-La marca es una **línea vertical corta sobre la curva**, del color de la
-categoría, y se filtra con la **misma regla de lado que la tira de jugadas**:
-solo las jugadas propias, salvo que esté puesto "Pintar las dos" o que no se
-sepa de qué lado jugaba el usuario. Si las dos reglas se separaran, la curva
-marcaría en color jugadas que la tira pinta en gris. Hay una prueba que fija que
-comparten `lado` y `VER_AMBOS`, calculados una sola vez.
+La marca se filtra con la **misma regla de lado que la tira de jugadas**: solo
+las jugadas propias, salvo que esté puesto "Pintar las dos" o que no se sepa de
+qué lado jugaba el usuario. Si las dos reglas se separaran, la curva marcaría en
+color jugadas que la tira pinta en gris. Hay una prueba que fija que comparten
+`lado` y `VER_AMBOS`, calculados una sola vez.
+
+**Cómo se dibuja la marca es elegible desde la v0.59**, y por qué está abajo.
 
 La forzada tapa a la categoría, igual que en todos lados: pasa por `presentar`,
 así que una jugada grave que además era la única legal **no** se marca. No hubo
@@ -1396,14 +1397,59 @@ en algo y la jugada la decide el redondeo. `jugadaEnLaCurva` es la inversa de
 Con esto la curva pasa de ser un dibujo a ser un **índice**: se ve dónde se dio
 vuelta la partida y se va ahí de un toque, sin recorrer la tira de jugadas.
 
-### La trampa del SVG: `preserveAspectRatio="none"` prohíbe los círculos
+### La trampa del SVG: `preserveAspectRatio="none"` deforma el eje x
 
 La tira se estira al ancho que haya, así que el SVG no conserva la proporción y
-**todo se deforma en el eje x**. Un círculo saldría óvalo, y de un ancho distinto
-en cada partida según cuántas jugadas tenga. Por eso no hay ni un círculo: la
-línea, la mitad y las marcas llevan `vector-effect="non-scaling-stroke"`, que
-deja el grosor en píxeles de pantalla, así que una marca se ve igual de fina con
-20 jugadas que con 200. Hay un chequeo en las pruebas que lo fija.
+**todo se deforma en el eje x**. Lo que va adentro del SVG y lleva trazo —la
+línea, la mitad, el "estás acá" y la raya— se defiende con
+`vector-effect="non-scaling-stroke"`, que deja el grosor en píxeles de pantalla:
+se ve igual de fino con 20 jugadas que con 200. Hay un chequeo que lo fija.
+
+**Lo que NO se puede defender así es un círculo**, que saldría óvalo y de un
+ancho distinto en cada partida. Por eso los puntos de la v0.59 **no van adentro
+del SVG**: son elementos HTML posicionados en porcentaje encima de él. El
+porcentaje se mide contra el contenedor, que no está deformado, y un
+`border-radius` de CSS es un círculo de verdad. Van después del SVG en el HTML,
+así que quedan encima sin necesidad de `z-index`.
+
+### Las marcas: tres formas, elegibles (v0.59)
+
+**La raya sola no aguantó el uso.** Con 28 unidades de alto y una partida de 77
+jugadas —19 marcas— la tira se leía como un código de barras y tapaba la curva.
+Lo reportó el usuario desde el celular, con la captura al lado: es exactamente
+el tipo de cosa que ni las pruebas ni el arnés cazan, porque las dos miran una
+partida de prueba de 36 jugadas y pocas marcas.
+
+Se dibujaron cuatro variantes sobre una partida de 77 jugadas con las 19 marcas
+en su sitio y se eligió mirándolas. **Quedaron tres**, elegibles y guardadas
+igual que el tema del tablero y el modo de eval:
+
+| forma | qué es | qué le pasa |
+|---|---|---|
+| **punto** (por defecto) | punto de 7 px con aro claro | el aro lo despega del fondo oscuro y separa dos marcas pegadas |
+| **punto chico** | punto de 6 px, sin aro | más limpio; las que caen sobre lo oscuro pierden contraste |
+| **raya** | la de la v0.58, **a la mitad de alto** | sigue siendo un trazo vertical compitiendo con la línea |
+
+**La diferencia entre el punto y la raya no es estética.** Una raya vertical dice
+*"acá pasa algo en todo este momento"* y un punto dice *"acá, en esta jugada"*.
+Lo segundo es lo que la marca significa. Y además deja la raya vertical para una
+sola cosa —el "estás acá"—, que con 19 rayas de colores al lado no se distinguía.
+
+**Las marcas se dibujan DESPUÉS del "estás acá", en las tres formas.** En la
+v0.58 no era así y la marca de la jugada que se estaba mirando quedaba tapada
+justo por la raya que dice que la estás mirando, que es la única que nunca puede
+desaparecer. Lo pidió el usuario y hay prueba del orden.
+
+**Va en el renglón de controles de la vista Partida**, al lado del tema y del
+modo de eval. Es una preferencia de *cómo se ven* las cosas, así que por la
+regla de §4ter va a configuración; como esa pantalla no existe todavía (§8),
+vive donde viven las otras dos y las tres se mudan juntas cuando exista.
+
+**`MARGEN_MARCA` no es un número mágico:** es cuánto hay que correr la marca
+para adentro cuando la curva está pegada al borde, y sale de su medio tamaño
+sobre los 46 px de la tira. El punto con aro mide 10 px de punta a punta, o sea
+11%. Media marca cortada se leería como una marca más chica, y ahí el tamaño
+dejaría de significar lo mismo en todas.
 
 ### Qué es puro y qué no
 
@@ -1845,7 +1891,9 @@ resultados en la v0.39.)*
   v0.58**, con las tres decisiones que estaban abiertas resueltas y explicadas
   en §4quaterdecies: el eje es `winPct` —la misma escala que ya llena la barra,
   que comprime sola—, va pegada arriba de la tira de jugadas, y sí se marcan las
-  categorías, pero seis de diez. Se toca para ir a esa jugada.
+  categorías, pero seis de diez. Se toca para ir a esa jugada. **En la v0.59 la
+  forma de la marca pasó a ser elegible** —punto, punto chico o raya—, después
+  de que la raya sola tapara la curva en una partida de 77 jugadas.
 
   **Lo que quedó abierto y es de gusto**, no técnico: la curva no distingue el
   lado del usuario —las blancas van siempre abajo—, y las marcas son lo único
