@@ -1322,3 +1322,123 @@ test("lo juntado se descarta cuando deja de corresponder", () => {
   assert.ok(html.includes("barrido descartado: cambió la configuración"));
   assert.ok(html.includes("barrido descartado: se van a analizar partidas nuevas"));
 });
+
+/* --- la curva de quién va ganando, v0.58 --- */
+
+/* Una partida de mentira: N filas con la evaluación que se le pida, en
+   centipeones desde las blancas. `franja` es la posición ANTES de la jugada
+   vista por el que mueve, que es de donde sale el punto 0 de la curva. */
+const filasCurva = (evals, cats) => evals.map((cp, i) => ({
+  n: Math.floor(i / 2) + 1,
+  turno: i % 2 === 0 ? "w" : "b",
+  evalBlancas: cp,
+  franja: i === 0 ? 0.2 : 0,
+  cat: (cats && cats[i]) || "bien",
+  forzada: false
+}));
+
+test("la curva tiene un punto más que jugadas: el punto 0 es la posición inicial", () => {
+  const c = A.curvaVentaja(filasCurva([50, -50, 300]), null, false);
+  assert.equal(c.puntos.length, 4);
+  assert.equal(c.puntos[0].x, 0);
+  assert.equal(c.puntos[3].x, 100, "la última jugada cae en el borde derecho");
+});
+
+test("el punto 0 sale de `franja` y no de suponer que la partida arranca igualada", () => {
+  /* `franja` es antesMio: con las blancas moviendo, +0,20 son +20 centipeones
+     desde las blancas, o sea apenas arriba de la mitad. Un PGN que arranca
+     desde una posición cualquiera no empieza en 50%. */
+  const c = A.curvaVentaja(filasCurva([50, -50]), null, false);
+  assert.ok(c.puntos[0].y < 50, "arriba de la mitad = ventaja blanca");
+  assert.ok(Math.abs(c.puntos[0].y - (100 - A.winPct(20))) < 1e-9);
+  /* y con las negras moviendo primero el mismo +0,20 es ventaja NEGRA */
+  const negras = filasCurva([50, -50]);
+  negras[0].turno = "b";
+  assert.ok(A.curvaVentaja(negras, null, false).puntos[0].y > 50);
+});
+
+test("el eje vertical es winPct, así que un +9 no aplasta el resto", () => {
+  /* Era la decisión pendiente. Con centipeones crudos, +900 contra +50 deja a
+     la segunda pegada a la mitad y a la primera contra el borde; con winPct
+     las dos se ven, y ninguna toca el borde porque TOPE es 1000. */
+  const c = A.curvaVentaja(filasCurva([900, 50]), null, false);
+  const [ , nueve, cincuenta ] = c.puntos;
+  assert.ok(nueve.y > 1, "ni siquiera un +9 llega al borde de arriba");
+  assert.ok(cincuenta.y - nueve.y > 25, "y quedan bien separadas");
+  assert.ok(Math.abs(cincuenta.y - 50) < 10, "un +0,50 sigue cerca de la mitad");
+});
+
+test("solo se marcan las seis categorías que vale la pena buscar", () => {
+  const cats = ["mejor", "grave", "bien", "genial", "libro", "excelente",
+                "omision", "forzada"];
+  const c = A.curvaVentaja(filasCurva(cats.map(() => 0), cats), null, false);
+  assert.deepEqual(c.marcas.map(m => m.clave), ["grave", "genial", "omision"]);
+  assert.deepEqual(c.marcas.map(m => m.i), [1, 3, 6]);
+});
+
+test("una forzada no se marca aunque su categoría sí esté en la lista", () => {
+  /* `presentar` tapa la categoría con Forzada, y Forzada no se busca: no hubo
+     nada que decidir. Sin pasar por `presentar` esta jugada saldría como grave. */
+  const filas = filasCurva([0], ["grave"]);
+  filas[0].forzada = true;
+  assert.deepEqual(A.curvaVentaja(filas, null, false).marcas, []);
+});
+
+test("con un lado conocido se marcan solo las jugadas del usuario", () => {
+  const cats = ["grave", "grave", "grave", "grave"];
+  const filas = filasCurva([0, 0, 0, 0], cats);
+  assert.deepEqual(A.curvaVentaja(filas, "w", false).marcas.map(m => m.i), [0, 2]);
+  assert.deepEqual(A.curvaVentaja(filas, "b", false).marcas.map(m => m.i), [1, 3]);
+  assert.deepEqual(A.curvaVentaja(filas, "b", true).marcas.map(m => m.i), [0, 1, 2, 3],
+                   "con 'Pintar las dos' vuelven todas");
+  assert.deepEqual(A.curvaVentaja(filas, null, false).marcas.map(m => m.i), [0, 1, 2, 3],
+                   "sin saber de qué lado jugaba, tampoco se esconde nada");
+});
+
+test("una partida sin filas no rompe la curva", () => {
+  assert.deepEqual(A.curvaVentaja([], null, false), { puntos: [], marcas: [] });
+});
+
+test("el toque sobre la curva cae en la jugada de abajo", () => {
+  /* La inversa de ejeX, y es lo que hace que el dedo caiga siempre en algo:
+     el borde izquierdo es la primera jugada y el derecho la última, sin
+     agujeros ni índices fuera de rango. */
+  assert.equal(A.jugadaEnLaCurva(0, 10), 0);
+  assert.equal(A.jugadaEnLaCurva(1, 10), 9);
+  assert.equal(A.jugadaEnLaCurva(0.54, 10), 4, "5,4 cae en el punto 5, que es la jugada 4");
+  assert.equal(A.jugadaEnLaCurva(0.56, 10), 5, "y 5,6 en el punto 6, que es la jugada 5");
+  assert.equal(A.jugadaEnLaCurva(-0.3, 10), 0, "un toque afuera no se sale del rango");
+  assert.equal(A.jugadaEnLaCurva(1.3, 10), 9);
+  assert.equal(A.jugadaEnLaCurva(0.5, 0), 0, "sin jugadas no hay a dónde ir");
+});
+
+test("la curva no lleva ni un círculo: se deforma en el eje x", () => {
+  /* La tira se estira al ancho que haya con preserveAspectRatio="none", así que
+     un círculo saldría óvalo y de un ancho distinto en cada partida. La línea y
+     las marcas se defienden con non-scaling-stroke, que deja el grosor en
+     píxeles de pantalla. */
+  const f = html.slice(html.indexOf("function dibujarCurva"),
+                       html.indexOf("/* Temas de tablero"));
+  assert.ok(!f.includes("<circle"), "un círculo acá sale deformado");
+  assert.equal((f.match(/non-scaling-stroke/g) || []).length, 6,
+               "las seis cosas que llevan trazo la necesitan");
+  assert.ok(f.includes('preserveAspectRatio="none"'));
+});
+
+test("el 'estás acá' no usa ninguno de los colores de las categorías", () => {
+  /* Los diez colores ya significan algo. Un color nuevo al lado de ellos se lee
+     como una categoría más, así que el marcador va sin color: línea clara con
+     funda oscura, los dos tonos que ya usa la barra. */
+  const f = html.slice(html.indexOf("function dibujarCurva"),
+                       html.indexOf("/* Temas de tablero"));
+  const aca = f.slice(f.indexOf("const aca ="));
+  assert.ok(!aca.includes("var(--c-"), "el marcador no toma un color de categoría");
+  assert.ok(aca.includes('stroke="#2b2b2b"') && aca.includes('stroke="#f0ece2"'),
+            "la funda oscura y la línea clara son los dos tonos de la barra");
+});
+
+test("la curva se pinta con la misma regla de lado que la tira de jugadas", () => {
+  /* Si se separaran, la curva marcaría jugadas del rival que la tira pinta en
+     gris, o al revés. Comparten `lado` y VER_AMBOS, calculados una sola vez. */
+  assert.ok(html.includes('$("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS);'));
+});

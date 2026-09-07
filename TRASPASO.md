@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.57**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.58**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -108,9 +108,7 @@ mirando el celular, no corriendo pruebas.
 **Regla que salió de eso (v0.51): un cambio que toca lo que se dibuja se MIRA en
 la pantalla, no solo se mide.** El comentario impreso se escapó porque se
 verificó el cambio de forma estrecha —midiendo la alineación de una columna— y
-no se miró la página. Se puede levantar la app en un navegador headless con
-Playwright, simular la API de chess.com y sacar capturas; así se verificó cada
-tanda de la v0.42 a la v0.51.
+no se miró la página.
 
 ---
 
@@ -1284,6 +1282,100 @@ nada mal. Ahora mira el tramo **desde la tabla anterior hasta esta**: no tiene
 número mágico y además es más fuerte, porque exige leyenda **propia** y no la de
 la tabla de arriba.
 
+## 4quaterdecies. La curva de quién va ganando (v0.58)
+
+Era el primero de los tres pendientes de §8, y el enunciado decía qué faltaba:
+*"el dato ya está en las filas y no cuesta una corrida más; falta decidir cómo
+se dibuja —el eje comprimido, porque un +9 aplasta todo lo demás—, dónde va, y
+si las categorías se marcan encima como puntos."* Las tres decisiones, y por qué.
+
+### El eje vertical es `winPct`, no los centipeones
+
+Era el problema declarado y se resuelve sin inventar nada: `winPct` **ya está en
+la app**. Es la que llena la barra de evaluación y la que da la caída en puntos
+de victoria, así que la curva y la barra dicen literalmente lo mismo y no hay
+una escala nueva que aprender.
+
+Comprime sola, que es lo que se pedía: con `TOPE` en 1000 centipeones los
+extremos caen en 2,5% y 97,5%, o sea que **la línea nunca toca el borde** —ni
+con mate— y siempre se ve. Con centipeones crudos, un +9 contra un +0,50 deja a
+la segunda pegada a la mitad y a la primera contra el techo.
+
+Se descartó inventar un eje propio —logarítmico, o por tramos—: sería una
+tercera forma de expresar la misma cantidad, después de los centipeones y de los
+puntos de victoria, y habría que explicar cuál mira cada pantalla. Es el mismo
+problema que la regla 9 de §5 evita adentro de una tabla: dos jueces para lo
+mismo dan filas que leídas en voz alta no cierran.
+
+### Hay N+1 puntos, y el punto 0 no se supone
+
+El punto 0 es la posición **antes de la primera jugada**, y sale de `franja`
+—`antesMio`, en peones desde el que mueve—, no de dar por hecho que la partida
+arranca igualada. Un PGN desde una posición cualquiera arranca donde arranca, y
+uno que empieza con negras también. Hay prueba de las dos cosas.
+
+### Dónde va: pegada arriba de la tira de jugadas
+
+Todo lo que está arriba en `zonaRevision` habla de **una** jugada —el tablero, el
+veredicto, las tres métricas, las señales—; la curva y la tira de jugadas
+recorren la **partida entera**. Puestas juntas quedan las dos formas de moverse
+por la partida una al lado de la otra, y el corte entre "esta jugada" y "toda la
+partida" cae en un solo lugar.
+
+Cuesta 46 px de alto y no le saca ninguno al tablero.
+
+### Las blancas van siempre abajo, aunque el tablero esté girado
+
+La barra se da vuelta con el tablero porque **está pegada a él** y tiene que
+acompañarlo. La curva no está pegada a nada, y dar vuelta un eje de tiempo a
+mitad de camino deja al usuario sin saber qué mitad está mirando. Cuál de las
+dos jugadas es la tuya lo dicen las marcas, que es para lo que están.
+
+### Sí se marcan las categorías, pero seis de diez
+
+Marcar las diez alfombra la tira: "Mejor", "Excelente", "Bien", "Libro" y
+"Forzada" son la enorme mayoría de las jugadas, así que marcarlas no distingue
+nada. Quedan las seis que vale la pena buscar —Brillante, Genial, Imprecisión,
+Error, Omisión y Error grave—, en `CATS_EN_LA_CURVA`.
+
+La marca es una **línea vertical corta sobre la curva**, del color de la
+categoría, y se filtra con la **misma regla de lado que la tira de jugadas**:
+solo las jugadas propias, salvo que esté puesto "Pintar las dos" o que no se
+sepa de qué lado jugaba el usuario. Si las dos reglas se separaran, la curva
+marcaría en color jugadas que la tira pinta en gris. Hay una prueba que fija que
+comparten `lado` y `VER_AMBOS`, calculados una sola vez.
+
+La forzada tapa a la categoría, igual que en todos lados: pasa por `presentar`,
+así que una jugada grave que además era la única legal **no** se marca. No hubo
+nada que decidir.
+
+### Se toca para ir a esa jugada
+
+Un manejador solo en el contenedor y la cuenta a partir del ancho, en vez de N
+zonas invisibles: con 100 jugadas serían 100 rectángulos redibujados en cada
+paso, y cada uno mediría 3 px, o sea menos que un dedo. Así el dedo cae siempre
+en algo y la jugada la decide el redondeo. `jugadaEnLaCurva` es la inversa de
+`ejeX` y está aparte del manejador para poder probarla sin un DOM.
+
+Con esto la curva pasa de ser un dibujo a ser un **índice**: se ve dónde se dio
+vuelta la partida y se va ahí de un toque, sin recorrer la tira de jugadas.
+
+### La trampa del SVG: `preserveAspectRatio="none"` prohíbe los círculos
+
+La tira se estira al ancho que haya, así que el SVG no conserva la proporción y
+**todo se deforma en el eje x**. Un círculo saldría óvalo, y de un ancho distinto
+en cada partida según cuántas jugadas tenga. Por eso no hay ni un círculo: la
+línea, la mitad y las marcas llevan `vector-effect="non-scaling-stroke"`, que
+deja el grosor en píxeles de pantalla, así que una marca se ve igual de fina con
+20 jugadas que con 200. Hay un chequeo en las pruebas que lo fija.
+
+### Qué es puro y qué no
+
+`curvaVentaja` y `jugadaEnLaCurva` viven en el **bloque de análisis** y no tocan
+el DOM: devuelven puntos y marcas, no dibujo. `dibujarCurva` arma el SVG y vive
+al lado del tablero. Es el mismo reparto de siempre y es lo que deja probar la
+geometría en node.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -1713,13 +1805,16 @@ resultados en la v0.39.)*
   parte miden lo mismo. Hacerlas excluyentes se descartó, porque obliga a
   elegir arbitrariamente cuál gana.
 
-- **Falta el dibujo de la curva de quién va ganando.** Hoy la evaluación se ve
-  jugada por jugada —la barra, horizontal o vertical— y nunca como una línea a
-  lo largo de la partida, así que no se ve de un vistazo dónde se dio vuelta.
-  El dato ya está en las filas y no cuesta una corrida más: `evalBlancas` es la
-  evaluación después de cada jugada, en centipeones y desde las blancas. Falta
-  decidir cómo se dibuja —el eje comprimido, porque un +9 aplasta todo lo
-  demás—, dónde va, y si las categorías se marcan encima como puntos.
+- ~~**Falta el dibujo de la curva de quién va ganando.**~~ **HECHO en la
+  v0.58**, con las tres decisiones que estaban abiertas resueltas y explicadas
+  en §4quaterdecies: el eje es `winPct` —la misma escala que ya llena la barra,
+  que comprime sola—, va pegada arriba de la tira de jugadas, y sí se marcan las
+  categorías, pero seis de diez. Se toca para ir a esa jugada.
+
+  **Lo que quedó abierto y es de gusto**, no técnico: la curva no distingue el
+  lado del usuario —las blancas van siempre abajo—, y las marcas son lo único
+  que dice cuáles jugadas son suyas. Si al usarla resulta que se lee al revés
+  cuando se juega con negras, se decide ahí.
 
 - **La fila "Tomé otra" no dice cuánto costó.** Sabemos que se capturó otra
   cosa, no qué se perdió por no tomar la buena. Solo se puede saber si la buena
