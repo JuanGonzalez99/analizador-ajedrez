@@ -5,7 +5,8 @@
   "scripts": {
     "test": "node --test pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
     "mirar": "node pruebas/mirar.mjs",
-    "mirar:mate": "node pruebas/mirar.mjs mate"
+    "mirar:mate": "node pruebas/mirar.mjs mate",
+    "mirar:ahogado": "node pruebas/mirar.mjs ahogado"
   },
   "devDependencies": {
     "playwright": "^1.49.1"

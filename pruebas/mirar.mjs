@@ -30,13 +30,14 @@ import { Chess } from "../chess.js";
 
 const RAIZ = path.dirname(fileURLToPath(new URL("../index.html", import.meta.url)));
 const SALIDA = path.join(RAIZ, "capturas");
-/* Qué partida se mira. `npm run mirar mate` usa la que TERMINA EN MATE, que es
-   donde vivió el bug del `mate 0`: la jugada que daba el mate salía "Omisión" y
-   la barra decía "M0". La partida larga no llega nunca a esa pantalla, porque
-   no termina en mate, así que sin esto no había forma de mirarlo. */
-const CUAL = process.argv[2] === "mate" ? "partida-mate.pgn" : "partida-de-prueba.pgn";
-const PGN = fs.readFileSync(new URL("./" + CUAL, import.meta.url), "utf8");
-const SUFIJO = process.argv[2] === "mate" ? "-mate" : "";
+/* Qué partida se mira: `npm run mirar <nombre>` lee `partida-<nombre>.pgn`.
+   Hay más de una porque CÓMO TERMINA LA PARTIDA es una pantalla propia y la
+   partida larga no llega nunca a ninguna de ellas —no termina ni en mate ni en
+   tablas—, así que sin esto no había forma de mirarlas. Ahí vivió el bug del
+   `mate 0`: la jugada que daba el mate salía "Omisión" y la barra decía "M0". */
+const CUAL = process.argv[2] || "de-prueba";
+const PGN = fs.readFileSync(new URL(`./partida-${CUAL}.pgn`, import.meta.url), "utf8");
+const SUFIJO = CUAL === "de-prueba" ? "" : "-" + CUAL;
 
 /* Chromium: el de Playwright, salvo que el entorno traiga uno propio. En los
    contenedores de trabajo suele estar preinstalado y bajarlo de nuevo no sirve. */
@@ -98,6 +99,8 @@ fens.forEach((fen, i) => {
   const mata = mateEnUna(fen);
   if (mata) { tabla[fen] = { mate: 1, mejor: mata, segunda: null }; return; }
   const legales = pos.moves({ verbose: true });
+  /* ahogado: no hay jugadas. El motor real contesta `cp 0` y `bestmove (none)`,
+     que es lo que hace el falso al no encontrar el FEN en la tabla. */
   if (!legales.length) return;
   const jugada = jugadas[i] && (jugadas[i].from + jugadas[i].to + (jugadas[i].promotion || ""));
   const otra = legales.map(m => m.from + m.to + (m.promotion || "")).find(u => u !== jugada);
@@ -178,8 +181,11 @@ const avanzar = async n => {
 await foto("revision-1");
 /* hasta la ÚLTIMA jugada: en la partida que termina en mate es la que importa,
    y en la larga avanzar() frena solo cuando el botón se deshabilita */
-await avanzar(process.argv[2] === "mate" ? 99 : 20);
+/* en las partidas cortas se va hasta la ÚLTIMA jugada, que es la que importa;
+   avanzar() frena solo cuando el botón se deshabilita */
+await avanzar(CUAL === "de-prueba" ? 20 : 99);
 /* las tres formas de marca, sobre la misma jugada: es lo único que cambia */
+/* eslint-disable-next-line no-unused-vars */
 for (const forma of ["punto", "puntoChico", "raya"]) {
   await pg.selectOption("#marcasCurva", forma);
   await pg.waitForTimeout(200);

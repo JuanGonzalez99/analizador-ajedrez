@@ -80,7 +80,13 @@ test('no queda rastro del mecanismo "casilla atacada por un peón"', () => {
 });
 
 test("derivarFilas ya no emite el campo aPeon", () => {
-  const campos = html.slice(html.indexOf("filas.push({"), html.indexOf("filas.push({") + 400);
+  /* Sin ventana de N caracteres: se mira desde el push HASTA EL RETURN, que es
+     exactamente el bloque de campos. La ventana de 400 se rompió sola en la
+     v0.61 al agregar un comentario adentro del push, sin que hubiera nada mal;
+     es el mismo fallo que tuvo el chequeo 2 de estaticos.mjs con su ventana de
+     200, y la lección ya estaba escrita. */
+  const campos = html.slice(html.indexOf("filas.push({"),
+                            html.indexOf("return { filas, apertura };"));
   assert.ok(!campos.includes("aPeon"));
   assert.ok(campos.includes("colgada"), "colgada sí tiene que seguir");
 });
@@ -1563,4 +1569,59 @@ test("la barra dice 'mate' y no 'M0' cuando la partida terminó", () => {
   assert.equal(A.textoEval({ cp: null, mate: 3 }, "w"), "M3");
   assert.equal(A.textoEval({ cp: null, mate: 3 }, "b"), "-M3");
   assert.equal(A.textoEval({ cp: -50, mate: null }, "w"), "-0.50");
+});
+
+/* --- cómo termina la partida, v0.61 --- */
+
+test("el remate se lee del tablero, no del encabezado del PGN", () => {
+  /* `desenlace()`, en el bloque de tablas, sale de las cabeceras y contesta
+     "cómo terminó" para el mes. Esta contesta otra cosa: si la posición está
+     terminada EN EL TABLERO, que es lo que decide si se pisa la evaluación. */
+  const fin = ms => {
+    const { fens } = A.prepararPartida(ms);
+    return A.remateEnTablero(fens[fens.length - 1]);
+  };
+  assert.equal(fin("1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#"), "1-0");
+  assert.equal(fin("1. f3 e5 2. g4 Qh4#"), "0-1", "el mate de las negras es 0-1");
+  assert.equal(fin("1. e3 a5 2. Qh5 Ra6 3. Qxa5 h5 4. Qxc7 Rah6 5. h4 f6 6. Qxd7+ Kf7" +
+                   " 7. Qxb7 Qd3 8. Qxb8 Qh7 9. Qxc8 Kg6 10. Qe6"), "½-½",
+               "el ahogado son tablas");
+  assert.equal(fin("1. e4 e5"), null, "una posición viva no tiene remate");
+});
+
+test("las tablas por material insuficiente también son un remate", () => {
+  /* Sale del FEN igual que el ahogado: dos reyes solos no es una posición que
+     el motor esté evaluando, es una partida terminada. */
+  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/8/4K3 w - - 0 60"), "½-½");
+  /* y la regla de las 50 jugadas, que viaja en el propio FEN */
+  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/4Q3/4K3 w - - 100 80"), "½-½");
+  assert.equal(A.remateEnTablero("4k3/8/8/8/8/8/4Q3/4K3 w - - 99 80"), null,
+               "a 99 la partida sigue");
+});
+
+test("la triple repetición NO se caza, y está anotado", () => {
+  /* No está en el FEN sino en la historia de la partida, y acá se arranca de
+     una posición suelta. Una tablas por repetición o por acuerdo sigue
+     mostrando la evaluación, igual que un abandono. La prueba existe para que
+     la limitación sea una decisión escrita y no una sorpresa. */
+  const { fens } = A.prepararPartida("1. Nf3 Nf6 2. Ng1 Ng8 3. Nf3 Nf6 4. Ng1 Ng8");
+  assert.equal(A.remateEnTablero(fens[fens.length - 1]), null);
+});
+
+test("con la partida terminada la barra muestra el resultado y se llena entera", () => {
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5 2. Bc4 Nc6 3. Qh5 Nf6 4. Qxf7#");
+  const evs = fens.map((f, i) => i === fens.length - 1
+    ? { cp: null, mate: 0, mejor: null, segunda: null }
+    : { cp: 30, mate: null, mejor: "e2e4", segunda: null });
+  const filas = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} }).filas;
+  const ultima = filas[filas.length - 1];
+  assert.equal(ultima.remate, "1-0");
+  assert.equal(ultima.evalTexto, "1-0", "el resultado le gana a 'mate' y a 'M0'");
+  /* y ninguna otra fila lo lleva: una posición terminal corta la partida */
+  assert.deepEqual(filas.slice(0, -1).map(f => f.remate), filas.slice(0, -1).map(() => null));
+  /* el tope de 2 y 98 se salta solo con remate: existe para que la barra nunca
+     se vea vacía mientras la partida sigue, y con la partida terminada eso
+     sería mentira */
+  assert.ok(html.includes('const pct = f.remate ? { "1-0": 100, "0-1": 0 }[f.remate] ?? 50'));
+  assert.ok(html.includes(': Math.max(2, Math.min(98, winPct(f.evalBlancas)));'));
 });

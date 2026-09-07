@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.60**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.61**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -138,9 +138,15 @@ donde vivía el bug del `mate 0` era justo la que el arnés no sabía dibujar. S
 resuelve con chess.js, que es barato: posición mateada → `mate 0`, hay una
 jugada que matea → `mate 1`. Con eso recorre el mismo camino que el motor real.
 
-**Hay dos partidas y se elige cuál:** `npm run mirar` usa una de 36 jugadas, y
-`npm run mirar mate` una que **termina en mate**, que la primera no hace y por
-eso no llegaba nunca a esa pantalla.
+**Hay varias partidas y se elige cuál:** `npm run mirar <nombre>` lee
+`pruebas/partida-<nombre>.pgn`. Están la larga de 36 jugadas (`de-prueba`, la de
+por defecto), una que termina **en mate** y una que termina **ahogada**. Existen
+porque *cómo termina la partida* es una pantalla propia y la larga no llega
+nunca a ninguna de ellas.
+
+**Un artefacto del motor falso, para no perseguirlo:** puede mostrar "MEJOR: la
+jugada" al lado de una pérdida grande, porque inventa la mejor y la evaluación
+por separado. El motor de verdad no puede decir las dos cosas a la vez.
 
 **Las evaluaciones son inventadas y hay que saberlo:** los veredictos que se ven
 en esas capturas no significan nada. Lo que se verifica es la **disposición**.
@@ -1792,6 +1798,49 @@ juzga la app, y esto no juzga nada, describe.
 *(La discusión de si además tiene que cambiar la categoría quedó abierta, y el
 usuario la ve como parte de "los textos de las categorías son genéricos" (§8):
 `senales` es justo la materia prima de esa tarea.)*
+
+### Cómo termina la partida: el remate (v0.61)
+
+Con la partida terminada la barra mostraba `mate` o `+0.00`, que es la
+evaluación de una posición que ya no se juega. Ahora muestra **el resultado**
+—`1-0`, `0-1` o `½-½`— y se llena **entera** del color del que ganó, o partida
+al medio en tablas.
+
+**La línea que decide cuándo se pisa la evaluación es de fondo, no cosmética:
+solo cuando la partida terminó EN EL TABLERO.** Ahí no hay evaluación que
+perder — el `mate 0` del mate y el `cp 0` del ahogado no son la opinión del
+motor sobre la posición, son la regla del juego, así que "1-0" no tapa nada. En
+cambio un abandono o una perdida por tiempo terminan en una posición **viva**, y
+ahí el −8,16 sí dice algo —qué tan perdido estabas— que "0-1" taparía. Esas no
+se tocan.
+
+**El tope de la barra se saltea a propósito.** El `Math.max(2, Math.min(98, …))`
+existe para que la barra nunca se vea vacía: con la evaluación en su máximo
+queda siempre una astilla del otro color, y esa astilla dice *"todavía se
+juega"*. Con la partida terminada eso es mentira, así que el remate va derecho a
+100, 0 o 50.
+
+**`remateEnTablero` no es `desenlace`.** La segunda vive en el bloque de tablas,
+sale de las cabeceras del PGN y contesta "cómo terminó" para el mes. Esta mira
+el FEN y contesta si la posición está terminada, que es otra pregunta.
+
+**Se calcula solo en la última fila**, y no en todas: una posición terminal corta
+la partida, así que ninguna otra puede serlo. Evita duplicar el `new Chess()` por
+fila que ya paga `legales`, que en el barrido de un año se cuenta por cientos de
+miles.
+
+**Qué caza y qué no.** Del FEN pelado salen el mate, el ahogado, el material
+insuficiente y la regla de las 50 jugadas —el contador va en el propio FEN—.
+**No sale la triple repetición**, que está en la historia de la partida y no en
+la posición: chess.js la mira sobre las jugadas jugadas y acá se arranca de una
+posición suelta. Unas tablas por repetición o por acuerdo siguen mostrando la
+evaluación, igual que un abandono. Hay una prueba que fija la limitación, para
+que sea una decisión escrita y no una sorpresa.
+
+*(Queda abierto si el resultado tiene que aparecer también en las partidas que
+NO terminan en el tablero —abandono, tiempo, repetición, acuerdo—. Ahí sí habría
+que sacarlo del encabezado `Result`, y habría que decidir si pisa la evaluación
+o si va en otro lado, por ejemplo al lado de "jugada 79 de 79".)*
 
 ## 7. Trabajo acordado, en orden
 
