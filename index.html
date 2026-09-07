@@ -322,7 +322,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.63 · 07-09";
+  window.VERSION = "v0.63.1 · 07-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2087,6 +2087,11 @@ function dibujar(fen, jugada, mejor) {
 /* ============ interfaz ============ */
 const TOPE_MES = 50;
 let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJOR = false, USUARIO = "";
+/* El JSON de chess.com de la partida elegida. El PGN trae el resultado pero NO
+   el motivo —abandono, tiempo, acuerdo—: eso solo está en el JSON del mes. Se
+   elige en la lista y se necesita mucho después, en la revisión, así que tiene
+   que viajar. Es null con un PGN pegado, y ahí el motivo no se muestra. */
+let ELEGIDA_META = null;
 /* Cadencia elegida, por clave exacta ("300+0"). null = todavía no se eligió y
    manda la que más partidas tiene. Es una PREFERENCIA y no una orden: si el mes
    que se abre no tiene esa cadencia, se cae a la dominante (elegirCadencia). */
@@ -2257,13 +2262,13 @@ async function cargarMes(url) {
       $("partidas").querySelectorAll("div").forEach(x => x.classList.remove("sel"));
       d.classList.add("sel");
       const g = PARTIDAS[+d.dataset.i];
-      ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g);
+      ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g;
       ver("zonaAnalizar", true);
       ocupado(false);
       estado("");
     };
   });
-  ELEGIDA = null; ELEGIDA_ID = null;
+  ELEGIDA = null; ELEGIDA_ID = null; ELEGIDA_META = null;
   ver("zonaAnalizar", true);
   ocupado(false);
   estado("Elegí una partida, o analizá el mes entero.");
@@ -2273,7 +2278,8 @@ async function cargarMes(url) {
 $("usarPgn").onclick = seguro("pgn", () => {
   const t = $("pgn").value.trim();
   if (!t) return;
-  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t });
+  /* un PGN pegado no trae el JSON del mes, así que no hay motivo que mostrar */
+  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t }); ELEGIDA_META = null;
   ver("zonaAnalizar", true); ocupado(false); estado("PGN cargado.");
 });
 
@@ -2306,6 +2312,10 @@ $("analizar").onclick = seguro("analizar", async () => {
       estado(`${fase}: posición ${hechas} de ${total}`);
       progreso(hechas / total);
     }, opcionesDePantalla());
+    /* `analizarPartida` no lo sabe ni tiene por qué: recibe un PGN suelto. El
+       camino del mes lo pega igual pero por su cuenta (`r.meta = g`), y por eso
+       el motivo salía ahí y no acá. */
+    R.meta = ELEGIDA_META;
     progreso(1);
     IDX = 0; MEJOR_EN = null;
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;

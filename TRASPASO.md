@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.63**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.63.1**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1939,6 +1939,43 @@ El nombre de chess.com puede tener 25 caracteres, así que la cabecera pasó a
 tres celdas: el nombre se recorta con puntos suspensivos y el resultado nunca.
 Medido sobre 30 combinaciones de nombre y resultado: **0 envuelven**. Sin eso,
 un rival de nombre largo parte el renglón y empuja el tablero hacia abajo.
+
+#### El motivo no aparecía, y por qué el arnés no lo vio (v0.63.1)
+
+Reportado por el usuario apenas se publicó: **el motivo no se veía nunca**.
+
+Hay **tres caminos** hasta la revisión y el motivo solo funcionaba en uno:
+
+| camino | ¿llega el JSON del mes? |
+|---|---|
+| Analizar el mes → elegir de la lista del mes | **sí**, ese camino pega `r.meta = g` por su cuenta |
+| Elegir una partida → "Analizar la partida" | **no** — y es el que se usa |
+| PGN pegado | no, y no puede: el motivo no está en el PGN |
+
+`analizarPartida` recibe un PGN suelto, así que no sabe ni tiene por qué saber
+del JSON. El arreglo es una global, `ELEGIDA_META`, que se guarda al elegir de
+la lista y se engancha al resultado; se limpia en los dos lugares donde deja de
+haber partida elegida, o una partida pegada heredaría el motivo de la anterior.
+
+**Por qué el arnés no lo agarró, que es la parte que importa.** Entraba
+**pegando el PGN**, que es exactamente el único camino donde el motivo no existe
+ni tiene que existir. O sea que probaba el caso donde la ausencia es correcta y
+nunca tocaba el caso donde era un bug.
+
+Desde la v0.63.1 el arnés **falsea la API de chess.com** —el listado de meses y
+el JSON del mes, armados a partir del propio PGN de prueba— y entra **por la
+lista**, como el usuario. Con eso recorre el camino de verdad. Además imprime en
+texto lo que dicen la cabecera y el cierre:
+
+```
+cabecera: "vs MewoneX (601)" "1-0"
+cierre:   "1-0 · abandono · 18 jugadas"
+```
+
+**Regla que sale de acá:** cuando hay más de un camino hasta la misma pantalla,
+el arnés tiene que recorrer **el que usa el usuario**, no el más fácil de
+programar. El PGN pegado se eligió porque ahorraba simular la API, y ese atajo
+escondió el bug.
 
 #### Dos pendientes que quedaron abiertos acá
 

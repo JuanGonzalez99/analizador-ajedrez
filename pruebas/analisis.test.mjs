@@ -1725,3 +1725,21 @@ test("en la última jugada la lista baja hasta el cierre", () => {
      al fondo del recuadro y el cierre queda justo abajo, fuera de vista. */
   assert.ok(html.includes("if (IDX === R.filas.length - 1) cont.scrollTop = cont.scrollHeight;"));
 });
+
+test("el JSON del mes viaja hasta la revisión (v0.63.1)", () => {
+  /* El PGN trae el resultado pero NO el motivo —abandono, tiempo, acuerdo—:
+     eso solo está en el JSON del mes. Se elige en la lista y se necesita mucho
+     después, en la revisión.
+
+     Hay TRES caminos a la revisión y en la v0.63 el motivo solo salía en uno:
+     el del mes, que pega `r.meta = g` por su cuenta. El camino común —elegir
+     una partida y analizarla— perdía el JSON, así que el motivo no aparecía
+     nunca. Lo reportó el usuario. */
+  assert.ok(html.includes("let ELEGIDA_META = null;"), "falta la global");
+  assert.ok(html.includes("ELEGIDA_META = g;"), "no se guarda al elegir de la lista");
+  assert.ok(html.includes("R.meta = ELEGIDA_META;"), "no se engancha al analizar");
+  /* y se limpia en los dos lugares donde deja de haber partida elegida, o una
+     partida pegada heredaría el motivo de la anterior */
+  assert.equal((html.match(/ELEGIDA_META = null;/g) || []).length, 3,
+               "la global, el reset de la lista y el PGN pegado");
+});

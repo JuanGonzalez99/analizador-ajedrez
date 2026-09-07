@@ -129,10 +129,35 @@ onmessage = function (e) {
 };
 `;
 
+/* La API de chess.com, falseada. Hace falta porque EL MOTIVO DEL FINAL
+   —abandono, tiempo, acuerdo— no está en el PGN: viene en el JSON del mes. Con
+   el PGN pegado el arnés recorría el único camino donde ese motivo no existe, y
+   por eso no vio que en el camino de verdad tampoco aparecía (v0.63.1).
+   El resultado y el motivo salen del PGN de prueba para no repetirlos acá. */
+const cabPgn = (k, d) => (PGN.match(new RegExp(`\\[${k} "([^"]*)"`)) || [, d])[1];
+const RES = cabPgn("Result", "1-0");
+const MOTIVO = process.env.MOTIVO || "resigned";
+const JUEGO = {
+  url: "https://www.chess.com/game/live/1", pgn: PGN, time_class: "rapid",
+  end_time: 1757000000, rules: "chess",
+  white: { username: cabPgn("White", "Blancas"), rating: +cabPgn("WhiteElo", "600"),
+           result: RES === "1-0" ? "win" : MOTIVO },
+  black: { username: cabPgn("Black", "Negras"), rating: +cabPgn("BlackElo", "600"),
+           result: RES === "0-1" ? "win" : MOTIVO },
+};
+const API = {
+  "/api/archives": { archives: ["http://localhost:8099/api/mes"] },
+  "/api/mes": { games: [JUEGO] },
+};
+
 const TIPOS = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript",
                 ".json": "application/json", ".wasm": "application/wasm" };
 const srv = http.createServer((req, res) => {
   const ruta = decodeURIComponent(req.url.split("?")[0]);
+  if (API[ruta]) {
+    res.writeHead(200, { "content-type": "application/json" });
+    return res.end(JSON.stringify(API[ruta]));
+  }
   if (ruta.endsWith("stockfish-18-lite-single.js")) {
     res.writeHead(200, { "content-type": "text/javascript" });
     return res.end(FALSO);
@@ -150,10 +175,16 @@ const pg = await b.newPage({ viewport: { width: 412, height: 915 }, deviceScaleF
 pg.on("pageerror", e => console.log("PAGEERROR:", e.message));
 
 fs.mkdirSync(SALIDA, { recursive: true });
+/* Se entra POR LA LISTA, que es como lo usa el usuario, y no pegando el PGN:
+   son dos caminos distintos y el del PGN no tiene el JSON del mes. */
+await pg.route("https://api.chess.com/**", r =>
+  r.fulfill({ status: 200, contentType: "application/json",
+              body: JSON.stringify(API["/api/archives"]) }));
 await pg.goto("http://localhost:8099/index.html");
-await pg.click("#verPegar");
-await pg.fill("#pgn", PGN);
-await pg.click("#usarPgn");
+await pg.fill("#usuario", cabPgn("White", "Blancas"));
+await pg.click("#buscar");
+await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+await pg.click("#partidas div[data-i]");
 await pg.waitForSelector("#analizar", { state: "visible", timeout: 20000 });
 await pg.click("#analizar");
 try {
@@ -229,6 +260,12 @@ else {
 }
 await pg.selectOption("#marcasCurva", "punto");
 
+/* lo que dice la cabecera y el cierre, en texto: una captura no deja copiar y
+   pegar el resultado a una prueba, y esto sí */
+console.log("cabecera:", JSON.stringify(await pg.locator("#revRival").textContent()),
+            JSON.stringify(await pg.locator("#revFin").textContent()));
+const cierreEl = pg.locator(".jugadas .cierre");
+console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl.textContent()).trim()) : "(no hay)");
 console.log("listo: capturas/");
 await b.close();
 srv.close();
