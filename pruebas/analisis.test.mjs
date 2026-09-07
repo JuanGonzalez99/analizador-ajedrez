@@ -1490,3 +1490,77 @@ test("una marca nunca se corta contra el borde de la tira", () => {
     assert.ok(+n > 0 && +n < 50, `el margen de ${k} tiene que dejar tira usable`);
   assert.ok(+v.punto > +v.puntoChico, "el punto con aro es más grande y pide más margen");
 });
+
+/* --- el mate visto de los dos lados, v0.60 --- */
+
+const UNA = () => A.prepararPartida("1. e4 e5");
+const EVS = (a, b) => {
+  const { jugadas } = UNA();
+  return [a, b, { cp: 0, mate: null, mejor: "a2a3", segunda: null }];
+};
+const fila1 = (a, b, mateVista = 3) => {
+  const { jugadas, fens } = UNA();
+  return A.derivarFilas(jugadas, fens, EVS(a, b), { pos: new Set(), nombres: {} },
+                        0, "critico", null, mateVista).filas[0];
+};
+const UCI_PRIMERA = UNA().jugadas[0].from + UNA().jugadas[0].to;
+
+test("dar el mate no es soltarlo: `mate 0` es la partida terminada", () => {
+  /* Reportado desde el celular: un `40. Qxg7#` salía "Omisión — había mate o
+     material y se dejó pasar", con pérdida 0,00 y con "MEJOR: la jugada" al
+     lado. Leído en voz alta no cerraba (§5 regla 9).
+
+     La causa era una comparación: el mate que le queda al rival se mira con
+     `sig < 0`, y cuando el mate se EJECUTA el motor dice `mate 0`, que en UCI
+     significa "el que mueve ya está mateado". Cero no es menor que cero, así
+     que la jugada que mataba caía del lado de "lo dejó pasar". */
+  const f = fila1({ cp: null, mate: 1, mejor: UCI_PRIMERA, segunda: null },
+                  { cp: null, mate: 0, mejor: null, segunda: null });
+  assert.notEqual(f.cat, "omision", "jugó el mate: no dejó pasar nada");
+  assert.equal(f.cat, "mejor");
+  assert.deepEqual(f.senales, [], "y no hay nada que avisar");
+});
+
+test("el mate soltado de verdad sigue siendo Omisión", () => {
+  /* La otra mitad del arreglo: el `<=` no puede haberse comido el caso que la
+     v0.53 vino a resolver. Había mate en 1, se jugó otra cosa y el mate ya no
+     está: eso sí es una omisión, valga lo que valga en centipeones. */
+  const f = fila1({ cp: null, mate: 1, mejor: "d2d4", segunda: null },
+                  { cp: 20, mate: null, mejor: "a7a6", segunda: null });
+  assert.equal(f.cat, "omision");
+  assert.ok(f.senales.some(s => s.includes("mate forzado en 1")));
+});
+
+test("permitir un mate se avisa, aunque la pérdida no lo note", () => {
+  /* Es el espejo del mate soltado y falla por el MISMO motivo: la evaluación
+     está topeada en 1000, así que caer de -8,16 a mate da 1,84 y no llega al
+     corte de 3 de "Error grave". La tarjeta decía "Empeora la posición" y la
+     barra, al lado, "-M1". */
+  const f = fila1({ cp: -816, mate: null, mejor: "d2d4", segunda: null },
+                  { cp: null, mate: 1, mejor: "a7a6", segunda: null });
+  assert.ok(f.senales.includes("permite mate forzado en 1"), f.senales.join(" | "));
+  /* Y la CATEGORÍA no se toca: cambiarla movería los conteos de todas las
+     tablas, y esa decisión es del usuario. Por ahora la app avisa, no juzga. */
+  assert.equal(f.cat, "error", "la etiqueta sigue saliendo de la pérdida");
+  assert.equal(f.perdida, 1.84);
+});
+
+test("si ya te estaban matando, permitirlo otra vez no es un hallazgo", () => {
+  /* Misma decisión que la del mate estirado: la señal se dispara UNA vez, en la
+     jugada que crea el mate, y no en todas las que vienen después. Sin esto una
+     partida perdida se llenaría del mismo cartel repetido. */
+  const f = fila1({ cp: null, mate: -2, mejor: "d2d4", segunda: null },
+                  { cp: null, mate: 1, mejor: "a7a6", segunda: null });
+  assert.deepEqual(f.senales.filter(s => s.startsWith("permite")), []);
+});
+
+test("la barra dice 'mate' y no 'M0' cuando la partida terminó", () => {
+  /* "M0" es como lo dice el motor, no como lo diría una persona. Quién ganó ya
+     lo dice la barra, que en esa posición está llena de una sola punta. */
+  assert.equal(A.textoEval({ cp: null, mate: 0 }, "b"), "mate");
+  assert.equal(A.textoEval({ cp: null, mate: 0 }, "w"), "mate");
+  /* y los mates de verdad no se tocaron */
+  assert.equal(A.textoEval({ cp: null, mate: 3 }, "w"), "M3");
+  assert.equal(A.textoEval({ cp: null, mate: 3 }, "b"), "-M3");
+  assert.equal(A.textoEval({ cp: -50, mate: null }, "w"), "-0.50");
+});

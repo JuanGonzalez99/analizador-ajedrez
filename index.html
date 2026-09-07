@@ -306,7 +306,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.59 · 07-09";
+  window.VERSION = "v0.60 · 07-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -939,6 +939,10 @@ function categorizar(d, modo = "critico") {
 }
 
 function textoEval(ev, turno) {
+  /* `mate 0` es la partida terminada: el que mueve está mateado. "M0" es como
+     lo dice el motor y no como lo diría una persona. Quién ganó ya lo dice la
+     barra, que en esa posición está llena de una sola punta. */
+  if (ev.mate === 0) return "mate";
   if (ev.mate !== null && ev.mate !== undefined) {
     const blancasGanan = (ev.mate > 0) === (turno === "w");
     return (blancasGanan ? "M" : "-M") + Math.abs(ev.mate);
@@ -1108,7 +1112,20 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const eMate = evs[i].mate;
     if (eMate !== null && eMate !== undefined && eMate > 0 && eMate <= mateALaVista) {
       const sig = evs[i + 1].mate;
-      if (!(sig !== null && sig !== undefined && sig < 0)) oportunidad = { tipo: "mate", n: eMate };
+      /* `sig` es el mate visto por EL QUE MUEVE DESPUÉS, o sea el rival. Si el
+         mate sigue siendo mío, él lo ve negativo, y entonces no lo solté.
+
+         EL <= NO ES UN <, y por eso está escrito con este cartel al lado. En
+         UCI `mate 0` significa "el que mueve ya está mateado", o sea que el
+         mate NO se soltó: se ejecutó. Con `< 0` la jugada que da el mate caía
+         del lado equivocado y salía "Omisión: había mate y se dejó pasar",
+         encima de la jugada que mataba y con pérdida 0,00. Se vio en el celu,
+         en un Qxg7# que la app llamó omisión.
+
+         El resto de la app ya leía bien el mate 0 —`aBlancas` lo manda a
+         -10000 para el que mueve, que es lo correcto—; esta comparación era la
+         única excepción. */
+      if (!(sig !== null && sig !== undefined && sig <= 0)) oportunidad = { tipo: "mate", n: eMate };
     }
     /* Dejar pasar material lo decide el motor, igual que en la tabla: había
        algo cuando su mejor jugada era una captura que ganaba material, y se
@@ -1136,6 +1153,32 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const cat = cats[modo] || cats.critico;
 
     const senales = [];
+    /* EL MATE EN CONTRA. Toda la lógica de mate miraba solo el mate A FAVOR del
+       que mueve; el que te hacen a vos no existía en ningún lado, así que la
+       tarjeta decía "Empeora la posición · la pieza movida queda comible"
+       mientras la barra mostraba -M1 al lado. Reportado desde el celular.
+
+       Es el espejo del mate soltado de la v0.53, y por el MISMO motivo: la
+       evaluación está topeada en 1000, así que caer de -8,16 a mate da 1,84 y
+       no llega al corte de 3 de "Error grave". El corte está saturado justo
+       donde el aviso más importa.
+
+       POR AHORA ES SOLO UNA SEÑAL Y NO TOCA LA CATEGORÍA, por decisión del
+       usuario: cambiar la etiqueta movería los conteos de todas las tablas y de
+       lo acumulado, y eso se decide con la app en la mano. La señal no mueve
+       ningún número; solo deja de callarse (§5 regla 12).
+
+       "No lo había antes" es necesario: si YA te estaban matando, permitirlo de
+       nuevo no es un hallazgo. Es la misma decisión que la del mate estirado.
+       Como la condición pide que aparezca, la señal se dispara UNA vez, en la
+       jugada que lo crea, y no en todas las que siguen.
+
+       No pasa por MATE_A_LA_VISTA a propósito: ese dial dice qué tan duro te
+       juzga la app, y esto no juzga nada, describe. */
+    const mateAntes = evs[i].mate, mateDespues = evs[i + 1].mate;
+    const teMatan = mateDespues !== null && mateDespues !== undefined && mateDespues > 0;
+    const yaTeMataban = mateAntes !== null && mateAntes !== undefined && mateAntes < 0;
+    if (teMatan && !yaTeMataban) senales.push(`permite mate forzado en ${mateDespues}`);
     if (perdida >= 0.5) {
       if (colgada) senales.push("la pieza movida queda comible");
     }

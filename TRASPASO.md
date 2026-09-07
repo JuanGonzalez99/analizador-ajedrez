@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.59**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.60**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -130,6 +130,17 @@ un contenedor—, así que se sirve un worker de mentira en lugar de
 —`uci` → `uciok`, `position fen`, `go` → dos líneas `info` y un `bestmove`— y
 contesta de una tabla FEN → evaluación armada de antemano con chess.js. La
 partida corre entera en segundos.
+
+**El mate NO se puede inventar con un número, y por eso el falso lo calcula.**
+Devolviendo siempre centipeones, la última jugada de una partida que termina en
+mate salía "Error grave, pierde 8.29" y la barra decía "+0.00": la pantalla
+donde vivía el bug del `mate 0` era justo la que el arnés no sabía dibujar. Se
+resuelve con chess.js, que es barato: posición mateada → `mate 0`, hay una
+jugada que matea → `mate 1`. Con eso recorre el mismo camino que el motor real.
+
+**Hay dos partidas y se elige cuál:** `npm run mirar` usa una de 36 jugadas, y
+`npm run mirar mate` una que **termina en mate**, que la primera no hace y por
+eso no llegaba nunca a esa pantalla.
 
 **Las evaluaciones son inventadas y hay que saberlo:** los veredictos que se ven
 en esas capturas no significan nada. Lo que se verifica es la **disposición**.
@@ -1720,6 +1731,67 @@ mover el dial. Una función y no dos copias, porque dos copias se desincronizan.
 **Dónde nos separamos de chess.com a propósito:** ellos marcan Miss cuando el
 mate se ALARGA (jugada 40 de la partida de referencia, de mate en 8 a mate en
 13); nosotros exigimos que se pierda. Alargar un mate no cuesta la partida.
+
+### Dar el mate no es soltarlo: `mate 0` (v0.60)
+
+Reportado desde el celular, con la captura al lado: un **`40. Qxg7#` salía
+"Omisión — había mate o material y se dejó pasar"**, con pérdida 0,00 y con
+"MEJOR: la jugada" en el cuadrito. Leído en voz alta no cerraba, que es
+exactamente el chequeo de la regla 9 de §5.
+
+La causa era una comparación. El mate que le queda al rival se mira así:
+
+```js
+const sig = evs[i + 1].mate;              // el mate visto por EL QUE MUEVE DESPUÉS
+if (!(sig !== null && sig !== undefined && sig <= 0)) oportunidad = { tipo: "mate", n: eMate };
+```
+
+`sig` viene del rival, así que si el mate sigue siendo mío él lo ve negativo.
+**Pero cuando el mate se EJECUTA el motor dice `mate 0`**, que en UCI significa
+"el que mueve ya está mateado" — o sea que el mate no se soltó, se dio. Con
+`< 0` el cero caía del lado equivocado.
+
+Lo llamativo, y por eso el `<=` va con un cartel al lado en el código: **el
+resto de la app ya leía bien el `mate 0`**. `aBlancas` lo manda a −10000 para el
+que mueve, que es lo correcto. Esta comparación era la única excepción.
+
+De la misma tanda, la barra dejó de decir **"M0"**: es como lo dice el motor y
+no como lo diría una persona. Ahora dice `mate`. Quién ganó ya lo dice la barra,
+que en esa posición está llena de una sola punta.
+
+### El mate EN CONTRA no existía (v0.60)
+
+Toda la lógica de mate miraba `evs[i].mate > 0`, o sea **el mate a favor del que
+mueve**. El que te hacen a vos no estaba en ningún lado, así que una jugada que
+regala mate en 1 mostraba *"Error · Empeora la posición · la pieza movida queda
+comible"* mientras la barra, tres centímetros más arriba, decía `−M1`.
+
+Falla por el **mismo motivo** que el mate soltado, y es su espejo: la evaluación
+está topeada en 1000, así que caer de −8,16 a mate da **1,84** y no llega al
+corte de 3 de "Error grave". El corte está saturado justo donde el aviso más
+importa.
+
+**Por ahora es SOLO una señal y no toca la categoría**, por decisión del
+usuario: cambiar la etiqueta movería los conteos de todas las tablas y de lo
+acumulado, y eso se decide con la app en la mano. La señal no mueve ningún
+número; solo deja de callarse, que es la regla 12 de §5.
+
+```js
+if (teMatan && !yaTeMataban) senales.push(`permite mate forzado en ${mateDespues}`);
+```
+
+**"No lo había antes" es necesario**, y es la misma decisión que la del mate
+estirado: si ya te estaban matando, permitirlo de nuevo no es un hallazgo. Como
+la condición pide que el mate *aparezca*, la señal se dispara **una vez**, en la
+jugada que lo crea, y no en todas las que siguen. Sin eso una partida perdida se
+llenaría del mismo cartel repetido.
+
+**No pasa por `MATE_A_LA_VISTA` a propósito:** ese dial dice qué tan duro te
+juzga la app, y esto no juzga nada, describe.
+
+*(La discusión de si además tiene que cambiar la categoría quedó abierta, y el
+usuario la ve como parte de "los textos de las categorías son genéricos" (§8):
+`senales` es justo la materia prima de esa tarea.)*
 
 ## 7. Trabajo acordado, en orden
 

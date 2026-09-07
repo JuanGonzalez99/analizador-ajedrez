@@ -30,7 +30,13 @@ import { Chess } from "../chess.js";
 
 const RAIZ = path.dirname(fileURLToPath(new URL("../index.html", import.meta.url)));
 const SALIDA = path.join(RAIZ, "capturas");
-const PGN = fs.readFileSync(new URL("./partida-de-prueba.pgn", import.meta.url), "utf8");
+/* Qué partida se mira. `npm run mirar mate` usa la que TERMINA EN MATE, que es
+   donde vivió el bug del `mate 0`: la jugada que daba el mate salía "Omisión" y
+   la barra decía "M0". La partida larga no llega nunca a esa pantalla, porque
+   no termina en mate, así que sin esto no había forma de mirarlo. */
+const CUAL = process.argv[2] === "mate" ? "partida-mate.pgn" : "partida-de-prueba.pgn";
+const PGN = fs.readFileSync(new URL("./" + CUAL, import.meta.url), "utf8");
+const SUFIJO = process.argv[2] === "mate" ? "-mate" : "";
 
 /* Chromium: el de Playwright, salvo que el entorno traiga uno propio. En los
    contenedores de trabajo suele estar preinstalado y bajarlo de nuevo no sirve. */
@@ -63,9 +69,35 @@ const base = i => {
 };
 const forma = i => base(i) + (GOLPES[i] || 0);
 
+/* EL MATE NO SE PUEDE INVENTAR CON UN NÚMERO. El motor de mentira devolvía
+   siempre centipeones, así que la última jugada de una partida que termina en
+   mate salía "Error grave, pierde 8.29" y la barra decía "+0.00": la pantalla
+   donde vivía el bug del `mate 0` era justo la que el arnés no sabía dibujar.
+
+   Se calcula de verdad con chess.js, que es barato:
+   - posición mateada  → `mate 0`, que es lo que dice el motor cuando al que
+     mueve ya lo matearon;
+   - hay una jugada que matea → `mate 1`, y esa es la mejor.
+   Con eso el arnés recorre el mismo camino que el motor real en las dos
+   pantallas que importan: la que da el mate y la que lo permite. */
+const mateEnUna = fen => {
+  const c = new Chess(fen);
+  for (const m of c.moves({ verbose: true })) {
+    c.move(m.san);
+    const mata = c.in_checkmate();
+    c.undo();
+    if (mata) return m.from + m.to + (m.promotion || "");
+  }
+  return null;
+};
+
 const tabla = {};
 fens.forEach((fen, i) => {
-  const legales = new Chess(fen).moves({ verbose: true });
+  const pos = new Chess(fen);
+  if (pos.in_checkmate()) { tabla[fen] = { mate: 0, mejor: null, segunda: null }; return; }
+  const mata = mateEnUna(fen);
+  if (mata) { tabla[fen] = { mate: 1, mejor: mata, segunda: null }; return; }
+  const legales = pos.moves({ verbose: true });
   if (!legales.length) return;
   const jugada = jugadas[i] && (jugadas[i].from + jugadas[i].to + (jugadas[i].promotion || ""));
   const otra = legales.map(m => m.from + m.to + (m.promotion || "")).find(u => u !== jugada);
@@ -84,10 +116,12 @@ onmessage = function (e) {
   if (s === "uci") return postMessage("uciok");
   if (s.startsWith("position fen ")) { fen = s.slice(13); return; }
   if (s.startsWith("go ")) {
-    const v = T[fen] || { cp: 0, mejor: "e2e4", segunda: -60 };
-    postMessage("info depth 16 multipv 1 score cp " + v.cp + " pv " + v.mejor);
-    postMessage("info depth 16 multipv 2 score cp " + v.segunda + " pv " + v.mejor);
-    postMessage("bestmove " + v.mejor);
+    var v = T[fen] || { cp: 0, mejor: "e2e4", segunda: -60 };
+    var tipo = v.mate === undefined ? "cp " + v.cp : "mate " + v.mate;
+    postMessage("info depth 16 multipv 1 score " + tipo + (v.mejor ? " pv " + v.mejor : ""));
+    if (v.segunda !== null && v.segunda !== undefined)
+      postMessage("info depth 16 multipv 2 score cp " + v.segunda + " pv " + v.mejor);
+    postMessage("bestmove " + (v.mejor || "(none)"));
   }
 };
 `;
@@ -131,7 +165,7 @@ try {
 }
 await pg.waitForTimeout(800);
 
-const foto = async n => { await pg.waitForTimeout(300); await pg.screenshot({ path: path.join(SALIDA, n + ".png") }); };
+const foto = async n => { await pg.waitForTimeout(300); await pg.screenshot({ path: path.join(SALIDA, n + SUFIJO + ".png") }); };
 /* frena solo al llegar a la última: el botón se deshabilita ahí, y sin esto
    el arnés se muere de timeout clickeando algo que no responde */
 const avanzar = async n => {
@@ -142,7 +176,9 @@ const avanzar = async n => {
 };
 
 await foto("revision-1");
-await avanzar(20);
+/* hasta la ÚLTIMA jugada: en la partida que termina en mate es la que importa,
+   y en la larga avanzar() frena solo cuando el botón se deshabilita */
+await avanzar(process.argv[2] === "mate" ? 99 : 20);
 /* las tres formas de marca, sobre la misma jugada: es lo único que cambia */
 for (const forma of ["punto", "puntoChico", "raya"]) {
   await pg.selectOption("#marcasCurva", forma);
@@ -157,6 +193,10 @@ await foto("revision-tablero-y-curva");
 await avanzar(13);
 await foto("revision-final");
 await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "curva.png") });
+/* la jugada ANTERIOR a la última: en la partida que termina en mate es la que
+   permite el mate, o sea la otra mitad del arreglo de la v0.60 */
+await pg.click("#ant");
+await foto("revision-anteultima");
 
 /* Parado JUSTO en una jugada marcada: es donde se ve si la marca queda tapada
    por la raya del "estás acá", que es la única que nunca puede desaparecer.
