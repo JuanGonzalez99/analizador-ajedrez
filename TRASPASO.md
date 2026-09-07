@@ -110,6 +110,42 @@ la pantalla, no solo se mide.** El comentario impreso se escapó porque se
 verificó el cambio de forma estrecha —midiendo la alineación de una columna— y
 no se miró la página.
 
+### El tercer chequeo: mirar la pantalla (v0.58)
+
+```bash
+npm run mirar
+```
+
+De la v0.42 a la v0.57 esto se rearmaba a mano en cada sesión. Desde la v0.58
+vive en el repo, en `pruebas/mirar.mjs`, por el mismo camino que hicieron las
+pruebas en la v18. Levanta un servidor sobre el repo, abre `index.html` en un
+Chromium headless **en modo simple**, pega un PGN, la analiza y deja capturas en
+`capturas/` (ignorado por git). **No toca `index.html`**: no viaja al sitio y no
+cambia nada de lo que se ve en el celular.
+
+**El motor va falseado, y es lo que lo hace usable.** El wasm real tarda minutos
+por partida —medido: profundidad 13 sobre 25 jugadas no terminó en 10 minutos en
+un contenedor—, así que se sirve un worker de mentira en lugar de
+`stockfish-18-lite-single.js`. Habla el pedacito de UCI que usa la clase `Motor`
+—`uci` → `uciok`, `position fen`, `go` → dos líneas `info` y un `bestmove`— y
+contesta de una tabla FEN → evaluación armada de antemano con chess.js. La
+partida corre entera en segundos.
+
+**Las evaluaciones son inventadas y hay que saberlo:** los veredictos que se ven
+en esas capturas no significan nada. Lo que se verifica es la **disposición**.
+La forma de la curva está elegida a mano —apertura pareja, desplome,
+recuperación, definición— y hay cuatro desplomes de una sola jugada, porque sin
+ellos ninguna categoría mala se dispara y la curva sale sin marcas, que es justo
+lo que hay que mirar.
+
+**Dos trampas que ya costaron tiempo, las dos anotadas en el archivo:**
+- `load_pgn` devuelve `false` y **no tira**. Un PGN de prueba escrito a mano con
+  una jugada 19 imposible entró como una partida de cero jugadas y el arnés se
+  colgó diez minutos esperando una pantalla que nunca iba a llegar. Es el mismo
+  error que la regla de §10: nunca afirmar de memoria una posición.
+- Redirigir la salida por un pipe la bufferiza, así que "no imprime nada" no es
+  lo mismo que "está colgado". Se pierde media hora ahí.
+
 ---
 
 ## 3. Mapa del archivo

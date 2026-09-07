@@ -3,6 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test pruebas/analisis.test.mjs && node pruebas/estaticos.mjs"
+    "test": "node --test pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
+    "mirar": "node pruebas/mirar.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.1"
   }
 }
