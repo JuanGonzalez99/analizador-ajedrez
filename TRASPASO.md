@@ -2495,14 +2495,20 @@ resultados en la v0.39.)*
   una pantalla aparte. La regla que salió: lo que cambia *qué datos se miran*
   va a la vista; lo que cambia *cómo se ven* va a configuración.
 
-- **La estética de la tira de navegación es mejorable, y el usuario lo dio por
-  bueno igual.** Los recuadros con borde, el número de jugada en gris al lado, y
-  los dos galones cuadrados a los costados: funciona y se entiende, pero es la
-  parte menos trabajada de la pantalla nueva. Anotado a pedido del usuario, que
-  prefirió avanzar y volver después. Lo que NO hay que tocar sin volver a
-  pensarlo es el comportamiento: la tira lleva la partida entera y se centra
-  sola en la jugada actual, y de ahí sale que siempre se vea que hay más para
-  los dos lados cuando lo hay.
+- **Los tres cuadritos (Mejor / Pérdida / Caída) están sin resolver.** Quedan
+  sueltos abajo de la curva y son lo que más lugar ocupa por lo poco que dicen.
+  Se dibujó la alternativa —meterlos en un renglón gris adentro de la tarjeta—
+  y recuperaba unos 60 px, pero **"Mejor" deja de poder tocarse**, que hoy es el
+  atajo para ver la mejor jugada en el tablero. El usuario los dejó como están y
+  pidió anotar que hay que revisar cómo dejarlos bien. Las dos formas están
+  dibujadas en el arnés (`dist-E` y `dist-E-compacta`).
+
+  **La estética de la TIRA sí se resolvió** en la misma mirada: sin recuadro en
+  cada jugada, galones sin botón, y la actual marcada con el 20% del color de su
+  categoría, que es exactamente como la lista vertical la marca desde la v28. Lo
+  que NO hay que tocar sin volver a pensarlo es el comportamiento: la tira lleva
+  la partida entera y se centra sola en la jugada actual, y de ahí sale que
+  siempre se vea que hay más para los dos lados cuando lo hay.
 
 - **Las animaciones son una rama sin empezar.** Apareció al ver que el
   deslizamiento del tablero no resulta intuitivo: un galón estático avisa que

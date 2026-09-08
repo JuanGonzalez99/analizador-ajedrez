@@ -440,7 +440,7 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
 
    Además así el dedo llega a cualquier jugada de la partida, no solo a las
    vecinas, y los galones quedan para el paso fino. */
-const armarTira = async (conNumero = false) => await pg.evaluate((conNum) => {
+const armarTira = async (conNumero = false, estilo = "borde") => await pg.evaluate(([conNum, est]) => {
   const vieja = document.getElementById("tiraH");
   if (vieja) vieja.remove();
   const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
@@ -450,7 +450,14 @@ const armarTira = async (conNumero = false) => await pg.evaluate((conNum) => {
   const galon = t => {
     const b = document.createElement("button");
     b.textContent = t;
-    b.style.cssText = "flex:0 0 38px;height:38px;padding:0;font-size:16px;";
+    /* el galón sin recuadro pesa mucho menos, y ya hay dos iguales en el
+       tablero: los tres serían el mismo gesto dibujado igual */
+    /* el galón va pelado en TODAS las variantes nuevas: así lo único que cambia
+       entre ellas es cómo se marca la jugada actual, que es lo que se compara */
+    b.style.cssText = est !== "borde"
+      ? "flex:0 0 30px;height:38px;padding:0;font-size:20px;border:none;" +
+        "background:none;color:var(--tenue);"
+      : "flex:0 0 38px;height:38px;padding:0;font-size:16px;";
     return b;
   };
   const medio = document.createElement("div");
@@ -471,9 +478,27 @@ const armarTira = async (conNumero = false) => await pg.evaluate((conNum) => {
     }
     const sp = document.createElement("span");
     sp.innerHTML = e.innerHTML;
-    sp.style.cssText = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;" +
-      "border:1px solid " + (esta ? "currentColor" : "var(--linea)") + ";color:" + e.style.color +
-      (esta ? ";font-weight:700" : "");
+    const base = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;color:" +
+      e.style.color + ";";
+    /* cuatro formas de decir CUÁL es la actual, con la misma información:
+       - borde:  todas con recuadro, la actual con el recuadro fuerte (la de hoy)
+       - limpia: ninguna con recuadro, la actual con recuadro
+       - pelado: ninguna con recuadro, la actual con fondo LLENO y letra clara
+       - tenue:  igual que pelado pero con el fondo al 20%, que es EXACTAMENTE
+                 como la lista vertical marca la jugada actual desde la v28 */
+    sp.style.cssText = base + (
+      est === "borde"
+        ? "border:1px solid " + (esta ? "currentColor" : "var(--linea)") + (esta ? ";font-weight:700" : "")
+      : est === "limpia"
+        ? (esta ? "border:1px solid currentColor;font-weight:700" : "border:1px solid transparent")
+      : est === "tenue"
+        ? (esta ? "background:color-mix(in srgb, currentColor 20%, transparent);font-weight:700" : "")
+        : (esta ? "font-weight:700" : ""));
+    /* con fondo lleno la letra tiene que ir del color del papel, no del suyo */
+    if (est === "pelado" && esta) {
+      sp.style.background = e.style.color;
+      sp.style.color = "var(--papel, #fdfcfa)";
+    }
     medio.appendChild(sp);
     if (esta) elegida = sp;
   }
@@ -483,7 +508,7 @@ const armarTira = async (conNumero = false) => await pg.evaluate((conNum) => {
   if (elegida) medio.scrollLeft = elegida.offsetLeft -
     (medio.clientWidth - elegida.offsetWidth) / 2;
   return cont.id;
-}, conNumero);
+}, [conNumero, estilo]);
 
 /* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
    a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
@@ -581,8 +606,21 @@ await desdeArriba("dist-E");
 await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "fila"],
             { ...OCULTAR, metricasAdentro: true });
 await desdeArriba("dist-E-compacta");
-/* la tira sola, grande, para mirarle las puntas */
+/* la tira sola, grande, para mirarle las puntas. Va después de una pantalla,
+   que es donde se centra. */
 await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira" + SUFIJO + ".png") });
+
+/* LAS TRES FORMAS DE LA TIRA. El usuario pidió sacarle el borde a cada jugada;
+   las otras dos son propuestas: la actual marcada con fondo en vez de recuadro,
+   y los galones sin recuadro, que son lo más pesado de la fila. */
+for (const est of ["limpia", "pelado", "tenue"]) {
+  await armarTira(true, est);
+  await armar(E, OCULTAR);
+  /* PRIMERO la pantalla, que es la que centra la tira, y DESPUÉS el recorte: al
+     revés la tira salía sin centrar, mostrando el arranque de la partida. */
+  await desdeArriba("dist-E-" + est);
+  await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira-" + est + SUFIJO + ".png") });
+}
 console.log("maquetas: dist-D-hoy, dist-A, dist-B, dist-C, dist-E, dist-E-compacta, tira");
 
 console.log("listo: capturas/");
