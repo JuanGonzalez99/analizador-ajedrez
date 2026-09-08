@@ -539,6 +539,36 @@ const armarTira = async (conNumero = false, estilo = "borde", fade = 0, caja = "
   }
   cont.append(galon("\u2039"), medio, galon("\u203a"));
   document.getElementById("zonaRevision").appendChild(cont);
+  /* ORDEN: PRIMERO el recuadro, DESPUÉS el galón. Corregir el relleno del
+     recuadro corre la base de todo el renglón —con `align-items:baseline` la
+     base la fija el elemento que más sube por encima de ella—, así que si el
+     galón se calcula antes, queda corrido por el arreglo del recuadro. Lo vio
+     el usuario en la captura. */
+  /* EL RECUADRO DE LA JUGADA ACTUAL, CENTRADO SOBRE LA TINTA.
+     Con las cajas alineadas por la base, el recuadro sobresale por abajo: arriba
+     solo tiene el hueco entre el borde de la caja y la mayúscula, y abajo tiene
+     además todo el espacio de las colas. Se mide cuánto y se corrige de tres
+     formas, que es lo que hay que elegir mirando. */
+  const sel2 = medio.querySelector('[style*="font-weight:700"], [style*="font-weight: 700"]');
+  if (sel2 && caja !== "hoy") {
+    const cs = getComputedStyle(sel2);
+    const cv = document.createElement("canvas").getContext("2d");
+    cv.font = "13px " + cs.fontFamily;
+    const m = cv.measureText("N");
+    const r = sel2.getBoundingClientRect();
+    const pt = parseFloat(cs.paddingTop), pb = parseFloat(cs.paddingBottom);
+    const base = r.top + pt + m.fontBoundingBoxAscent;
+    const arriba = (base - m.actualBoundingBoxAscent) - r.top;
+    const abajo = r.bottom - base;
+    const d = abajo - arriba;
+    if (caja === "recorta") sel2.style.paddingBottom = Math.max(0, pb - d) + "px";
+    if (caja === "alarga") sel2.style.paddingTop = (pt + d) + "px";
+    if (caja === "mitad") {
+      sel2.style.paddingTop = (pt + d / 2) + "px";
+      sel2.style.paddingBottom = Math.max(0, pb - d / 2) + "px";
+    }
+    window.__sobra = +d.toFixed(2);
+  }
   /* EL VÉRTICE DEL CHEVRON VA AL CENTRO DE LA "N", no al centro del renglón.
      El renglón incluye el espacio de las colas y las tildes, así que su centro
      cae más abajo que el de una mayúscula: eso es lo que se veía corrido.
@@ -565,31 +595,6 @@ const armarTira = async (conNumero = false, estilo = "borde", fade = 0, caja = "
   /* centrar DESPUÉS de estar en el documento: antes no hay anchos que medir */
   if (elegida) medio.scrollLeft = elegida.offsetLeft -
     (medio.clientWidth - elegida.offsetWidth) / 2;
-  /* EL RECUADRO DE LA JUGADA ACTUAL, CENTRADO SOBRE LA TINTA.
-     Con las cajas alineadas por la base, el recuadro sobresale por abajo: arriba
-     solo tiene el hueco entre el borde de la caja y la mayúscula, y abajo tiene
-     además todo el espacio de las colas. Se mide cuánto y se corrige de tres
-     formas, que es lo que hay que elegir mirando. */
-  const sel2 = medio.querySelector('[style*="font-weight:700"], [style*="font-weight: 700"]');
-  if (sel2 && caja !== "hoy") {
-    const cs = getComputedStyle(sel2);
-    const cv = document.createElement("canvas").getContext("2d");
-    cv.font = "13px " + cs.fontFamily;
-    const m = cv.measureText("N");
-    const r = sel2.getBoundingClientRect();
-    const pt = parseFloat(cs.paddingTop), pb = parseFloat(cs.paddingBottom);
-    const base = r.top + pt + m.fontBoundingBoxAscent;
-    const arriba = (base - m.actualBoundingBoxAscent) - r.top;
-    const abajo = r.bottom - base;
-    const d = abajo - arriba;
-    if (caja === "recorta") sel2.style.paddingBottom = Math.max(0, pb - d) + "px";
-    if (caja === "alarga") sel2.style.paddingTop = (pt + d) + "px";
-    if (caja === "mitad") {
-      sel2.style.paddingTop = (pt + d / 2) + "px";
-      sel2.style.paddingBottom = Math.max(0, pb - d / 2) + "px";
-    }
-    window.__sobra = +d.toFixed(2);
-  }
   return cont.id;
 }, [conNumero, estilo, fade, caja]);
 
@@ -707,12 +712,13 @@ for (const [est, fade, caja] of [["tenue", 24, "hoy"], ["tenue", 24, "recorta"],
   const nom = "caja-" + caja;
   if (caja === "recorta") console.log("el recuadro sobresale por abajo:",
     await pg.evaluate(() => window.__sobra), "px");
+  if (caja !== "mitad") { }
   if (true) {
     /* SE MIDE, no se mira: el ojo alinea por la caja del TEXTO, no por la del
        elemento, así que se le pide al navegador el rectángulo real de cada
        texto con un Range. Si las bases no coinciden, se ve corrido aunque los
        elementos estén centrados. */
-    console.log("alineación:", await pg.evaluate(() => {
+    console.log("alineación (" + caja + "):", await pg.evaluate(() => {
       const t = document.querySelector("#tiraH");
       const caja = el => {
         const n = [...el.childNodes].find(x => x.nodeType === 3 && x.textContent.trim())
