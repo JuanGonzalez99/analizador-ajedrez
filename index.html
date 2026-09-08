@@ -228,6 +228,10 @@
   .veredicto .txt { flex: 1; min-width: 0; }
   .veredicto .tit { font-weight: 700; font-size: 15px; }
   .veredicto .sub { font-size: 12.5px; color: var(--tenue); }
+  /* La explicación va con el color del texto normal y NO con el tenue del
+     subtítulo: es lo único de la tarjeta que cambia en cada jugada, así que si
+     se pinta como el resto se pierde entre dos renglones grises. */
+  .veredicto .exp { font-size: 12.5px; margin-top: 2px; }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: 10px auto 0; }
   /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
@@ -322,7 +326,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.63.1 · 07-09";
+  window.VERSION = "v0.64 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -639,7 +643,8 @@
   </div>
   <div class="veredicto" id="veredicto">
     <div class="ico" id="vIco"></div>
-    <div class="txt"><div class="tit" id="vTit"></div><div class="sub" id="vSub"></div></div>
+    <div class="txt"><div class="tit" id="vTit"></div><div class="sub" id="vSub"></div>
+      <div class="exp oculto" id="vExp"></div></div>
     <div class="ev" id="vEv"></div>
   </div>
   <div class="metricas">
@@ -663,6 +668,7 @@
     <select id="tema" class="chico" aria-label="Tema del tablero"></select>
     <select id="verEval" class="chico" aria-label="Dónde se ve la evaluación"></select>
     <select id="marcasCurva" class="chico" aria-label="Cómo se marcan las categorías en la curva"></select>
+    <select id="dondeExp" class="chico" aria-label="Dónde va la explicación de la jugada"></select>
   </div>
 </div>
 
@@ -1259,14 +1265,17 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const mateAntes = evs[i].mate, mateDespues = evs[i + 1].mate;
     const teMatan = mateDespues !== null && mateDespues !== undefined && mateDespues > 0;
     const yaTeMataban = mateAntes !== null && mateAntes !== undefined && mateAntes < 0;
-    if (teMatan && !yaTeMataban) senales.push(`permite mate forzado en ${mateDespues}`);
+    /* Se guarda además de decirse: la señal es una lista de mecanismos y la
+       explicación es una frase, y las dos necesitan el mismo número. */
+    const mateContra = (teMatan && !yaTeMataban) ? mateDespues : null;
+    if (mateContra) senales.push(`permite mate forzado en ${mateContra}`);
     if (perdida >= 0.5) {
       if (colgada) senales.push("la pieza movida queda comible");
     }
     if (oportunidad) {
       senales.push(oportunidad.tipo === "mate"
         ? `había mate forzado en ${oportunidad.n}`
-        : `había ${oportunidad.san}, que ganaba ${oportunidad.gana}`);
+        : `había ${oportunidad.san}, que ganaba ${enPeones(oportunidad.gana)}`);
     }
     /* Tomaste el material, pero con la pieza equivocada. No es una omisión, así
        que el costo lo dice la pérdida y no el valor de lo capturado. */
@@ -1296,15 +1305,25 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
       capBuena: !!capB, tomoBuena, tomoConOtra,
+      /* Para REDACTAR, no para medir: `explicarJugada` los necesita
+         estructurados. Hasta la v0.63 lo único que salía de acá eran las
+         señales, que son texto ya armado y no se pueden volver a redactar.
+         Ninguno entra a CAMPOS_FLACOS: la explicación vive en la revisión,
+         que trabaja sobre filas enteras. */
+      oportunidad, cap: capB, mateContra,
       /* una sola jugada legal: no hubo decisión. Solo lo usa la revisión. */
       forzada: legales === 1, esRecaptura,
-      /* Para medir, no para mostrar: ninguna tabla los usa todavía y por eso NO
-         están en CAMPOS_FLACOS —un año de filas flacas tiene que pesar poco—.
-         Van los DOS y no solo el hueco: `huecoSegunda` queda en null cuando el
+      /* Para medir: ninguna TABLA los usa todavía y por eso NO están en
+         CAMPOS_FLACOS —un año de filas flacas tiene que pesar poco—.
+         Van los TRES y no solo el hueco: `huecoSegunda` queda en null cuando el
          motor no devuelve segunda, y una razón de que no la devuelva es que
          haya UNA SOLA jugada legal. Sin `legales` al lado, la posición más
-         forzada posible cae en el grupo de "no sé", que es el equivocado. */
-      huecoSegunda, legales,
+         forzada posible cae en el grupo de "no sé", que es el equivocado.
+         `unicaBuena` es el hueco ya comparado contra 150, o sea la mitad de
+         "Genial" que SÍ significa "no había otra": la explicación la necesita
+         para no llamarle "la única" a un Genial que entró por cruce de banda.
+         Emitirla es lo que §8 pedía para poder estratificar por dificultad. */
+      huecoSegunda, unicaBuena, legales,
       /* segundos pensados en esta jugada, o null si la partida no traía reloj.
          null NO es cero: es "no se sabe", y las medianas lo saltean. */
       seg: (tiempos && tiempos[i] != null) ? tiempos[i] : null
@@ -1386,6 +1405,116 @@ function normalizarPgn(texto) {
   const cab = lineas.slice(0, i).join("\n");
   const cuerpo = lineas.slice(i).join("\n").trim();
   return cuerpo ? cab + "\n\n" + cuerpo : cab;
+}
+
+/* ============ la explicación de la jugada ============ */
+
+/* Cada pieza con su artículo. El género cambia —"el caballo", "la torre"— y
+   armarlo suelto en cada frase se olvida en alguna. */
+const PIEZA_EL = { p: "el peón", n: "el caballo", b: "el alfil",
+                   r: "la torre", q: "la dama", k: "el rey" };
+const PIEZA_TU = { p: "tu peón", n: "tu caballo", b: "tu alfil",
+                   r: "tu torre", q: "tu dama", k: "tu rey" };
+
+/* El material se cuenta en PEONES y no en "puntos", y no es capricho: la
+   tarjeta ya dice "12,3 puntos de victoria" un renglón más arriba, así que dos
+   "puntos" con significados distintos en la misma tarjeta sería el mismo error
+   de denominadores que sacó la columna "% resto" (§4quinquies).
+
+   OJO: `gana` es el VALOR, no la pieza. Sale de VALOR, así que 3 puede ser un
+   caballo o un alfil, y con recaptura de por medio es la diferencia. Por eso la
+   frase dice cuánto vale y NUNCA qué pieza es. */
+const enPeones = n => n === 1 ? "un peón" : `${n} peones`;
+
+const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+/* La explicación redactada de una jugada: lo que la tarjeta dice ADEMÁS de la
+   frase fija de la categoría. Hoy "Empeora la posición" es igual para las 400
+   jugadas de un mes; esto la vuelve de esa jugada.
+
+   ES PURA Y SE DERIVA AL PINTAR, no se guarda. Lo que está en la caché son las
+   evaluaciones, no las filas, así que las partidas ya analizadas estrenan el
+   texto sin migrar nada y sin volver a correr el motor.
+
+   REGLA DURA: acá no se afirma nada que no esté medido (§5 regla 1). Cada frase
+   sale de un campo que calculó chess.js o el motor. "Debilita el enroque" o
+   "gana espacio" NO se pueden decir por más que suenen bien: no los medimos.
+   Por el mismo motivo devuelve "" cuando no hay nada honesto que agregar, en
+   vez de rellenar: una frase vacía en la tarjeta de todas las jugadas enseña a
+   no leer la tarjeta.
+
+   Como mucho DOS frases. Es una tarjeta de celular y compite con el tablero por
+   la pantalla; el orden de abajo es el que decide cuáles dos sobreviven.
+
+   `mejorSan` viene de afuera: pasar el UCI del motor a notación necesita la
+   posición ANTERIOR, y la fila guarda la de después. Va null cuando la jugada
+   ya era la mejor, que es cuando no hay alternativa que ofrecer.
+
+   `mio` dice si la jugada es del usuario, y lo único que cambia es "el caballo"
+   → "tu caballo". El resto queda impersonal a propósito: con un PGN pegado no
+   se sabe de qué lado jugaba, y una frase que tutea a medias se lee peor que
+   una que no tutea nunca. */
+function explicarJugada(f, mejorSan = null, mio = null) {
+  /* En una forzada no hubo decisión y la tarjeta ya lo dice entera (§4.6bis):
+     cualquier cosa que agreguemos acá juzga algo que no se eligió. */
+  if (!f || f.forzada) return "";
+  const pieza = (mio ? PIEZA_TU : PIEZA_EL)[f.pieza] || "la pieza";
+  const donde = (f.uci || "").slice(2, 4);
+
+  /* 1. EL MECANISMO: qué pasó. Uno solo, el más grave, o la tarjeta se vuelve
+     una lista. El corte de 0,5 es el mismo que ya usan las señales: un
+     mecanismo que no costó nada no es un hallazgo, es una coincidencia. */
+  let mecanismo = "";
+  if (f.mateContra) mecanismo = `Deja mate forzado en ${f.mateContra} en contra.`;
+  else if (f.colgada && f.perdida >= 0.5)
+    mecanismo = `${mayus(pieza)} queda comible en ${donde}.`;
+  else if (f.tomoConOtra && f.perdida >= 0.5 && f.cap)
+    mecanismo = `La captura iba con otra pieza: ${f.cap.san}.`;
+
+  /* 2. QUÉ HABÍA en su lugar. */
+  let habia = "";
+  if (f.oportunidad && f.oportunidad.tipo === "mate")
+    habia = `Había mate forzado en ${f.oportunidad.n}` +
+            `${mejorSan ? `, con ${mejorSan}` : ""}.`;
+  else if (f.oportunidad && f.oportunidad.tipo === "material")
+    habia = `Había ${f.oportunidad.san}, que ganaba ${enPeones(f.oportunidad.gana)}.`;
+
+  /* 3. EL MÉRITO, para las buenas.
+
+     "Brillante" y "Genial" ya tienen su frase fija, así que acá va SOLO lo que
+     esa frase no dice: dónde está el material entregado, o cuánto le sacaba la
+     mejor a la segunda.
+
+     El Genial por CRUCE DE BANDA no dice "era la única", y esa distinción es la
+     que evita mentir: la categoría se dispara por dos motivos distintos
+     (`unicaBuena` o el cruce) y solo uno de los dos es "no había otra". Cuando
+     entró por el cruce, el mérito lo cuenta el rumbo, más abajo. */
+  let merito = "";
+  if (f.cat === "brillante")
+    merito = f.colgada ? `${mayus(pieza)} queda comible en ${donde}, y aun así es la mejor.`
+                       : "Entrega material y aun así es la mejor del motor.";
+  else if (f.cat === "genial" && f.unicaBuena)
+    merito = `Era la única: la segunda del motor quedaba ` +
+             `${(f.huecoSegunda / 100).toFixed(2)} atrás.`;
+  else if (f.tomoBuena) merito = "Es la captura que había para hacer.";
+
+  /* 4. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
+     (`banda`, arriba). Inventar acá una segunda escala de "cómo va la partida"
+     sería tener dos respuestas para la misma pregunta en la misma pantalla.
+
+     Se calla en los tres casos donde la evaluación no significa lo que parece:
+     la partida ya terminada (la barra muestra el resultado, no una evaluación),
+     y cualquiera de los dos mates forzados, donde el tope de 1000 aplasta el
+     número y "pasa de ganando a ganando" sería falso de puro saturado. */
+  let rumbo = "";
+  const hayNumeros = typeof f.franja === "number" && typeof f.evalBlancas === "number";
+  if (hayNumeros && !f.remate && !f.mateContra && f.mateDe === null) {
+    const a = banda(f.franja);
+    const b = banda((f.turno === "w" ? f.evalBlancas : -f.evalBlancas) / 100);
+    if (a !== b) rumbo = `La posición pasa de ${a} a ${b}.`;
+  }
+
+  return [merito, mecanismo, habia, rumbo].filter(Boolean).slice(0, 2).join(" ");
 }
 
 /* ===================== fin del bloque de análisis ====================== */
@@ -1972,6 +2101,44 @@ function aplicarModoEval(id) {
   $("marcasCurva").value = MARCA_CURVA;
   $("marcasCurva").onchange = seguro("marcas de la curva", () => {
     aplicarMarcaCurva($("marcasCurva").value);
+    if (R) pintarRevision();
+  });
+})();
+
+/* DÓNDE VA LA EXPLICACIÓN. Las tres se defienden solas y por eso están las
+   tres, para decidir usando la app (§10). Es un interruptor TEMPORAL, como el
+   de margen contra gris de la v0.48: cuando el usuario elija, las otras dos se
+   van y esto queda en una sola forma.
+
+   - "en la tarjeta": un renglón más abajo del subtítulo. No pierde nada, pero
+     la tarjeta crece y la pantalla del celu es de 760 de alto.
+   - "en vez de la frase fija": la explicación ocupa el lugar de "Empeora la
+     posición". No crece nada y es lo más parecido a chess.com; se pierde la
+     frase de la categoría, que igual está en el título al lado del símbolo.
+   - "abajo, con las señales": la tarjeta no se toca y el texto reemplaza a la
+     lista de mecanismos, que dice lo mismo en telegrama.
+
+   En las tres, si no hay nada honesto que decir la pantalla queda como estaba:
+   la explicación vacía nunca deja un hueco. */
+const DONDE_EXP_OPC = {
+  tarjeta:   "Explicación: en la tarjeta",
+  reemplaza: "Explicación: en vez de la frase",
+  senales:   "Explicación: abajo, con las señales"
+};
+let DONDE_EXP = "tarjeta";
+function aplicarDondeExp(id) {
+  DONDE_EXP = DONDE_EXP_OPC[id] ? id : "tarjeta";
+  try { localStorage.setItem("dondeExp", DONDE_EXP); } catch (e) { /* incógnito */ }
+}
+(function iniciarDondeExp() {
+  let guardado = "tarjeta";
+  try { guardado = localStorage.getItem("dondeExp") || "tarjeta"; } catch (e) { /* incógnito */ }
+  $("dondeExp").innerHTML = Object.entries(DONDE_EXP_OPC)
+    .map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
+  aplicarDondeExp(guardado);
+  $("dondeExp").value = DONDE_EXP;
+  $("dondeExp").onchange = seguro("dónde va la explicación", () => {
+    aplicarDondeExp($("dondeExp").value);
     if (R) pintarRevision();
   });
 })();
@@ -3635,6 +3802,13 @@ function pintarLista() {
 function pintarRevision() {
   const f = R.filas[IDX];
   const c = presentar(f);
+  /* La explicación se ARMA acá y se deriva de la fila, no viene guardada: una
+     partida que ya estaba en la caché la estrena sin volver a correr el motor.
+     El SAN de la mejor va en null cuando la jugada ya era la mejor, porque ahí
+     no hay alternativa que ofrecer. */
+  const ladoUsr = ladoDelUsuario(R);
+  const explicado = explicarJugada(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
+                                   ladoUsr ? f.turno === ladoUsr : null);
   const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
   $("vIco").textContent = c.icono;
@@ -3642,10 +3816,14 @@ function pintarRevision() {
   $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
   /* En una forzada los números sobran: no hubo elección, así que "pierde 0.00"
      invita a juzgar algo que no se decidió. */
-  $("vSub").textContent = f.forzada ? c.desc
-    : c.desc +
+  const cabeza = (DONDE_EXP === "reemplaza" && explicado) ? explicado : c.desc;
+  $("vSub").textContent = f.forzada ? cabeza
+    : cabeza +
       ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
       ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria`;
+  const enTarjeta = DONDE_EXP === "tarjeta" && !!explicado;
+  $("vExp").textContent = enTarjeta ? explicado : "";
+  $("vExp").classList.toggle("oculto", !enTarjeta);
   /* si el número ya viaja en la barra, la tarjeta no lo repite */
   $("vEv").textContent = MODO_EVAL === "tarjeta" ? f.evalTexto : "";
 
@@ -3773,8 +3951,14 @@ function pintarRevision() {
   const notas = f.senales.slice();
   if (f.rev) notas.push(`a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +
     `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`);
-  $("senales").textContent = notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "";
-  $("senales").classList.toggle("oculto", !notas.length);
+  /* La explicación y las señales dicen lo mismo con distinto vestido, así que
+     donde va una no va la otra: repetirlas sería el eco que la v0.44 le sacó a
+     las leyendas. */
+  const abajo = DONDE_EXP === "senales" && explicado
+    ? explicado
+    : (notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "");
+  $("senales").textContent = abajo;
+  $("senales").classList.toggle("oculto", !abajo);
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
   $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
   $("btnAmbos").disabled = !ladoDelUsuario(R);

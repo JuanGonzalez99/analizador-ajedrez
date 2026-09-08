@@ -1094,7 +1094,9 @@ test("los dos lugares que pintan una jugada usan el mismo presentador", () => {
   assert.ok(!html.includes("CATEGORIAS[x.cat].icono"), "quedó el camino viejo en la tira");
   assert.ok(!html.includes("const c = CATEGORIAS[f.cat];"), "quedó el camino viejo en la tarjeta");
   /* y en una forzada no se muestran los números: no hubo elección que juzgar */
-  assert.ok(html.includes('$("vSub").textContent = f.forzada ? c.desc'));
+  assert.ok(html.includes('$("vSub").textContent = f.forzada ? cabeza'));
+  assert.ok(html.includes('const cabeza = (DONDE_EXP === "reemplaza" && explicado) ? explicado : c.desc;'),
+    "la explicación puede ocupar el lugar de la frase fija, pero no el de los números");
 });
 
 /* --- el mate soltado y el dial "mate a la vista", v0.53 --- */
@@ -1742,4 +1744,156 @@ test("el JSON del mes viaja hasta la revisión (v0.63.1)", () => {
      partida pegada heredaría el motivo de la anterior */
   assert.equal((html.match(/ELEGIDA_META = null;/g) || []).length, 3,
                "la global, el reset de la lista y el PGN pegado");
+});
+
+
+/* ================= la explicación de la jugada (v0.64) ================== */
+
+/* Todas estas prueban FRASES, y las frases son lo que el usuario lee. Cada una
+   arma una fila de verdad con derivarFilas —no un objeto a mano— para que si
+   un campo cambia de nombre o de signo, la prueba se caiga acá y no en el celu.
+   Las posiciones se verifican con chess.js, nunca de memoria (§10). */
+
+const SIN_LIBRO_EXP = { pos: new Set(), nombres: {} };
+const unaFila = (fenAntes, san, evs, desde = 0) => {
+  const j = new Chess(fenAntes);
+  const hecho = j.move(san);
+  assert.ok(hecho, san + " tiene que ser legal en " + fenAntes);
+  return A.derivarFilas([hecho], [fenAntes, j.fen()], evs, SIN_LIBRO_EXP,
+                        desde, "critico", null).filas[0];
+};
+
+/* la dama blanca se para en d5, donde la come el peón de e6 y nadie recaptura */
+const DAMA_COLGADA = "4k3/8/4p3/8/8/8/8/3QK3 w - - 0 1";
+const EVS_DAMA = () => [
+  { cp: 400, mate: null, mejor: "d1d4", segunda: { cp: 380, mate: null } },
+  { cp: 900, mate: null, mejor: "e6d5", segunda: null }
+];
+
+test("la explicación nombra la pieza y la casilla, que es lo que la señal no dice", () => {
+  const f = unaFila(DAMA_COLGADA, "Qd5", EVS_DAMA());
+  assert.equal(f.colgada, true);
+  assert.equal(A.explicarJugada(f, "Qd4", null),
+    "La dama queda comible en d5. La posición pasa de ganando a perdiendo.");
+});
+
+test("con el lado del usuario sabido, la frase tutea la pieza", () => {
+  const f = unaFila(DAMA_COLGADA, "Qd5", EVS_DAMA());
+  assert.ok(A.explicarJugada(f, "Qd4", true).startsWith("Tu dama"));
+  assert.ok(A.explicarJugada(f, "Qd4", false).startsWith("La dama"),
+    "la del rival no es tuya");
+  assert.ok(A.explicarJugada(f, "Qd4", null).startsWith("La dama"),
+    "con un PGN pegado no se sabe, y ahí no se tutea");
+});
+
+test("nunca más de dos frases: es una tarjeta de celular", () => {
+  const f = unaFila(DAMA_COLGADA, "Qd5", EVS_DAMA());
+  for (const mio of [true, false, null])
+    assert.ok(A.explicarJugada(f, "Qd4", mio).split(". ").length <= 2);
+});
+
+test("el material se cuenta en peones, y nunca dice qué pieza es", () => {
+  /* Torre blanca en d1 y dama negra colgada en d8: en vez de Rxd8 se toma el
+     peón de a7. El campo `gana` es un VALOR y con recaptura es una diferencia, así que
+     traducirlo a "una dama" sería inventar. */
+  const f = unaFila("3qk3/p6p/8/8/8/8/7P/R2RK3 w - - 0 1", "Rxa7",
+    [{ cp: 300, mate: null, mejor: "d1d8", segunda: null },
+     { cp: -100, mate: null, mejor: "d8d1", segunda: null }]);
+  const dice = A.explicarJugada(f, "Rxd8", true);
+  assert.ok(dice.includes("que ganaba 4 peones"), dice);
+  assert.ok(!/dama|torre|caballo|alfil/.test(dice.replace(/^.*?queda comible.*?\. /, "")),
+    "el valor no nombra la pieza: " + dice);
+  assert.equal(A.enPeones(1), "un peón", "y en singular no dice 1 peones");
+});
+
+test("un mate soltado se explica con la jugada que lo daba", () => {
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const f = A.derivarFilas(jugadas, fens, [
+    { cp: null, mate: 8, mejor: "d4d5", segunda: null },
+    { cp: -980, mate: null, mejor: "a7a6", segunda: null },
+    { cp: 980, mate: null, mejor: "a2a3", segunda: null }
+  ], SIN_LIBRO_EXP, 0, "critico", null, 99).filas[0];
+  assert.equal(A.explicarJugada(f, "Rd5", true), "Había mate forzado en 8, con Rd5.");
+  assert.equal(A.explicarJugada(f, null, true), "Había mate forzado en 8.",
+    "sin el SAN de la mejor la frase se corta sola, no inventa");
+});
+
+test("el mate en contra se dice, y calla el rumbo: la evaluación está saturada", () => {
+  /* 1. f3 e5 2. g4?? Qh4#. La posición la verifica chess.js. */
+  const { jugadas, fens } = A.prepararPartida("1. f3 e5 2. g4 Qh4#");
+  const f = A.derivarFilas(jugadas, fens, [
+    { cp: 20, mate: null, mejor: "e2e4", segunda: null },
+    { cp: -30, mate: null, mejor: "e7e5", segunda: null },
+    { cp: 10, mate: null, mejor: "d2d4", segunda: null },
+    { cp: null, mate: 1, mejor: "d8h4", segunda: null },
+    { cp: null, mate: 0, mejor: null, segunda: null }
+  ], SIN_LIBRO_EXP, 0, "critico", null).filas;
+  assert.equal(f[2].mateContra, 1, "la fila guarda el número, no solo la señal");
+  assert.equal(A.explicarJugada(f[2], "d4", true), "Deja mate forzado en 1 en contra.");
+  assert.ok(!A.explicarJugada(f[2], "d4", true).includes("pasa de"),
+    "con mate forzado el número está topeado en 1000 y el rumbo mentiría");
+});
+
+test('"era la única" solo lo dice el Genial que entró por el hueco', () => {
+  /* La misma jugada con dos evaluaciones: una donde le saca 220 a la segunda y
+     otra donde entra por cruce de banda. La categoría es la misma y la frase
+     NO puede serlo: solo una de las dos significa "no había otra". */
+  const antes = "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4";
+  const porHueco = unaFila(antes, "d3",
+    [{ cp: 60, mate: null, mejor: "d2d3", segunda: { cp: -160, mate: null } },
+     { cp: -60, mate: null, mejor: "d7d6", segunda: null }]);
+  const porCruce = unaFila(antes, "d3",
+    [{ cp: -250, mate: null, mejor: "d2d3", segunda: { cp: -290, mate: null } },
+     { cp: 10, mate: null, mejor: "d7d6", segunda: null }]);
+  assert.equal(porHueco.cat, "genial");
+  assert.equal(porCruce.cat, "genial");
+  assert.equal(porHueco.unicaBuena, true);
+  assert.equal(porCruce.unicaBuena, false);
+  assert.equal(A.explicarJugada(porHueco, null, true),
+    "Era la única: la segunda del motor quedaba 2.20 atrás.");
+  assert.equal(A.explicarJugada(porCruce, null, true),
+    "La posición pasa de perdiendo a parejo.");
+});
+
+test("una forzada no se explica: no hubo nada que elegir", () => {
+  /* rey blanco en h1 en jaque de la torre de a1, con g2 propio y h2 libre:
+     Kh2 es la única legal, y chess.js lo confirma en la prueba de abajo */
+  const f = unaFila("7k/8/8/8/8/8/6P1/r6K w - - 0 1", "Kh2",
+    [{ cp: -900, mate: null, mejor: "h1g1", segunda: null },
+     { cp: 900, mate: null, mejor: "a1a2", segunda: null }]);
+  assert.equal(f.forzada, true, "tiene que ser la única legal");
+  assert.equal(A.explicarJugada(f, null, true), "");
+});
+
+test("cuando no hay nada medido que decir, no se dice nada", () => {
+  /* 2. Nf3, la mejor del motor, sin mecanismos y sin cambio de rumbo. Una
+     frase de relleno en todas las jugadas enseña a no leer la tarjeta. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5 2. Nf3");
+  const f = A.derivarFilas(jugadas, fens, [
+    { cp: 20, mate: null, mejor: "e2e4", segunda: { cp: 10, mate: null } },
+    { cp: -20, mate: null, mejor: "e7e5", segunda: null },
+    { cp: 25, mate: null, mejor: "g1f3", segunda: { cp: 15, mate: null } },
+    { cp: -25, mate: null, mejor: "b8c6", segunda: null }
+  ], SIN_LIBRO_EXP, 0, "critico", null).filas[2];
+  assert.equal(f.cat, "mejor");
+  assert.equal(A.explicarJugada(f, null, true), "");
+});
+
+test("la explicación se deriva al pintar y no viaja en la caché", () => {
+  /* Es lo que deja que una partida ya analizada estrene el texto sin volver a
+     correr el motor: lo que se guarda son las evaluaciones, no las filas. */
+  assert.ok(!html.includes("explicacion:"), "no hay campo guardado en la fila");
+  assert.ok(html.includes("const explicado = explicarJugada("),
+    "se arma en pintarRevision, en cada pintada");
+  const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
+  for (const c of ["oportunidad", "cap", "mateContra", "unicaBuena"])
+    assert.ok(!campos.includes('"' + c + '"'), c + " no tiene por qué viajar a las tablas");
+});
+
+test("las tres ubicaciones existen, y ninguna deja hueco cuando no hay texto", () => {
+  assert.ok(html.includes("const DONDE_EXP_OPC = {"), "el interruptor temporal");
+  for (const k of ["tarjeta", "reemplaza", "senales"])
+    assert.ok(html.includes(k + ":"), "falta la ubicación " + k);
+  assert.ok(html.includes('$("vExp").classList.toggle("oculto", !enTarjeta);'));
+  assert.ok(html.includes('$("senales").classList.toggle("oculto", !abajo);'));
 });

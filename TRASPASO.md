@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.63.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.64**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -137,6 +137,13 @@ mate salía "Error grave, pierde 8.29" y la barra decía "+0.00": la pantalla
 donde vivía el bug del `mate 0` era justo la que el arnés no sabía dibujar. Se
 resuelve con chess.js, que es barato: posición mateada → `mate 0`, hay una
 jugada que matea → `mate 1`. Con eso recorre el mismo camino que el motor real.
+
+**Las capturas salen a 412 x 760, y el tamaño es una medición.** Sobre una
+captura del celular del usuario, sacando la escala del tablero —que mide 360 CSS
+de ancho—, su viewport es de ~420 x 810 con la barra de direcciones escondida y
+~745 de alto cuando está visible. 412 x 760 es el caso apretado. Hasta la v0.64
+el arnés dibujaba a 412 x 915, y con 155 px de más no se podía dimensionar
+cuánto entra de verdad en la pantalla.
 
 **Hay varias partidas y se elige cuál:** `npm run mirar <nombre>` lee
 `pruebas/partida-<nombre>.pgn`. Están la larga de 36 jugadas (`de-prueba`, la de
@@ -1475,6 +1482,94 @@ el DOM: devuelven puntos y marcas, no dibujo. `dibujarCurva` arma el SVG y vive
 al lado del tablero. Es el mismo reparto de siempre y es lo que deja probar la
 geometría en node.
 
+## 4quindecies. La explicación por jugada (v0.64)
+
+Hasta la v0.63 la tarjeta del veredicto decía la misma frase para las 400
+jugadas de un mes: "Empeora la posición". El mecanismo lo contaba la línea de
+señales, en telegrama y sin nombrar la jugada —"la pieza movida queda
+comible"—. Lo que falta va en §8: chess.com escribe una frase por jugada.
+
+`explicarJugada(f, mejorSan, mio)` la redacta. Es **pura**, vive en el bloque de
+análisis y se prueba en node.
+
+### Se deriva al pintar, y por eso no hay migración
+
+La explicación **no se guarda en ningún lado**. Lo que está en la caché son las
+evaluaciones, no las filas, así que una partida analizada hace un mes estrena el
+texto sin volver a correr el motor y sin tocar el esquema. Es la misma razón por
+la que "todo lo analizado" puede cambiar de modo sin rehacer el barrido (§4.4:
+la caché guarda evaluaciones, no veredictos).
+
+Lo que sí hubo que agregar a la fila son **cuatro campos que ya se calculaban y
+se tiraban**: `oportunidad`, `cap`, `mateContra` y `unicaBuena`. Hasta la v0.63
+lo único que salía de ahí eran las señales, que son texto ya armado y no se
+puede volver a redactar. Ninguno entra a `CAMPOS_FLACOS`: la explicación vive en
+la revisión, que trabaja sobre filas enteras.
+
+`unicaBuena` en la fila es, de paso, **lo que §8 pedía** para estratificar por
+dificultad: estaba calculado y no se emitía.
+
+### La regla que la gobierna: no se afirma nada que no esté medido
+
+Es §5 regla 1 aplicada a una frase en vez de a un número, y es lo que separa
+esto de escribir lindo. "Debilita el enroque" o "gana espacio" **no se pueden
+decir** por más que suenen a entrenador: no los medimos. Cada frase sale de un
+campo que calculó chess.js o el motor.
+
+De la misma regla sale que **devuelve `""` cuando no hay nada honesto que
+decir**, en vez de rellenar. Una frase de relleno en todas las jugadas enseña a
+no leer la tarjeta, y entonces la que sí importa tampoco se lee.
+
+**Como mucho dos frases.** Es una tarjeta de celular y compite con el tablero
+por la pantalla. El orden decide cuáles dos sobreviven: mérito, mecanismo, qué
+había, rumbo.
+
+### Las decisiones de redacción que hubo que tomar
+
+| decisión | por qué |
+|---|---|
+| el material va en **peones**, no en "puntos" | la tarjeta ya dice "12,3 puntos de victoria" un renglón más arriba; dos "puntos" con significados distintos en la misma tarjeta es el error de denominadores de la columna "% resto" |
+| el valor **nunca** se traduce a una pieza | `gana` sale de `VALOR`, así que 3 puede ser un caballo o un alfil, y con recaptura de por medio es una diferencia. "Ganaba una pieza" sería inventar |
+| el rumbo usa **`banda`**, la que ya decide "Genial" por cruce | inventar una segunda escala de "cómo va la partida" sería tener dos respuestas para la misma pregunta en la misma pantalla |
+| **solo se tutea la pieza** ("tu caballo"), el resto queda impersonal | con un PGN pegado no se sabe de qué lado jugaba el usuario, y una frase que tutea a medias se lee peor que una que no tutea nunca |
+| una **forzada** no se explica | no hubo decisión; cualquier cosa que se agregue juzga algo que no se eligió |
+
+**Y la que evita mentir:** "Genial" se dispara por dos motivos distintos
+—`unicaBuena` o el cruce de banda— y **solo uno de los dos significa "no había
+otra"**. La frase "Era la única" sale únicamente cuando entró por el hueco;
+cuando entró por el cruce, el mérito lo cuenta el rumbo. Sin esa distinción, la
+mitad de los Geniales afirmaría algo falso, y hay prueba que lo fija.
+
+### El mate en contra y la evaluación saturada
+
+Con mate forzado —a favor o en contra— el rumbo **se calla**. La evaluación está
+topeada en 1000, así que "pasa de ganando a ganando" sería falso de puro
+saturado. Es el mismo tope que ya obligó a tratar el mate aparte en la barra
+(v0.62) y en la categoría (v0.53).
+
+### Dónde va: interruptor temporal de tres posiciones
+
+**Sin decidir todavía**, y el interruptor existe para decidirlo con la app en la
+mano, como el de margen contra gris de la v0.48:
+
+| opción | qué gana | qué cuesta |
+|---|---|---|
+| **en la tarjeta** | no pierde nada; el texto va con la tinta normal y es lo único que cambia en cada jugada | la tarjeta crece un renglón, y la pantalla del celu es de 760 |
+| **en vez de la frase fija** | no crece nada, y es lo más parecido a chess.com | se pierde "Empeora la posición" —que igual está en el título, al lado del símbolo— y hereda el gris del subtítulo |
+| **abajo, con las señales** | la tarjeta no se toca | queda lejos de la jugada y en gris |
+
+Cuando el usuario elija, **las otras dos se van** junto con el selector y con las
+capturas del arnés que las dibujan.
+
+### Lo que quedó por medir
+
+Con el motor falseado del arnés, **5 de 36 jugadas** tienen algo que explicar.
+Ese número **no vale**: el motor falso elige su "mejor" jugada casi al azar, así
+que las omisiones de material y las capturas buenas —que son las que más texto
+producen— casi no se disparan. La proporción de verdad hay que mirarla en el
+celu, con el motor real. Si resultara baja, lo que falta no es aflojar la regla
+de arriba: es medir más mecanismos.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -2349,12 +2444,13 @@ tenían 4 jugadas legales o menos. No se filtró porque chess.com hace lo mismo
 diferencia deliberada con ellos, como la del mate estirado. Es del usuario
 decidir si "Genial" tiene sentido cuando la partida ya está resuelta.
 
-- **Los textos de las categorías son genéricos.** Hoy cada categoría tiene una
-  frase fija —"Empeora la posición"— y las señales dicen el mecanismo pero no la
-  jugada. chess.com escribe una por jugada: *"Tu caballo ahora es vulnerable.
-  Tuviste la oportunidad de capturar un peón y ganar material después de los
-  intercambios subsiguientes."* Casi todo lo que hace falta ya está en la fila
-  (`senales`, `mejor`, `colgada`, `capBuena`, `perdida`); falta redactarlo.
+- ~~**Los textos de las categorías son genéricos.**~~ **HECHO en la v0.64**,
+  con `explicarJugada` y las decisiones de redacción explicadas en §4quindecies.
+  La regla que lo gobierna es §5 regla 1: no se afirma nada que no esté medido,
+  y por eso hay jugadas que no dicen nada en vez de decir algo lindo.
+  **Queda abierto dónde va** —hay un interruptor temporal de tres posiciones
+  para elegirlo mirando— y **cuánto habla de verdad**: con el motor falseado del
+  arnés habla en 5 de 36 jugadas, y ese número no vale.
 
 - **No se puede jugar una variante y verla evaluada.** chess.com lo tiene como
   "Reintentar": ponés otra jugada en la posición y te dice qué pasa. Es lo que

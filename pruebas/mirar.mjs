@@ -170,8 +170,13 @@ const srv = http.createServer((req, res) => {
 await new Promise(r => srv.listen(8099, r));
 
 const b = await chromium.launch(CHROMIUM ? { executablePath: CHROMIUM } : {});
-/* un celular: 412 x 915 es un Android corriente, y a 2x las capturas se leen */
-const pg = await b.newPage({ viewport: { width: 412, height: 915 }, deviceScaleFactor: 2 });
+/* EL TAMAÑO SALE DE UNA MEDICIÓN, no de un modelo de teléfono. Sobre una
+   captura del celular del usuario, y sacando la escala del tablero (que mide
+   360 CSS de ancho), su viewport es de ~420 x 810 con la barra de direcciones
+   escondida y ~745 de alto cuando está visible. Se dibuja a 412 x 760, que es
+   el caso apretado: una captura más alta no deja dimensionar cuánto se ve de
+   verdad, y era 915 hasta la v0.64. A 2x las capturas se leen. */
+const pg = await b.newPage({ viewport: { width: 412, height: 760 }, deviceScaleFactor: 2 });
 pg.on("pageerror", e => console.log("PAGEERROR:", e.message));
 
 fs.mkdirSync(SALIDA, { recursive: true });
@@ -210,6 +215,39 @@ const avanzar = async n => {
 };
 
 await foto("revision-1");
+
+/* LAS TRES UBICACIONES DE LA EXPLICACIÓN (v0.64), sobre la misma jugada: es lo
+   único que cambia entre las tres capturas. La jugada NO se elige a ojo —se
+   avanza hasta la primera que tenga algo que explicar, leyendo la pantalla— y
+   por eso sirve igual en cualquiera de las partidas de prueba.
+   Esto se va junto con el interruptor, cuando el usuario elija una. */
+await pg.selectOption("#dondeExp", "tarjeta");
+/* La jugada NO se elige a ojo: se recorre la partida leyendo la pantalla y se
+   vuelve a la que MÁS tiene para explicar. Una que solo dice el rumbo no sirve
+   para juzgar la disposición, porque es la frase más corta de todas. */
+const textos = [];
+for (let i = 0; ; i++) {
+  textos.push(((await pg.locator("#vExp").textContent()) || "").trim());
+  if (await pg.locator("#sig").isDisabled()) break;
+  await pg.click("#sig");
+}
+let mejor = 0;
+textos.forEach((t, i) => { if (t.length > textos[mejor].length) mejor = i; });
+for (let i = textos.length - 1; i > mejor; i--) await pg.click("#ant");
+console.log("explicación:", JSON.stringify(textos[mejor]),
+            `(jugada ${mejor + 1} de ${textos.length}; ` +
+            `${textos.filter(Boolean).length} tienen algo que decir)`);
+/* la vista arranca en el tablero, que es como se mira la jugada: la pregunta de
+   las tres es si el renglón nuevo empuja algo fuera de la pantalla */
+for (const donde of ["tarjeta", "reemplaza", "senales"]) {
+  await pg.selectOption("#dondeExp", donde);
+  await pg.waitForTimeout(200);
+  await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -60));
+  await foto("explicacion-" + donde);
+  await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + donde + ".png") });
+}
+await pg.selectOption("#dondeExp", "tarjeta");
 /* hasta la ÚLTIMA jugada: en la partida que termina en mate es la que importa,
    y en la larga avanzar() frena solo cuando el botón se deshabilita */
 /* en las partidas cortas se va hasta la ÚLTIMA jugada, que es la que importa;
