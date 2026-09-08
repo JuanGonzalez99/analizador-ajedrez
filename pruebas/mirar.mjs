@@ -440,7 +440,8 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
 
    Además así el dedo llega a cualquier jugada de la partida, no solo a las
    vecinas, y los galones quedan para el paso fino. */
-const armarTira = async (conNumero = false, estilo = "borde") => await pg.evaluate(([conNum, est]) => {
+const armarTira = async (conNumero = false, estilo = "borde", fade = 0) =>
+  await pg.evaluate(([conNum, est, desvanecer]) => {
   const vieja = document.getElementById("tiraH");
   if (vieja) vieja.remove();
   const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
@@ -455,14 +456,30 @@ const armarTira = async (conNumero = false, estilo = "borde") => await pg.evalua
     /* el galón va pelado en TODAS las variantes nuevas: así lo único que cambia
        entre ellas es cómo se marca la jugada actual, que es lo que se compara */
     b.style.cssText = est !== "borde"
-      ? "flex:0 0 30px;height:38px;padding:0;font-size:20px;border:none;" +
-        "background:none;color:var(--tenue);"
+      /* 44 px es el objetivo mínimo para un dedo, y `display:flex` + `line-height:1`
+         es lo que los alinea de verdad con las jugadas: con el `line-height` de
+         un botón, el chevron se apoya en su propia caja y queda corrido. */
+      ? "flex:0 0 34px;height:44px;padding:0;font-size:24px;border:none;" +
+        "background:none;color:var(--tenue);display:flex;align-items:center;" +
+        "justify-content:center;line-height:1;"
       : "flex:0 0 38px;height:38px;padding:0;font-size:16px;";
     return b;
   };
   const medio = document.createElement("div");
   medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;align-items:center;" +
     "overflow-x:auto;scrollbar-width:none;";
+  /* EL DESVANECIDO. Los recuadros de antes tapaban las jugadas de las puntas y
+     eso decía "hay más para allá"; sin recuadro, las jugadas se cortaban en
+     seco. Una máscara de degradado devuelve ese aviso sin dibujar nada: la
+     jugada se disuelve contra el papel a medida que se acerca al galón.
+     No es opacidad sobre el elemento: es una máscara, así que no depende del
+     color de fondo y funciona igual con cualquier tema. */
+  if (desvanecer) {
+    const m = "linear-gradient(to right, transparent 0, #000 " + desvanecer + "px, " +
+      "#000 calc(100% - " + desvanecer + "px), transparent 100%)";
+    medio.style.maskImage = m;
+    medio.style.webkitMaskImage = m;
+  }
   let elegida = null;
   for (const e of jg) {
     const esta = e.classList.contains("sel");
@@ -472,14 +489,17 @@ const armarTira = async (conNumero = false, estilo = "borde") => await pg.evalua
       if (jgs.indexOf(e) === 0) {
         const num = document.createElement("span");
         num.textContent = fila.querySelector(".np").textContent + ".";
-        num.style.cssText = "font-size:12px;color:var(--tenue);white-space:nowrap;";
+        /* el mismo relleno vertical que las jugadas: sin eso las cajas miden
+           distinto y el número queda medio renglón corrido */
+        num.style.cssText = "font-size:12px;color:var(--tenue);white-space:nowrap;" +
+          "padding:4px 0;line-height:1.2;";
         medio.appendChild(num);
       }
     }
     const sp = document.createElement("span");
     sp.innerHTML = e.innerHTML;
-    const base = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;color:" +
-      e.style.color + ";";
+    const base = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;" +
+      "line-height:1.2;color:" + e.style.color + ";";
     /* cuatro formas de decir CUÁL es la actual, con la misma información:
        - borde:  todas con recuadro, la actual con el recuadro fuerte (la de hoy)
        - limpia: ninguna con recuadro, la actual con recuadro
@@ -508,7 +528,7 @@ const armarTira = async (conNumero = false, estilo = "borde") => await pg.evalua
   if (elegida) medio.scrollLeft = elegida.offsetLeft -
     (medio.clientWidth - elegida.offsetWidth) / 2;
   return cont.id;
-}, [conNumero, estilo]);
+}, [conNumero, estilo, fade]);
 
 /* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
    a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
@@ -613,13 +633,16 @@ await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira" + SUFIJO 
 /* LAS TRES FORMAS DE LA TIRA. El usuario pidió sacarle el borde a cada jugada;
    las otras dos son propuestas: la actual marcada con fondo en vez de recuadro,
    y los galones sin recuadro, que son lo más pesado de la fila. */
-for (const est of ["limpia", "pelado", "tenue"]) {
-  await armarTira(true, est);
+/* la elegida es "tenue"; lo que falta decidir es cuánto se desvanecen las
+   jugadas contra los galones, así que se dibuja con tres anchos */
+for (const [est, fade] of [["tenue", 0], ["tenue", 24], ["tenue", 48]]) {
+  await armarTira(true, est, fade);
   await armar(E, OCULTAR);
   /* PRIMERO la pantalla, que es la que centra la tira, y DESPUÉS el recorte: al
      revés la tira salía sin centrar, mostrando el arranque de la partida. */
-  await desdeArriba("dist-E-" + est);
-  await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira-" + est + SUFIJO + ".png") });
+  const nom = "tenue-fade" + fade;
+  await desdeArriba("dist-E-" + nom);
+  await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira-" + nom + SUFIJO + ".png") });
 }
 console.log("maquetas: dist-D-hoy, dist-A, dist-B, dist-C, dist-E, dist-E-compacta, tira");
 
