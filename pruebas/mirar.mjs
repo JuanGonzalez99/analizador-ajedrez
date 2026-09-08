@@ -323,8 +323,35 @@ else {
     await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
   /* la maqueta del borde violeta se fue en la v0.71: el usuario eligió el color
      de la categoría mirando las dos. */
+    /* LAS CUATRO FORMAS DEL DIAL DE LA v0.76, sobre la misma variante
+       encadenada: es lo único que cambia entre las cuatro capturas. La pantalla
+       se ancla arriba de la tarjeta que quedó más arriba, que es lo que el
+       usuario ve al mirar el celu. Esto se va junto con el dial, cuando el
+       usuario elija una forma. */
+    for (const forma of ["sinLista", "adentro", "abajo", "dos"]) {
+      await pg.selectOption("#formaPrueba", forma);
+      await pg.evaluate(() => {
+        const p = document.getElementById("prueba");
+        const arriba = p.classList.contains("oculto") ? document.getElementById("veredicto") : p;
+        arriba.scrollIntoView({ block: "start" });
+        window.scrollBy(0, -14);
+      });
+      await foto("prueba-forma-" + forma);
+      console.log("forma " + forma.padEnd(9),
+        JSON.stringify(await pg.evaluate(() => ({
+          tarjetaReal: !document.getElementById("veredicto").classList.contains("oculto"),
+          listaAdentro: !document.getElementById("pLinea").classList.contains("oculto"),
+          probadasAbajo: document.querySelectorAll("#tiraSc .jg.inv").length,
+          elegidaAbajo: (document.querySelector("#tiraSc .jg.sel") || {}).textContent || null
+        }))));
+    }
+    /* queda en "adentro", que es la única forma donde la tira de la variante
+       vive en la tarjeta: es lo que mira lo que sigue. El volcado en texto va
+       acá por lo mismo —con la forma de por defecto, esa tira no existe—. */
+    await pg.selectOption("#formaPrueba", "adentro");
     console.log("variante:", JSON.stringify(
       (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
+
     /* volver a la PRIMERA jugada de la variante tocando su tira. Iba al
        arranque con data-v="0" hasta la v0.71, que le sacó ese eslabón. */
     await pg.click('#pLinea span[data-v="1"]');

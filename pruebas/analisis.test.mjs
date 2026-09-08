@@ -2427,12 +2427,47 @@ test("la barra y la tarjeta no quedan pegadas", () => {
 
 test("la tira lleva la partida entera, no una ventana", () => {
   /* De ahí sale que siempre se vea que hay más para los dos lados cuando lo
-     hay: no hay ningún N que elegir. */
-  assert.ok(html.includes("$(\"tiraSc\").innerHTML = R.filas.map((x, i) =>"),
-    "se dibujan TODAS las filas");
+     hay: no hay ningún N que elegir.
+
+     Desde la v0.76 la tira se corta en UN solo caso —con las jugadas probadas
+     dibujadas abajo, y corta justo donde se abrió la prueba—, y eso NO es una
+     ventana: el corte sale de la variante y no de un largo elegido. Lo que esta
+     prueba fija es eso: o la partida entera, o hasta donde arrancó la prueba. */
+  assert.ok(html.includes("const hasta = varAbajo ? PRUEBA.desde0 : R.filas.length;"),
+    "o entera, o hasta donde se abrió la prueba");
+  assert.ok(html.includes("$(\"tiraSc\").innerHTML = R.filas.slice(0, hasta).map((x, i) =>"),
+    "se dibujan TODAS las filas hasta ahí");
   assert.ok(!html.includes('id="jugadas"'), "la lista vertical se fue");
   assert.ok(html.includes("mask-image: linear-gradient(to right, transparent 0, #000 24px"),
     "y las puntas se desvanecen en vez de cortarse");
+});
+
+/* EL DIAL DE LA v0.76 ES TEMPORAL y estas dos pruebas también: cuando el
+   usuario elija una forma, se queda esa y se van el dial, las otras tres y
+   estas pruebas con ellas. Mientras exista, lo que no puede pasar en silencio
+   es que se pierda una forma o que cambie sola la de por defecto. */
+test("el dial de la prueba: cuatro formas, y una sola deja las dos tarjetas", () => {
+  const cuerpo = html.match(/const FORMAS_PRUEBA = (\{[\s\S]*?\n\});/);
+  assert.ok(cuerpo, "está FORMAS_PRUEBA");
+  const F = new Function("return " + cuerpo[1])();
+  assert.deepEqual(Object.keys(F), ["sinLista", "adentro", "abajo", "dos"]);
+  /* la única que NO reemplaza la tarjeta real es la que se llama así */
+  assert.deepEqual(Object.entries(F).filter(([, f]) => !f.reemplaza).map(([k]) => k),
+                   ["dos"]);
+  /* y las tres maneras de mostrar las probadas están las tres */
+  assert.deepEqual([...new Set(Object.values(F).map(f => f.lista))].sort(),
+                   ["abajo", "adentro", "no"]);
+  assert.ok(/let FORMA_PRUEBA = "sinLista";/.test(html), "por defecto, sin la lista");
+  assert.ok(html.includes('<select id="formaPrueba"'), "y el dial existe en la pantalla");
+});
+
+test("con una prueba abierta la tarjeta real se esconde", () => {
+  /* El pedido del usuario: una tarjeta, no dos. Que dependa de `fp.reemplaza`
+     es lo que hace que la forma "dos" siga pudiendo mostrarlas juntas. */
+  assert.ok(html.includes('$("veredicto").classList.toggle("oculto", !!PRUEBA && fp.reemplaza);'),
+    "se esconde la real, y solo con una prueba abierta");
+  assert.ok(html.includes('const tira = fp.lista === "adentro" ? tiraDeLaVariante() : "";'),
+    "y la lista adentro de la tarjeta solo va en la forma que la pide");
 });
 
 test("el chevron de la tira se dibuja, no se escribe", () => {

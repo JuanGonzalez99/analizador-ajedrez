@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.75**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.76**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1843,8 +1843,68 @@ la partida, así que no hay contra qué comparar.
   mismo ocupando el lugar más visible de la tira. Parado en el arranque no hay
   ningún eslabón marcado, y eso se lee solo.
 
+### Una tarjeta y no dos, y el dial de las cuatro formas (v0.76)
+
+Reportado por el usuario mirando el celu: **con una prueba abierta había dos
+tarjetas apiladas** —la punteada de la prueba arriba y la de la jugada real
+abajo— y pidió que la punteada **reemplace** a la real en vez de sumarse.
+
+Eso está hecho y no es un dial: con una prueba abierta la tarjeta real se
+esconde. **Cuesta poco y por eso se pudo hacer entero**: la comparación contra
+lo que se jugó de verdad ya viaja en la punteada —`pierde 0.00 · en la partida
+exd4 pierde 1.66`— y de la segunda jugada de la variante en adelante no hay
+contra qué comparar, así que ahí la tarjeta real no estaba diciendo nada.
+
+**Lo que no se pudo decidir mirando capturas es dónde van las jugadas
+probadas.** Hoy son una tira que envuelve en dos renglones adentro de la
+tarjeta. Se dibujaron cuatro formas a 412 × 760 y el usuario no eligió: *"no me
+decido, y creo que esta va a ser mejor probando la app"*. Así que van las
+cuatro, en un dial, y se decide usando la app — la regla de §10, la misma que
+resolvió margen contra gris en la v0.48 con un interruptor que duró dos
+versiones.
+
+**Lo que ocupa cada cosa, medido con el arnés** sobre una pantalla de 760: la
+tarjeta real son **92 px** y la tira de jugadas probadas otros **58**.
+
+| forma del dial | la real | las probadas | recupera |
+|---|---|---|---|
+| **Prueba: sin la lista** *(por defecto)* | se esconde | no se ven | 150 px |
+| **Prueba: la lista adentro** | se esconde | adentro de la tarjeta | 92 px |
+| **Prueba: la lista abajo** | se esconde | en la tira, en violeta | 150 px |
+| **Prueba: las dos tarjetas** | se queda | en la tira, en violeta | 58 px |
+
+Son **dos ejes** —¿reemplaza o conviven? y ¿dónde van las probadas?— y de ahí
+salen las cuatro. El por defecto es "sin la lista", que es la más limpia.
+
+**La forma "abajo" mueve una decisión ya tomada, y por eso es la que hay que
+mirar con más cuidado.** Este mismo documento dice que la tira de la variante
+vive adentro de su tarjeta "y no al lado de la otra": esa forma la pone
+justamente ahí. La tira **corta la partida en el punto donde se abrió la
+prueba** y sigue con lo inventado, en violeta —el color que ya significa
+"inventada" en la flecha del tablero—, con un corte punteado igual al borde de
+su tarjeta. Lo jugado de verdad queda a la izquierda del corte y se llega
+scrolleando, igual que a todo el resto de la tira.
+
+Dos cosas que hubo que resolver ahí, y las dos por el mismo motivo —**no puede
+haber dos "estás acá" en el mismo renglón**—:
+- adentro de la variante **ninguna jugada de la partida queda marcada**: la
+  elegida es una inventada. Parado en el arranque, al revés: no hay ninguna
+  inventada marcada y la elegida vuelve a ser la de la partida.
+- **el cierre de la tira no va mientras se prueba.** Dice cómo terminó la
+  partida, y la partida inventada no termina así.
+
+El centrado automático sale gratis: `centrarTira` centra la elegida, sea de la
+partida o inventada.
+
+**El dial se va cuando el usuario elija.** Con él se van las otras tres formas,
+las dos pruebas que lo fijan y el bucle de capturas del arnés. Queda anotado
+acá para que el que lo saque sepa qué sacar.
+
 ### Lo que quedó abierto
 
+- **Dónde van las jugadas probadas.** Es lo que el dial de la v0.76 está
+  preguntando: adentro de la tarjeta, abajo en la tira, o no mostrarlas. Se
+  decide usando la app en el celular.
 - **La variante no se guarda.** Al salir se tira. Guardarla —para volver a una
   línea que encontraste— es otra tanda y toca la caché.
 
@@ -2674,6 +2734,9 @@ no tener que leer la sección entera para saber qué hay.
    fueron con la fila de botones. Abajo, en "De interfaz".
 6. **La estética de la navegación por las jugadas**, que el usuario dio por
    servible pero mejorable. Abajo, en "De interfaz".
+7. **Dónde van las jugadas probadas** (v0.76). La tarjeta punteada ya reemplaza
+   a la real, que era el pedido; lo que falta es elegir entre las cuatro formas
+   del dial. En §4sexdecies, con lo que ocupa cada una.
 
 **Del resto, lo que sigue vivo:** comparar dos jugadores y las dos estadísticas
 de reloj que faltan (§7), el listado de partidas sin rediseñar y la pantalla de

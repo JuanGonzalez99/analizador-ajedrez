@@ -340,6 +340,13 @@
                   padding: 4px 7px; }
   .tira .cierre b { font-weight: 700;
                     color: color-mix(in srgb, currentColor 95%, transparent); }
+  /* Lo inventado en la tira de la partida (dial de la v0.76, forma "abajo"):
+     VIOLETA, que es lo que ya significa "inventada" en la flecha del tablero, y
+     el corte con la misma línea punteada que el borde de su tarjeta. El fondo
+     de la elegida sale de `currentColor`, así que se tiñe solo. */
+  .tira .jg.inv { color: #6a1b9a; }
+  .tira .corte { flex: 0 0 0; width: 0; height: 17px; align-self: center;
+                 border-left: 2px dashed #6a1b9a; margin: 0 5px; }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
   .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: 13px;
@@ -386,7 +393,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.75 · 08-09";
+  window.VERSION = "v0.76 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -749,6 +756,12 @@
     <select id="tema" class="chico" aria-label="Tema del tablero"></select>
     <select id="verEval" class="chico" aria-label="Dónde se ve la evaluación"></select>
     <select id="marcasCurva" class="chico" aria-label="Cómo se marcan las categorías en la curva"></select>
+    <!-- DIAL TEMPORAL (v0.76): cómo se ve la pantalla mientras se prueba una
+         jugada. Son cuatro formas dibujadas que el usuario no pudo elegir
+         mirando capturas, así que se ponen las cuatro y se decide usando la
+         app, como el interruptor de margen contra gris de la v0.48. SE VA
+         cuando esté elegida: ver §4sexdecies. -->
+    <select id="formaPrueba" class="chico" aria-label="Cómo se ve la pantalla mientras se prueba una jugada"></select>
   </div>
 </div>
 
@@ -2558,6 +2571,52 @@ function aplicarModoEval(id) {
   });
 })();
 
+/* CÓMO SE VE LA PANTALLA MIENTRAS SE PRUEBA UNA JUGADA — DIAL TEMPORAL (v0.76).
+
+   El pedido que lo abrió es del usuario y es una sola cosa: CON UNA PRUEBA
+   ABIERTA NO TIENE QUE HABER DOS TARJETAS. La punteada —la de la prueba—
+   reemplaza a la de la jugada real en vez de apilarse arriba. Eso sacó 92 px de
+   una pantalla de 760, medidos con el arnés.
+
+   Lo que quedó sin decidir es DÓNDE VAN LAS JUGADAS PROBADAS, que hoy son una
+   tira que envuelve en dos renglones adentro de la tarjeta y se lleva otros 58.
+   Se dibujaron las cuatro formas y ninguna ganó mirando capturas, así que van
+   las cuatro y se decide usando la app: es la regla de §10 —"cuando dos formas
+   se defienden solas, ponerlas las dos y decidir usando la app"— la misma que
+   resolvió margen contra gris en la v0.48 con un interruptor que duró dos
+   versiones.
+
+   Dos ejes, y de ahí salen las cuatro:
+   - ¿la punteada REEMPLAZA a la real, o conviven? (`reemplaza`)
+   - ¿las probadas van adentro de la tarjeta, abajo en la tira, o no van?
+
+   POR DEFECTO VA "sin la lista", que es la más limpia: pedido del usuario.
+   Cuando esté elegida, se queda una y el dial se va. */
+const FORMAS_PRUEBA = {
+  sinLista: { nombre: "Prueba: sin la lista",     reemplaza: true,  lista: "no" },
+  adentro:  { nombre: "Prueba: la lista adentro", reemplaza: true,  lista: "adentro" },
+  abajo:    { nombre: "Prueba: la lista abajo",   reemplaza: true,  lista: "abajo" },
+  dos:      { nombre: "Prueba: las dos tarjetas", reemplaza: false, lista: "abajo" }
+};
+let FORMA_PRUEBA = "sinLista";
+function formaPrueba() { return FORMAS_PRUEBA[FORMA_PRUEBA] || FORMAS_PRUEBA.sinLista; }
+function aplicarFormaPrueba(id) {
+  FORMA_PRUEBA = FORMAS_PRUEBA[id] ? id : "sinLista";
+  try { localStorage.setItem("formaPrueba", FORMA_PRUEBA); } catch (e) { /* incógnito */ }
+}
+(function iniciarFormaPrueba() {
+  let guardado = "sinLista";
+  try { guardado = localStorage.getItem("formaPrueba") || "sinLista"; } catch (e) { /* incógnito */ }
+  $("formaPrueba").innerHTML = Object.entries(FORMAS_PRUEBA)
+    .map(([k, f]) => `<option value="${k}">${f.nombre}</option>`).join("");
+  aplicarFormaPrueba(guardado);
+  $("formaPrueba").value = FORMA_PRUEBA;
+  $("formaPrueba").onchange = seguro("forma de la prueba", () => {
+    aplicarFormaPrueba($("formaPrueba").value);
+    if (R) pintarRevision();
+  });
+})();
+
 /* EL INTERRUPTOR DE "DÓNDE VA LA EXPLICACIÓN" VIVIÓ DE LA v0.64 A LA v0.72 y
    cumplió su función, igual que el de margen contra gris de la v0.48: tenía las
    tres formas puestas, el usuario las miró en el celu y eligió. Lo elegido está
@@ -3029,6 +3088,20 @@ function tiraDeLaVariante() {
            `style="color:var(--c-${c.clave})"><span class="sm">${c.icono}</span>${x.san}</span>`;
   }).join("");
 }
+/* La variante EN LA TIRA DE LA PARTIDA (dial de la v0.76, forma "abajo"). Son
+   los mismos eslabones que `tiraDeLaVariante` pero con la clase de la tira de
+   abajo, así heredan el tamaño, el relleno medido y el fondo de la elegida.
+   El corte dice dónde deja de ser la partida y empieza lo inventado. */
+function laVarianteEnLaTira() {
+  const p = PRUEBA;
+  if (!p || !p.linea.length) return "";
+  return `<span class="corte" aria-hidden="true"></span>` + p.linea.map((x, i) => {
+    const c = presentar(x.fila);
+    return `<span class="jg inv ${i + 1 === p.ver ? "sel" : ""}" data-v="${i + 1}">` +
+           `<span class="sm">${c.icono}</span>${x.san}</span>`;
+  }).join("");
+}
+
 let VER_AMBOS = false;
 let MES = null;
 let MESES = [];        /* urls de todos los archivos mensuales del usuario */
@@ -4695,7 +4768,7 @@ function pintarRevision() {
   /* por defecto solo se pintan las jugadas propias: las del rival distraen de
      lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
   const lado = ladoDelUsuario(R);
-  const celda = (x, i) => {
+  const celda = (x, i, sel) => {
     if (!x) return "";
     const mia = !lado || VER_AMBOS || x.turno === lado;
     const p = presentar(x);
@@ -4705,7 +4778,7 @@ function pintarRevision() {
        verde que solo cambia de luminosidad: eran indistinguibles. El símbolo se
        lee a cualquier tamaño y no depende del color, así que también sirve para
        quien no distingue verde de rojo. El color se queda como refuerzo. */
-    return `<span class="jg ${i === IDX ? "sel" : ""}" data-i="${i}" style="color:${col}` +
+    return `<span class="jg ${i === sel ? "sel" : ""}" data-i="${i}" style="color:${col}` +
       `${mia ? "" : ";opacity:.55"}"><span class="sm">${p.icono}</span>` +
       `<span class="sa">${x.san}</span></span>`;
   };
@@ -4713,11 +4786,26 @@ function pintarRevision() {
      partida. La primera de la tira lo lleva igual aunque sea de las negras, o
      no se sabría en qué jugada arranca lo que se está viendo. */
   $("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS, MARCA_CURVA);
-  $("tiraSc").innerHTML = R.filas.map((x, i) =>
+  /* CON LA FORMA "abajo" LA TIRA CORTA donde se abrió la prueba y sigue con lo
+     inventado, en violeta: una sola tira y un solo sistema de navegación. Lo
+     jugado de verdad queda a la izquierda del corte y se llega scrolleando,
+     igual que a todo el resto de la tira. Y la elegida pasa a ser una de la
+     variante, así que ninguna de la partida queda marcada: si no, habría dos
+     "estás acá" en el mismo renglón. El cierre —cómo terminó la partida— no va
+     mientras se prueba: esa partida no termina así. */
+  const fp = formaPrueba();
+  const varAbajo = !!(PRUEBA && PRUEBA.linea.length && fp.lista === "abajo");
+  const hasta = varAbajo ? PRUEBA.desde0 : R.filas.length;
+  const selTira = varAbajo && PRUEBA.ver > 0 ? -1 : IDX;
+  $("tiraSc").innerHTML = R.filas.slice(0, hasta).map((x, i) =>
     (x.turno === "w" || i === 0 ? `<span class="np">${x.n}.</span>` : "") +
-    celda(x, i)).join("") + cierreDeLaTira(fin, R.filas);
+    celda(x, i, selTira)).join("") +
+    (varAbajo ? laVarianteEnLaTira() : cierreDeLaTira(fin, R.filas));
   $("tiraSc").querySelectorAll("span[data-i]").forEach(sp => {
     sp.onclick = () => irA(+sp.dataset.i);
+  });
+  $("tiraSc").querySelectorAll("span[data-v]").forEach(sp => {
+    sp.onclick = () => verDeLaVariante(+sp.dataset.v);
   });
   medirTira();
   centrarTira();
@@ -4748,6 +4836,13 @@ function pintarRevision() {
   /* La tarjeta de la variante. Sin variante abierta no existe, y la pantalla
      queda exactamente como antes de la v0.65. */
   $("prueba").classList.toggle("oculto", !PRUEBA);
+  /* LA PUNTEADA REEMPLAZA A LA REAL (v0.76): con una prueba abierta había dos
+     tarjetas apiladas, y el usuario las quiso una. Cuesta poco: la comparación
+     contra lo que se jugó de verdad ya viaja en la punteada —"pierde 0.00 · en
+     la partida exd4 pierde 0.12"— y de la segunda jugada de la variante en
+     adelante no hay contra qué comparar, así que ahí la real no decía nada.
+     La forma "dos" del dial es la única que las deja convivir. */
+  $("veredicto").classList.toggle("oculto", !!PRUEBA && fp.reemplaza);
   if (PRUEBA) {
     const t = textoPrueba(R.profBase || +$("prof").value || 16);
     $("prueba").style.borderLeftColor = t.color;
@@ -4757,7 +4852,7 @@ function pintarRevision() {
     $("pSub").textContent = t.sub;
     $("pExp").textContent = t.exp;
     $("pExp").classList.toggle("oculto", !t.exp);
-    const tira = tiraDeLaVariante();
+    const tira = fp.lista === "adentro" ? tiraDeLaVariante() : "";
     $("pLinea").innerHTML = tira;
     $("pLinea").classList.toggle("oculto", !tira);
     $("pLinea").querySelectorAll("span[data-v]").forEach(sp => {
