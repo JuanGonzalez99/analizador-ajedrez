@@ -248,7 +248,7 @@ for (let i = 0; ; i++) {
    dejarla al azar del largo la escondía detrás de otra más larga. */
 let mejor = 0;
 textos.forEach((t, i) => { if (t.length > textos[mejor].length) mejor = i; });
-const conDoble = textos.findIndex(t => t.includes("a la vez"));
+const conDoble = textos.findIndex(t => t.includes("ataque doble"));
 if (conDoble >= 0) mejor = conDoble;
 for (let i = textos.length - 1; i > mejor; i--) await pg.click("#ant");
 console.log("explicación:", JSON.stringify(textos[mejor]),
@@ -296,6 +296,12 @@ console.log("botones:  ", JSON.stringify(await pg.locator("#vTit").textContent()
             await pg.locator("#btnProbar").evaluate(e => e.classList.contains("primario"))
               ? "Probar otra" : "Siguiente");
 await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-mala" + SUFIJO + ".png") });
+/* MAQUETA para decidir: la misma fila con DOS botones, que es como quedaría si
+   "Siguiente" saltara a la próxima jugada tuya. Se esconde el del medio y se
+   saca la foto; no cambia nada de la app. Esto se va cuando el usuario elija. */
+await pg.evaluate(() => { document.getElementById("btnProbar").style.display = "none"; });
+await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-dos" + SUFIJO + ".png") });
+await pg.evaluate(() => { document.getElementById("btnProbar").style.display = ""; });
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("tarjeta-y-botones");
@@ -341,6 +347,10 @@ else {
       null, { timeout: 30000 });
     await foto("prueba-5-encadenada");
     await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
+  /* MAQUETA para decidir: la misma tarjeta con el borde violeta en vez del color
+   de la categoría. Se va cuando el usuario elija. */
+  await pg.evaluate(() => { document.getElementById("prueba").style.borderLeftColor = "#6a1b9a"; });
+  await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba-violeta" + SUFIJO + ".png") });
     console.log("variante:", JSON.stringify(
       (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
     /* volver al arranque de la variante tocando su tira */

@@ -356,7 +356,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.69 · 08-09";
+  window.VERSION = "v0.70 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1543,8 +1543,16 @@ const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
    Desde la v0.69 la función que hace todo esto devuelve PARTES y no una cadena;
    `explicarJugada` es el join, y está al final. */
 
-/* La explicación, EN PARTES. Cada parte es una frase con su referencia al
-   tablero: `{ txt, sq }` para una pieza y `{ txt, uci }` para una jugada.
+/* La explicación, EN PARTES. Cada parte es una frase con tres cosas:
+   `txt` la frase entera, `marca` EL NOMBRE DEL CONCEPTO adentro de esa frase
+   —el pedacito que se toca— y `sq` o `uci`, que es lo que se enciende en el
+   tablero cuando lo tocás.
+
+   LA MARCA ES EL CONCEPTO Y NO LA FRASE ENTERA, por decisión del usuario y
+   porque es lo que hace chess.com: ellos resaltan "indefenso", "ataque doble",
+   "columna abierta". La frase entera subrayada se probó en la v0.69 y se
+   cambió: leer una frase que es toda un botón cuesta más, y el nombre del
+   concepto es además lo que se aprende.
 
    ESO ES LO QUE CAMBIÓ EN LA v0.69, y sale de una captura del usuario: cuando
    chess.com resalta una palabra —"indefenso"— NO te la explica, te la MUESTRA
@@ -1570,11 +1578,14 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
      mecanismo que no costó nada no es un hallazgo, es una coincidencia. */
   let mecanismo = null;
   if (f.mateContra)
-    mecanismo = { txt: `Deja mate forzado en ${f.mateContra} en contra.` };
+    mecanismo = { txt: `Deja mate forzado en ${f.mateContra} en contra.`,
+                  marca: "mate forzado" };
   else if (f.colgada && f.perdida >= 0.5)
-    mecanismo = { txt: `${mayus(pieza)} queda comible en ${donde}.`, sq: donde };
+    mecanismo = { txt: `${mayus(pieza)} queda comible en ${donde}.`,
+                  marca: "queda comible", sq: donde };
   else if (f.tomoConOtra && f.perdida >= 0.5 && f.cap)
-    mecanismo = { txt: `La captura iba con otra pieza: ${f.cap.san}.` };
+    mecanismo = { txt: `La captura iba con otra pieza: ${f.cap.san}.`,
+                  marca: f.cap.san };
   /* La pieza colgada que NO es la que moviste, y que ANTES no lo estaba. Es el
      error más común de todos y hasta la v0.67 la app solo miraba la que se
      había movido: te podías dejar la dama en otro lado y la tarjeta hablaba del
@@ -1585,7 +1596,7 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
   else if (obs && obs.nuevas && obs.nuevas.length && f.perdida >= 0.5) {
     const c = obs.nuevas[0];
     mecanismo = { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda sin defender.`,
-                  sq: c.sq };
+                  marca: "sin defender", sq: c.sq };
   }
 
   /* 2. LO QUE LA JUGADA SALVA, que es el espejo del anterior y lo que faltaba
@@ -1596,17 +1607,18 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
     const s = obs.salvadas[0];
     salvada = { txt: `${s.seFue ? "Saca" : "Salva"} ${suya(s.pieza)} de ${s.sq}, ` +
                      `que estaba sin defender.`,
-                sq: s.seFue ? donde : s.sq };
+                marca: "sin defender", sq: s.seFue ? donde : s.sq };
   }
 
   /* 3. QUÉ HABÍA en su lugar. */
   let habia = null;
   if (f.oportunidad && f.oportunidad.tipo === "mate")
     habia = { txt: `Había mate forzado en ${f.oportunidad.n}` +
-                   `${mejorSan ? `, con ${mejorSan}` : ""}.`, uci: f.mejor };
+                   `${mejorSan ? `, con ${mejorSan}` : ""}.`,
+              marca: mejorSan || "mate forzado", uci: f.mejor };
   else if (f.oportunidad && f.oportunidad.tipo === "material")
     habia = { txt: `Había ${f.oportunidad.san}, que ${loQueSeLlevaba(f.oportunidad)}.`,
-              uci: f.mejor };
+              marca: f.oportunidad.san, uci: f.mejor };
 
   /* 4. EL MÉRITO, para las buenas.
 
@@ -1621,18 +1633,21 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
   let merito = null;
   if (f.cat === "brillante")
     merito = f.colgada
-      ? { txt: `${mayus(pieza)} queda comible en ${donde}, y aun así es la mejor.`, sq: donde }
-      : { txt: "Entrega material y aun así es la mejor del motor." };
+      ? { txt: `${mayus(pieza)} queda comible en ${donde}, y aun así es la mejor.`,
+          marca: "queda comible", sq: donde }
+      : { txt: "Entrega material y aun así es la mejor del motor.", marca: "Entrega material" };
   else if (f.cat === "genial" && f.unicaBuena)
     merito = { txt: `Era la única: la segunda del motor quedaba ` +
-                    `${(f.huecoSegunda / 100).toFixed(2)} atrás.` };
+                    `${(f.huecoSegunda / 100).toFixed(2)} atrás.`,
+               marca: "Era la única" };
   else if (f.tomoBuena)
-    merito = { txt: "Es la captura que había para hacer.", sq: donde };
+    merito = { txt: "Es la captura que había para hacer.", marca: "la captura", sq: donde };
   /* Una recaptura no es un mérito y tampoco un descuido: el material ya estaba
      perdido y solo lo estás recuperando. Es la misma distinción que le sacó los
      falsos positivos a "Genial" (§8), dicha en la tarjeta. */
   else if (f.esRecaptura)
-    merito = { txt: "Es una recaptura: el material ya estaba perdido.", sq: donde };
+    merito = { txt: "Es una recaptura: el material ya estaba perdido.",
+               marca: "recaptura", sq: donde };
 
   /* 5. LO QUE LA JUGADA ATACA. Es lo que chess.com dice en las jugadas que
      salieron bien —"echás al alfil rival con un peón"— y lo que a la tarjeta le
@@ -1643,12 +1658,15 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
   let ataque = null;
   if (obs && obs.amenazadas.length >= 2) {
     const [a, b] = obs.amenazadas;
-    ataque = { txt: `Ataca a la vez ${piezaEn(a.pieza, a.sq)} y ${piezaEn(b.pieza, b.sq)}.`,
-               sq: [a.sq, b.sq] };
+    /* Se nombra el concepto —"ataque doble"— en vez de describirlo: es lo que
+       se puede aprender de una tarjeta, y es lo que chess.com resalta. */
+    ataque = { txt: `Es un ataque doble: ${piezaEn(a.pieza, a.sq)} y ` +
+                    `${piezaEn(b.pieza, b.sq)}.`,
+               marca: "ataque doble", sq: [a.sq, b.sq] };
   } else if (obs && obs.amenazadas.length === 1) {
     const a = obs.amenazadas[0];
     ataque = { txt: `Ataca ${piezaEn(a.pieza, a.sq)} con ${PIEZA_UN[f.pieza] || "una pieza"}.`,
-               sq: a.sq };
+               marca: "Ataca", sq: a.sq };
   }
 
   /* 6. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
@@ -1664,7 +1682,7 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
   if (hayNumeros && !f.remate && !f.mateContra && f.mateDe === null) {
     const a = banda(f.franja);
     const b = banda((f.turno === "w" ? f.evalBlancas : -f.evalBlancas) / 100);
-    if (a !== b) rumbo = { txt: `La posición pasa de ${a} a ${b}.` };
+    if (a !== b) rumbo = { txt: `La posición pasa de ${a} a ${b}.`, marca: b };
   }
 
   /* 7. LA ALTERNATIVA, y va última de las que hablan de esta jugada: el
@@ -1676,7 +1694,7 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
      jugada que lo daba, y "Había mate forzado en 8, con Rd5. La mejor era Rd5."
      es la clase de eco que la v0.44 le sacó a las leyendas. */
   const alternativa = (mejorSan && !(habia && habia.txt.includes(mejorSan)))
-    ? { txt: `La mejor era ${mejorSan}.`, uci: f.mejor } : null;
+    ? { txt: `La mejor era ${mejorSan}.`, marca: mejorSan, uci: f.mejor } : null;
 
   /* 8. LA RESPUESTA DEL RIVAL. Sale de una evaluación que ya estaba hecha —la
      de la posición siguiente— y es lo que convierte la tarjeta en el comienzo
@@ -1684,7 +1702,8 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
      Va al final porque casi siempre hay una, así que si fuera antes taparía a
      todo lo demás. Se calla con la partida terminada: no hay respuesta que dar. */
   const respuesta = (sanRival && !f.remate)
-    ? { txt: `El rival tiene ${sanRival}.`, uci: f.mejorRival, deDespues: true } : null;
+    ? { txt: `El rival tiene ${sanRival}.`, marca: sanRival, uci: f.mejorRival,
+        deDespues: true } : null;
 
   /* Como mucho DOS. Es una tarjeta de celular y compite con el tablero por la
      pantalla; este orden es el que decide cuáles dos sobreviven. */
@@ -1808,8 +1827,15 @@ function pintarExplicacion(id, partes) {
   el.innerHTML = partes.map((p, i) => {
     const ref = p.sq ? ` data-sq="${[].concat(p.sq).join(",")}"`
               : p.uci ? ` data-uci="${p.uci}"` : "";
+    /* Se marca EL CONCEPTO adentro de la frase, no la frase. Si la marca no
+       aparece tal cual en el texto —un cambio de redacción que se olvidó de
+       actualizarla— la frase sale entera y sin resaltar, que es feo pero no
+       rompe nada; hay una prueba que las mantiene alineadas. */
+    const k = p.marca ? p.txt.indexOf(p.marca) : -1;
+    if (!ref || k < 0) return `<span class="fr">${p.txt}</span>`;
     const enc = RESALTA && RESALTA.i === i ? " on" : "";
-    return `<span class="fr${ref ? " senala" : ""}${enc}"${ref} data-i="${i}">${p.txt}</span>`;
+    return `<span class="fr">${p.txt.slice(0, k)}<span class="senala${enc}"${ref} ` +
+           `data-i="${i}">${p.marca}</span>${p.txt.slice(k + p.marca.length)}</span>`;
   }).join(" ");
   el.querySelectorAll("span.senala").forEach(sp => {
     sp.onclick = seguro("señalar", () => {

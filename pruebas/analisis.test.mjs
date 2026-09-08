@@ -2255,6 +2255,48 @@ test("hay una partida de prueba donde el ataque doble se dispara", () => {
   const obs = A.observarJugada(f, fens[i]);
   assert.deepEqual(obs.amenazadas.map(a => a.sq).sort(), ["c5", "e5"]);
   const partes = A.partesDeLaExplicacion(f, "Bb5", true, null, obs);
-  assert.equal(partes[0].txt, "Ataca a la vez el alfil de c5 y el caballo de e5.");
-  assert.deepEqual(partes[0].sq, ["c5", "e5"], "y señala las dos casillas");
+  assert.equal(partes[0].txt, "Es un ataque doble: el alfil de c5 y el caballo de e5.");
+  assert.equal(partes[0].marca, "ataque doble", "el concepto es lo que se toca");
+  assert.deepEqual(partes[0].sq, ["c5", "e5"], "y enciende las dos casillas");
+});
+
+
+test("cada frase que señala algo trae el nombre de su concepto, y está en la frase", () => {
+  /* La marca es el pedacito que se toca. Si dejara de aparecer en el texto —un
+     cambio de redacción que se olvida de actualizarla— la frase saldría entera
+     y sin resaltar, que es feo y silencioso. Esta prueba lo agarra.
+     Se barren todas las jugadas de las cuatro partidas de prueba. */
+  const partidas = ["de-prueba", "mate", "ahogado", "doble"];
+  let miradas = 0, conMarca = 0;
+  for (const nombre of partidas) {
+    const pgn = fs.readFileSync(new URL(`./partida-${nombre}.pgn`, import.meta.url), "utf8");
+    const { jugadas, fens } = A.prepararPartida(pgn);
+    for (let i = 0; i < jugadas.length; i++) {
+      /* evaluaciones inventadas pero VARIADAS, para que caigan categorías
+         distintas y se recorran todas las ramas de la redacción */
+      const evs = [
+        { cp: (i * 137) % 700 - 350, mate: null, mejor: fens[i + 1] ? null : null,
+          segunda: { cp: (i * 91) % 500 - 250, mate: null } },
+        { cp: (i * 211) % 700 - 350, mate: null, mejor: null, segunda: null }
+      ];
+      const j = new Chess(fens[i]);
+      const legales = j.moves({ verbose: true });
+      evs[0].mejor = legales.length
+        ? legales[i % legales.length].from + legales[i % legales.length].to : null;
+      const f = A.derivarFilas([jugadas[i]], [fens[i], fens[i + 1]], evs,
+        { pos: new Set(), nombres: {} }, i, "critico", null, 3,
+        jugadas[i - 1] || null).filas[0];
+      const obs = A.observarJugada(f, fens[i]);
+      for (const p of A.partesDeLaExplicacion(f, "Nf3", true, "Nc6", obs)) {
+        miradas++;
+        if (!p.sq && !p.uci) continue;   /* sin referencia no hace falta marca */
+        conMarca++;
+        assert.ok(p.marca, "frase sin concepto: " + p.txt);
+        assert.ok(p.txt.includes(p.marca),
+          `el concepto "${p.marca}" no está en la frase "${p.txt}"`);
+      }
+    }
+  }
+  assert.ok(miradas > 100, "se miraron pocas frases: " + miradas);
+  assert.ok(conMarca > 20, "se miraron pocas frases con referencia: " + conMarca);
 });
