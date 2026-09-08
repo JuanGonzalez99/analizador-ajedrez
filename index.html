@@ -341,7 +341,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.66 · 08-09";
+  window.VERSION = "v0.67 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -791,7 +791,11 @@ function capturaBuena(fen, mejorUci) {
   if (gana < 1) return null;
   const j = new Chess(fen);
   const hecho = j.move(mov);
-  return hecho ? { san: hecho.san, gana } : null;
+  /* `comida` es la pieza que se capturaba, y se sabe con certeza: la devuelve
+     chess.js. `gana` es otra cosa —el valor NETO, ya restada la recaptura—, y
+     por eso van los dos: con los dos se puede decir "se llevaba el caballo"
+     cuando nadie recapturaba, y "ganaba 2 peones en el cambio" cuando sí. */
+  return hecho ? { san: hecho.san, gana, comida: hecho.captured } : null;
 }
 
 /* ¿la jugada entrega material? (queda comible, o come algo que vale menos) */
@@ -1246,7 +1250,8 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
        era la heurística de material a un ply, que llamaba ganadoras a capturas
        que el motor desaconseja. */
     if (!oportunidad && !tomoBuena && !tomoConOtra && capB)
-      oportunidad = { tipo: "material", san: capB.san, gana: capB.gana };
+      oportunidad = { tipo: "material", san: capB.san, gana: capB.gana,
+                      comida: capB.comida };
 
     const entrega = esMejor
       ? entregaMaterial(fens[i], { from: j.from, to: j.to, promotion: j.promotion })
@@ -1328,6 +1333,12 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       remate, mateDe, evalBlancas: despues,
       evalTexto: remate ? TEXTO_REMATE[remate] : textoEval(evs[i + 1], rival),
       fen: fens[i + 1], mejor: evs[i].mejor, senales, franja: antesMio,
+      /* La mejor respuesta del rival a lo que jugaste. Ya estaba calculada
+         —es la mejor de la posición SIGUIENTE, que el motor evaluó igual— y no
+         se emitía. Es lo que deja que la tarjeta diga "y ahora el rival tiene
+         X" sin una sola llamada más al motor, y es además la puerta a la
+         variante: la jugada que te nombra es la que vas a querer probar. */
+      mejorRival: evs[i + 1] ? evs[i + 1].mejor : null,
       pieza: j.piece, esCaptura: !!j.captured, colgada,
       capBuena: !!capB, tomoBuena, tomoConOtra,
       /* Para REDACTAR, no para medir: `explicarJugada` los necesita
@@ -1451,6 +1462,21 @@ const PIEZA_TU = { p: "tu peón", n: "tu caballo", b: "tu alfil",
    frase dice cuánto vale y NUNCA qué pieza es. */
 const enPeones = n => n === 1 ? "un peón" : `${n} peones`;
 
+/* Qué se llevaba una captura, en palabras. Son DOS frases distintas y la
+   diferencia no es de estilo:
+   - sin recaptura, se sabe exactamente qué pieza cae, y decirlo es más claro
+     que cualquier número: "se llevaba el caballo";
+   - con recaptura, lo que queda es un saldo, y ahí nombrar la pieza mentiría
+     —cobrás la dama pero entregás la torre—, así que se dice el saldo.
+   `gana` es el neto y `VALOR[comida]` el bruto: que sean distintos ES la
+   definición de que hubo recaptura, así que no hace falta calcularla de nuevo. */
+const loQueSeLlevaba = cap => {
+  const bruto = VALOR[cap.comida] || 0;
+  return cap.comida && cap.gana === bruto
+    ? `se llevaba ${PIEZA_EL[cap.comida] || "material"}`
+    : `ganaba ${enPeones(cap.gana)} en el cambio`;
+};
+
 const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
 
 /* La explicación redactada de una jugada: lo que la tarjeta dice ADEMÁS de la
@@ -1479,7 +1505,7 @@ const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
    → "tu caballo". El resto queda impersonal a propósito: con un PGN pegado no
    se sabe de qué lado jugaba, y una frase que tutea a medias se lee peor que
    una que no tutea nunca. */
-function explicarJugada(f, mejorSan = null, mio = null) {
+function explicarJugada(f, mejorSan = null, mio = null, sanRival = null) {
   /* En una forzada no hubo decisión y la tarjeta ya lo dice entera (§4.6bis):
      cualquier cosa que agreguemos acá juzga algo que no se eligió. */
   if (!f || f.forzada) return "";
@@ -1502,7 +1528,7 @@ function explicarJugada(f, mejorSan = null, mio = null) {
     habia = `Había mate forzado en ${f.oportunidad.n}` +
             `${mejorSan ? `, con ${mejorSan}` : ""}.`;
   else if (f.oportunidad && f.oportunidad.tipo === "material")
-    habia = `Había ${f.oportunidad.san}, que ganaba ${enPeones(f.oportunidad.gana)}.`;
+    habia = `Había ${f.oportunidad.san}, que ${loQueSeLlevaba(f.oportunidad)}.`;
 
   /* 3. EL MÉRITO, para las buenas.
 
@@ -1522,6 +1548,10 @@ function explicarJugada(f, mejorSan = null, mio = null) {
     merito = `Era la única: la segunda del motor quedaba ` +
              `${(f.huecoSegunda / 100).toFixed(2)} atrás.`;
   else if (f.tomoBuena) merito = "Es la captura que había para hacer.";
+  /* Una recaptura no es un mérito y tampoco un descuido: el material ya estaba
+     perdido y solo lo estás recuperando. Es la misma distinción que le sacó los
+     falsos positivos a "Genial" (§8), dicha en la tarjeta. */
+  else if (f.esRecaptura) merito = "Es una recaptura: el material ya estaba perdido.";
 
   /* 4. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
      (`banda`, arriba). Inventar acá una segunda escala de "cómo va la partida"
@@ -1539,7 +1569,27 @@ function explicarJugada(f, mejorSan = null, mio = null) {
     if (a !== b) rumbo = `La posición pasa de ${a} a ${b}.`;
   }
 
-  return [merito, mecanismo, habia, rumbo].filter(Boolean).slice(0, 2).join(" ");
+  /* 5. LA ALTERNATIVA, y va última de las que hablan de esta jugada: el
+     cuadrito "Mejor" ya la muestra, así que acá suma solo cuando no hay nada
+     mejor que decir. `mejorSan` llega en null cuando la jugada ya era la
+     mejor, y ahí no hay alternativa que ofrecer.
+
+     Y no se repite: cuando había un mate, la frase de arriba YA nombró la
+     jugada que lo daba, y "Había mate forzado en 8, con Rd5. La mejor era Rd5."
+     es la clase de eco que la v0.44 le sacó a las leyendas. */
+  const alternativa = (mejorSan && !habia.includes(mejorSan))
+    ? `La mejor era ${mejorSan}.` : "";
+
+  /* 6. LA RESPUESTA DEL RIVAL. Sale de una evaluación que ya estaba hecha —la
+     de la posición siguiente— y es lo que convierte la tarjeta en el comienzo
+     de una variante: te nombra la jugada que vas a querer probar en el
+     tablero. Va al final porque casi siempre hay una, así que si fuera antes
+     taparía a todo lo demás.
+     Se calla con la partida terminada: no hay respuesta que dar. */
+  const respuesta = (sanRival && !f.remate) ? `El rival tiene ${sanRival}.` : "";
+
+  return [merito, mecanismo, habia, rumbo, alternativa, respuesta]
+    .filter(Boolean).slice(0, 2).join(" ");
 }
 
 /* ===================== fin del bloque de análisis ====================== */
@@ -1945,6 +1995,18 @@ async function analizarPartida(pgn, prof, id, onProg, opc = {}) {
    el FEN de después, así que la de antes es la de la fila i-1, y para la primera
    es el arranque de la partida. Si algo no cuadra se muestra el UCI crudo antes
    que nada. */
+/* Un UCI del motor pasado a notación, en la posición que se le diga. Desde la
+   v0.67 hacen falta DOS posiciones —la de antes para la mejor, la de después
+   para la respuesta del rival— así que la cuenta vive en un solo lado. */
+function sanDeUci(fen, uci) {
+  if (!fen || !uci || uci.length < 4) return null;
+  try {
+    const m = new Chess(fen).move({ from: uci.slice(0, 2), to: uci.slice(2, 4),
+                                    promotion: uci[4] || undefined });
+    return m ? m.san : null;
+  } catch (e) { return null; }
+}
+
 function sanDeLaMejor(i) {
   const f = R.filas[i];
   if (!f || !f.mejor || f.mejor.length < 4) return "—";
@@ -2507,7 +2569,8 @@ function textoPrueba(prof) {
       ico: c.icono,
       tit: `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} — ${c.nombre}`,
       sub: `pierde ${f.perdida.toFixed(2)}` + (p.ver === 1 ? contra : ""),
-      exp: explicarJugada(f, null, lado ? f.turno === lado : null),
+      exp: explicarJugada(f, null, lado ? f.turno === lado : null,
+                          sanDeUci(f.fen, f.mejorRival)),
       color: `var(--c-${c.clave})`
     };
   }
@@ -4068,7 +4131,8 @@ function pintarRevision() {
      no hay alternativa que ofrecer. */
   const ladoUsr = ladoDelUsuario(R);
   const explicado = explicarJugada(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
-                                   ladoUsr ? f.turno === ladoUsr : null);
+                                   ladoUsr ? f.turno === ladoUsr : null,
+                                   sanDeUci(f.fen, f.mejorRival));
   const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
   $("vIco").textContent = c.icono;

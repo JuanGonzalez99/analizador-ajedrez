@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.66**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.67**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1528,8 +1528,8 @@ había, rumbo.
 
 | decisión | por qué |
 |---|---|
-| el material va en **peones**, no en "puntos" | la tarjeta ya dice "12,3 puntos de victoria" un renglón más arriba; dos "puntos" con significados distintos en la misma tarjeta es el error de denominadores de la columna "% resto" |
-| el valor **nunca** se traduce a una pieza | `gana` sale de `VALOR`, así que 3 puede ser un caballo o un alfil, y con recaptura de por medio es una diferencia. "Ganaba una pieza" sería inventar |
+| el saldo va en **peones**, no en "puntos" | la tarjeta ya dice "12,3 puntos de victoria" un renglón más arriba; dos "puntos" con significados distintos en la misma tarjeta es el error de denominadores de la columna "% resto" |
+| la pieza se nombra **solo si no hay recaptura** (v0.67) | sin recaptura, chess.js dice exactamente qué cae y decirlo es más claro que cualquier número; con recaptura lo que queda es un saldo, y nombrar la pieza mentiría porque cobrás una y entregás otra |
 | el rumbo usa **`banda`**, la que ya decide "Genial" por cruce | inventar una segunda escala de "cómo va la partida" sería tener dos respuestas para la misma pregunta en la misma pantalla |
 | **solo se tutea la pieza** ("tu caballo"), el resto queda impersonal | con un PGN pegado no se sabe de qué lado jugaba el usuario, y una frase que tutea a medias se lee peor que una que no tutea nunca |
 | una **forzada** no se explica | no hubo decisión; cualquier cosa que se agregue juzga algo que no se eligió |
@@ -1561,14 +1561,36 @@ mano, como el de margen contra gris de la v0.48:
 Cuando el usuario elija, **las otras dos se van** junto con el selector y con las
 capturas del arnés que las dibujan.
 
-### Lo que quedó por medir
+### Cuánto habla, y qué se hizo cuando hablaba poco (v0.67)
 
-Con el motor falseado del arnés, **5 de 36 jugadas** tienen algo que explicar.
-Ese número **no vale**: el motor falso elige su "mejor" jugada casi al azar, así
-que las omisiones de material y las capturas buenas —que son las que más texto
-producen— casi no se disparan. La proporción de verdad hay que mirarla en el
-celu, con el motor real. Si resultara baja, lo que falta no es aflojar la regla
-de arriba: es medir más mecanismos.
+En la v0.64 hablaba en **5 de 36 jugadas** del arnés. El usuario lo marcó como
+un problema de uso, y tenía razón: una tarjeta que casi siempre calla es una
+tarjeta que no se lee. **La respuesta NO fue aflojar la regla** —seguir sin
+afirmar nada que no esté medido— sino **medir más cosas de las que ya estaban
+calculadas y se tiraban**. En la v0.67 habla en **34 de 36**.
+
+Las cuatro que se agregaron, todas de datos que ya existían:
+
+| frase | de dónde sale | por qué recién ahora |
+|---|---|---|
+| "se llevaba el caballo" | `hecho.captured` de chess.js | estaba en `capturaBuena` y no se devolvía; la app decía "ganaba 3 peones", que es cierto y no se entiende |
+| "ganaba 4 peones en el cambio" | `gana` distinto del bruto | cuando hay recaptura, nombrar la pieza **mentiría**: cobrás la dama y entregás la torre |
+| "Es una recaptura: el material ya estaba perdido" | `esRecaptura` | ya se usaba para sacarle falsos positivos a "Genial" (§8) y nunca se le había dicho al usuario |
+| "El rival tiene Nc6" | `evs[i + 1].mejor` | **la mejor de la posición siguiente ya estaba evaluada** y no se emitía |
+
+La última es la que más cambia el uso, y no cuesta una sola llamada más al
+motor: es la mejor jugada de la posición que quedó, que el motor calculó igual.
+Además **es la puerta a la variante**: la tarjeta te nombra la jugada que vas a
+querer probar, y el tablero ya se toca.
+
+**El orden importa y está elegido:** mérito, mecanismo, qué había, rumbo,
+la alternativa, la respuesta del rival. Las dos últimas van al final porque casi
+siempre existen: adelante taparían a todo lo demás. Y la alternativa **no se
+dice si la frase anterior ya nombró esa jugada** — "Había mate forzado en 8, con
+Rd5. La mejor era Rd5." es el mismo eco que la v0.44 le sacó a las leyendas.
+
+**Sigue devolviendo vacío cuando no hay nada honesto que decir.** Son 2 de 36, y
+son las jugadas donde la partida ya terminó.
 
 ## 4sexdecies. Probar jugadas: la variante (v0.65, rehecha en la v0.66)
 

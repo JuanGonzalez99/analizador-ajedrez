@@ -1829,7 +1829,8 @@ test("el mate en contra se dice, y calla el rumbo: la evaluación está saturada
     { cp: null, mate: 0, mejor: null, segunda: null }
   ], SIN_LIBRO_EXP, 0, "critico", null).filas;
   assert.equal(f[2].mateContra, 1, "la fila guarda el número, no solo la señal");
-  assert.equal(A.explicarJugada(f[2], "d4", true), "Deja mate forzado en 1 en contra.");
+  assert.equal(A.explicarJugada(f[2], "d4", true),
+    "Deja mate forzado en 1 en contra. La mejor era d4.");
   assert.ok(!A.explicarJugada(f[2], "d4", true).includes("pasa de"),
     "con mate forzado el número está topeado en 1000 y el rumbo mentiría");
 });
@@ -2026,4 +2027,83 @@ test("no se puede probar mientras corre un análisis", () => {
 
 test("la coronación va a dama sin preguntar, y está dicho", () => {
   assert.ok(html.includes('(!x.promotion || x.promotion === "q")'));
+});
+
+
+/* --------- lo que la explicación aprendió a decir en la v0.67 --------- */
+
+test("una captura sin recaptura nombra la pieza; con recaptura, el saldo", () => {
+  /* Las dos frases dicen cosas distintas y las dos son ciertas. Nombrar la
+     pieza cuando hay recaptura mentiría: cobrás una y entregás otra. */
+  /* Dama negra colgada en a8 y el rey negro lejos: Qxa8 no se recaptura. En vez
+     de eso las blancas mueven el rey. Las dos posiciones las verifica chess.js. */
+  const sinRecaptura = unaFila("q6k/8/8/8/8/8/8/Q3K3 w - - 0 1", "Kf2",
+    [{ cp: 300, mate: null, mejor: "a1a8", segunda: null },
+     { cp: -100, mate: null, mejor: "h8g8", segunda: null }]);
+  assert.equal(sinRecaptura.oportunidad.comida, "q", "se comía la dama");
+  assert.equal(sinRecaptura.oportunidad.gana, 9, "y nadie recapturaba");
+  assert.ok(A.explicarJugada(sinRecaptura, null, true).includes("se llevaba la dama"),
+    A.explicarJugada(sinRecaptura, null, true));
+
+  /* Torre d1 contra dama d8, pero el rey de e8 recaptura: ahí el saldo es 4 y
+     nombrar la dama mentiría, porque entregás la torre. */
+  const conRecaptura = unaFila("3qk3/p6p/8/8/8/8/7P/R2RK3 w - - 0 1", "Rxa7",
+    [{ cp: 300, mate: null, mejor: "d1d8", segunda: null },
+     { cp: -100, mate: null, mejor: "d8d1", segunda: null }]);
+  assert.equal(conRecaptura.oportunidad.gana, 4, "9 de la dama menos 5 de la torre");
+  const dice = A.explicarJugada(conRecaptura, null, true);
+  assert.ok(dice.includes("ganaba 4 peones en el cambio"), dice);
+  assert.ok(!dice.includes("la dama"), "no puede nombrar una pieza que se paga: " + dice);
+});
+
+test("la respuesta del rival sale de una evaluación que ya estaba hecha", () => {
+  /* Es la mejor de la posición SIGUIENTE, que el motor ya evaluó: la tarjeta la
+     dice sin una sola llamada más. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5 2. Nf3");
+  const filas = A.derivarFilas(jugadas, fens, [
+    { cp: 20, mate: null, mejor: "e2e4", segunda: { cp: 10, mate: null } },
+    { cp: -20, mate: null, mejor: "e7e5", segunda: null },
+    { cp: 25, mate: null, mejor: "g1f3", segunda: { cp: 15, mate: null } },
+    { cp: -25, mate: null, mejor: "b8c6", segunda: null }
+  ], SIN_LIBRO_EXP, 0, "critico", null).filas;
+  assert.equal(filas[2].mejorRival, "b8c6", "la mejor de la posición siguiente");
+  assert.equal(A.explicarJugada(filas[2], null, true, "Nc6"), "El rival tiene Nc6.");
+});
+
+test("la respuesta del rival va última, y no tapa a lo que importa", () => {
+  /* Casi siempre hay una, así que si fuera antes taparía a todo lo demás. */
+  const f = unaFila(DAMA_COLGADA, "Qd5", EVS_DAMA());
+  const dice = A.explicarJugada(f, "Qd4", true, "exd5");
+  assert.ok(dice.startsWith("Tu dama queda comible"), dice);
+  assert.ok(!dice.includes("El rival tiene"), "no entra: ya hay dos frases");
+});
+
+test("la alternativa no repite la jugada que la frase anterior ya nombró", () => {
+  /* "Había mate forzado en 8, con Rd5. La mejor era Rd5." es el mismo eco que
+     la v0.44 le sacó a las leyendas. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const f = A.derivarFilas(jugadas, fens, [
+    { cp: null, mate: 8, mejor: "d4d5", segunda: null },
+    { cp: -980, mate: null, mejor: "a7a6", segunda: null },
+    { cp: 980, mate: null, mejor: "a2a3", segunda: null }
+  ], SIN_LIBRO_EXP, 0, "critico", null, 99).filas[0];
+  assert.equal(A.explicarJugada(f, "Rd5", true), "Había mate forzado en 8, con Rd5.");
+});
+
+test("una recaptura se dice, porque no es ni mérito ni descuido", () => {
+  /* Es la misma distinción que le sacó los falsos positivos a "Genial": el
+     material ya estaba perdido y solo lo estás recuperando. */
+  const antes = "rnbqkbnr/ppp1pppp/8/3p4/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2";
+  const j = new Chess(antes);
+  const previa = { from: "d7", to: "d5", captured: undefined };
+  const hecho = j.move("exd5");
+  assert.ok(hecho, "exd5 tiene que ser legal");
+  const f = A.derivarFilas([hecho], [antes, j.fen()], [
+    { cp: 30, mate: null, mejor: "b1c3", segunda: { cp: 20, mate: null } },
+    { cp: -30, mate: null, mejor: "d8d5", segunda: null }
+  ], SIN_LIBRO_EXP, 2, "critico", null, 3,
+     { from: "e4", to: "d5", captured: "p" }).filas[0];
+  assert.equal(f.esRecaptura, true, "el rival comió en d5 y se recuperó ahí");
+  assert.ok(A.explicarJugada(f, null, true).startsWith("Es una recaptura"),
+    A.explicarJugada(f, null, true));
 });
