@@ -1897,3 +1897,74 @@ test("las tres ubicaciones existen, y ninguna deja hueco cuando no hay texto", (
   assert.ok(html.includes('$("vExp").classList.toggle("oculto", !enTarjeta);'));
   assert.ok(html.includes('$("senales").classList.toggle("oculto", !abajo);'));
 });
+
+/* ================== probar una jugada (v0.65) ==================== */
+
+/* Esto vive en el DOM y en el motor, así que lo que se puede probar acá es la
+   ESTRUCTURA: que el camino sea el mismo que el de la partida y que no escriba
+   donde no debe. Lo que hace falta mirar en la pantalla está en capturas/. */
+
+test("la jugada probada se juzga por el MISMO camino que las de la partida", () => {
+  /* Si se juzgara aparte, el día que cambie cómo se categoriza una jugada la
+     prueba diría otra cosa que la partida, sobre la misma posición. */
+  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+                            html.indexOf("function textoPrueba"));
+  assert.ok(cuerpo.includes("derivarFilas("), "arma la fila con derivarFilas");
+  assert.ok(cuerpo.includes("R.evs[IDX]"),
+    "la evaluación de ANTES es la de la partida, no una nueva");
+  assert.ok(cuerpo.includes("MATE_VISTA()"), "y respeta el dial del usuario");
+  assert.ok(/R\.jugadas && R\.jugadas\[IDX - 1\]/.test(cuerpo),
+    "la jugada previa va, o una recaptura probada no se reconocería");
+});
+
+test("probar no escribe en el análisis ni en la caché", () => {
+  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+                            html.indexOf("function textoPrueba"));
+  assert.ok(!cuerpo.includes("cache."), "la caché no se toca");
+  assert.ok(!/R\.filas\[[^\]]*\]\s*=/.test(cuerpo), "R.filas tampoco");
+  assert.ok(!cuerpo.includes("R.evs ="), "ni las evaluaciones de la partida");
+});
+
+test("la prueba se evalúa a la profundidad de la partida", () => {
+  /* Números de distinta profundidad no se comparan (§5.3), y todo el sentido de
+     esto es comparar contra lo que se jugó. */
+  assert.ok(html.includes("const prof = R.profBase || +$(\"prof\").value || 16;"));
+});
+
+test("cambiar de jugada corta la prueba", () => {
+  /* Una prueba pertenece a UNA posición. Va en irA, que es por donde pasan
+     todos los caminos: los botones, la tira, la curva, las flechas y el
+     deslizamiento. */
+  const cuerpo = html.slice(html.indexOf("function irA(i) {"),
+                            html.indexOf("let VER_AMBOS"));
+  assert.ok(cuerpo.includes("PRUEBA = null;"), "irA la corta");
+  assert.ok(cuerpo.includes("MEJOR_EN = null;"), "y sigue apagando el vistazo");
+});
+
+test("con el tablero tocable no se dibujan las zonas de los galones", () => {
+  /* El comentario de la v32 lo venía anunciando: las zonas se comen 10 px de
+     las columnas a y h, así que en cuanto tocar una casilla hace algo, tapan
+     casillas de verdad. */
+  assert.ok(html.includes("if (!prueba) s += galon("), "los galones");
+  assert.ok(html.includes("if (!prueba) s += zona(0, -1) + zona(T + M - 10, 1);"),
+    "y sus zonas de toque");
+  assert.ok(html.includes('data-sq="'), "las casillas tocables existen");
+});
+
+test("deslizar no pasa jugadas mientras se prueba", () => {
+  const cuerpo = html.slice(html.indexOf('$("tablero").addEventListener("touchend"'),
+                            html.indexOf('$("tablero").addEventListener("click"'));
+  assert.ok(cuerpo.includes("if (!tocado || !R || PRUEBA) return;"));
+});
+
+test("no se puede probar mientras corre un análisis", () => {
+  /* Los dos usan el mismo grupo de motores, y `pool.asegurar` puede cambiarle
+     el MultiPV o el Hash a motores que están trabajando. */
+  const cuerpo = html.slice(html.indexOf("function ocupado(si) {"),
+                            html.indexOf("async function correrMes"));
+  assert.ok(cuerpo.includes('$("btnProbar").disabled = si || !R;'));
+});
+
+test("la coronación va a dama sin preguntar, y está dicho", () => {
+  assert.ok(html.includes('(!x.promotion || x.promotion === "q")'));
+});

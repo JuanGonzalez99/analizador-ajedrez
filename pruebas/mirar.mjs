@@ -119,7 +119,19 @@ onmessage = function (e) {
   if (s === "uci") return postMessage("uciok");
   if (s.startsWith("position fen ")) { fen = s.slice(13); return; }
   if (s.startsWith("go ")) {
-    var v = T[fen] || { cp: 0, mejor: "e2e4", segunda: -60 };
+    var v = T[fen];
+    if (!v) {
+      /* Una posición que NO está en la tabla es, desde la v0.65, una jugada
+         probada: por definición no estaba en la partida. Se contesta un número
+         determinista sacado del FEN —la misma prueba da siempre lo mismo, así
+         que las capturas son repetibles— y SIN pv, porque derivarFilas usa la
+         mejor de la posición anterior, que sí está en la tabla, y nunca la de
+         esta. Antes contestaba cp 0 con "e2e4" de mejor, que además de mentir
+         podía ser ilegal en la posición probada. */
+      var x = 0;
+      for (var k = 0; k < fen.length; k++) x = (x * 31 + fen.charCodeAt(k)) | 0;
+      v = { cp: Math.abs(x % 601) - 300, mejor: null, segunda: null };
+    }
     var tipo = v.mate === undefined ? "cp " + v.cp : "mate " + v.mate;
     postMessage("info depth 16 multipv 1 score " + tipo + (v.mejor ? " pv " + v.mejor : ""));
     if (v.segunda !== null && v.segunda !== undefined)
@@ -248,6 +260,36 @@ for (const donde of ["tarjeta", "reemplaza", "senales"]) {
   await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + donde + ".png") });
 }
 await pg.selectOption("#dondeExp", "tarjeta");
+
+/* PROBAR UNA JUGADA (v0.65), sobre esa misma jugada. La alternativa NO se elige
+   a ojo: se le pide a chess.js una jugada legal en la posición de antes que no
+   sea la que se jugó de verdad, así la captura muestra una comparación y no la
+   misma jugada dos veces. */
+const posPrueba = new Chess(fens[mejor]);
+const real = jugadas[mejor];
+const alterna = posPrueba.moves({ verbose: true })
+  .find(m => !(m.from === real.from && m.to === real.to));
+if (!alterna) console.log("OJO: sin alternativa legal, no hay capturas de la prueba");
+else {
+  await pg.click("#btnProbar");
+  await foto("prueba-1-eligiendo");
+  await pg.click(`#tablero [data-sq="${alterna.from}"]`);
+  await foto("prueba-2-elegida");
+  await pg.click(`#tablero [data-sq="${alterna.to}"]`);
+  await pg.waitForFunction(
+    () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
+    null, { timeout: 30000 });
+  await foto("prueba-3-resultado");
+  await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba.png") });
+  console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
+              JSON.stringify(await pg.locator("#pSub").textContent()),
+              JSON.stringify(await pg.locator("#pExp").textContent()));
+  /* al volver, la pantalla tiene que quedar EXACTAMENTE como estaba: es lo que
+     dice, mirándolo, que la jugada probada no ensució nada */
+  await pg.click("#btnProbar");
+  await foto("prueba-4-vuelta");
+}
+
 /* hasta la ÚLTIMA jugada: en la partida que termina en mate es la que importa,
    y en la larga avanzar() frena solo cuando el botón se deshabilita */
 /* en las partidas cortas se va hasta la ÚLTIMA jugada, que es la que importa;

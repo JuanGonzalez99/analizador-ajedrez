@@ -232,6 +232,11 @@
      subtítulo: es lo único de la tarjeta que cambia en cada jugada, así que si
      se pinta como el resto se pierde entre dos renglones grises. */
   .veredicto .exp { font-size: 12.5px; margin-top: 2px; }
+  /* La tarjeta de la prueba va PUNTEADA: dice "esto no pasó" sin gastar una
+     palabra en decirlo. El violeta es el mismo de la flecha en el tablero, así
+     que la tarjeta y la jugada dibujada se leen como una sola cosa. */
+  .veredicto.prueba { border-style: dashed; border-left-color: #6a1b9a;
+                      margin-bottom: 8px; }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: 10px auto 0; }
   /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
@@ -326,7 +331,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.64 · 08-09";
+  window.VERSION = "v0.65 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -641,6 +646,14 @@
     <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
     <div id="tablero"></div>
   </div>
+  <!-- La tarjeta de la jugada probada. Va ARRIBA de la del veredicto y no en
+       su lugar: lo que se está comparando son dos jugadas desde la misma
+       posición, así que las dos tienen que verse a la vez. -->
+  <div class="veredicto prueba oculto" id="prueba">
+    <div class="ico" id="pIco"></div>
+    <div class="txt"><div class="tit" id="pTit"></div><div class="sub" id="pSub"></div>
+      <div class="exp oculto" id="pExp"></div></div>
+  </div>
   <div class="veredicto" id="veredicto">
     <div class="ico" id="vIco"></div>
     <div class="txt"><div class="tit" id="vTit"></div><div class="sub" id="vSub"></div>
@@ -662,6 +675,7 @@
     <button id="sig">Siguiente &rsaquo;</button>
   </div>
   <div class="fila" style="margin-top:6px">
+    <button class="chico" id="btnProbar">Probar una jugada</button>
     <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
     <button class="chico" id="btnAmbos">Pintar las dos</button>
@@ -2187,7 +2201,10 @@ $("salirDev").onclick = seguro("salir de dev", () => {
   $("tema").onchange = seguro("tema", () => aplicarTema($("tema").value));
 })();
 let GIRADO = false;
-function dibujar(fen, jugada, mejor) {
+/* `prueba` es lo que agrega la v0.65 y va en null en el camino normal:
+   { desde, destinos, uci }. Cuando viene, el tablero deja de ser un dibujo y
+   pasa a recibir toques por casilla. */
+function dibujar(fen, jugada, mejor, prueba) {
   const b = new Chess(fen).board();
   const S = 42, M = 15, T = S * 8;
   const fx = f => (GIRADO ? 7 - f : f) * S + M;
@@ -2218,6 +2235,10 @@ function dibujar(fen, jugada, mejor) {
   };
   s += flecha(jugada, "#1565c0", 5);
   if (mejor) s += flecha(mejor, "#2e7d32", 4);
+  /* La jugada probada va en VIOLETA, que es el único color que no está usado:
+     azul es lo que se jugó y verde lo que decía el motor. Con tres flechas a la
+     vez el color es lo único que las distingue. */
+  if (prueba && prueba.uci) s += flecha(prueba.uci, "#6a1b9a", 5);
   for (let f = 0; f < 8; f++)
     s += `<text x="${fx(f) + S / 2}" y="${T + M + 10}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".55">${"abcdefgh"[f]}</text>`;
   for (let r = 0; r < 8; r++)
@@ -2233,7 +2254,12 @@ function dibujar(fen, jugada, mejor) {
     `<path d="M ${x + hacia * 2.5} ${mitad - 7} L ${x - hacia * 2.5} ${mitad} L ${x + hacia * 2.5} ${mitad + 7}"
       fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
       stroke-linejoin="round" opacity=".38"/>`;
-  s += galon(M / 2 - 1, 1) + galon(T + M + M / 2 + 1, -1);
+  /* En modo prueba NO van los galones ni sus zonas de toque. El comentario de
+     abajo lo venía anunciando desde la v32: las zonas se comen 10 px de las
+     columnas a y h, así que en cuanto tocar una casilla hace algo, hay que
+     sacarlas del medio. Se van enteras y no achicadas: mientras se prueba una
+     jugada el tablero es del dedo, y para pasar de jugada están los botones. */
+  if (!prueba) s += galon(M / 2 - 1, 1) + galon(T + M + M / 2 + 1, -1);
   /* La zona que recibe el toque es mucho más grande que el galón: toda la altura
      del tablero, y 10 unidades hacia adentro además del margen. Aun así queda en
      unos 24 px de ancho, por debajo de los 44 recomendados —el margen no da para
@@ -2247,7 +2273,36 @@ function dibujar(fen, jugada, mejor) {
   const zona = (x, dir) =>
     `<rect x="${x}" y="0" width="${M + 10}" height="${T + M * 2}" fill="transparent"
       data-nav="${dir}" style="cursor:pointer"/>`;
-  s += zona(0, -1) + zona(T + M - 10, 1);
+  if (!prueba) s += zona(0, -1) + zona(T + M - 10, 1);
+
+  /* --- lo que solo existe mientras se prueba una jugada --- */
+  if (prueba) {
+    const px = sq => fx("abcdefgh".indexOf(sq[0]));
+    const py = sq => ry(8 - +sq[1]);
+    /* la casilla elegida: un marco y no un relleno, o tapa la pieza que estás
+       por mover, que es justo la que hay que ver */
+    if (prueba.desde)
+      s += `<rect x="${px(prueba.desde) + 2}" y="${py(prueba.desde) + 2}" width="${S - 4}"
+        height="${S - 4}" fill="none" stroke="#6a1b9a" stroke-width="3" rx="3"/>`;
+    /* adónde puede ir: punto en la casilla vacía, aro en la que tiene algo.
+       Es la convención de todos los tableros digitales y no hay nada que
+       aprender. El aro va del tamaño de la casilla para que se lea como
+       "acá comés" y no como un punto grande. */
+    for (const d of prueba.destinos || []) {
+      /* si hay algo en el destino sale del tablero que ya se armó arriba: un
+         `new Chess(fen)` por casilla serían treinta por pintada */
+      const hay = b[8 - +d[1]]["abcdefgh".indexOf(d[0])];
+      s += hay
+        ? `<circle cx="${px(d) + S / 2}" cy="${py(d) + S / 2}" r="${S / 2 - 3}" fill="none"
+            stroke="#6a1b9a" stroke-width="3" opacity=".55"/>`
+        : `<circle cx="${px(d) + S / 2}" cy="${py(d) + S / 2}" r="6" fill="#6a1b9a" opacity=".45"/>`;
+    }
+    /* las 64 casillas que reciben el toque, al final para quedar por encima de
+       las piezas: un <use> se come el click y el <rect> del fondo no se entera */
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
+      s += `<rect x="${fx(f)}" y="${ry(r)}" width="${S}" height="${S}" fill="transparent"
+        data-sq="${"abcdefgh"[f]}${8 - r}" style="cursor:pointer"/>`;
+  }
   return s + "</svg>";
 }
 
@@ -2277,8 +2332,128 @@ function irA(i) {
   if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
   IDX = i;
   MEJOR_EN = null;
+  /* Cambiar de jugada corta la prueba, por el mismo motivo que apaga el vistazo
+     a la mejor: una prueba pertenece a UNA posición, y arrastrarla a la
+     siguiente mostraría una jugada evaluada contra una posición que no es la
+     suya. Va acá y no en cada botón porque acá pasan todos los caminos. */
+  PRUEBA = null;
   pintarRevision();
 }
+/* ============ probar una jugada (v0.65) ============
+
+   El "Reintentar" de chess.com: poner otra jugada en la MISMA posición y ver
+   qué dice el motor. Lo que faltaba no era el motor ni las jugadas legales
+   —los dos ya estaban en la página— sino el camino.
+
+   TRES REGLAS, y las tres son la diferencia entre esto y ensuciar el análisis:
+
+   1. NO TOCA NADA GUARDADO. No escribe en R.filas ni en la caché. La fila de la
+      jugada probada se arma con `derivarFilas`, o sea el MISMO camino que las
+      jugadas de la partida, y se tira al salir. Por eso la jugada probada trae
+      su categoría, sus señales y su explicación sin una línea de código
+      paralela: si mañana cambia cómo se juzga una jugada, cambia también acá.
+
+   2. SE EVALÚA A LA MISMA PROFUNDIDAD que la partida (`R.profBase`), o el
+      número no se compara con nada (§5.3). Es lo mismo que pide la caché.
+
+   3. EL TABLERO CAMBIA DE POSICIÓN al entrar: se prueba una alternativa a la
+      jugada, así que hay que estar ANTES de ella. La revisión muestra siempre
+      la posición de después.
+
+   `estado` va por: "eligiendo" → "pensando" → "listo" | "error". */
+let PRUEBA = null;
+
+/* La posición ANTES de la jugada i. R.fens la tiene siempre; el resto es la
+   misma reconstrucción que hace sanDeLaMejor, por si algún día una R llega sin
+   fens (una partida vieja de la caché, por ejemplo). */
+const fenDeLaJugada = i => (R.fens && R.fens[i]) ||
+  (i > 0 ? R.filas[i - 1].fen : (R.cab.FEN || undefined));
+
+function salirDePrueba() { if (PRUEBA) { PRUEBA = null; pintarRevision(); } }
+
+function tocarCasilla(sq) {
+  if (!PRUEBA || PRUEBA.estado === "pensando") return;
+  const salidas = new Chess(fenDeLaJugada(IDX)).moves({ verbose: true });
+  /* con una pieza ya elegida, tocar un destino legal juega */
+  if (PRUEBA.desde) {
+    /* La coronación va a DAMA y no pregunta. Preguntar es una pantalla más para
+       el caso más raro de todos, y la dama es lo que elige el 99% de las veces;
+       si alguna vez hace falta subascender, se agrega ahí. */
+    const m = salidas.find(x => x.from === PRUEBA.desde && x.to === sq &&
+                                (!x.promotion || x.promotion === "q"));
+    if (m) return void probarJugada(m);
+  }
+  /* si no, tocar una pieza que se pueda mover la elige, y tocar cualquier otra
+     cosa desmarca: no hay forma de quedarse trabado */
+  const puede = salidas.filter(x => x.from === sq);
+  PRUEBA.desde = puede.length ? sq : null;
+  PRUEBA.destinos = puede.map(x => x.to);
+  PRUEBA.uci = null; PRUEBA.fila = null; PRUEBA.estado = "eligiendo"; PRUEBA.msg = "";
+  pintarRevision();
+}
+
+async function probarJugada(m) {
+  const antes = fenDeLaJugada(IDX);
+  const j = new Chess(antes);
+  const hecho = j.move({ from: m.from, to: m.to, promotion: m.promotion });
+  if (!hecho) return;
+  /* la identidad del intento: si el usuario se va o cambia de jugada mientras
+     el motor piensa, lo que vuelva no tiene que pisar la pantalla nueva */
+  const mio = PRUEBA;
+  Object.assign(PRUEBA, { uci: hecho.from + hecho.to + (hecho.promotion || ""),
+                          san: hecho.san, estado: "pensando", msg: "", fila: null,
+                          desde: null, destinos: [] });
+  pintarRevision();
+  const prof = R.profBase || +$("prof").value || 16;
+  try {
+    const [ev] = await evaluarPosiciones([j.fen()], prof, null, opcionesDePantalla());
+    if (PRUEBA !== mio) return;
+    /* MISMO camino que la partida: derivarFilas con una jugada suelta, igual
+       que la segunda opinión del barrido. `previa` es la jugada anterior de
+       verdad, que es lo que decide si esto es una recaptura. */
+    PRUEBA.fila = derivarFilas([hecho], [antes, j.fen()], [R.evs[IDX], ev],
+      LIBRO || { pos: new Set(), nombres: {} }, IDX, $("modo").value, null,
+      MATE_VISTA(), (R.jugadas && R.jugadas[IDX - 1]) || null).filas[0];
+    PRUEBA.estado = "listo";
+    window.LOG.add("·", `prueba: ${hecho.san} en la jugada ${IDX + 1} a profundidad ` +
+      `${prof} · pierde ${PRUEBA.fila.perdida.toFixed(2)} contra ` +
+      `${R.filas[IDX].perdida.toFixed(2)} de la jugada real`);
+  } catch (e) {
+    if (PRUEBA !== mio) return;
+    PRUEBA.estado = "error";
+    PRUEBA.msg = e.message || String(e);
+  }
+  pintarRevision();
+}
+
+/* Lo que la tarjeta de la prueba dice en cada estado. Devuelve las tres partes
+   ya armadas para que pintarRevision no tenga que decidir nada. */
+function textoPrueba(prof) {
+  const p = PRUEBA;
+  if (p.estado === "pensando")
+    return { ico: "…", tit: `Probando ${p.san}`, sub: `Pensando a profundidad ${prof}.`,
+             exp: "", color: "#6a1b9a" };
+  if (p.estado === "error")
+    return { ico: "!", tit: "No se pudo evaluar", sub: p.msg, exp: "", color: "#6a1b9a" };
+  if (p.estado === "listo" && p.fila) {
+    const f = p.fila, c = presentar(f);
+    const lado = ladoDelUsuario(R);
+    return {
+      ico: c.icono,
+      tit: `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`,
+      sub: `pierde ${f.perdida.toFixed(2)} \u00b7 en la partida jugaste ` +
+           `${R.filas[IDX].san}, que pierde ${R.filas[IDX].perdida.toFixed(2)}`,
+      exp: explicarJugada(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
+                          lado ? f.turno === lado : null),
+      color: `var(--c-${c.clave})`
+    };
+  }
+  return { ico: "\u2192", tit: p.desde ? `Elegiste ${p.desde}` : "Probá otra jugada",
+           sub: p.desde ? "Tocá adónde va, o tocá otra pieza."
+                        : "Tocá una pieza y después adónde va. No toca el análisis guardado.",
+           exp: "", color: "#6a1b9a" };
+}
+
 let VER_AMBOS = false;
 let MES = null;
 let MESES = [];        /* urls de todos los archivos mensuales del usuario */
@@ -2459,6 +2634,10 @@ function ocupado(si) {
   $("banco").disabled = si || !ELEGIDA;
   $("barrido").disabled = si || !ELEGIDA;
   $("buscar").disabled = si;
+  /* Probar una jugada usa el MISMO grupo de motores que el análisis, y
+     `pool.asegurar` puede cambiarle el MultiPV o el Hash a motores que están
+     trabajando. Con un análisis en curso, el botón se apaga. */
+  $("btnProbar").disabled = si || !R;
   ver("detener", si);
   if (si) CANCELAR = false;
 }
@@ -3893,7 +4072,11 @@ function pintarRevision() {
      hacia nada, o sea un bug. */
   const yaEraLaMejor = f.mejor === f.uci;
   const verMejor = (VER_MEJOR || MEJOR_EN === IDX) && !yaEraLaMejor;
-  $("tablero").innerHTML = dibujar(f.fen, f.uci, verMejor ? f.mejor : null);
+  /* Probando se muestra la posición de ANTES de la jugada, que es desde donde
+     se elige otra; la flecha azul sigue siendo lo que se jugó de verdad. */
+  $("tablero").innerHTML = PRUEBA
+    ? dibujar(fenDeLaJugada(IDX), f.uci, verMejor ? f.mejor : null, PRUEBA)
+    : dibujar(f.fen, f.uci, verMejor ? f.mejor : null, null);
   $("tileMejor").classList.toggle("activo", verMejor);
   $("tileMejor").classList.toggle("inerte", yaEraLaMejor);
   $("tileMejor").setAttribute("aria-disabled", yaEraLaMejor ? "true" : "false");
@@ -3959,6 +4142,20 @@ function pintarRevision() {
     : (notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "");
   $("senales").textContent = abajo;
   $("senales").classList.toggle("oculto", !abajo);
+  /* La tarjeta de la prueba. Cuando no se está probando no existe y la
+     pantalla queda exactamente como antes de la v0.65. */
+  $("prueba").classList.toggle("oculto", !PRUEBA);
+  if (PRUEBA) {
+    const t = textoPrueba(R.profBase || +$("prof").value || 16);
+    $("prueba").style.borderLeftColor = t.color;
+    $("pIco").textContent = t.ico;
+    $("pIco").style.color = t.color;
+    $("pTit").textContent = t.tit;
+    $("pSub").textContent = t.sub;
+    $("pExp").textContent = t.exp;
+    $("pExp").classList.toggle("oculto", !t.exp);
+  }
+  $("btnProbar").textContent = PRUEBA ? "Volver a la partida" : "Probar una jugada";
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
   $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
   $("btnAmbos").disabled = !ladoDelUsuario(R);
@@ -3977,7 +4174,9 @@ $("tablero").addEventListener("touchstart", ev => {
   tocado = { x: t.clientX, y: t.clientY };
 }, { passive: true });
 $("tablero").addEventListener("touchend", seguro("deslizar", ev => {
-  if (!tocado || !R) return;
+  /* Probando, el tablero es del dedo: deslizar pasaría de jugada justo cuando
+     lo que el dedo está haciendo es elegir una casilla. */
+  if (!tocado || !R || PRUEBA) return;
   const t = ev.changedTouches[0];
   const dx = t.clientX - tocado.x, dy = t.clientY - tocado.y;
   tocado = null;
@@ -3993,7 +4192,11 @@ $("tablero").addEventListener("touchend", seguro("deslizar", ev => {
 /* Los galones. El SVG se redibuja entero en cada jugada, así que el que escucha
    es el contenedor y no cada galón: si no, habría que volver a atar el evento
    cada vez. */
-$("tablero").addEventListener("click", seguro("galón", ev => {
+$("tablero").addEventListener("click", seguro("tablero", ev => {
+  /* Las casillas y los galones nunca conviven —`dibujar` dibuja unas o los
+     otros— así que un solo manejador alcanza y no hay orden que resolver. */
+  const sq = ev.target.closest && ev.target.closest("[data-sq]");
+  if (sq) return tocarCasilla(sq.getAttribute("data-sq"));
   const z = ev.target.closest && ev.target.closest("[data-nav]");
   if (!z) return;
   if (Date.now() - recienDeslizado < 400) return;
@@ -4043,6 +4246,13 @@ $("tileMejor").onclick = verDeUnaVez;
 $("tileMejor").onkeydown = ev => {
   if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); verDeUnaVez(ev); }
 };
+$("btnProbar").onclick = seguro("probar", () => {
+  if (PRUEBA) return salirDePrueba();
+  if (!R) return;
+  PRUEBA = { desde: null, destinos: [], uci: null, san: "", fila: null,
+             estado: "eligiendo", msg: "" };
+  pintarRevision();
+});
 $("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
 $("btnAmbos").onclick = seguro("pintar", () => { VER_AMBOS = !VER_AMBOS; pintarRevision(); });
 
