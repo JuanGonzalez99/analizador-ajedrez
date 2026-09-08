@@ -440,8 +440,8 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
 
    Además así el dedo llega a cualquier jugada de la partida, no solo a las
    vecinas, y los galones quedan para el paso fino. */
-const armarTira = async (conNumero = false, estilo = "borde", fade = 0) =>
-  await pg.evaluate(([conNum, est, desvanecer]) => {
+const armarTira = async (conNumero = false, estilo = "borde", fade = 0, caja = "hoy") =>
+  await pg.evaluate(([conNum, est, desvanecer, caja]) => {
   const vieja = document.getElementById("tiraH");
   if (vieja) vieja.remove();
   const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
@@ -565,8 +565,33 @@ const armarTira = async (conNumero = false, estilo = "borde", fade = 0) =>
   /* centrar DESPUÉS de estar en el documento: antes no hay anchos que medir */
   if (elegida) medio.scrollLeft = elegida.offsetLeft -
     (medio.clientWidth - elegida.offsetWidth) / 2;
+  /* EL RECUADRO DE LA JUGADA ACTUAL, CENTRADO SOBRE LA TINTA.
+     Con las cajas alineadas por la base, el recuadro sobresale por abajo: arriba
+     solo tiene el hueco entre el borde de la caja y la mayúscula, y abajo tiene
+     además todo el espacio de las colas. Se mide cuánto y se corrige de tres
+     formas, que es lo que hay que elegir mirando. */
+  const sel2 = medio.querySelector('[style*="font-weight:700"], [style*="font-weight: 700"]');
+  if (sel2 && caja !== "hoy") {
+    const cs = getComputedStyle(sel2);
+    const cv = document.createElement("canvas").getContext("2d");
+    cv.font = "13px " + cs.fontFamily;
+    const m = cv.measureText("N");
+    const r = sel2.getBoundingClientRect();
+    const pt = parseFloat(cs.paddingTop), pb = parseFloat(cs.paddingBottom);
+    const base = r.top + pt + m.fontBoundingBoxAscent;
+    const arriba = (base - m.actualBoundingBoxAscent) - r.top;
+    const abajo = r.bottom - base;
+    const d = abajo - arriba;
+    if (caja === "recorta") sel2.style.paddingBottom = Math.max(0, pb - d) + "px";
+    if (caja === "alarga") sel2.style.paddingTop = (pt + d) + "px";
+    if (caja === "mitad") {
+      sel2.style.paddingTop = (pt + d / 2) + "px";
+      sel2.style.paddingBottom = Math.max(0, pb - d / 2) + "px";
+    }
+    window.__sobra = +d.toFixed(2);
+  }
   return cont.id;
-}, [conNumero, estilo, fade]);
+}, [conNumero, estilo, fade, caja]);
 
 /* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
    a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
@@ -671,15 +696,18 @@ await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira" + SUFIJO 
 /* LAS TRES FORMAS DE LA TIRA. El usuario pidió sacarle el borde a cada jugada;
    las otras dos son propuestas: la actual marcada con fondo en vez de recuadro,
    y los galones sin recuadro, que son lo más pesado de la fila. */
-/* la elegida es "tenue"; lo que falta decidir es cuánto se desvanecen las
-   jugadas contra los galones, así que se dibuja con tres anchos */
-for (const [est, fade] of [["tenue", 0], ["tenue", 24], ["tenue", 48]]) {
-  await armarTira(true, est, fade);
+/* elegido: tenue con desvanecido 24. Lo que falta es cómo se corrige que el
+   recuadro de la jugada actual sobresalga por abajo. */
+for (const [est, fade, caja] of [["tenue", 24, "hoy"], ["tenue", 24, "recorta"],
+                                 ["tenue", 24, "alarga"], ["tenue", 24, "mitad"]]) {
+  await armarTira(true, est, fade, caja);
   await armar(E, OCULTAR);
   /* PRIMERO la pantalla, que es la que centra la tira, y DESPUÉS el recorte: al
      revés la tira salía sin centrar, mostrando el arranque de la partida. */
-  const nom = "tenue-fade" + fade;
-  if (fade === 24) {
+  const nom = "caja-" + caja;
+  if (caja === "recorta") console.log("el recuadro sobresale por abajo:",
+    await pg.evaluate(() => window.__sobra), "px");
+  if (true) {
     /* SE MIDE, no se mira: el ojo alinea por la caja del TEXTO, no por la del
        elemento, así que se le pide al navegador el rectángulo real de cada
        texto con un Range. Si las bases no coinciden, se ve corrido aunque los
