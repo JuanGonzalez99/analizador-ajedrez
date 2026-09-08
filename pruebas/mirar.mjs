@@ -539,6 +539,29 @@ const armarTira = async (conNumero = false, estilo = "borde", fade = 0) =>
   }
   cont.append(galon("\u2039"), medio, galon("\u203a"));
   document.getElementById("zonaRevision").appendChild(cont);
+  /* EL VÉRTICE DEL CHEVRON VA AL CENTRO DE LA "N", no al centro del renglón.
+     El renglón incluye el espacio de las colas y las tildes, así que su centro
+     cae más abajo que el de una mayúscula: eso es lo que se veía corrido.
+     El centro de la N se mide con las métricas REALES de la tipografía
+     (`actualBoundingBoxAscent` de canvas), no se estima. */
+  if (est !== "borde") {
+    const ref = [...medio.children].find(e => e.querySelector && e.querySelector(".sa"));
+    if (ref) {
+      const cs = getComputedStyle(ref);
+      const cv = document.createElement("canvas").getContext("2d");
+      cv.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+      const m = cv.measureText("N");
+      const r = ref.getBoundingClientRect();
+      /* la base del texto: el borde de arriba de la caja, más el relleno, más
+         lo que la tipografía sube por encima de la base */
+      const base = r.top + parseFloat(cs.paddingTop) + m.fontBoundingBoxAscent;
+      const centroN = base - m.actualBoundingBoxAscent / 2;
+      for (const b of cont.querySelectorAll("button")) {
+        const rb = b.getBoundingClientRect();
+        b.style.transform = "translateY(" + (centroN - (rb.top + rb.bottom) / 2).toFixed(2) + "px)";
+      }
+    }
+  }
   /* centrar DESPUÉS de estar en el documento: antes no hay anchos que medir */
   if (elegida) medio.scrollLeft = elegida.offsetLeft -
     (medio.clientWidth - elegida.offsetWidth) / 2;
@@ -675,6 +698,19 @@ for (const [est, fade] of [["tenue", 0], ["tenue", 24], ["tenue", 48]]) {
       };
       /* del galón dibujado se mide el TRAZO, no la caja del botón: es lo que
          se ve. `getBoundingClientRect` sobre el <path> da justo eso. */
+      /* y la N de referencia, para poder comparar el vértice contra SU centro */
+      const jugRef = [...t.querySelector("div").children]
+        .find(e => e.querySelector && e.querySelector(".sa"));
+      let centroN = null;
+      if (jugRef) {
+        const cs = getComputedStyle(jugRef);
+        const cv = document.createElement("canvas").getContext("2d");
+        cv.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
+        const m = cv.measureText("N");
+        const r = jugRef.getBoundingClientRect();
+        centroN = +(r.top + parseFloat(cs.paddingTop) + m.fontBoundingBoxAscent -
+                    m.actualBoundingBoxAscent / 2).toFixed(1);
+      }
       const trazo = t.querySelector("button path");
       const rg = trazo && trazo.getBoundingClientRect();
       const galon = t.querySelector("button");
@@ -682,8 +718,8 @@ for (const [est, fade] of [["tenue", 0], ["tenue", 24], ["tenue", 48]]) {
       const num = [...medio.children].find(e => /^\d+\.$/.test(e.textContent.trim()));
       const jug = [...medio.children].find(e => e.querySelector && e.querySelector(".sa"));
       return JSON.stringify({
-        galonDibujado: rg ? { arriba: +rg.top.toFixed(1), abajo: +rg.bottom.toFixed(1),
-                              medio: +((rg.top + rg.bottom) / 2).toFixed(1) } : caja(galon),
+        verticeChevron: rg ? +((rg.top + rg.bottom) / 2).toFixed(1) : null,
+        centroDeLaN: centroN,
         numero: caja(num), jugada: caja(jug) });
     }));
   }
