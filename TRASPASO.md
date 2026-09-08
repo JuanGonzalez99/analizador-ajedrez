@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.67**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.68**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1591,6 +1591,69 @@ Rd5. La mejor era Rd5." es el mismo eco que la v0.44 le sacó a las leyendas.
 
 **Sigue devolviendo vacío cuando no hay nada honesto que decir.** Son 2 de 36, y
 son las jugadas donde la partida ya terminó.
+
+### Mirar la posición, y no solo la fila (v0.68)
+
+El usuario pasó cinco capturas de la revisión de chess.com. Lo que dicen ahí es
+de otra clase que lo nuestro: *"Echas al alfil rival con un peón"*, *"Parece que
+dejaste un peón sin defender"*, *"ganar un caballo a través de un ataque
+doble"*. **No son números de la jugada: son cosas que se ven en la posición.**
+
+`observarJugada(f)` las mira, y **NO vive en `derivarFilas`**. Esa es la decisión
+de fondo y es lo que la hace posible:
+
+> `derivarFilas` corre en el bucle que recorre un año de partidas, así que todo
+> lo que se meta ahí se paga cientos de miles de veces. **La explicación se
+> arma al pintar UNA tarjeta**, así que ahí se puede gastar: dar vuelta el turno
+> del FEN, pedirle jugadas a chess.js quince veces, recorrer el tablero entero.
+> Es la misma división que la app ya tenía —`derivarFilas` calcula lo que las
+> TABLAS miden— dicha de nuevo para lo que se describe.
+
+Lo que mira hoy:
+
+| observación | cómo se calcula | por qué así |
+|---|---|---|
+| **qué ataca la jugada** | se da vuelta el turno del FEN y se le piden a chess.js las jugadas de la pieza que se movió | después de mover es el turno del rival, y las jugadas de mi pieza no se pueden pedir de otra forma |
+| **qué pieza mía queda colgada, que no es la que moví** | `quedaComible` sobre cada pieza propia | es el error más común de todos, y hasta la v0.67 la app **solo miraba la pieza movida**: te podías dejar la dama en otro lado y la tarjeta hablaba del peón que empujaste |
+
+**Dos trampas del turno dado vuelta**, las dos anotadas en el código:
+- **el paso al vuelo hay que limpiarlo**, o el FEN es inválido;
+- **si la jugada da jaque, chess.js ofrece capturar al rey.** Se saca de la
+  lista: atacar al rey es dar jaque y eso ya lo dice el propio SAN con su "+".
+
+**Solo cuenta atacar algo que vale MÁS que la pieza que movés.** Atacar algo que
+vale igual o menos es una oferta de cambio, no una amenaza: el rival no está
+obligado a nada. Es lo que hace que la frase no se dispare en cada jugada.
+
+### El botón dice qué hacer ahora (v0.68)
+
+Lo primero que se ve en las capturas de chess.com no es el texto: es que **el
+botón grande cambia con el veredicto**. Jugada buena, verde y dice "Siguiente";
+jugada mala, rojo y dice "Reintentar".
+
+Acá es el mismo mecanismo con los tres botones grandes —`‹`, "Probar otra",
+"Siguiente ›"— y **el color no decora: dice cuál de los dos es**. Rellenos y no
+solo con borde, porque en una fila de botones iguales el que importa tiene que
+ganar por peso y no por matiz.
+
+Esto es lo que la variante necesitaba: hasta la v0.67 "Probar" era un botón
+chico entre las perillas, o sea una función escondida. **La jugada mala es
+justo la que da ganas de probar otra cosa**, así que ahí la app la propone.
+
+**El criterio es `CATS_PARA_REINTENTAR` y NO `esMala`**, y la diferencia importa:
+
+- `esMala` (`perdida >= 3`) contesta *"¿esto cuenta como jugada mala en la
+  estadística?"* y **mueve los números de todas las tablas**;
+- `CATS_PARA_REINTENTAR` contesta *"¿le ofrezco al usuario volver a jugar esta
+  posición?"*, y ahí una imprecisión también cuenta —es lo que hace chess.com—.
+
+Tocar ese conjunto no toca ningún número: solo cuál botón es el grande.
+
+**Y el botón NO nombra la jugada.** "En vez de Qh5+" se probó, se miró la
+captura y se partía en dos renglones, saliéndose de los 48 px. Además era
+redundante: el título de la tarjeta, dos dedos más abajo, ya dice "15. Qh5+ —
+Error grave". El botón dice qué **hace**; qué jugada reemplaza lo dice la
+pantalla.
 
 ## 4sexdecies. Probar jugadas: la variante (v0.65, rehecha en la v0.66)
 

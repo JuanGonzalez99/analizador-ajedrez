@@ -2107,3 +2107,78 @@ test("una recaptura se dice, porque no es ni mérito ni descuido", () => {
   assert.ok(A.explicarJugada(f, null, true).startsWith("Es una recaptura"),
     A.explicarJugada(f, null, true));
 });
+
+/* ---------- mirar la posición, no solo la fila (v0.68) ---------- */
+
+test("observarJugada ve qué ataca la jugada, y solo lo que vale más", () => {
+  /* d4 le pega al alfil de c5 con un peón. Un peón vale menos que un alfil, así
+     que es una amenaza; atacar algo que vale igual o menos es una oferta de
+     cambio y no cuenta. La posición la verifica chess.js. */
+  const antes = "rnbqk1nr/pppp1ppp/8/2b1p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 4 3";
+  const f = unaFila(antes, "d4",
+    [{ cp: 30, mate: null, mejor: "d2d4", segunda: { cp: 10, mate: null } },
+     { cp: -30, mate: null, mejor: "c5d4", segunda: null }], 4);
+  const obs = A.observarJugada(f);
+  assert.deepEqual(obs.amenazadas, [{ sq: "c5", pieza: "b" }]);
+  assert.equal(A.explicarJugada(f, null, true, null, obs),
+    "Ataca el alfil de c5 con un peón.");
+});
+
+test("una jugada que da jaque no dice que ataca al rey", () => {
+  /* Con el turno dado vuelta, chess.js ofrece capturar al rey. Atacar al rey es
+     dar jaque, y eso ya lo dice el propio SAN con su "+". */
+  const antes = "rnbqkbnr/pppp1ppp/8/4p3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 2 3";
+  const f = unaFila(antes, "Bxf7+",
+    [{ cp: 30, mate: null, mejor: "c4f7", segunda: { cp: 10, mate: null } },
+     { cp: -30, mate: null, mejor: "e8f7", segunda: null }], 4);
+  const obs = A.observarJugada(f);
+  assert.ok(!obs.amenazadas.some(a => a.pieza === "k"),
+    "el rey no está en la lista: " + JSON.stringify(obs.amenazadas));
+});
+
+test("observarJugada ve la pieza colgada que NO es la que moviste", () => {
+  /* Torre blanca en h5, torre negra en h8 que la mira por la columna, y las
+     blancas empujan el peón de a2. La jugada no tiene nada de malo por sí sola:
+     lo que cuelga está en el otro lado del tablero. Hasta la v0.67 la app solo
+     miraba la pieza movida, así que esto no se veía. */
+  const antes = "4k2r/8/8/7R/8/8/P7/4K3 w k - 0 1";
+  const f = unaFila(antes, "a4",
+    [{ cp: 100, mate: null, mejor: "h5h8", segunda: { cp: 80, mate: null } },
+     { cp: 400, mate: null, mejor: "h8h5", segunda: null }]);
+  const obs = A.observarJugada(f);
+  assert.deepEqual(obs.colgadas, [{ sq: "h5", pieza: "r" }]);
+  /* La frase entera sale "Tu torre de h5 queda sin defender. Había Rxh8+, que se
+     llevaba la torre.": el mecanismo y la alternativa, que es la tarjeta que se
+     quería. Se comprueba el mecanismo, que es lo nuevo. */
+  assert.ok(A.explicarJugada(f, null, true, null, obs)
+    .startsWith("Tu torre de h5 queda sin defender."),
+    A.explicarJugada(f, null, true, null, obs));
+  assert.ok(A.explicarJugada(f, null, null, null, obs)
+    .startsWith("La torre de h5 queda sin defender."), "sin lado conocido, impersonal");
+});
+
+test("el turno dado vuelta limpia el paso al vuelo", () => {
+  /* Un FEN con un al paso que ya no significa nada es un FEN inválido, y
+     chess.js lo rechaza sin decir por qué. */
+  assert.ok(html.includes('p[3] = "-";'));
+  assert.ok(html.includes("const conElTurnoDadoVuelta"));
+});
+
+test("lo que mira la posición NO vive en derivarFilas", () => {
+  /* Es lo que lo hace posible: derivarFilas corre en el bucle de un año de
+     partidas y esto se calcula al pintar UNA tarjeta. */
+  const cuerpo = html.slice(html.indexOf("function derivarFilas"),
+                            html.indexOf("function mediana"));
+  assert.ok(!cuerpo.includes("observarJugada"), "el barrido no lo paga");
+  assert.ok(html.includes("observarJugada(f))"), "la pantalla sí lo pide");
+});
+
+test("el botón grande lo decide el veredicto, y con otro criterio que las tablas", () => {
+  /* esMala mueve los números de todas las tablas; esto solo mueve cuál botón es
+     el grande, y por eso una imprecisión también cuenta. */
+  assert.ok(html.includes('const CATS_PARA_REINTENTAR = new Set(["imprecision", "error", "omision", "grave"]);'));
+  assert.ok(html.includes("const paraProbar = !f.forzada && CATS_PARA_REINTENTAR.has(f.cat);"));
+  assert.ok(html.includes('$("btnProbar").classList.toggle("primario", !PRUEBA && paraProbar);'));
+  assert.ok(html.includes("const esMala = f => f.perdida >= 3;"),
+    "y el de las tablas sigue siendo el de siempre");
+});

@@ -261,6 +261,35 @@ for (const donde of ["tarjeta", "reemplaza", "senales"]) {
 }
 await pg.selectOption("#dondeExp", "tarjeta");
 
+/* LOS TRES BOTONES GRANDES (v0.68). Cuál es el grande lo decide el veredicto,
+   así que hacen falta las dos fotos: una jugada buena y una mala. La mala NO se
+   elige a ojo: se recorre la partida leyendo el título de la tarjeta. */
+const malas = ["Imprecisión", "Error", "Omisión"];
+await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-buena" + SUFIJO + ".png") });
+const antesDeBuscar = mejor;
+for (let i = 0; i < 60; i++) {
+  const t = (await pg.locator("#vTit").textContent()) || "";
+  if (malas.some(m => t.includes(m))) break;
+  if (await pg.locator("#sig").isDisabled()) break;
+  await pg.click("#sig");
+}
+console.log("botones:  ", JSON.stringify(await pg.locator("#vTit").textContent()),
+            "→ el grande es",
+            await pg.locator("#btnProbar").evaluate(e => e.classList.contains("primario"))
+              ? "Probar otra" : "Siguiente");
+await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-mala" + SUFIJO + ".png") });
+await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
+await pg.evaluate(() => window.scrollBy(0, -60));
+await foto("tarjeta-y-botones");
+/* y se vuelve a la jugada de las capturas de la explicación */
+while (true) {
+  const t = (await pg.locator("#vTit").textContent()) || "";
+  if (await pg.locator("#ant").isDisabled()) break;
+  const n = parseInt(t, 10);
+  if (!isNaN(n) && n <= Math.floor(antesDeBuscar / 2) + 1) break;
+  await pg.click("#ant");
+}
+
 /* PROBAR JUGADAS: LA VARIANTE (v0.66), sobre esa misma jugada. Las jugadas NO
    se eligen a ojo: se le piden a chess.js, y la primera es una legal que no sea
    la que se jugó de verdad, para que la captura muestre una comparación y no la

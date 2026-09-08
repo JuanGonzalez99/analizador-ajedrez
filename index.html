@@ -172,7 +172,15 @@
      van pegadas, del mismo tamaño y ocupando el ancho entero. Antes eran dos
      cuadraditos de 40 px separados por "Mostrar la mejor". */
   .nav { display: flex; gap: 6px; margin-top: 10px; }
-  .nav button { flex: 1; height: 48px; font-size: 15px; }
+  .nav button { flex: 1; height: 48px; font-size: 15px; white-space: nowrap; }
+  /* la flecha de "anterior" no necesita el ancho de una palabra */
+  .nav #ant { flex: 0 0 56px; }
+  /* EL BOTÓN QUE DICE QUÉ HACER AHORA. Es lo primero que se ve en la revisión
+     de chess.com: con la jugada buena el grande es "Siguiente", y con la jugada
+     mala es "Reintentar". El color no decora, dice cuál de los dos es.
+     Relleno y no solo borde: en una fila de botones iguales, el que importa
+     tiene que ganar por peso, no por matiz. */
+  button.primario { color: #fff; border-color: transparent; font-weight: 700; }
 
   /* El ? vive en el título de la sección y abre el texto largo. Es un botón y
      no un <summary> anidado: los detalles no se pueden anidar en el título de
@@ -341,7 +349,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.67 · 08-09";
+  window.VERSION = "v0.68 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -681,12 +689,15 @@
   <div class="curva" id="curva" role="img"
        aria-label="Curva de quién va ganando a lo largo de la partida"></div>
   <div class="jugadas" id="jugadas"></div>
+<!-- Los tres botones grandes, en una fila. "Probar" vive acá y no entre los
+       chicos desde la v0.68: es la acción principal cuando la jugada salió mal,
+       y una acción principal no puede estar en la fila de las perillas. -->
   <div class="nav">
-    <button id="ant">&lsaquo; Anterior</button>
+    <button id="ant">&lsaquo;</button>
+    <button id="btnProbar">Probar</button>
     <button id="sig">Siguiente &rsaquo;</button>
   </div>
   <div class="fila" style="margin-top:6px">
-    <button class="chico" id="btnProbar">Probar una jugada</button>
     <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
     <button class="chico" id="btnAmbos">Pintar las dos</button>
@@ -823,6 +834,15 @@ const CATEGORIAS = {
 
 const ORDEN = ["brillante", "genial", "mejor", "excelente", "bien", "libro",
                       "imprecision", "error", "omision", "grave"];
+
+/* Las cuatro que dan ganas de probar otra cosa. NO ES `esMala`, que vive en el
+   bloque de tablas y es `perdida >= 3`: son dos preguntas distintas y mezclarlas
+   movería los números de todas las tablas.
+   - `esMala` contesta "¿esto cuenta como jugada mala en la estadística?".
+   - esto contesta "¿le ofrezco al usuario volver a jugar esta posición?", y ahí
+     una imprecisión también cuenta, que es lo que hace chess.com.
+   Cambiar este conjunto no toca ningún número: solo cuál botón es el grande. */
+const CATS_PARA_REINTENTAR = new Set(["imprecision", "error", "omision", "grave"]);
 
 /* FORZADA no es una categoría y por eso NO está en CATEGORIAS ni en ORDEN.
    Cuando hay una sola jugada legal no hay nada que juzgar: no la elegiste, te
@@ -1451,6 +1471,13 @@ const PIEZA_EL = { p: "el peón", n: "el caballo", b: "el alfil",
                    r: "la torre", q: "la dama", k: "el rey" };
 const PIEZA_TU = { p: "tu peón", n: "tu caballo", b: "tu alfil",
                    r: "tu torre", q: "tu dama", k: "tu rey" };
+/* "con un peón" y no "con el peón": la que importa es CUÁL PIEZA, no cuál de
+   todas. La dama y el rey van con artículo definido porque hay una sola. */
+const PIEZA_UN = { p: "un peón", n: "un caballo", b: "un alfil",
+                   r: "una torre", q: "la dama", k: "el rey" };
+/* "el alfil de c5": la pieza del rival se nombra con su casilla, o en una
+   posición con dos alfiles la frase no dice cuál. */
+const piezaEn = (t, sq) => `${PIEZA_EL[t] || "la pieza"} de ${sq}`;
 
 /* El material se cuenta en PEONES y no en "puntos", y no es capricho: la
    tarjeta ya dice "12,3 puntos de victoria" un renglón más arriba, así que dos
@@ -1505,7 +1532,7 @@ const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
    → "tu caballo". El resto queda impersonal a propósito: con un PGN pegado no
    se sabe de qué lado jugaba, y una frase que tutea a medias se lee peor que
    una que no tutea nunca. */
-function explicarJugada(f, mejorSan = null, mio = null, sanRival = null) {
+function explicarJugada(f, mejorSan = null, mio = null, sanRival = null, obs = null) {
   /* En una forzada no hubo decisión y la tarjeta ya lo dice entera (§4.6bis):
      cualquier cosa que agreguemos acá juzga algo que no se eligió. */
   if (!f || f.forzada) return "";
@@ -1521,6 +1548,15 @@ function explicarJugada(f, mejorSan = null, mio = null, sanRival = null) {
     mecanismo = `${mayus(pieza)} queda comible en ${donde}.`;
   else if (f.tomoConOtra && f.perdida >= 0.5 && f.cap)
     mecanismo = `La captura iba con otra pieza: ${f.cap.san}.`;
+  /* La pieza colgada que NO es la que moviste. Es el error más común de todos y
+     hasta la v0.67 la app solo miraba la que se había movido: te podías dejar
+     la dama en otro lado y la tarjeta hablaba del peón que empujaste.
+     Sale de `observarJugada`, que se calcula al pintar y no en el barrido. */
+  else if (obs && obs.colgadas.length && f.perdida >= 0.5) {
+    const c = obs.colgadas[0];
+    mecanismo = `${mayus((mio ? PIEZA_TU : PIEZA_EL)[c.pieza] || "la pieza")} de ` +
+                `${c.sq} queda sin defender.`;
+  }
 
   /* 2. QUÉ HABÍA en su lugar. */
   let habia = "";
@@ -1552,6 +1588,21 @@ function explicarJugada(f, mejorSan = null, mio = null, sanRival = null) {
      perdido y solo lo estás recuperando. Es la misma distinción que le sacó los
      falsos positivos a "Genial" (§8), dicha en la tarjeta. */
   else if (f.esRecaptura) merito = "Es una recaptura: el material ya estaba perdido.";
+
+  /* 3bis. LO QUE LA JUGADA ATACA. Es lo que chess.com dice en las jugadas que
+     salieron bien —"echás al alfil rival con un peón"— y lo que a la tarjeta le
+     faltaba para tener algo que decir cuando no hubo ni error ni hallazgo.
+     Solo cuenta atacar algo que vale MÁS que la pieza que movés: eso es una
+     amenaza de verdad, porque el rival tiene que hacer algo. Atacar algo que
+     vale igual o menos es una oferta de cambio, no una amenaza. */
+  let ataque = "";
+  if (obs && obs.amenazadas.length >= 2) {
+    const [a, b] = obs.amenazadas;
+    ataque = `Ataca a la vez ${piezaEn(a.pieza, a.sq)} y ${piezaEn(b.pieza, b.sq)}.`;
+  } else if (obs && obs.amenazadas.length === 1) {
+    const a = obs.amenazadas[0];
+    ataque = `Ataca ${piezaEn(a.pieza, a.sq)} con ${PIEZA_UN[f.pieza] || "una pieza"}.`;
+  }
 
   /* 4. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
      (`banda`, arriba). Inventar acá una segunda escala de "cómo va la partida"
@@ -1588,8 +1639,66 @@ function explicarJugada(f, mejorSan = null, mio = null, sanRival = null) {
      Se calla con la partida terminada: no hay respuesta que dar. */
   const respuesta = (sanRival && !f.remate) ? `El rival tiene ${sanRival}.` : "";
 
-  return [merito, mecanismo, habia, rumbo, alternativa, respuesta]
+  return [merito, mecanismo, ataque, habia, rumbo, alternativa, respuesta]
     .filter(Boolean).slice(0, 2).join(" ");
+}
+
+
+/* ============ lo que se ve mirando la posición (v0.68) ============
+
+   Estas observaciones NO viven en `derivarFilas` y es a propósito: se calculan
+   AL PINTAR UNA TARJETA, o sea una vez, y no en el bucle que recorre un año de
+   partidas. Eso es lo que permite que sean caras —dan vuelta el turno del FEN y
+   le piden jugadas a chess.js varias veces— sin que el barrido pague nada.
+
+   Es la misma división que ya tiene la app: `derivarFilas` calcula lo que las
+   TABLAS miden, y la explicación describe lo que el usuario está mirando.
+
+   Todo lo de acá lo verifica chess.js: no se afirma un ataque de memoria (§10). */
+
+/* El mismo FEN con el turno del otro. Hace falta porque para saber QUÉ ataca la
+   pieza que acabo de mover tengo que pedir MIS jugadas, y después de mover es
+   el turno del rival.
+   El paso al vuelo se limpia porque con el turno dado vuelta ya no significa
+   nada, y un FEN con un al paso imposible es un FEN inválido. */
+const conElTurnoDadoVuelta = fen => {
+  const p = fen.split(" ");
+  p[1] = p[1] === "w" ? "b" : "w";
+  p[3] = "-";
+  return p.join(" ");
+};
+
+function observarJugada(f) {
+  const vacio = { amenazadas: [], colgadas: [] };
+  if (!f || !f.fen || !f.uci) return vacio;
+  const donde = f.uci.slice(2, 4);
+  try {
+    const mio = f.turno;
+    /* 1. QUÉ ATACA la pieza que moví. Se le pregunta a chess.js dando vuelta el
+       turno; el rey se saca de la lista porque atacarlo es dar jaque, que ya lo
+       dice el propio SAN con un "+". */
+    const j = new Chess(conElTurnoDadoVuelta(f.fen));
+    const amenazadas = j.moves({ verbose: true })
+      .filter(m => m.from === donde && m.captured && m.captured !== "k" &&
+                   (VALOR[m.captured] || 0) > (VALOR[f.pieza] || 0))
+      .map(m => ({ sq: m.to, pieza: m.captured }));
+
+    /* 2. QUÉ PIEZA MÍA QUEDA COLGADA que no sea la que moví. Es el error más
+       común de todos y la app solo miraba la pieza movida. `quedaComible` es
+       exactamente esta pregunta y ya estaba escrita: se le pasa otra casilla. */
+    const tablero = new Chess(f.fen).board();
+    const colgadas = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = tablero[r][c];
+      if (!p || p.color !== mio || p.type === "k") continue;
+      const sq = "abcdefgh"[c] + (8 - r);
+      if (sq === donde) continue;
+      if (quedaComible(f.fen, sq)) colgadas.push({ sq, pieza: p.type });
+    }
+    /* la más cara primero: si hay dos, la que duele es esa */
+    colgadas.sort((a, b) => (VALOR[b.pieza] || 0) - (VALOR[a.pieza] || 0));
+    return { amenazadas, colgadas };
+  } catch (e) { return vacio; }
 }
 
 /* ===================== fin del bloque de análisis ====================== */
@@ -2570,7 +2679,7 @@ function textoPrueba(prof) {
       tit: `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} — ${c.nombre}`,
       sub: `pierde ${f.perdida.toFixed(2)}` + (p.ver === 1 ? contra : ""),
       exp: explicarJugada(f, null, lado ? f.turno === lado : null,
-                          sanDeUci(f.fen, f.mejorRival)),
+                          sanDeUci(f.fen, f.mejorRival), observarJugada(f)),
       color: `var(--c-${c.clave})`
     };
   }
@@ -4132,7 +4241,7 @@ function pintarRevision() {
   const ladoUsr = ladoDelUsuario(R);
   const explicado = explicarJugada(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
                                    ladoUsr ? f.turno === ladoUsr : null,
-                                   sanDeUci(f.fen, f.mejorRival));
+                                   sanDeUci(f.fen, f.mejorRival), observarJugada(f));
   const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
   $("vIco").textContent = c.icono;
@@ -4318,11 +4427,27 @@ function pintarRevision() {
       sp.onclick = () => verDeLaVariante(+sp.dataset.v);
     });
   }
-  /* El botón nombra la jugada que reemplaza: sin eso, "Probar una jugada" no
-     dice desde qué posición, y el tablero saltando una jugada atrás al tocarlo
-     se lee como un error. Con la variante abierta, la única salida. */
-  $("btnProbar").textContent = PRUEBA ? "Volver a la partida"
-                                      : `Probar en vez de ${f.san}`;
+  /* EL BOTÓN NOMBRA LA JUGADA que reemplaza —"En vez de Re1"—: sin eso no dice
+     desde qué posición arranca, y el tablero saltando una jugada atrás al
+     tocarlo se lee como un error. Con la variante abierta, es la única salida.
+
+     Y CUÁL DE LOS DOS ES EL GRANDE LO DECIDE EL VEREDICTO, que es lo primero
+     que se ve en la revisión de chess.com: con la jugada buena, seguir; con la
+     jugada mala, probar otra. El botón deja de ser una opción escondida y pasa
+     a ser lo que la app te propone hacer, que es justo lo que le faltaba: la
+     jugada mala es la que da ganas de probar otra cosa. */
+  /* "Probar otra" y no "En vez de Qh5+": el nombre de la jugada NO va en el
+     botón. Se probó y se vio en la captura —"En vez de Qh5+" se parte en dos
+     renglones y se sale de los 48 px de alto— y además es redundante, porque el
+     título de la tarjeta, dos dedos más abajo, dice "15. Qh5+ — Error grave".
+     El botón dice qué HACE; qué jugada reemplaza lo dice la pantalla. */
+  $("btnProbar").textContent = PRUEBA ? "Volver" : "Probar otra";
+  const paraProbar = !f.forzada && CATS_PARA_REINTENTAR.has(f.cat);
+  $("btnProbar").classList.toggle("primario", !PRUEBA && paraProbar);
+  $("btnProbar").style.background = (!PRUEBA && paraProbar) ? `var(--c-${c.clave})` : "";
+  $("sig").classList.toggle("primario", !PRUEBA && !paraProbar && IDX < R.filas.length - 1);
+  $("sig").style.background = ($("sig").classList.contains("primario"))
+    ? "var(--c-mejor)" : "";
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
   $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
   $("btnAmbos").disabled = !ladoDelUsuario(R);
