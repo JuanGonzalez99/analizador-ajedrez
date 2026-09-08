@@ -2089,6 +2089,51 @@ Y quedaron **rechazados por no medibles**, que es distinto: "debilita el
 enroque", "gana espacio", "iniciativa", "controlás el centro", "mejorás la peor
 pieza". Suenan a libro y no hay número atrás; §5 regla 1 los deja afuera.
 
+### La lluvia de la v0.77: qué entró, qué no, y por qué
+
+Se hizo una lluvia de frases nuevas y el usuario las marcó una por una. Esto es
+el resultado, y vale sobre todo por lo que dice que **NO** hay que volver a
+proponer.
+
+**Entran, y ninguna necesita datos nuevos:**
+
+| frase | con qué se contesta |
+|---|---|
+| salir del libro | `aperturas.json`, que ya viaja en la fila |
+| se corona | el SAN trae `=Q` |
+| enrocaste | el SAN trae `O-O` |
+| peón aislado | ningún peón mío en las columnas de al lado |
+| peones doblados | dos míos en la misma columna |
+| pieza atrapada | `quedaComible` en cada casilla adonde puede ir |
+| jaque descubierto y ataque a la descubierta | la línea que abrió la casilla que dejé |
+| la mejor era X **y qué hacía** | `mejor`, que ya está evaluada |
+
+**Entran con condición**, y la condición es la parte importante:
+
+- **"El rival acababa de errar"** solo si además dice **cómo se cobraba**. Decir
+  que erró y no decir con qué no le sirve a nadie.
+- **"Casi no había opción"** solo si las pocas jugadas legales eran **parecidas
+  entre sí**. Y ahí hay un techo real: con MultiPV 2 el motor devuelve la mejor
+  y la segunda, así que se puede afirmar que **las dos mejores** estaban
+  parejas, nunca que "las tres eran lo mismo".
+
+**Quedan para mirar, sin decidir:** caballo plantado (*outpost*), torre en la
+séptima, se van las damas, torres conectadas, al rival le quedan pocas legales
+(el aviso de ahogado), y los cuatro de la tanda corta —columna semiabierta, peón
+pasado del rival, la pareja de alfiles, pierde el enroque—.
+
+**No entran, y esto es lo que no hay que volver a proponer:**
+
+- **"El rey rival se quedó en el centro."** Descartada por el usuario: *"suena
+  raro"*. Es medible —perdió los dos enroques y sigue en la columna e— así que
+  no se cayó por §5 regla 1 sino por cómo se lee.
+- **Cuánto tardaste en jugarla.** El dato está (`seg`, desde la v0.43) y la
+  frase salía sola, pero **no va a la tarjeta**: es del usuario la decisión, y
+  lo que pidió en su lugar es **ver el reloj en el tablero**, que está anotado
+  entre los pendientes de interfaz (§8).
+- **Una palabra sola es muy seca.** Vale para toda frase de una palabra:
+  "Coronás." tiene que decir algo más. Es criterio de redacción, no de medición.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -2812,6 +2857,14 @@ en vivo es la v0.63.1.
 
   No es "volver a ponerlos": es decidir si eso que hacían tiene que estar en
   algún lado, ahora que el lugar donde estaban no existe.
+
+- **El reloj no se ve en el tablero.** Pedido del usuario, y salió de descartar
+  una frase: la tarjeta podía decir "la jugaste en 2 segundos" —el dato está en
+  la fila desde la v0.43— y él prefirió que el tiempo **se vea en el tablero**,
+  no que se cuente en la tarjeta. Falta decidir qué se muestra: los segundos que
+  gastó esa jugada, lo que quedaba en el reloj, o los dos relojes como en una
+  partida en vivo. Lo que quedaba pide `restan`, que el bucle ya calcula y no
+  emite (§7.8).
 
 - **Las animaciones son una rama sin empezar.** Apareció al ver que el
   deslizamiento del tablero no resulta intuitivo: un galón estático avisa que
