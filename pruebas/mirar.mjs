@@ -257,7 +257,7 @@ for (const donde of ["tarjeta", "reemplaza", "senales"]) {
   await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -60));
   await foto("explicacion-" + donde);
-  await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + donde + ".png") });
+  await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + donde + SUFIJO + ".png") });
 }
 await pg.selectOption("#dondeExp", "tarjeta");
 
@@ -280,7 +280,7 @@ else {
     () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
     null, { timeout: 30000 });
   await foto("prueba-3-resultado");
-  await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba.png") });
+  await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
   console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
               JSON.stringify(await pg.locator("#pSub").textContent()),
               JSON.stringify(await pg.locator("#pExp").textContent()));
