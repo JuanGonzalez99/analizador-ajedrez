@@ -2306,3 +2306,55 @@ test("cada frase que señala algo trae el nombre de su concepto, y está en la f
   assert.ok(miradas > 100, "se miraron pocas frases: " + miradas);
   assert.ok(conMarca > 20, "se miraron pocas frases con referencia: " + conMarca);
 });
+
+test("sacar la línea de señales no pierde nada: la tarjeta ya lo dice todo", () => {
+  /* La línea de señales se fue en la v0.73 porque aparecía y desaparecía entre
+     los cuadritos y la curva, y la pantalla saltaba al pasar de jugada. Antes
+     de sacarla se midió, y esta prueba es esa medición: para cada señal que
+     sale, la explicación de la tarjeta tiene que decir lo mismo.
+     Se barren las cuatro partidas de prueba con CINCO juegos de evaluaciones
+     inventadas cada una, para caer en muchas categorías y no en las que da una
+     sola tabla. */
+  const EQUIVALE = [
+    [/^permite mate forzado/,          /Deja mate forzado/],
+    [/^la pieza movida queda comible/, /queda comible en/],
+    [/^había mate forzado/,            /Había mate forzado/],
+    [/^había .*, que /,                /Había /],
+    [/^la tomaste con otra pieza/,     /La captura iba con otra pieza/],
+  ];
+  let conSenal = 0, sinDecir = 0, ejemplo = "";
+  for (const nombre of ["de-prueba", "mate", "ahogado", "doble"]) {
+    const pgn = fs.readFileSync(new URL(`./partida-${nombre}.pgn`, import.meta.url), "utf8");
+    const { jugadas, fens } = A.prepararPartida(pgn);
+    for (let semilla = 0; semilla < 5; semilla++) {
+      for (let i = 0; i < jugadas.length; i++) {
+        const leg = new Chess(fens[i]).moves({ verbose: true });
+        if (!leg.length) continue;
+        const m = leg[(i * 7 + semilla * 3) % leg.length];
+        const f = A.derivarFilas([jugadas[i]], [fens[i], fens[i + 1]], [
+          { cp: ((i * 137 + semilla * 311) % 1400) - 700, mate: null,
+            mejor: m.from + m.to,
+            segunda: { cp: ((i * 91 + semilla * 53) % 900) - 450, mate: null } },
+          { cp: ((i * 211 + semilla * 97) % 1400) - 700, mate: null,
+            mejor: null, segunda: null }
+        ], { pos: new Set(), nombres: {} }, i, "critico", null, 3,
+           jugadas[i - 1] || null).filas[0];
+        if (!f.senales.length) continue;
+        conSenal++;
+        const txt = A.explicarJugada(f, "Nf3", true, "Nc6", A.observarJugada(f, fens[i]));
+        for (const s of f.senales) {
+          const par = EQUIVALE.find(([re]) => re.test(s));
+          if (!par || !par[1].test(txt)) {
+            sinDecir++;
+            if (!ejemplo) ejemplo = `señal "${s}" contra texto "${txt}"`;
+          }
+        }
+      }
+    }
+  }
+  assert.ok(conSenal > 20, "se miraron pocas jugadas con señales: " + conSenal);
+  assert.equal(sinDecir, 0, "la tarjeta se come una señal: " + ejemplo);
+  /* y el renglón queda SOLO para la segunda opinión, que no es una señal */
+  assert.ok(html.includes("const abajo = f.rev"), "el renglón vive solo para el rev");
+  assert.ok(!html.includes("const notas = f.senales.slice();"), "la lista se fue");
+});

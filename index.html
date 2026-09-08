@@ -359,7 +359,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.72.1 · 08-09";
+  window.VERSION = "v0.73 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4542,10 +4542,27 @@ function pintarRevision() {
      cierre queda justo abajo, fuera de vista. Se descubrió mirándolo. */
   if (IDX === R.filas.length - 1) cont.scrollTop = cont.scrollHeight;
 
-  const notas = f.senales.slice();
-  if (f.rev) notas.push(`a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +
-    `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`);
-  const abajo = notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "";
+  /* LA LISTA DE SEÑALES SE FUE EN LA v0.73, y el motivo es de disposición: era
+     un renglón que aparecía y desaparecía entre los cuadritos y la curva, así
+     que la curva y la lista de jugadas SALTABAN unos píxeles al pasar de una
+     jugada a la otra. Una pantalla que se mueve sola se lee peor que una que
+     dice menos.
+
+     Y no dice menos: se midieron 405 jugadas de las cuatro partidas de prueba,
+     con evaluaciones variadas para caer en muchas categorías, y de las 29 que
+     traían señales NO HUBO NINGUNA que la explicación de la tarjeta no dijera
+     —y mejor, porque la explicación nombra la pieza y la casilla—. La prueba
+     que lo fija corre ese mismo barrido.
+
+     Lo único que la explicación no dice es la SEGUNDA OPINIÓN a más
+     profundidad, que no es una señal sino un dato del análisis. Por eso el
+     renglón sigue existiendo solo para eso, y como el barrido está apagado en
+     modo simple, en la app del usuario no aparece nunca: la disposición no se
+     mueve. */
+  const abajo = f.rev
+    ? `\u00b7 a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +
+      `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`
+    : "";
   $("senales").textContent = abajo;
   $("senales").classList.toggle("oculto", !abajo);
   /* La tarjeta de la variante. Sin variante abierta no existe, y la pantalla

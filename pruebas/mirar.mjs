@@ -300,6 +300,27 @@ await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-mala" + S
    tiene encima ni cuánto hay que scrollear para llegar */
 await pg.evaluate(() => document.querySelector(".nav").scrollIntoView({ block: "end" }));
 await foto("pantalla-botones");
+
+/* MAQUETAS de dónde va la fila de navegación (v0.73). El usuario marcó que
+   navegar sin ver el tablero no sirve, y hoy la fila vive abajo de todo. Las dos
+   la mudan a pegada al tablero, una con el alto de siempre y otra compacta.
+   Son maquetas: mueven el DOM en la página abierta y no tocan index.html.
+   Se van cuando el usuario elija. */
+const alTablero = async (alto, nombre) => {
+  await pg.evaluate((h) => {
+    const nav = document.querySelector(".nav");
+    document.querySelector(".revtab").after(nav);
+    nav.style.marginTop = "8px";
+    nav.querySelectorAll("button").forEach(b => { b.style.height = h + "px"; });
+  }, alto);
+  await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -60));
+  await foto(nombre);
+};
+await alTablero(48, "maqueta-nav-tablero");
+await alTablero(36, "maqueta-nav-tablero-compacta");
+await pg.reload();
+await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 30000 }).catch(() => {});
 /* MAQUETA para decidir: la misma fila con DOS botones, que es como quedaría si
    "Siguiente" saltara a la próxima jugada tuya. Se esconde el del medio y se
    saca la foto; no cambia nada de la app. Esto se va cuando el usuario elija. */

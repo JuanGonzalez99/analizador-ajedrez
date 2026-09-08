@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.72.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.73**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1688,6 +1688,25 @@ La segunda es la que faltaba para poder decir algo de **las jugadas del rival**:
 
 **Sin la posición de antes, `nuevas` y `salvadas` quedan vacías en vez de
 adivinar**, y hay una prueba que lo fija.
+
+### La línea de señales se fue (v0.73)
+
+Era un renglón entre los cuadritos y la curva que **aparecía y desaparecía**
+según la jugada, así que la curva y la lista de jugadas **saltaban unos píxeles**
+al pasar de una a otra. Una pantalla que se mueve sola se lee peor que una que
+dice menos. Lo marcó el usuario.
+
+**Y no dice menos, y eso se midió antes de sacarlo**: 405 jugadas de las cuatro
+partidas de prueba, con cinco juegos de evaluaciones inventadas cada una para
+caer en muchas categorías; de las 29 que traían señales, **ninguna decía algo
+que la tarjeta no dijera** —y la tarjeta lo dice mejor, porque nombra la pieza y
+la casilla—. La prueba que lo fija corre ese mismo barrido, así que si alguna
+vez una señal deja de estar cubierta, se cae ahí y no en el celu.
+
+Lo único que la explicación no dice es la **segunda opinión a más profundidad**,
+que no es una señal sino un dato del análisis. El renglón sigue existiendo solo
+para eso, y como el barrido está apagado en modo simple, **en la app del usuario
+no aparece nunca**: la disposición no se mueve.
 
 ### El botón dice qué hacer ahora (v0.68)
 
