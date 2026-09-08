@@ -1706,7 +1706,10 @@ test("el cierre calla el motivo cuando no lo hay, y no aparece sin resultado", (
   assert.equal(T.cierreDeLaTira(null, [{ n: 3 }]), "");
   assert.equal(T.cierreDeLaTira({ res: "1-0", motivo: null }, []), "");
   const sinMotivo = T.cierreDeLaTira({ res: "1-0", motivo: null }, [{ n: 3 }]);
-  assert.ok(sinMotivo.includes("<b>1-0</b> <small>"), sinMotivo);
+  assert.ok(sinMotivo.includes("<b>1-0</b> \u00b7 3 jugadas"), sinMotivo);
+  /* desde la v0.74 el cierre es un eslabón MÁS de la tira horizontal, no un
+     renglón abajo de una lista: por eso es un <span> y no un <div> */
+  assert.ok(sinMotivo.startsWith("<span class=\"cierre\">"), sinMotivo);
 });
 
 test("la cabecera perdió el contador de medias jugadas", () => {
@@ -1725,10 +1728,36 @@ test("el nombre del rival cede y el resultado no", () => {
   assert.ok(html.includes(".revcab .fin { flex: 0 0 auto; white-space: nowrap;"));
 });
 
-test("en la última jugada la lista baja hasta el cierre", () => {
-  /* Sin esto el cierre no se ve NUNCA: el scroll deja la jugada elegida pegada
-     al fondo del recuadro y el cierre queda justo abajo, fuera de vista. */
-  assert.ok(html.includes("if (IDX === R.filas.length - 1) cont.scrollTop = cont.scrollHeight;"));
+test("la tira se centra sola en la jugada actual", () => {
+  /* De acá sale, sin ninguna regla extra, que SIEMPRE se vea que hay más para
+     los dos lados cuando lo hay: la tira lleva la partida entera y la actual va
+     al medio. Reemplaza al scroll de la lista vertical, que hasta la v0.73
+     tenía además un caso especial para que el cierre se viera en la última. */
+  assert.ok(html.includes("function centrarTira()"));
+  assert.ok(html.includes("sc.scrollLeft = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;"));
+  /* y el scroll se mueve a mano, no con scrollIntoView, que arrastra la página */
+  const cuerpo = html.slice(html.indexOf("function centrarTira()"),
+                            html.indexOf("function irA(i)"));
+  assert.ok(!cuerpo.includes("scrollIntoView"));
+});
+
+test("la tipografía se mide en el navegador, no se escriben números fijos", () => {
+  /* `system-ui` es Roboto en Android y otra cosa en cada aparato, así que un
+     número fijo alinearía bien en uno y mal en el resto. Y la base del renglón
+     se mide con una sonda, no se calcula: calcularla obliga a suponer cómo
+     reparte el interlineado el navegador. */
+  const cuerpo = html.slice(html.indexOf("function medirTira()"),
+                            html.indexOf("function centrarTira()"));
+  assert.ok(cuerpo.includes("actualBoundingBoxAscent"), "la altura de la mayúscula");
+  assert.ok(cuerpo.includes('display:inline-block;width:0;height:0'), "la sonda de la base");
+  assert.ok(cuerpo.includes("--galon") && cuerpo.includes("--jgArriba"),
+    "deja las dos correcciones en variables CSS");
+  /* PRIMERO el recuadro y DESPUÉS el galón: repartir el relleno corre la base */
+  assert.ok(cuerpo.indexOf("--jgArriba") < cuerpo.indexOf("--galon"),
+    "el orden importa y está al revés");
+  assert.ok(cuerpo.includes("const b2 = base()"), "la base se vuelve a medir después");
+  assert.ok(cuerpo.includes("if (!cap) { TIRA_MEDIDA = true; return; }"),
+    "sin la métrica, se queda con el relleno parejo en vez de romperse");
 });
 
 test("el JSON del mes viaja hasta la revisión (v0.63.1)", () => {
@@ -1955,9 +1984,15 @@ test("las dos puertas arrancan de posiciones distintas", () => {
   /* El botón pregunta "¿y si en vez de esto?" y arranca ANTES de la jugada;
      tocar una pieza pregunta "¿y ahora qué?" y arranca DESPUÉS, que es también
      lo que deja probar las del rival: ahí le toca a él. */
-  assert.ok(html.includes("abrirPrueba(IDX);"), "el botón, antes de la jugada");
+  /* Desde la v0.74 la ÚNICA puerta es tocar una pieza: el botón que abría una
+     "en vez de esta jugada" se fue con la fila de botones grandes, que vivía
+     donde no se ve el tablero. Para reemplazar una jugada propia se vuelve una
+     con el galón y se toca ahí. */
+  assert.ok(!html.includes("abrirPrueba(IDX);"), "la puerta del botón se fue");
   assert.ok(html.includes("if (!PRUEBA) abrirPrueba(IDX + 1);"),
-    "tocar una pieza, después de la jugada");
+    "queda la de tocar una pieza, que arranca de la posición de después");
+  assert.ok(html.includes('$("btnProbar").onclick = seguro("volver de la variante", salirDePrueba);'),
+    "y el botón que queda solo sirve para salir");
 });
 
 test("la comparación contra la jugada real es solo para la primera", () => {
@@ -2028,7 +2063,10 @@ test("no se puede probar mientras corre un análisis", () => {
      el MultiPV o el Hash a motores que están trabajando. */
   const cuerpo = html.slice(html.indexOf("function ocupado(si) {"),
                             html.indexOf("async function correrMes"));
-  assert.ok(cuerpo.includes('$("btnProbar").disabled = si || !R;'));
+  /* desde la v0.74 la variante se abre TOCANDO EL TABLERO y no con un botón,
+     así que lo que se apaga es el toque y no un `disabled` */
+  assert.ok(cuerpo.includes("TRABAJANDO = si;"));
+  assert.ok(html.includes("if (TRABAJANDO) return;"), "y el tablero lo mira");
 });
 
 test("la coronación va a dama sin preguntar, y está dicho", () => {
@@ -2233,14 +2271,16 @@ test("lo que mira la posición NO vive en derivarFilas", () => {
     "la pantalla sí lo pide, y con la posición de antes para poder comparar");
 });
 
-test("el botón grande lo decide el veredicto, y con otro criterio que las tablas", () => {
-  /* esMala mueve los números de todas las tablas; esto solo mueve cuál botón es
-     el grande, y por eso una imprecisión también cuenta. */
-  assert.ok(html.includes('const CATS_PARA_REINTENTAR = new Set(["imprecision", "error", "omision", "grave"]);'));
-  assert.ok(html.includes("const paraProbar = !f.forzada && CATS_PARA_REINTENTAR.has(f.cat);"));
-  assert.ok(html.includes('$("btnProbar").classList.toggle("primario", !PRUEBA && paraProbar);'));
+test("la fila de botones grandes se fue entera", () => {
+  /* Vivía abajo de todo, o sea donde no se ve el tablero, y el usuario lo
+     resumió así: "cualquier navegación que se haga sin ver lo que se navega no
+     sirve de nada". Con ella se fue el botón que cambiaba de color según el
+     veredicto, que era lo único que usaba CATS_PARA_REINTENTAR. */
+  assert.ok(!html.includes("CATS_PARA_REINTENTAR"), "y su criterio, que no usa nadie más");
+  assert.ok(!html.includes("button.primario"), "ni el estilo del botón grande");
+  assert.ok(!html.includes('class="nav"'), "ni la fila");
   assert.ok(html.includes("const esMala = f => f.perdida >= 3;"),
-    "y el de las tablas sigue siendo el de siempre");
+    "el criterio de las TABLAS no se toca: ese mueve números");
 });
 
 test("hay una partida de prueba donde el ataque doble se dispara", () => {
@@ -2357,4 +2397,54 @@ test("sacar la línea de señales no pierde nada: la tarjeta ya lo dice todo", (
   /* y el renglón queda SOLO para la segunda opinión, que no es una señal */
   assert.ok(html.includes("const abajo = f.rev"), "el renglón vive solo para el rev");
   assert.ok(!html.includes("const notas = f.senales.slice();"), "la lista se fue");
+});
+
+/* ============== la vista Partida, rehecha (v0.74) ============== */
+
+test("el orden de la vista es el que se eligió mirando las seis maquetas", () => {
+  /* cabecera · barra · TARJETA · tablero · tira · curva · cuadritos · controles.
+     La tarjeta va ARRIBA del tablero: se lee primero. */
+  const z = html.slice(html.indexOf('<div id="zonaRevision"'),
+                       html.indexOf('<div id="zonaResumen"'));
+  const orden = ["revcab", 'id="evalh"', 'id="veredicto"', '"revtab"', 'id="tira"',
+                 'id="curva"', '"metricas"'];
+  let antes = -1;
+  for (const q of orden) {
+    const i = z.indexOf(q);
+    assert.ok(i > antes, "fuera de orden: " + q);
+    antes = i;
+  }
+  /* y la tarjeta de la variante va pegada arriba de la del veredicto */
+  assert.ok(z.indexOf('id="prueba"') < z.indexOf('id="veredicto"'));
+});
+
+test("la barra y la tarjeta no quedan pegadas", () => {
+  /* Pasó al reordenar: la barra no tiene margen abajo y la tarjeta no tenía
+     arriba, y hasta la v0.73 no hacía falta porque entre las dos estaba el
+     tablero. Mover un elemento le cambia los márgenes a sus DOS vecinos. */
+  assert.ok(/\.veredicto \{[^}]*margin-top: 10px/.test(html));
+});
+
+test("la tira lleva la partida entera, no una ventana", () => {
+  /* De ahí sale que siempre se vea que hay más para los dos lados cuando lo
+     hay: no hay ningún N que elegir. */
+  assert.ok(html.includes("$(\"tiraSc\").innerHTML = R.filas.map((x, i) =>"),
+    "se dibujan TODAS las filas");
+  assert.ok(!html.includes('id="jugadas"'), "la lista vertical se fue");
+  assert.ok(html.includes("mask-image: linear-gradient(to right, transparent 0, #000 24px"),
+    "y las puntas se desvanecen en vez de cortarse");
+});
+
+test("el chevron de la tira se dibuja, no se escribe", () => {
+  /* `‹` y `›` son comillas angulares y se apoyan a la altura de la minúscula:
+     la caja mide centrada y el dibujo se ve arriba. */
+  const t = html.slice(html.indexOf('<div class="tira" id="tira">'),
+                       html.indexOf('<div class="curva"'))
+    /* sin los comentarios: el de ahí adentro NOMBRA las comillas para explicar
+       por qué no se usan, y sin sacarlo la prueba se agarra de su propia
+       explicación */
+    .replace(/<!--[\s\S]*?-->/g, "");
+  assert.ok(t.includes("<svg"), "el galón es un dibujo");
+  assert.ok(!t.includes("&lsaquo;") && !t.includes("&rsaquo;"), "y no una comilla");
+  assert.ok(t.includes('id="ant"') && t.includes('id="sig"'), "los dos siguen ahí");
 });

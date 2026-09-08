@@ -171,16 +171,10 @@
   /* Avanzar y retroceder es la misma tarea repetida muchas veces seguidas:
      van pegadas, del mismo tamaño y ocupando el ancho entero. Antes eran dos
      cuadraditos de 40 px separados por "Mostrar la mejor". */
-  .nav { display: flex; gap: 6px; margin-top: 10px; }
-  .nav button { flex: 1; height: 48px; font-size: 15px; white-space: nowrap; }
-  /* la flecha de "anterior" no necesita el ancho de una palabra */
-  .nav #ant { flex: 0 0 56px; }
-  /* EL BOTÓN QUE DICE QUÉ HACER AHORA. Es lo primero que se ve en la revisión
-     de chess.com: con la jugada buena el grande es "Siguiente", y con la jugada
-     mala es "Reintentar". El color no decora, dice cuál de los dos es.
-     Relleno y no solo borde: en una fila de botones iguales, el que importa
-     tiene que ganar por peso, no por matiz. */
-  button.primario { color: #fff; border-color: transparent; font-weight: 700; }
+  /* LA FILA DE BOTONES GRANDES SE FUE EN LA v0.74. Vivía abajo de todo, o sea
+     donde no se ve el tablero, y el usuario la resumió así: "cualquier
+     navegación que se haga sin ver lo que se navega no sirve de nada". La
+     reemplaza la tira, que va pegada al tablero. */
 
   /* El ? vive en el título de la sección y abre el texto largo. Es un botón y
      no un <summary> anidado: los detalles no se pueden anidar en el título de
@@ -230,7 +224,11 @@
   .metricas .tocable.inerte { cursor: default; opacity: .5; }
   .metricas .tocable.activo { border-color: currentColor;
                               background: color-mix(in srgb, currentColor 12%, transparent); }
-  .veredicto { display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+  /* el margen de arriba lo trae la tarjeta y no el bloque de arriba: desde la
+     v0.74 arriba hay una barra de evaluación, que no tenía margen abajo, y las
+     dos quedaban pegadas. Mover un elemento le cambia los márgenes a sus DOS
+     vecinos, no a uno (§10). */
+  .veredicto { display: flex; align-items: center; gap: 10px; padding: 9px 12px; margin-top: 10px;
                border: 1px solid var(--linea); border-left-width: 5px; border-radius: 8px; }
   .veredicto .ico { font-weight: 800; font-size: 17px; min-width: 26px; text-align: center; }
   .veredicto .txt { flex: 1; min-width: 0; }
@@ -254,7 +252,11 @@
      de la categoría, igual que la tarjeta del veredicto. Elegido por el usuario
      mirándolo, contra la otra opción, que era dejarla violeta siempre. */
   .veredicto.prueba { border-style: dashed; border-left-color: #6a1b9a;
-                      margin-bottom: 8px; }
+                      margin-bottom: 0; }
+  /* La salida de la variante vive EN la tarjeta de la variante: es la única
+     pantalla que la necesita, y así no hay un botón esperando en la fila de
+     abajo para algo que casi nunca está pasando. */
+  .veredicto.prueba > .chico { flex: 0 0 auto; align-self: flex-start; }
   /* La tira de la variante. Envuelve en vez de scrollear: una variante de diez
      jugadas entra en dos renglones, y un carrusel horizontal adentro de una
      tarjeta que ya vive adentro de una página que scrollea son tres scrolls
@@ -282,37 +284,58 @@
      el JS: son de la marca, no del estilo. */
   .curva .pt { position: absolute; border-radius: 50%; display: block;
                transform: translate(-50%, -50%); pointer-events: none; }
-  /* La tira horizontal mostraba tres jugadas por vez y obligaba a scrollear a
-     ciegas para encontrar una. La lista vertical entra en pares —como se lee
-     una planilla— y scrollea sola, así el tablero no se mueve de lugar. */
-  /* position: relative para que offsetTop de cada fila sea contra la lista y
-     no contra la pagina: de eso depende que el scroll se quede acá adentro */
-  .jugadas { border: 1px solid var(--linea); border-radius: 8px; margin-top: 10px;
-             max-height: 27vh; overflow-y: auto; font-size: 13.5px; position: relative; }
-  .jugadas > div { display: grid; grid-template-columns: 28px 1fr 1fr; gap: 4px;
-                   align-items: center; padding: 3px 7px;
-                   border-bottom: 1px solid var(--linea); }
-  .jugadas > div:last-child { border-bottom: 0; }
-  /* Cómo terminó la partida, cerrando la tira: es donde lo escribe una planilla.
-     No suma alto a la pantalla porque vive adentro de la lista, que ya scrollea. */
-  .jugadas .cierre { display: block; text-align: center; padding: 7px 10px;
-                     font-size: 12.5px; color: var(--tenue);
-                     border-top: 1px solid var(--linea); }
-  .jugadas .cierre b { font-weight: 700;
-                       color: color-mix(in srgb, currentColor 95%, transparent); }
-  .jugadas .cierre small { font-size: 11.5px; opacity: .75; }
-  .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
-  .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
-                 padding: 4px 6px; border-radius: 5px; min-width: 0; }
-  /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra
-     "??"): sin esto las jugadas bailan de fila en fila */
-  .jugadas .jg .sm { font-size: 11px; font-weight: 700; min-width: 16px;
-                     text-align: center; flex-shrink: 0; }
-  .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
+  /* LA TIRA DE JUGADAS (v0.74). Es horizontal y lleva la partida ENTERA; se
+     centra sola en la jugada actual. De ahí sale, sin ninguna regla extra, que
+     SIEMPRE se vea que hay más para los dos lados cuando lo hay.
+
+     Fue una lista vertical de la v28 a la v0.73. La tira horizontal de antes de
+     la v28 "mostraba tres jugadas por vez y obligaba a scrollear a ciegas", y
+     eso está resuelto por dos cosas que aquella no tenía: los galones, que dan
+     el paso fino sin arrastrar, y el centrado automático. */
+  .tira { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  /* alineada POR LA BASE y no por el centro: el número va en 12 px y la jugada
+     en 13, así que centrando las cajas las bases quedan a distinta altura, que
+     es lo que el ojo lee como corrido. Los galones no tienen base —son un
+     dibujo— y por eso viven afuera de este contenedor. */
+  /* position: relative para que offsetLeft de cada jugada sea contra la tira y
+     no contra la página: de eso depende que el centrado caiga donde tiene que
+     caer. Es la misma razón por la que la lista vertical lo tenía. */
+  .tiraSc { flex: 1; min-width: 0; display: flex; gap: 5px; align-items: baseline;
+            overflow-x: auto; scrollbar-width: none; position: relative; }
+  .tiraSc::-webkit-scrollbar { display: none; }
+  /* EL DESVANECIDO. Sin recuadro alrededor de cada jugada, las de las puntas se
+     cortaban en seco; una máscara las disuelve contra el papel al acercarse al
+     galón y eso dice "hay más para allá" sin dibujar nada. Es una MÁSCARA y no
+     opacidad sobre el elemento, así que no depende del color de fondo y anda
+     igual con cualquier tema de tablero. */
+  .tiraSc { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px,
+                                #000 calc(100% - 24px), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 24px,
+                        #000 calc(100% - 24px), transparent 100%); }
+  .tira > button { flex: 0 0 34px; height: 44px; padding: 0; border: none;
+                   background: none; color: var(--tenue); display: flex;
+                   align-items: center; justify-content: center; line-height: 1;
+                   /* lo pone `medirTira()`: el vértice del chevron va al centro
+                      de la mayúscula, no al del renglón */
+                   transform: translateY(var(--galon, 0px)); }
+  .tira .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px;
+              white-space: nowrap; padding: 4px 0; line-height: 1.2; }
+  .tira .jg { white-space: nowrap; font-size: 13px; border-radius: 6px; cursor: pointer;
+              line-height: 1.2; display: inline-block;
+              /* el relleno lo reparte `medirTira()`: con la alineación por base,
+                 el recuadro sobresale por abajo todo el espacio de las colas */
+              padding: var(--jgArriba, 4px) 7px var(--jgAbajo, 4px); }
+  /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra "??") */
+  .tira .jg .sm { font-weight: 700; margin-right: 3px; }
   /* un contorno redondeado se leía como un campo de texto editable. Un fondo
      del propio color de la categoría marca igual y no promete nada falso. */
-  .jugadas .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
-                     font-weight: 700; }
+  .tira .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
+                  font-weight: 700; }
+  /* Cómo terminó la partida, cerrando la tira: es donde lo escribe una planilla. */
+  .tira .cierre { white-space: nowrap; font-size: 12px; color: var(--tenue);
+                  padding: 4px 7px; }
+  .tira .cierre b { font-weight: 700;
+                    color: color-mix(in srgb, currentColor 95%, transparent); }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
   .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: 13px;
@@ -359,7 +382,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.73 · 08-09";
+  window.VERSION = "v0.74 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -670,18 +693,17 @@
   <div class="revcab"><span id="revRival" class="rival"></span>
     <span id="revFin" class="fin"></span></div>
   <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
-  <div class="revtab">
-    <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
-    <div id="tablero"></div>
-  </div>
-  <!-- La tarjeta de la jugada probada. Va ARRIBA de la del veredicto y no en
-       su lugar: lo que se está comparando son dos jugadas desde la misma
-       posición, así que las dos tienen que verse a la vez. -->
+  <!-- EL ORDEN DE ESTA VISTA SE DECIDIÓ DIBUJÁNDOLO (v0.74, §4septdecies):
+       arriba el ESTADO —la barra—, después lo que pasó en esta jugada —las dos
+       tarjetas—, después el tablero, y abajo la navegación y la curva. La
+       tarjeta va arriba del tablero porque se lee primero: bajás la vista,
+       encontrás el veredicto y recién entonces mirás la posición. -->
   <div class="veredicto prueba oculto" id="prueba">
     <div class="ico" id="pIco"></div>
     <div class="txt"><div class="tit" id="pTit"></div><div class="sub" id="pSub"></div>
       <div class="exp oculto" id="pExp"></div>
       <div class="vlinea oculto" id="pLinea"></div></div>
+    <button class="chico" id="btnProbar">Volver</button>
   </div>
   <div class="veredicto" id="veredicto">
     <div class="ico" id="vIco"></div>
@@ -689,6 +711,26 @@
       <div class="exp oculto" id="vExp"></div></div>
     <div class="ev" id="vEv"></div>
   </div>
+  <div class="revtab">
+    <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
+    <div id="tablero"></div>
+  </div>
+  <!-- La tira de jugadas: lleva la partida ENTERA y se centra sola en la
+       jugada actual, que es de donde sale que siempre se vea que hay más para
+       los dos lados cuando lo hay. Los galones son el paso fino y el dedo el
+       paso grueso. -->
+  <div class="tira" id="tira">
+    <!-- El chevron se DIBUJA y no se escribe: `&lsaquo;` y `&rsaquo;` son comillas
+         angulares y en casi toda tipografía se apoyan a la altura de la
+         minúscula, no en el centro del renglón, así que se ven corridas por más
+         que la caja mida centrada. Dibujado es además la MISMA forma que los
+         galones del tablero, que son el mismo gesto. -->
+    <button id="ant" aria-label="Jugada anterior"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M 3.5 -6 L -3.5 0 L 3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="tiraSc" id="tiraSc"></div>
+    <button id="sig" aria-label="Jugada siguiente"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M -3.5 -6 L 3.5 0 L -3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+  <div class="curva" id="curva" role="img"
+       aria-label="Curva de quién va ganando a lo largo de la partida"></div>
   <div class="metricas">
     <div id="tileMejor" class="tocable" role="button" tabindex="0"
          aria-label="Ver la mejor jugada en el tablero"><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
@@ -696,17 +738,6 @@
     <div><div class="et">Caída</div><div class="va" id="mCaida"></div></div>
   </div>
   <div class="senales" id="senales"></div>
-  <div class="curva" id="curva" role="img"
-       aria-label="Curva de quién va ganando a lo largo de la partida"></div>
-  <div class="jugadas" id="jugadas"></div>
-<!-- Los tres botones grandes, en una fila. "Probar" vive acá y no entre los
-       chicos desde la v0.68: es la acción principal cuando la jugada salió mal,
-       y una acción principal no puede estar en la fila de las perillas. -->
-  <div class="nav">
-    <button id="ant">&lsaquo;</button>
-    <button id="btnProbar">Probar</button>
-    <button id="sig">Siguiente &rsaquo;</button>
-  </div>
   <div class="fila" style="margin-top:6px">
     <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
@@ -844,14 +875,6 @@ const CATEGORIAS = {
 const ORDEN = ["brillante", "genial", "mejor", "excelente", "bien", "libro",
                       "imprecision", "error", "omision", "grave"];
 
-/* Las cuatro que dan ganas de probar otra cosa. NO ES `esMala`, que vive en el
-   bloque de tablas y es `perdida >= 3`: son dos preguntas distintas y mezclarlas
-   movería los números de todas las tablas.
-   - `esMala` contesta "¿esto cuenta como jugada mala en la estadística?".
-   - esto contesta "¿le ofrezco al usuario volver a jugar esta posición?", y ahí
-     una imprecisión también cuenta, que es lo que hace chess.com.
-   Cambiar este conjunto no toca ningún número: solo cuál botón es el grande. */
-const CATS_PARA_REINTENTAR = new Set(["imprecision", "error", "omision", "grave"]);
 
 /* FORZADA no es una categoría y por eso NO está en CATEGORIAS ni en ORDEN.
    Cuando hay una sola jugada legal no hay nada que juzgar: no la elegiste, te
@@ -2084,6 +2107,9 @@ const pool = {
 };
 
 let CANCELAR = false;
+/* Hay trabajo del motor en curso. Lo pone `ocupado()` y lo mira el tablero para
+   no abrir una variante en el medio de un análisis. */
+let TRABAJANDO = false;
 
 /* Evalúa una lista de posiciones con el grupo de motores. */
 async function evaluarPosiciones(fens, prof, onProg, opc = {}) {
@@ -2613,6 +2639,76 @@ let CADENCIA = null;
    apaga el vistazo: si alguien agrega otra forma de navegar y no la usa, el
    vistazo quedaría pegado de una jugada a la otra. */
 let MEJOR_EN = null;
+/* LA TIPOGRAFÍA SE MIDE, NO SE ESTIMA (v0.74).
+
+   Tres veces seguidas la tira se vio corrida mientras las cuentas decían que
+   estaba centrada, y las tres el problema era el MISMO: se estaba midiendo la
+   caja del renglón, que incluye el espacio de las colas y las tildes, cuando lo
+   que el ojo alinea es la MAYÚSCULA.
+
+   Acá se miden las dos cosas que hacen falta y se dejan en variables CSS:
+
+   - `--galon`: cuánto hay que correr el chevron para que su vértice caiga en el
+     centro de la mayúscula.
+   - `--jgArriba` / `--jgAbajo`: cómo repartir el relleno del recuadro de la
+     jugada actual para que no sobresalga por abajo.
+
+   Se mide en el navegador y no se escriben números fijos porque LA TIPOGRAFÍA
+   CAMBIA CON EL APARATO: `system-ui` es Roboto en Android y otra cosa en cada
+   lado, y un número fijo alinearía bien en uno y mal en el resto.
+
+   La base del renglón se mide con una sonda —un inline-block de alto cero apoya
+   su borde inferior exactamente en la base— y no se calcula: calcularla obliga
+   a suponer cómo reparte el interlineado el navegador. */
+let TIRA_MEDIDA = false;
+function medirTira() {
+  if (TIRA_MEDIDA) return;
+  const jg = $("tiraSc").querySelector(".jg");
+  if (!jg) return;
+  const cs = getComputedStyle(jg);
+  const cv = document.createElement("canvas").getContext("2d");
+  cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const cap = cv.measureText("N").actualBoundingBoxAscent;
+  /* un navegador sin `actualBoundingBoxAscent` se queda con el relleno parejo
+     de la hoja de estilos: se ve peor, no se rompe */
+  if (!cap) { TIRA_MEDIDA = true; return; }
+  const base = () => {
+    const sonda = document.createElement("span");
+    sonda.style.cssText = "display:inline-block;width:0;height:0";
+    jg.appendChild(sonda);
+    const y = sonda.getBoundingClientRect().top;
+    sonda.remove();
+    return y;
+  };
+  const t = $("tira");
+  const b1 = base(), r = jg.getBoundingClientRect();
+  /* SIN LAYOUT NO HAY MEDICIÓN. La primera pintada pasa con `zonaRevision`
+     todavía oculta, así que todos los rectángulos dan cero y la corrección
+     sale disparatada. Se sale SIN marcar la medición como hecha, para que la
+     próxima pintada —ya visible— la haga de verdad. */
+  if (!r.height) return;
+  const d = (r.bottom - b1) - ((b1 - cap) - r.top);
+  const pt = parseFloat(cs.paddingTop), pb = parseFloat(cs.paddingBottom);
+  t.style.setProperty("--jgArriba", (pt + d / 2).toFixed(2) + "px");
+  t.style.setProperty("--jgAbajo", Math.max(0, pb - d / 2).toFixed(2) + "px");
+  /* PRIMERO el recuadro y DESPUÉS el galón, y el orden no es opcional: repartir
+     el relleno corre la base de todo el renglón —con la alineación por base, la
+     fija el elemento que más sube por encima de ella—, así que el galón hay que
+     calcularlo contra la base NUEVA. Se vuelve a medir por eso. */
+  const b2 = base(), rg = $("ant").getBoundingClientRect();
+  t.style.setProperty("--galon", ((b2 - cap / 2) - (rg.top + rg.bottom) / 2).toFixed(2) + "px");
+  TIRA_MEDIDA = true;
+}
+
+/* La jugada actual, al medio. Se mueve SOLO el scroll de la tira, a mano:
+   `scrollIntoView` scrollea también a los ancestros, así que cada jugada
+   arrastraría la página entera. Es la misma trampa que ya tenía la lista
+   vertical, anotada desde la v28. */
+function centrarTira() {
+  const sc = $("tiraSc"), sel = sc.querySelector(".sel");
+  if (sel) sc.scrollLeft = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;
+}
+
 function irA(i) {
   if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
   IDX = i;
@@ -2706,6 +2802,9 @@ function verDeLaVariante(k) {
 }
 
 function tocarCasilla(sq) {
+  /* con un análisis en curso el tablero no abre variantes: los dos usan el
+     mismo grupo de motores (ver `ocupado`) */
+  if (TRABAJANDO) return;
   /* SIN prueba abierta, tocar una pieza abre una desde la posición que se está
      viendo, que es la de DESPUÉS de la jugada. Es la puerta del "¿y ahora
      qué?", y es la que deja probar las del rival: ahí le toca a él. */
@@ -3013,8 +3112,9 @@ function ocupado(si) {
   $("buscar").disabled = si;
   /* Probar una jugada usa el MISMO grupo de motores que el análisis, y
      `pool.asegurar` puede cambiarle el MultiPV o el Hash a motores que están
-     trabajando. Con un análisis en curso, el botón se apaga. */
-  $("btnProbar").disabled = si || !R;
+     trabajando. Desde la v0.74 la variante se abre TOCANDO EL TABLERO y no con
+     un botón, así que lo que se apaga es el toque, no un `disabled`. */
+  TRABAJANDO = si;
   ver("detener", si);
   if (si) CANCELAR = false;
 }
@@ -3834,9 +3934,9 @@ function comoTermino(cab, meta) {
 function cierreDeLaTira(fin, filas) {
   if (!fin || !filas.length) return "";
   const jugadas = filas[filas.length - 1].n;
-  return `<div class="cierre"><b>${fin.res}</b>` +
+  return `<span class="cierre"><b>${fin.res}</b>` +
     (fin.motivo ? ` \u00b7 ${fin.motivo}` : "") +
-    ` <small>\u00b7 ${jugadas} jugadas</small></div>`;
+    ` \u00b7 ${jugadas} jugadas</span>`;
 }
 
 const VERBO = { gane: "Gané", empate: "Empaté", perdi: "Perdí" };
@@ -4497,7 +4597,7 @@ function pintarRevision() {
      lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
   const lado = ladoDelUsuario(R);
   const celda = (x, i) => {
-    if (!x) return "<span></span>";
+    if (!x) return "";
     const mia = !lado || VER_AMBOS || x.turno === lado;
     const p = presentar(x);
     const col = mia ? `var(--c-${p.clave})` : "var(--tenue)";
@@ -4510,37 +4610,18 @@ function pintarRevision() {
       `${mia ? "" : ";opacity:.55"}"><span class="sm">${p.icono}</span>` +
       `<span class="sa">${x.san}</span></span>`;
   };
-  /* se agrupa por número de jugada, no de a dos por posición: si la partida
-     arranca con negras —un PGN desde una posición— el par queda igual */
-  const pares = new Map();
-  R.filas.forEach((x, i) => {
-    if (!pares.has(x.n)) pares.set(x.n, {});
-    pares.get(x.n)[x.turno] = { x, i };
-  });
+  /* El número de jugada acompaña a la de las BLANCAS, como se escribe una
+     partida. La primera de la tira lo lleva igual aunque sea de las negras, o
+     no se sabría en qué jugada arranca lo que se está viendo. */
   $("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS, MARCA_CURVA);
-  $("jugadas").innerHTML = [...pares.entries()].map(([num, p]) =>
-    `<div><span class="np">${num}</span>` +
-    `${celda(p.w && p.w.x, p.w && p.w.i)}${celda(p.b && p.b.x, p.b && p.b.i)}</div>`).join("") +
-    cierreDeLaTira(fin, R.filas);
-  $("jugadas").querySelectorAll("span[data-i]").forEach(s => {
-    s.onclick = () => irA(+s.dataset.i);
+  $("tiraSc").innerHTML = R.filas.map((x, i) =>
+    (x.turno === "w" || i === 0 ? `<span class="np">${x.n}.</span>` : "") +
+    celda(x, i)).join("") + cierreDeLaTira(fin, R.filas);
+  $("tiraSc").querySelectorAll("span[data-i]").forEach(sp => {
+    sp.onclick = () => irA(+sp.dataset.i);
   });
-  /* Se mueve SOLO el scroll de la lista, a mano. scrollIntoView scrollea
-     tambien a los ancestros, asi que cada jugada arrastraba la pagina entera
-     hacia la lista: deslizabas en el tablero y la pantalla se te iba sola. */
-  const cont = $("jugadas"), sel = cont.querySelector(".sel");
-  if (sel) {
-    const fila = sel.parentElement;
-    const arriba = fila.offsetTop, alto = fila.offsetHeight;
-    if (arriba < cont.scrollTop) cont.scrollTop = arriba;
-    else if (arriba + alto > cont.scrollTop + cont.clientHeight)
-      cont.scrollTop = arriba + alto - cont.clientHeight;
-  }
-
-  /* En la última jugada la lista baja del todo, o el cierre no se ve NUNCA: el
-     scroll de arriba deja la jugada elegida pegada al fondo del recuadro, y el
-     cierre queda justo abajo, fuera de vista. Se descubrió mirándolo. */
-  if (IDX === R.filas.length - 1) cont.scrollTop = cont.scrollHeight;
+  medirTira();
+  centrarTira();
 
   /* LA LISTA DE SEÑALES SE FUE EN LA v0.73, y el motivo es de disposición: era
      un renglón que aparecía y desaparecía entre los cuadritos y la curva, así
@@ -4593,18 +4674,6 @@ function pintarRevision() {
      jugada mala, probar otra. El botón deja de ser una opción escondida y pasa
      a ser lo que la app te propone hacer, que es justo lo que le faltaba: la
      jugada mala es la que da ganas de probar otra cosa. */
-  /* "Probar otra" y no "En vez de Qh5+": el nombre de la jugada NO va en el
-     botón. Se probó y se vio en la captura —"En vez de Qh5+" se parte en dos
-     renglones y se sale de los 48 px de alto— y además es redundante, porque el
-     título de la tarjeta, dos dedos más abajo, dice "15. Qh5+ — Error grave".
-     El botón dice qué HACE; qué jugada reemplaza lo dice la pantalla. */
-  $("btnProbar").textContent = PRUEBA ? "Volver" : "Probar otra";
-  const paraProbar = !f.forzada && CATS_PARA_REINTENTAR.has(f.cat);
-  $("btnProbar").classList.toggle("primario", !PRUEBA && paraProbar);
-  $("btnProbar").style.background = (!PRUEBA && paraProbar) ? `var(--c-${c.clave})` : "";
-  $("sig").classList.toggle("primario", !PRUEBA && !paraProbar && IDX < R.filas.length - 1);
-  $("sig").style.background = ($("sig").classList.contains("primario"))
-    ? "var(--c-mejor)" : "";
   $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
   $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
   $("btnAmbos").disabled = !ladoDelUsuario(R);
@@ -4701,15 +4770,13 @@ $("tileMejor").onclick = verDeUnaVez;
 $("tileMejor").onkeydown = ev => {
   if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); verDeUnaVez(ev); }
 };
-/* La puerta del "¿y si en vez de esto jugaba otra cosa?": arranca de la
-   posición de ANTES de la jugada que se está mirando. La otra puerta —tocar una
-   pieza, que arranca de la de después— está en tocarCasilla. */
-$("btnProbar").onclick = seguro("probar", () => {
-  if (PRUEBA) return salirDePrueba();
-  if (!R) return;
-  abrirPrueba(IDX);
-  pintarRevision();
-});
+/* La ÚNICA puerta de entrada a la variante es tocar una pieza (v0.74). El botón
+   que abría una "en vez de esta jugada" se fue con la fila de botones grandes:
+   vivía donde no se ve el tablero, así que no se usaba. Para reemplazar una
+   jugada propia se vuelve una con el galón y se toca una pieza, que es lo mismo
+   que hace el "Reintentar" de chess.com.
+   Este botón solo sale de la variante, y por eso vive adentro de su tarjeta. */
+$("btnProbar").onclick = seguro("volver de la variante", salirDePrueba);
 $("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
 $("btnAmbos").onclick = seguro("pintar", () => { VER_AMBOS = !VER_AMBOS; pintarRevision(); });
 

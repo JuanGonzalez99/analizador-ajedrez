@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.73**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.74**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1847,6 +1847,116 @@ la partida, así que no hay contra qué comparar.
 
 - **La variante no se guarda.** Al salir se tira. Guardarla —para volver a una
   línea que encontraste— es otra tanda y toca la caché.
+
+## 4septdecies. La vista Partida, rehecha (v0.74)
+
+Se dibujaron **seis distribuciones completas** a 412 × 760 antes de tocar una
+línea de `index.html`, moviendo el DOM de la página abierta desde el arnés. El
+usuario las miró en el celular y eligió. Es la misma regla de §10 que ya había
+ganado dos veces, aplicada esta vez a la pantalla entera.
+
+### El orden, y por qué
+
+```
+cabecera · barra · TARJETA · tablero · tira · curva · cuadritos · controles
+```
+
+**La tarjeta va ARRIBA del tablero**, y es lo que ninguna de las otras cinco
+distribuciones probaba. Se lee primero: bajás la vista, encontrás el veredicto y
+recién entonces mirás la posición, que es el orden en el que uno mira —"¿qué
+pasó?" y después "a ver…"—. Con la tarjeta abajo llegás a ella después de haber
+mirado el tablero sin saber qué buscar.
+
+Y entra todo en una pantalla, sin scrollear.
+
+### La lista vertical volvió a ser una tira horizontal
+
+De la v28 a la v0.73 fue una lista vertical en pares. La tira horizontal que
+había ANTES de la v28 se había ido por un motivo anotado: *"mostraba tres
+jugadas por vez y obligaba a scrollear a ciegas"*. Esta no es aquella, y la
+diferencia está en dos cosas que aquella no tenía:
+
+1. **lleva la partida entera y se centra sola en la jugada actual**, así que
+   nunca hay que buscar dónde estás;
+2. **los galones dan el paso fino sin arrastrar**, y el dedo el paso grueso.
+
+De la primera sale, sin ninguna regla extra, lo que pidió el usuario: **siempre
+se ve que hay más para los dos lados cuando lo hay**, y en el arranque y el
+final no se ve, que es la información correcta.
+
+**El panorama de la partida pasa a ser la curva.** En la tira entran cuatro
+jugadas, así que no puede ser el lugar donde se busca dónde se rompió la
+partida; la curva lo hace mejor porque es un dibujo. Cada una hace lo que sabe:
+la curva es para mirar, la tira para moverse.
+
+### El desvanecido de las puntas
+
+Sin recuadro alrededor de cada jugada, las de las puntas se cortaban en seco.
+Una **máscara de degradado** de 24 px las disuelve contra el papel al acercarse
+al galón, y eso dice "hay más para allá" sin dibujar nada. Es una máscara y no
+opacidad sobre el elemento: no depende del color de fondo y anda igual con
+cualquier tema de tablero.
+
+### La tipografía se MIDE, no se estima
+
+Tres veces seguidas la tira se vio corrida mientras las cuentas decían que
+estaba centrada, y las tres el problema fue **el mismo**: se estaba midiendo la
+caja del renglón, que incluye el espacio de las colas y las tildes, cuando lo
+que el ojo alinea es **la mayúscula**.
+
+Lo que quedó, en `medirTira()`:
+
+- **el chevron se DIBUJA, no se escribe.** `‹` y `›` son comillas angulares: en
+  casi toda tipografía se apoyan a la altura de la minúscula, así que la caja
+  mide centrada y el dibujo se ve arriba. Dibujado es además la misma forma que
+  los galones del tablero, que son el mismo gesto.
+- **el vértice del chevron va al centro de la mayúscula**, y la altura de la
+  mayúscula sale de `actualBoundingBoxAscent` de canvas.
+- **la base del renglón se mide con una sonda** —un `inline-block` de alto cero
+  apoya su borde inferior exactamente en la base— y no se calcula: calcularla
+  obliga a suponer cómo reparte el interlineado el navegador.
+- **el relleno del recuadro de la jugada actual se reparte** para que no
+  sobresalga por abajo, que es lo que pasa al alinear por la base.
+
+**No hay números fijos y no puede haberlos**: `system-ui` es Roboto en Android y
+otra cosa en cada aparato, así que un número escrito a mano alinearía bien en
+uno y mal en el resto.
+
+**Y el orden importa**: primero el recuadro, después el galón. Repartir el
+relleno **corre la base de todo el renglón** —con la alineación por base, la fija
+el elemento que más sube por encima de ella—, así que el galón hay que
+calcularlo contra la base nueva. Se ve en la medición: la corrección del
+recuadro baja el renglón 0.8 px, y el usuario lo notó en una captura.
+
+**Sin layout no hay medición.** La primera pintada pasa con `zonaRevision`
+todavía oculta y todos los rectángulos dan cero: ahí se sale **sin** marcar la
+medición como hecha, para que la próxima —ya visible— la haga de verdad. Sin esa
+guarda la corrección quedaba congelada en un disparate.
+
+### Lo que se fue, y lo que eso se llevó puesto
+
+**La fila de botones grandes.** Vivía abajo de todo, o sea donde no se ve el
+tablero, y el usuario lo resumió así: *"cualquier navegación que se haga sin ver
+lo que se navega no sirve de nada"*. Con ella se fueron:
+
+- el botón que **abría una variante "en vez de esta jugada"**. Ahora la única
+  puerta es **tocar una pieza**, que arranca de la posición de después; para
+  reemplazar una jugada propia se vuelve una con el galón y se toca ahí, que es
+  lo mismo que hace el "Reintentar" de chess.com;
+- el botón que **cambiaba de color según el veredicto** (v0.68) y con él
+  `CATS_PARA_REINTENTAR`, que no usaba nadie más;
+- el `disabled` que impedía probar durante un análisis: ahora es una bandera,
+  `TRABAJANDO`, que mira el tablero. Lo que se apaga es el toque, no un botón.
+
+**La salida de la variante vive en la tarjeta de la variante**, que es la única
+pantalla que la necesita.
+
+### El error que la regla de §10 agarró en el acto
+
+Al reordenar, la barra de evaluación y la tarjeta quedaron **pegadas**: la barra
+no tenía margen abajo y la tarjeta no tenía margen arriba, y hasta la v0.73 no
+hacía falta porque entre las dos estaba el tablero. Es exactamente lo que dice
+la regla: **mover un elemento le cambia los márgenes a sus DOS vecinos**.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

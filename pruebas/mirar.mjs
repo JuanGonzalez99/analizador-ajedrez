@@ -227,6 +227,13 @@ const avanzar = async n => {
 };
 
 await foto("revision-1");
+/* la vista desde su primer renglón: es donde se ve si la barra y la tarjeta
+   quedaron pegadas, que es lo que pasó al reordenar en la v0.74 */
+await pg.evaluate(() => {
+  document.getElementById("zonaRevision").scrollIntoView({ block: "start" });
+  window.scrollBy(0, -8);
+});
+await foto("revision-arriba");
 
 /* LAS TRES UBICACIONES DE LA EXPLICACIÓN (v0.64), sobre la misma jugada: es lo
    único que cambia entre las tres capturas. La jugada NO se elige a ojo —se
@@ -274,54 +281,19 @@ await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("revision-tarjeta");
 await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta" + SUFIJO + ".png") });
 
-/* LOS TRES BOTONES GRANDES (v0.68). Cuál es el grande lo decide el veredicto,
-   así que hacen falta las dos fotos: una jugada buena y una mala. La mala NO se
-   elige a ojo: se recorre la partida leyendo el título de la tarjeta. */
-const malas = ["Imprecisión", "Error", "Omisión"];
-await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-buena" + SUFIJO + ".png") });
-/* se cuentan los pasos que se dan, para poder DESHACERLOS exactamente. Antes se
-   volvía comparando el número de jugada del título, y eso paraba en la mitad
-   equivocada del par —"5… Bxd4" en vez de "5. d4"—, así que las capturas de la
-   variante salían de otra posición que la que se había elegido. */
-let pasos = 0;
-for (let i = 0; i < 60; i++) {
-  const t = (await pg.locator("#vTit").textContent()) || "";
-  if (malas.some(m => t.includes(m))) break;
-  if (await pg.locator("#sig").isDisabled()) break;
-  await pg.click("#sig");
-  pasos++;
-}
-console.log("botones:  ", JSON.stringify(await pg.locator("#vTit").textContent()),
-            "→ el grande es",
-            await pg.locator("#btnProbar").evaluate(e => e.classList.contains("primario"))
-              ? "Probar otra" : "Siguiente");
-await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-mala" + SUFIJO + ".png") });
-/* la fila de botones EN LA PANTALLA, que es donde se juzga: sola no se ve qué
-   tiene encima ni cuánto hay que scrollear para llegar */
-await pg.evaluate(() => document.querySelector(".nav").scrollIntoView({ block: "end" }));
-await foto("pantalla-botones");
-
-await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
-await pg.evaluate(() => window.scrollBy(0, -60));
-await foto("tarjeta-y-botones");
-/* y se vuelve a la jugada de las capturas de la explicación, deshaciendo
-   exactamente los pasos que se dieron */
-for (let i = 0; i < pasos; i++) await pg.click("#ant");
-
 /* PROBAR JUGADAS: LA VARIANTE (v0.66), sobre esa misma jugada. Las jugadas NO
    se eligen a ojo: se le piden a chess.js, y la primera es una legal que no sea
    la que se jugó de verdad, para que la captura muestre una comparación y no la
    misma jugada dos veces. */
-const posPrueba = new Chess(fens[mejor]);
-const real = jugadas[mejor];
-const alterna = posPrueba.moves({ verbose: true })
-  .find(m => !(m.from === real.from && m.to === real.to));
+const posPrueba = new Chess(fens[mejor + 1]);
+const alterna = posPrueba.moves({ verbose: true })[0];
 if (!alterna) console.log("OJO: sin alternativa legal, no hay capturas de la variante");
 else {
-  /* PUERTA 1, el botón: la posición de ANTES de la jugada. */
-  await pg.click("#btnProbar");
-  await foto("prueba-1-eligiendo");
+  /* La variante se abre TOCANDO una pieza (v0.74): la puerta del botón se fue
+     con la fila de botones grandes. Arranca de la posición de DESPUÉS de la
+     jugada, o sea la del rival, así que la alternativa sale de ahí. */
   await pg.click(`#tablero [data-sq="${alterna.from}"]`);
+  await foto("prueba-1-eligiendo");
   await foto("prueba-2-elegida");
   await pg.click(`#tablero [data-sq="${alterna.to}"]`);
   await pg.waitForFunction(
@@ -357,20 +329,10 @@ else {
      estaba: es lo que dice, mirándolo, que la variante no ensució nada */
   await pg.click("#btnProbar");
   await foto("prueba-4-vuelta");
-
-  /* PUERTA 2, tocar una pieza sin abrir nada: arranca de la posición de DESPUÉS
-     de la jugada, o sea la del rival. */
-  const posDespues = new Chess(fens[mejor + 1]);
-  const delRival = posDespues.moves({ verbose: true })[0];
-  if (delRival) {
-    await pg.click(`#tablero [data-sq="${delRival.from}"]`);
-    await foto("prueba-7-tocando-sin-boton");
-  }
-  await pg.click("#btnProbar");
 }
 
-/* el tablero, el veredicto y la curva en una sola pantalla: es la pregunta de
-   si algo nuevo empuja la lista de jugadas fuera de la vista */
+/* la pantalla entera: con la disposición de la v0.74 entra todo —barra,
+   tarjeta, tablero, tira y curva— y eso es justamente lo que hay que mirar */
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("revision-tablero-y-curva");
@@ -409,365 +371,33 @@ await pg.selectOption("#marcasCurva", "punto");
 
 /* lo que dice la cabecera y el cierre, en texto: una captura no deja copiar y
    pegar el resultado a una prueba, y esto sí */
+/* la alineación de la tira, medida en la app de verdad: el vértice del chevron
+   contra el centro de la mayúscula. Es lo que `medirTira()` deja acomodado, y
+   si algún día se rompe, se rompe acá y no en el celular. */
+console.log("tira:     ", await pg.evaluate(() => {
+  const jg = document.querySelector("#tiraSc .jg");
+  const cs = getComputedStyle(jg);
+  const cv = document.createElement("canvas").getContext("2d");
+  cv.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const cap = cv.measureText("N").actualBoundingBoxAscent;
+  const sonda = document.createElement("span");
+  sonda.style.cssText = "display:inline-block;width:0;height:0";
+  jg.appendChild(sonda);
+  const base = sonda.getBoundingClientRect().top;
+  sonda.remove();
+  const p = document.querySelector("#ant path").getBoundingClientRect();
+  const sel = document.querySelector("#tiraSc .jg.sel").getBoundingClientRect();
+  return JSON.stringify({
+    verticeChevron: +((p.top + p.bottom) / 2).toFixed(1),
+    centroDeLaN: +(base - cap / 2).toFixed(1),
+    recuadroArriba: +((base - cap) - sel.top).toFixed(1),
+    recuadroAbajo: +(sel.bottom - base).toFixed(1) });
+}));
+
 console.log("cabecera:", JSON.stringify(await pg.locator("#revRival").textContent()),
             JSON.stringify(await pg.locator("#revFin").textContent()));
-const cierreEl = pg.locator(".jugadas .cierre");
+const cierreEl = pg.locator(".tira .cierre");
 console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl.textContent()).trim()) : "(no hay)");
-
-/* ============ LAS CUATRO DISTRIBUCIONES (maquetas, v0.73) ============
-
-   Van AL FINAL a propósito: mueven el DOM de la página abierta y no lo dejan
-   como estaba, así que nada de lo de arriba puede depender de esto. NO TOCAN
-   index.html: son un dibujo para decidir mirando, y se van cuando el usuario
-   elija.
-
-   Lo que se está comparando es dónde va cada bloque de la vista Partida:
-     A  estado arriba   → cabecera · barra · CURVA · tablero · tira · tarjeta · cuadritos
-     B  tarjeta primero → igual que A pero la tarjeta antes de la tira
-     C  compacta        → A con los cuadritos metidos adentro de la tarjeta
-     D  la de hoy       → para tener contra qué comparar
-
-   La TIRA HORIZONTAL no existe en la app: se arma acá con las jugadas que ya
-   están dibujadas en la lista vertical, para poder verla sin construirla. */
-
-/* LA TIRA LLEVA LA PARTIDA ENTERA y se centra sola en la jugada actual.
-
-   No es una ventana de N jugadas: eso obligaba a elegir un N, y con cualquiera
-   las puntas quedaban cortadas o no según dónde estuvieras. Con la partida
-   entera adentro y el scroll centrado, **siempre se ve que hay más para los dos
-   lados cuando lo hay**, y cuando no lo hay —el arranque y el final— tampoco se
-   ve, que es la información correcta. Es lo que pidió el usuario.
-
-   Además así el dedo llega a cualquier jugada de la partida, no solo a las
-   vecinas, y los galones quedan para el paso fino. */
-const armarTira = async (conNumero = false, estilo = "borde", fade = 0, caja = "hoy") =>
-  await pg.evaluate(([conNum, est, desvanecer, caja]) => {
-  const vieja = document.getElementById("tiraH");
-  if (vieja) vieja.remove();
-  const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
-  const cont = document.createElement("div");
-  cont.id = "tiraH";
-  cont.style.cssText = "display:flex;align-items:center;gap:6px;margin:10px 0;";
-  const galon = t => {
-    const b = document.createElement("button");
-    /* EL CHEVRON SE DIBUJA, NO SE ESCRIBE. `‹` y `›` son comillas angulares y en
-       casi toda tipografía se apoyan a la altura de la minúscula, no en el
-       centro del renglón: por eso se veían corridos aunque las cajas de texto
-       midieran centradas. Dibujado es la MISMA forma que los galones del
-       tablero, que son el mismo gesto, y queda centrado por construcción. */
-    if (est !== "borde") {
-      const h = t === "\u2039" ? 1 : -1;
-      b.innerHTML = '<svg width="13" height="20" viewBox="-7 -10 14 20" ' +
-        'aria-hidden="true"><path d="M ' + (h * 3.5) + ' -6 L ' + (-h * 3.5) +
-        ' 0 L ' + (h * 3.5) + ' 6" fill="none" stroke="currentColor" ' +
-        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-    } else b.textContent = t;
-    /* el galón sin recuadro pesa mucho menos, y ya hay dos iguales en el
-       tablero: los tres serían el mismo gesto dibujado igual */
-    /* el galón va pelado en TODAS las variantes nuevas: así lo único que cambia
-       entre ellas es cómo se marca la jugada actual, que es lo que se compara */
-    b.style.cssText = est !== "borde"
-      /* 44 px es el objetivo mínimo para un dedo, y `display:flex` + `line-height:1`
-         es lo que los alinea de verdad con las jugadas: con el `line-height` de
-         un botón, el chevron se apoya en su propia caja y queda corrido. */
-      ? "flex:0 0 34px;height:44px;padding:0;border:none;" +
-        "background:none;color:var(--tenue);display:flex;align-items:center;" +
-        "justify-content:center;line-height:1;"
-      : "flex:0 0 38px;height:38px;padding:0;font-size:16px;";
-    return b;
-  };
-  const medio = document.createElement("div");
-  /* ALINEADO POR LA BASE y no por el centro: el número va en 12 px y la jugada
-     en 13, así que centrando las cajas las bases quedan a distinta altura, que
-     es lo que el ojo lee como corrido. Los galones no tienen base —son un
-     dibujo— y por eso viven afuera, centrados. */
-  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;align-items:baseline;" +
-    "overflow-x:auto;scrollbar-width:none;";
-  /* EL DESVANECIDO. Los recuadros de antes tapaban las jugadas de las puntas y
-     eso decía "hay más para allá"; sin recuadro, las jugadas se cortaban en
-     seco. Una máscara de degradado devuelve ese aviso sin dibujar nada: la
-     jugada se disuelve contra el papel a medida que se acerca al galón.
-     No es opacidad sobre el elemento: es una máscara, así que no depende del
-     color de fondo y funciona igual con cualquier tema. */
-  if (desvanecer) {
-    const m = "linear-gradient(to right, transparent 0, #000 " + desvanecer + "px, " +
-      "#000 calc(100% - " + desvanecer + "px), transparent 100%)";
-    medio.style.maskImage = m;
-    medio.style.webkitMaskImage = m;
-  }
-  let elegida = null;
-  for (const e of jg) {
-    const esta = e.classList.contains("sel");
-    if (conNum) {
-      const fila = e.parentElement;
-      const jgs = [...fila.querySelectorAll(".jg")].filter(x => x.textContent.trim());
-      if (jgs.indexOf(e) === 0) {
-        const num = document.createElement("span");
-        num.textContent = fila.querySelector(".np").textContent + ".";
-        /* el mismo relleno vertical que las jugadas: sin eso las cajas miden
-           distinto y el número queda medio renglón corrido */
-        num.style.cssText = "font-size:12px;color:var(--tenue);white-space:nowrap;" +
-          "padding:4px 0;line-height:1.2;";
-        medio.appendChild(num);
-      }
-    }
-    const sp = document.createElement("span");
-    sp.innerHTML = e.innerHTML;
-    const base = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;" +
-      "line-height:1.2;color:" + e.style.color + ";";
-    /* cuatro formas de decir CUÁL es la actual, con la misma información:
-       - borde:  todas con recuadro, la actual con el recuadro fuerte (la de hoy)
-       - limpia: ninguna con recuadro, la actual con recuadro
-       - pelado: ninguna con recuadro, la actual con fondo LLENO y letra clara
-       - tenue:  igual que pelado pero con el fondo al 20%, que es EXACTAMENTE
-                 como la lista vertical marca la jugada actual desde la v28 */
-    sp.style.cssText = base + (
-      est === "borde"
-        ? "border:1px solid " + (esta ? "currentColor" : "var(--linea)") + (esta ? ";font-weight:700" : "")
-      : est === "limpia"
-        ? (esta ? "border:1px solid currentColor;font-weight:700" : "border:1px solid transparent")
-      : est === "tenue"
-        ? (esta ? "background:color-mix(in srgb, currentColor 20%, transparent);font-weight:700" : "")
-        : (esta ? "font-weight:700" : ""));
-    /* con fondo lleno la letra tiene que ir del color del papel, no del suyo */
-    if (est === "pelado" && esta) {
-      sp.style.background = e.style.color;
-      sp.style.color = "var(--papel, #fdfcfa)";
-    }
-    medio.appendChild(sp);
-    if (esta) elegida = sp;
-  }
-  cont.append(galon("\u2039"), medio, galon("\u203a"));
-  document.getElementById("zonaRevision").appendChild(cont);
-  /* ORDEN: PRIMERO el recuadro, DESPUÉS el galón. Corregir el relleno del
-     recuadro corre la base de todo el renglón —con `align-items:baseline` la
-     base la fija el elemento que más sube por encima de ella—, así que si el
-     galón se calcula antes, queda corrido por el arreglo del recuadro. Lo vio
-     el usuario en la captura. */
-  /* EL RECUADRO DE LA JUGADA ACTUAL, CENTRADO SOBRE LA TINTA.
-     Con las cajas alineadas por la base, el recuadro sobresale por abajo: arriba
-     solo tiene el hueco entre el borde de la caja y la mayúscula, y abajo tiene
-     además todo el espacio de las colas. Se mide cuánto y se corrige de tres
-     formas, que es lo que hay que elegir mirando. */
-  const sel2 = medio.querySelector('[style*="font-weight:700"], [style*="font-weight: 700"]');
-  if (sel2 && caja !== "hoy") {
-    const cs = getComputedStyle(sel2);
-    const cv = document.createElement("canvas").getContext("2d");
-    cv.font = "13px " + cs.fontFamily;
-    const m = cv.measureText("N");
-    const r = sel2.getBoundingClientRect();
-    const pt = parseFloat(cs.paddingTop), pb = parseFloat(cs.paddingBottom);
-    const base = r.top + pt + m.fontBoundingBoxAscent;
-    const arriba = (base - m.actualBoundingBoxAscent) - r.top;
-    const abajo = r.bottom - base;
-    const d = abajo - arriba;
-    if (caja === "recorta") sel2.style.paddingBottom = Math.max(0, pb - d) + "px";
-    if (caja === "alarga") sel2.style.paddingTop = (pt + d) + "px";
-    if (caja === "mitad") {
-      sel2.style.paddingTop = (pt + d / 2) + "px";
-      sel2.style.paddingBottom = Math.max(0, pb - d / 2) + "px";
-    }
-    window.__sobra = +d.toFixed(2);
-  }
-  /* EL VÉRTICE DEL CHEVRON VA AL CENTRO DE LA "N", no al centro del renglón.
-     El renglón incluye el espacio de las colas y las tildes, así que su centro
-     cae más abajo que el de una mayúscula: eso es lo que se veía corrido.
-     El centro de la N se mide con las métricas REALES de la tipografía
-     (`actualBoundingBoxAscent` de canvas), no se estima. */
-  if (est !== "borde") {
-    const ref = [...medio.children].find(e => e.querySelector && e.querySelector(".sa"));
-    if (ref) {
-      const cs = getComputedStyle(ref);
-      const cv = document.createElement("canvas").getContext("2d");
-      cv.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
-      const m = cv.measureText("N");
-      const r = ref.getBoundingClientRect();
-      /* la base del texto: el borde de arriba de la caja, más el relleno, más
-         lo que la tipografía sube por encima de la base */
-      const base = r.top + parseFloat(cs.paddingTop) + m.fontBoundingBoxAscent;
-      const centroN = base - m.actualBoundingBoxAscent / 2;
-      for (const b of cont.querySelectorAll("button")) {
-        const rb = b.getBoundingClientRect();
-        b.style.transform = "translateY(" + (centroN - (rb.top + rb.bottom) / 2).toFixed(2) + "px)";
-      }
-    }
-  }
-  /* centrar DESPUÉS de estar en el documento: antes no hay anchos que medir */
-  if (elegida) medio.scrollLeft = elegida.offsetLeft -
-    (medio.clientWidth - elegida.offsetWidth) / 2;
-  return cont.id;
-}, [conNumero, estilo, fade, caja]);
-
-/* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
-   a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
-const armar = async (orden, opc = {}) => await pg.evaluate(([ids, o]) => {
-  const z = document.getElementById("zonaRevision");
-  /* SIEMPRE dentro de zonaRevision: `.fila` existe también arriba, en la zona de
-     búsqueda, y un querySelector suelto se traía ese en vez de este. */
-  const dentro = sel => z.querySelector("#" + sel) || z.querySelector("." + sel);
-  /* la línea de métricas que mete la variante compacta se saca SIEMPRE al
-     empezar: si no, la maqueta siguiente la hereda y muestra los números dos
-     veces, adentro de la tarjeta y en los cuadritos */
-  const vieja = z.querySelector("#metricasEnTarjeta");
-  if (vieja) vieja.remove();
-  const piezas = ids.map(dentro).filter(Boolean);
-  /* todo lo que NO entra en la maqueta se esconde: si queda visible, aparece
-     arriba de todo, porque lo demás se reordena appendeando al final */
-  /* al esconder se GUARDA el display que tenía: la tira es un flex, y
-     devolvérselo con "" la dejaba en block, con los galones uno abajo del otro.
-     Es la misma clase de error que el de los márgenes: tocar un elemento le
-     cambia cosas que no estabas mirando. */
-  for (const el of [...z.children]) {
-    if (piezas.includes(el)) continue;
-    if (el.dataset.disp === undefined) el.dataset.disp = el.style.display;
-    el.style.display = "none";
-  }
-  for (const el of piezas) {
-    if (el.dataset.disp !== undefined) { el.style.display = el.dataset.disp; delete el.dataset.disp; }
-    el.style.marginTop = "10px";
-    el.style.marginBottom = "0";
-    z.appendChild(el);
-  }
-  if (o.metricasAdentro) {
-    /* SCOPEADO, como todo lo demás: la cabecera de la vista Mes también se
-       llama `.metricas`, y viene antes en el documento. Es el mismo error que
-       ya había pasado con `.fila`. */
-    const m = dentro("metricas");
-    const txt = z.querySelector("#veredicto .txt");
-    const linea = document.createElement("div");
-    linea.id = "metricasEnTarjeta";
-    linea.style.cssText = "font-size:12px;color:var(--tenue);margin-top:4px;" +
-      "font-variant-numeric:tabular-nums;";
-    linea.textContent = [...m.children]
-      .map(d => d.querySelector(".et").textContent + " " + d.querySelector(".va").textContent)
-      .join("  ·  ");
-    txt.appendChild(linea);
-    m.style.display = "none";
-  }
-}, [orden, opc]);
-
-const desdeArriba = async nombre => {
-  /* CENTRAR LA TIRA ACÁ y no al armarla: `armar` la mueve de lugar, y mover un
-     elemento le resetea el scroll. Es la tercera vez que aparece el mismo tipo
-     de error en estas maquetas: tocar algo cambia cosas que no estabas mirando. */
-  await pg.evaluate(() => {
-    const t = document.querySelector("#tiraH > div");
-    if (!t) return;
-    const sel = [...t.children].find(e => e.style.fontWeight === "700");
-    if (sel) t.scrollLeft = sel.offsetLeft - (t.clientWidth - sel.offsetWidth) / 2;
-  });
-  await pg.evaluate(() => window.scrollTo(0, 0));
-  await pg.evaluate(() => {
-    const z = document.getElementById("zonaRevision");
-    z.scrollIntoView({ block: "start" });
-    window.scrollBy(0, -8);
-  });
-  await foto(nombre);
-};
-
-/* Se vuelve a la jugada de las capturas de la explicación: la prueba de la
-   curva de más arriba clickea una marca y deja la vista en otra jugada, y las
-   maquetas tienen que compararse contra las capturas anteriores. Se toca la
-   jugada en la lista, que es exacto, en vez de contar pasos. */
-await pg.click(`#jugadas span[data-i="${mejor}"]`);
-await pg.waitForTimeout(200);
-
-/* D primero, que es la de hoy y todavía no se tocó nada */
-await desdeArriba("dist-D-hoy");
-
-const OCULTAR = {};
-await armarTira(true);
-/* A, B y C se quedan para comparar contra la elegida */
-await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "metricas", "fila"], OCULTAR);
-await desdeArriba("dist-A");
-await armar(["revcab", "evalh", "curva", "revtab", "veredicto", "tiraH", "metricas", "fila"], OCULTAR);
-await desdeArriba("dist-B");
-await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "fila"],
-            { ...OCULTAR, metricasAdentro: true });
-await desdeArriba("dist-C");
-
-/* E, la elegida: barra · tarjeta · tablero · navegación · curva */
-const E = ["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"];
-await armar(E, OCULTAR);
-await desdeArriba("dist-E");
-/* y la E con los cuadritos adentro de la tarjeta, que es lo que falta decidir */
-await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "fila"],
-            { ...OCULTAR, metricasAdentro: true });
-await desdeArriba("dist-E-compacta");
-/* la tira sola, grande, para mirarle las puntas. Va después de una pantalla,
-   que es donde se centra. */
-await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira" + SUFIJO + ".png") });
-
-/* LAS TRES FORMAS DE LA TIRA. El usuario pidió sacarle el borde a cada jugada;
-   las otras dos son propuestas: la actual marcada con fondo en vez de recuadro,
-   y los galones sin recuadro, que son lo más pesado de la fila. */
-/* elegido: tenue con desvanecido 24. Lo que falta es cómo se corrige que el
-   recuadro de la jugada actual sobresalga por abajo. */
-for (const [est, fade, caja] of [["tenue", 24, "hoy"], ["tenue", 24, "recorta"],
-                                 ["tenue", 24, "alarga"], ["tenue", 24, "mitad"]]) {
-  await armarTira(true, est, fade, caja);
-  await armar(E, OCULTAR);
-  /* PRIMERO la pantalla, que es la que centra la tira, y DESPUÉS el recorte: al
-     revés la tira salía sin centrar, mostrando el arranque de la partida. */
-  const nom = "caja-" + caja;
-  if (caja === "recorta") console.log("el recuadro sobresale por abajo:",
-    await pg.evaluate(() => window.__sobra), "px");
-  if (caja !== "mitad") { }
-  if (true) {
-    /* SE MIDE, no se mira: el ojo alinea por la caja del TEXTO, no por la del
-       elemento, así que se le pide al navegador el rectángulo real de cada
-       texto con un Range. Si las bases no coinciden, se ve corrido aunque los
-       elementos estén centrados. */
-    console.log("alineación (" + caja + "):", await pg.evaluate(() => {
-      const t = document.querySelector("#tiraH");
-      const caja = el => {
-        const n = [...el.childNodes].find(x => x.nodeType === 3 && x.textContent.trim())
-               || [...el.querySelectorAll("*")].map(x => [...x.childNodes]
-                  .find(y => y.nodeType === 3 && y.textContent.trim())).find(Boolean);
-        if (!n) return null;
-        const r = document.createRange(); r.selectNodeContents(n);
-        const b = r.getBoundingClientRect();
-        return { txt: n.textContent.trim().slice(0, 6), arriba: +b.top.toFixed(1),
-                 abajo: +b.bottom.toFixed(1), medio: +((b.top + b.bottom) / 2).toFixed(1) };
-      };
-      /* del galón dibujado se mide el TRAZO, no la caja del botón: es lo que
-         se ve. `getBoundingClientRect` sobre el <path> da justo eso. */
-      /* y la N de referencia, para poder comparar el vértice contra SU centro */
-      const jugRef = [...t.querySelector("div").children]
-        .find(e => e.querySelector && e.querySelector(".sa"));
-      let centroN = null;
-      if (jugRef) {
-        const cs = getComputedStyle(jugRef);
-        const cv = document.createElement("canvas").getContext("2d");
-        cv.font = cs.fontWeight + " " + cs.fontSize + " " + cs.fontFamily;
-        const m = cv.measureText("N");
-        const r = jugRef.getBoundingClientRect();
-        centroN = +(r.top + parseFloat(cs.paddingTop) + m.fontBoundingBoxAscent -
-                    m.actualBoundingBoxAscent / 2).toFixed(1);
-      }
-      const trazo = t.querySelector("button path");
-      const rg = trazo && trazo.getBoundingClientRect();
-      const galon = t.querySelector("button");
-      const medio = t.querySelector("div");
-      const num = [...medio.children].find(e => /^\d+\.$/.test(e.textContent.trim()));
-      const jug = [...medio.children].find(e => e.querySelector && e.querySelector(".sa"));
-      return JSON.stringify({
-        verticeChevron: rg ? +((rg.top + rg.bottom) / 2).toFixed(1) : null,
-        centroDeLaN: centroN,
-        numero: caja(num), jugada: caja(jug) });
-    }));
-  }
-  await desdeArriba("dist-E-" + nom);
-  await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira-" + nom + SUFIJO + ".png") });
-  if (fade === 24) {
-    /* un recorte chico de la punta izquierda: la tira entera a 2x no alcanza
-       para juzgar una diferencia de un píxel entre el galón y las jugadas */
-    const c = await pg.locator("#tiraH").boundingBox();
-    await pg.screenshot({ path: path.join(SALIDA, "tira-lupa" + SUFIJO + ".png"),
-                          clip: { x: c.x, y: c.y, width: 190, height: c.height } });
-  }
-}
-console.log("maquetas: dist-D-hoy, dist-A, dist-B, dist-C, dist-E, dist-E-compacta, tira");
 
 console.log("listo: capturas/");
 await b.close();
