@@ -303,14 +303,22 @@ else {
 
   /* LA RESPUESTA DEL RIVAL, que es lo que la v0.65 no dejaba hacer. Sale de la
      posición que quedó, así que también se la pide chess.js. */
+  /* Se encadenan CINCO más, de los dos lados: es la pregunta de si la variante
+     deja seguir la partida inventada o solo mide una jugada suelta. */
   posPrueba.move(alterna.san);
-  const respuesta = posPrueba.moves({ verbose: true })[0];
-  if (respuesta) {
-    await pg.click(`#tablero [data-sq="${respuesta.from}"]`);
-    await pg.click(`#tablero [data-sq="${respuesta.to}"]`);
+  let respuesta = null;
+  for (let k = 0; k < 5; k++) {
+    const m = posPrueba.moves({ verbose: true })[0];
+    if (!m) break;
+    respuesta = m;
+    await pg.click(`#tablero [data-sq="${m.from}"]`);
+    await pg.click(`#tablero [data-sq="${m.to}"]`);
     await pg.waitForFunction(
       () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
       null, { timeout: 30000 });
+    posPrueba.move(m.san);
+  }
+  if (respuesta) {
     await foto("prueba-5-encadenada");
     await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
   /* la maqueta del borde violeta se fue en la v0.71: el usuario eligió el color

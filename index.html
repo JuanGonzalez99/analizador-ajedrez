@@ -262,10 +262,14 @@
      tarjeta que ya vive adentro de una página que scrollea son tres scrolls
      encimados. */
   .vlinea { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  .vlinea .vj { font-size: 12px; padding: 2px 6px; border: 1px solid var(--linea);
-                border-radius: 999px; cursor: pointer; user-select: none;
-                white-space: nowrap; }
-  .vlinea .vj.sel { border-color: currentColor; font-weight: 700; }
+  /* SIN RECUADRO, igual que la tira de la partida: son la misma clase de cosa
+     —dónde estoy en una línea de jugadas— y tenerlas dibujadas distinto hacía
+     que la variante pareciera otro tipo de control. La actual se marca con el
+     20% de su color, que es lo que la app usa para "estás acá" desde la v28. */
+  .vlinea .vj { font-size: 12px; padding: 3px 7px; border-radius: 6px;
+                cursor: pointer; user-select: none; white-space: nowrap; }
+  .vlinea .vj.sel { background: color-mix(in srgb, currentColor 20%, transparent);
+                    font-weight: 700; }
   .vlinea .vj .sm { font-weight: 800; margin-right: 3px; }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: 10px auto 0; }
@@ -382,7 +386,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.74 · 08-09";
+  window.VERSION = "v0.74.1 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
