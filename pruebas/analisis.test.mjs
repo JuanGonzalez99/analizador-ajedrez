@@ -2448,3 +2448,61 @@ test("el chevron de la tira se dibuja, no se escribe", () => {
   assert.ok(!t.includes("&lsaquo;") && !t.includes("&rsaquo;"), "y no una comilla");
   assert.ok(t.includes('id="ant"') && t.includes('id="sig"'), "los dos siguen ahí");
 });
+
+/* ---------- los conceptos de la posición (v0.75) ---------- */
+
+test("la clavada se contesta sacando la pieza del tablero", () => {
+  /* Alfil en b5, caballo en d7, rey en e8 y c6 VACÍA: si al sacar el caballo el
+     rey queda en jaque, el caballo estaba tapando. chess.js confirma además que
+     el caballo no tiene ni una jugada legal. */
+  const conClavada = "r1bqkbnr/pppn1ppp/8/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 1";
+  assert.deepEqual(new Chess(conClavada).moves({ square: "d7" }), [],
+    "el caballo no se puede mover, que es lo que significa clavado");
+  assert.equal(A.estaClavada(conClavada, "d7", "e8"), true);
+  assert.equal(A.estaClavada(conClavada, "c7", "e8"), false, "esa no está en la línea");
+  /* la misma sin el alfil: no hay quien clave */
+  const sin = "r1bqkbnr/pppn1ppp/8/4p3/1B2P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 1";
+  assert.equal(A.estaClavada(sin, "d7", "e8"), false);
+  /* y el filtro geométrico no se come una clavada de verdad */
+  assert.equal(A.estaClavada(conClavada, "d7", "h8"), false, "sin el rey en la línea, no");
+});
+
+test("el bloqueo de la clavada NO se afirma cuando ya estaba", () => {
+  /* Es la misma regla que las colgadas: lo que ya estaba no lo causó esta
+     jugada. Acá se comprueba en el detector, comparando dos posiciones. */
+  const conClavada = "r1bqkbnr/pppn1ppp/8/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 1";
+  const cuerpo = html.slice(html.indexOf("function observarJugada"),
+                            html.indexOf("fin del bloque de análisis"));
+  assert.ok(cuerpo.includes("if (fenAntes && estaClavada(fenAntes, sq, reyRival)) continue;"));
+  assert.equal(A.estaClavada(conClavada, "d7", "e8"), true, "y el detector anda");
+});
+
+test("el peón pasado mira su columna y las dos de al lado, para adelante", () => {
+  assert.equal(A.esPasado(new Chess("4k3/8/8/3P4/8/8/8/4K3 w - - 0 1").board(), "d5", "w"), true);
+  assert.equal(A.esPasado(new Chess("4k3/8/4p3/3P4/8/8/8/4K3 w - - 0 1").board(), "d5", "w"), false,
+    "un peón en la columna de al lado lo frena");
+  assert.equal(A.esPasado(new Chess("4k3/8/3p4/3P4/8/8/8/4K3 w - - 0 1").board(), "d5", "w"), false,
+    "y uno en la suya, también");
+  assert.equal(A.esPasado(new Chess("4k3/8/8/3P4/4p3/8/8/4K3 w - - 0 1").board(), "d5", "w"), true,
+    "el que quedó ATRÁS no lo frena: solo cuenta lo que tiene por delante");
+});
+
+test("la columna abierta no tiene peones de NADIE", () => {
+  /* Con un peón del rival está semiabierta, que es otra cosa y no la decimos. */
+  const t = new Chess("3rk3/pp1p2pp/8/8/8/8/PP3PPP/3RK3 w - - 0 1").board();
+  assert.equal(A.columnaAbierta(t, "a1"), false, "peones de los dos");
+  assert.equal(A.columnaAbierta(t, "d1"), false, "un peón negro en d7: semiabierta");
+  assert.equal(A.columnaAbierta(t, "c1"), true, "sin peones de nadie");
+});
+
+test("los tres conceptos entran por UN solo renglón, no por tres", () => {
+  /* Como mucho entran dos frases en la tarjeta: si cada uno tuviera su turno,
+     entre los tres taparían al mecanismo y a la alternativa, que importan más. */
+  const cuerpo = html.slice(html.indexOf("let posicional = null;"),
+                            html.indexOf("/* 6. EL RUMBO"));
+  assert.ok(cuerpo.includes("obs.clavadas") && cuerpo.includes("obs.pasado") &&
+            cuerpo.includes("obs.columna"));
+  assert.equal((cuerpo.match(/posicional = \{/g) || []).length, 3, "los tres, en un if/else");
+  assert.ok(html.includes("[merito, mecanismo, salvada, ataque, posicional, habia, rumbo,"),
+    "y ocupa un solo lugar en el orden");
+});

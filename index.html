@@ -386,7 +386,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.74.1 · 08-09";
+  window.VERSION = "v0.75 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1698,6 +1698,24 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
                marca: "Ataca", sq: a.sq };
   }
 
+  /* 5bis. LO QUE SE VE EN LA POSICIÓN. Los tres van en UN solo lugar y no en tres
+     —clava, deja un peón pasado, toma una columna abierta— porque como mucho
+     entran dos frases en la tarjeta: si cada uno tuviera su turno, entre los
+     tres taparían al mecanismo y a la alternativa, que importan más.
+     El orden es el de cuánto cambia la partida: una clavada obliga al rival, un
+     peón pasado decide finales, una columna abierta es una mejora. */
+  let posicional = null;
+  if (obs && obs.clavadas && obs.clavadas.length) {
+    const c = obs.clavadas[0];
+    posicional = { txt: `Clava ${piezaEn(c.pieza, c.sq)}.`, marca: "Clava", sq: c.sq };
+  } else if (obs && obs.pasado) {
+    posicional = { txt: `${mayus(pieza)} de ${donde} queda pasado.`,
+                   marca: "pasado", sq: donde };
+  } else if (obs && obs.columna) {
+    posicional = { txt: `Toma la columna abierta ${obs.columna}.`,
+                   marca: "columna abierta", sq: donde };
+  }
+
   /* 6. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
      (`banda`, arriba). Inventar acá una segunda escala de "cómo va la partida"
      sería tener dos respuestas para la misma pregunta en la misma pantalla.
@@ -1736,8 +1754,8 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
 
   /* Como mucho DOS. Es una tarjeta de celular y compite con el tablero por la
      pantalla; este orden es el que decide cuáles dos sobreviven. */
-  return [merito, mecanismo, salvada, ataque, habia, rumbo, alternativa, respuesta]
-    .filter(Boolean).slice(0, 2);
+  return [merito, mecanismo, salvada, ataque, posicional, habia, rumbo,
+          alternativa, respuesta].filter(Boolean).slice(0, 2);
 }
 
 /* La misma explicación, en una sola cadena. Es lo que usa todo lo que no
@@ -1789,8 +1807,62 @@ function colgadasDe(fen, color) {
   return out.sort((a, b) => (VALOR[b.pieza] || 0) - (VALOR[a.pieza] || 0));
 }
 
+/* ¿La pieza de `sq` está tapando a su propio rey de una pieza que lo ataca por
+   una línea? Es la clavada absoluta, y se contesta SACÁNDOLA del tablero: si al
+   sacarla el rey queda en jaque, estaba tapando.
+
+   La comprobación es cara —carga un FEN— así que antes hay un filtro
+   geométrico: solo puede estar clavada una pieza que esté en la misma fila,
+   columna o diagonal que su rey. Deja tres o cuatro candidatas en vez de
+   quince. */
+function estaClavada(fen, sq, rey) {
+  if (!rey) return false;
+  const dc = "abcdefgh".indexOf(sq[0]) - "abcdefgh".indexOf(rey[0]);
+  const df = +sq[1] - +rey[1];
+  if (dc !== 0 && df !== 0 && Math.abs(dc) !== Math.abs(df)) return false;
+  const j = new Chess(fen);
+  const p = j.get(sq);
+  if (!p || p.type === "k") return false;
+  j.remove(sq);
+  const partes = j.fen().split(" ");
+  partes[1] = p.color;
+  partes[3] = "-";
+  const j2 = new Chess();
+  return j2.load(partes.join(" ")) && j2.in_check();
+}
+
+/* ¿Un peón sin ningún peón rival que lo pueda frenar? Ni en su columna ni en
+   las de al lado, y solo mirando hacia adelante. Es la definición de siempre. */
+function esPasado(tablero, sq, color) {
+  const col = "abcdefgh".indexOf(sq[0]), fila = 8 - +sq[1];
+  const paso = color === "w" ? -1 : 1;
+  for (let c = Math.max(0, col - 1); c <= Math.min(7, col + 1); c++)
+    for (let r = fila + paso; r >= 0 && r <= 7; r += paso) {
+      const q = tablero[r][c];
+      if (q && q.type === "p" && q.color !== color) return false;
+    }
+  return true;
+}
+
+/* ¿Columna sin peones de nadie? La definición de siempre: si hay un peón, aunque
+   sea del rival, no está abierta —a lo sumo semiabierta, que es otra cosa y no
+   la decimos—. */
+const columnaAbierta = (tablero, sq) => {
+  const col = "abcdefgh".indexOf(sq[0]);
+  return !tablero.some(fila => fila[col] && fila[col].type === "p");
+};
+
+const casillaDelRey = (tablero, color) => {
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const p = tablero[r][c];
+    if (p && p.type === "k" && p.color === color) return "abcdefgh"[c] + (8 - r);
+  }
+  return null;
+};
+
 function observarJugada(f, fenAntes = null) {
-  const vacio = { amenazadas: [], colgadas: [], nuevas: [], salvadas: [] };
+  const vacio = { amenazadas: [], colgadas: [], nuevas: [], salvadas: [],
+                  clavadas: [], pasado: false, columna: null };
   if (!f || !f.fen || !f.uci) return vacio;
   const donde = f.uci.slice(2, 4), deDonde = f.uci.slice(0, 2);
   try {
@@ -1826,7 +1898,30 @@ function observarJugada(f, fenAntes = null) {
       salvadas = antes.filter(c => !son.has(c.sq) && c.sq !== donde)
                       .map(c => ({ ...c, seFue: c.sq === deDonde }));
     }
-    return { amenazadas, colgadas, nuevas, salvadas };
+    /* 3. LO QUE SE VE EN LA POSICIÓN, y que no es ni material ni amenaza.
+       Los tres se comparan contra ANTES por el mismo motivo que las colgadas:
+       lo que ya estaba no lo causó esta jugada. */
+    const tablero = new Chess(f.fen).board();
+    const rival = mio === "w" ? "b" : "w";
+    const reyRival = casillaDelRey(tablero, rival);
+    const clavadas = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = tablero[r][c];
+      if (!p || p.color !== rival || p.type === "k") continue;
+      const sq = "abcdefgh"[c] + (8 - r);
+      if (!estaClavada(f.fen, sq, reyRival)) continue;
+      if (fenAntes && estaClavada(fenAntes, sq, reyRival)) continue;
+      clavadas.push({ sq, pieza: p.type });
+    }
+    /* el peón que ACABA de quedar pasado: si ya lo era antes de moverse, la
+       jugada no hizo nada nuevo */
+    const pasado = f.pieza === "p" && esPasado(tablero, donde, mio) &&
+      !(fenAntes && esPasado(new Chess(fenAntes).board(), deDonde, mio));
+    /* la columna abierta la toman la torre y la dama; un caballo en una columna
+       sin peones no significa nada */
+    const columna = (f.pieza === "r" || f.pieza === "q") &&
+                    columnaAbierta(tablero, donde) ? donde[0] : null;
+    return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna };
   } catch (e) { return vacio; }
 }
 

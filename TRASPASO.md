@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.74.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.75**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1958,6 +1958,77 @@ no tenía margen abajo y la tarjeta no tenía margen arriba, y hasta la v0.73 no
 hacía falta porque entre las dos estaba el tablero. Es exactamente lo que dice
 la regla: **mover un elemento le cambia los márgenes a sus DOS vecinos**.
 
+## 4octodecies. Tres conceptos de ajedrez en la explicación (v0.75)
+
+La v0.64 dejó la explicación hablando de **material y amenazas**: qué se comía,
+qué quedaba colgado, qué se salvaba. Todo eso sale de contar piezas. Lo que
+faltaba era lo que se ve **en la posición** y no en el conteo, y de la lluvia de
+ideas del usuario salieron tres que se pueden **medir**:
+
+- **la clavada** — `estaClavada(fen, sq, rey)`;
+- **el peón pasado** — `esPasado(tablero, sq, color)`;
+- **la columna abierta** — `columnaAbierta(tablero, sq)`.
+
+Los tres viven en `observarJugada`, o sea **a la hora de pintar la tarjeta y no
+en `derivarFilas`**. Es la misma división de la v0.64 y es lo que permite que
+sean caros: el barrido de un año no los paga, y una partida vieja de la caché
+estrena el texto sin migrar nada.
+
+### Cómo se contesta cada uno
+
+**La clavada se contesta sacando la pieza del tablero.** Si al sacarla el rey
+queda en jaque, estaba tapando: eso es la clavada absoluta, y no hay que
+enumerar líneas ni direcciones. El detalle que hace falta es que después de
+sacarla hay que **poner el turno del color de la pieza** —`in_check()` mira al
+que juega— y **borrar el al paso**, que con el tablero cambiado deja el FEN
+inválido. Es la misma trampa del FEN dado vuelta de la v0.64, anotada de nuevo
+acá porque volvió a aparecer.
+
+Cargar un FEN por casilla es caro, así que antes va un **filtro geométrico**:
+solo puede estar clavada una pieza que comparta fila, columna o diagonal con su
+rey. De quince piezas quedan tres o cuatro.
+
+**El peón pasado** mira su columna y las dos de al lado, **solo hacia adelante**.
+Un peón rival que quedó atrás no lo frena, y hay una prueba para eso.
+
+**La columna abierta no tiene peones de nadie.** Con un peón del rival está
+*semiabierta*, que es otra cosa; decirle abierta sería afirmar algo que no es, o
+sea §5 regla 1. Y la toman **la torre y la dama**: un caballo en una columna sin
+peones no significa nada.
+
+### Los tres se comparan contra ANTES
+
+Igual que las colgadas de la v0.64: **lo que ya estaba no lo causó esta jugada**.
+Si el caballo ya estaba clavado, la jugada no clavó nada; si el peón ya era
+pasado antes de avanzar, tampoco. Sin esa comparación la tarjeta le atribuye a
+la jugada la posición entera, que es la forma más fácil de mentir sin decir
+ninguna falsedad.
+
+### Un solo renglón para los tres, y por qué
+
+En la tarjeta entran **como mucho dos frases**. Si cada concepto tuviera su
+lugar en el orden, entre los tres taparían al mecanismo y a la alternativa, que
+son las que dicen qué pasó y qué había que jugar. Así que hay **una sola ranura
+`posicional`**, con un `if/else` que elige, y esa ranura entra al orden después
+del ataque y antes del rumbo.
+
+El orden adentro de la ranura es **cuánto cambia la partida**: la clavada obliga
+al rival ya mismo, el peón pasado decide finales, la columna abierta es una
+mejora.
+
+### Lo que se dejó afuera a propósito
+
+De la lluvia de ideas quedaron **sin hacer** —no descartados—: pieza atrapada,
+jaque descubierto, ataque a la descubierta, columna semiabierta, peón pasado del
+rival, la pareja de alfiles y el rey sin enrocar. **Pieza atrapada es la que más
+dice y la que más fácil se equivoca** —hay que probar que todas las casillas de
+escape están atacadas, y una casilla defendida no es lo mismo que una atacada—,
+así que va aparte y con su medición.
+
+Y quedaron **rechazados por no medibles**, que es distinto: "debilita el
+enroque", "gana espacio", "iniciativa", "controlás el centro", "mejorás la peor
+pieza". Suenan a libro y no hay número atrás; §5 regla 1 los deja afuera.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -2551,10 +2622,15 @@ de subordinar una a la otra. La dirección visual elegida es densa —toda la
 información de la jugada en una pantalla, sin scrollear— y no la de tarjetas
 grandes. Se decidió mirando tres propuestas dibujadas a ancho de celular.
 
-Lo que falta de esa dirección, y es la próxima tanda: rehacer la disposición de
-`zonaRevision` (barra de evaluación vertical al costado del tablero, las tres
-métricas de la jugada, la lista de jugadas completa en vez de la tira
-horizontal).
+~~Lo que falta de esa dirección, y es la próxima tanda: rehacer la disposición
+de `zonaRevision`.~~ **HECHO en la v0.74**, y está en §4septdecies. Se dibujaron
+seis distribuciones completas antes de tocar código y el usuario eligió mirando.
+Dos cosas salieron **al revés** de como estaban anotadas acá, y conviene saberlo
+antes de volver a moverlas: la barra de evaluación **no** fue vertical al
+costado del tablero —quedó horizontal arriba, que es donde ya estaba— y la lista
+de jugadas **volvió a ser la tira horizontal**, que es lo que esta línea quería
+sacar. La tira nueva no es la vieja: lleva la partida entera y se centra sola, y
+el panorama de la partida ahora lo da la curva.
 
 **Regla de trabajo que salió de acá:** proponer el enfoque y esperar el visto
 bueno antes de construir. Y antes de dibujar algo, mirar si ya existe público:
@@ -2580,6 +2656,34 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
 *(Los cuatro pendientes chicos de la v26 se resolvieron: barra de progreso en la
 v33, `textoDesglose` y la columna "% resto" en la v0.36, y el historial de
 resultados en la v0.39.)*
+
+### Índice de lo abierto, para retomar
+
+Está todo descripto más abajo o en la sección que se indica; esta lista es para
+no tener que leer la sección entera para saber qué hay.
+
+**De la tanda de la explicación y la variante (v0.64 a v0.75):**
+
+1. **Medir cuánto habla la tarjeta con motor de verdad.** El 34 de 36 es del
+   arnés. Abajo, en "los textos de las categorías".
+2. **Más conceptos**, empezando por **pieza atrapada**. La lista y los que se
+   rechazaron, en §4octodecies.
+3. **Los tres cuadritos** (Mejor / Pérdida / Caída). Abajo, en "De interfaz".
+4. **Guardar la variante**: al salir se tira. Toca la caché. Abajo.
+5. **La puerta "en vez de esta jugada" y el botón por veredicto**, que se
+   fueron con la fila de botones. Abajo, en "De interfaz".
+6. **La estética de la navegación por las jugadas**, que el usuario dio por
+   servible pero mejorable. Abajo, en "De interfaz".
+
+**Del resto, lo que sigue vivo:** comparar dos jugadores y las dos estadísticas
+de reloj que faltan (§7), el listado de partidas sin rediseñar y la pantalla de
+configuración (abajo), la paleta despareja, las animaciones, y las mediciones de
+fondo que hay que rehacer por cadencia y con margen (el aviso de acá arriba).
+
+**Estado del repo al cerrar la tanda:** la v0.64 a la v0.75 vive en la rama
+`claude/cards-explanation-move-testing-maozyk` y **no está mergeada a `main`**,
+por decisión del usuario. O sea que **nada de esto está desplegado**: lo que hay
+en vivo es la v0.63.1.
 
 ### De interfaz
 
@@ -2619,6 +2723,32 @@ resultados en la v0.39.)*
   que NO hay que tocar sin volver a pensarlo es el comportamiento: la tira lleva
   la partida entera y se centra sola en la jugada actual, y de ahí sale que
   siempre se vea que hay más para los dos lados cuando lo hay.
+
+- **La estética de la navegación por las jugadas quedó "servible, mejorable".**
+  Es palabra del usuario, mirando la tira de la v0.74: los dos galones dibujados
+  a los costados y los eslabones al medio hacen lo que tienen que hacer, pero
+  ninguna de las alternativas dibujadas lo dejó lindo. Vale para la tira de la
+  partida y para la de la variante, que se dibujan igual desde la v0.74.1.
+
+  No se contradice con el ítem de arriba: ahí lo que se cerró es **cómo se ve
+  cada jugada** —sin recuadro, la actual con el 20% del color de su categoría—,
+  y lo que queda abierto es **cómo se ven los galones y el conjunto**. Y el
+  **comportamiento** de la tira, que sí está cerrado, es lo que no hay que tocar
+  sin volver a pensarlo: lleva la partida entera y se centra sola.
+
+- **Dos cosas se fueron con la fila de botones (v0.74) y vale reconsiderarlas.**
+  La fila se sacó por un motivo bueno —navegar sin ver el tablero no sirve— pero
+  se llevó puestas dos que no tenían nada que ver con eso:
+
+  - **la puerta "en vez de esta jugada"**, que abría la variante reemplazando la
+    jugada propia. Hoy la única puerta es tocar una pieza, que arranca de la
+    posición de DESPUÉS; para reemplazar hay que volver una con el galón y darse
+    cuenta solo de que eso es lo que hay que hacer. Nadie midió si se descubre.
+  - **el botón que cambiaba de color según el veredicto** (v0.68), que era la
+    única pieza de la pantalla que reaccionaba a la categoría además del texto.
+
+  No es "volver a ponerlos": es decidir si eso que hacían tiene que estar en
+  algún lado, ahora que el lugar donde estaban no existe.
 
 - **Las animaciones son una rama sin empezar.** Apareció al ver que el
   deslizamiento del tablero no resulta intuitivo: un galón estático avisa que
@@ -2851,9 +2981,19 @@ decidir si "Genial" tiene sentido cuando la partida ya está resuelta.
   con `explicarJugada` y las decisiones de redacción explicadas en §4quindecies.
   La regla que lo gobierna es §5 regla 1: no se afirma nada que no esté medido,
   y por eso hay jugadas que no dicen nada en vez de decir algo lindo.
-  **Queda abierto dónde va** —hay un interruptor temporal de tres posiciones
-  para elegirlo mirando— y **cuánto habla de verdad**: con el motor falseado del
-  arnés habla en 5 de 36 jugadas, y ese número no vale.
+  **Dónde va quedó cerrado en la v0.72** (arriba del tablero desde la v0.74; el
+  interruptor de tres posiciones se fue). **Cuánto habla** creció mucho: de 5 de
+  36 jugadas a **34 de 36**, emitiendo datos que ya se calculaban y se tiraban
+  (`oportunidad`, `cap`, `mateContra`, `unicaBuena`, `mejorRival`) más los tres
+  conceptos de la v0.75. Con dos salvedades:
+
+  - **el 34 de 36 sale del motor falseado del arnés y no vale como medida.**
+    Falta mirarlo en el celular con Stockfish de verdad, sobre un mes.
+  - **faltan conceptos, y están listados en §4octodecies**: pieza atrapada —la
+    que más dice y la más fácil de equivocar—, jaque descubierto, ataque a la
+    descubierta, columna semiabierta, peón pasado del rival, la pareja de
+    alfiles y el rey sin enrocar. Los que se rechazaron por no medibles también
+    están ahí, para no volver a proponerlos.
 
 - ~~**No se puede jugar una variante y verla evaluada.**~~ **HECHO en la v0.65
   y ampliado en la v0.66**: la variante se encadena, se juegan también las del
