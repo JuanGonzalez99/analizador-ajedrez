@@ -16,6 +16,11 @@ describe. §10 tiene las reglas de trabajo.
   etiqueta, la forma de una marca, cuánto se llena una barra. Se dibuja con el
   arnés (`npm run mirar`), se mandan las alternativas y él elige mirando. Ya
   evitó dos cambios que no le gustaban y destapó uno que se había colado.
+- **Mirar la captura no es mirar lo que cambiaste: es mirar la pantalla.**
+  Incluye los **espacios**: que nada quede pegado a nada. Ya pasó —una fila de
+  botones mudada de lugar quedó pegada a la tarjeta de abajo, y lo vio el
+  usuario en la captura que le mandé yo—. Antes de mandar una captura, recorrerla
+  entera buscando cosas pegadas, cortadas o desalineadas.
 - **Las capturas se sacan al tamaño de un celular**, no de una pantalla alta.
   Medido sobre una captura suya, sacando la escala del tablero (que mide 360 CSS
   de ancho): su viewport es de **≈420 × 810 CSS** con la barra de direcciones

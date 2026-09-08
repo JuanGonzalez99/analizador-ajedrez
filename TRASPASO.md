@@ -2781,6 +2781,12 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 - **`npm test` antes de dar nada por bueno**, y una prueba nueva por cada
   arreglo. Los errores que no agarran son siempre los del DOM y los de la
   pregunta equivocada: para eso hay que mirar el celu.
+- **Mirar la pantalla incluye mirar los ESPACIOS.** No alcanza con mirar lo que
+  se cambió: hay que recorrer la captura entera buscando cosas **pegadas**,
+  cortadas o desalineadas. Ya pasó: una maqueta que mudaba la fila de
+  navegación al lado del tablero la dejó pegada a la tarjeta de abajo, y lo vio
+  el usuario en la captura que le mandamos nosotros. Mover un elemento de lugar
+  le cambia los márgenes a sus dos vecinos, no a uno.
 - **Un cambio que toca lo que se dibuja se MIRA en la pantalla, no solo se
   mide.** Se puede levantar la app en un navegador headless, simular la API de
   chess.com y sacar capturas (§2). Verificar de forma estrecha —medir justo lo
