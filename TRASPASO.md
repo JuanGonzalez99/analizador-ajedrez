@@ -2133,6 +2133,25 @@ pasado del rival, la pareja de alfiles, pierde el enroque—.
   entre los pendientes de interfaz (§8).
 - **Una palabra sola es muy seca.** Vale para toda frase de una palabra:
   "Coronás." tiene que decir algo más. Es criterio de redacción, no de medición.
+  La forma elegida es `Coronás: el peón vuelve como dama.` — dice el mecanismo,
+  que es lo que se puede aprender de una tarjeta.
+
+### La jerga, que apareció explicando un concepto y quedó pendiente
+
+Explicándole al usuario qué era "torre en la séptima" salió, de paso, **"los
+chanchos en la séptima"** —las dos torres ahí—, y le gustó cómo suena: *"me gusta
+la jerga. Quizás podamos apuntar nuestras frases a ese lado"*.
+
+**Queda como pendiente y NO se rehace lo escrito.** Es su condición, y es la
+correcta: las frases de la v0.64 a la v0.77 se redactaron y se miraron una por
+una, así que reescribirlas todas para cambiarles el tono es una tanda propia y
+con su propia mirada en el celu, no un arreglo al pasar.
+
+Cuando se haga, la pregunta que hay que contestar primero es **hasta dónde**: la
+jerga nombra conceptos que el jugador después reconoce en otros lados ("los
+chanchos", "la clavada", "peón pasado"), y eso enseña; pero un texto que se
+pasa de coloquial deja de poder decir un número. Es la misma tensión que §5
+regla 1 resuelve para los datos, ahora sobre el tono.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
@@ -2805,11 +2824,17 @@ en vivo es la v0.63.1.
   puesto en la v33 para que el botón de analizar quede a la vista; es un parche,
   no un diseño. Falta decidir cuántas mostrar, cómo se ven y cómo se busca.
 
-- **No hay pantalla de configuración.** Los dos `<select>` —tema del tablero y
-  dónde va la evaluación— viven sueltos en la fila de controles de la vista
-  Partida, y ahí adentro también tendría que ir la preferencia de "mostrar la
-  mejor" (§4bis). Es además el lugar donde irían los juegos de piezas
-  configurables, que están costurados pero sin hacer (§4bis).
+- **No hay pantalla de configuración, y ya va tocando** —palabra del usuario, a
+  la v0.76—. Los `<select>` sueltos en la fila de controles de la vista Partida
+  ya son **cuatro**: tema del tablero, dónde va la evaluación, marcas de la
+  curva y la forma de la prueba; el último ni siquiera es una preferencia sino
+  un dial temporal. Ahí adentro también tendría que ir la preferencia de
+  "mostrar la mejor" (§4bis). Es además el lugar donde irían los juegos de
+  piezas configurables, que están costurados pero sin hacer (§4bis).
+
+  **Cada dial nuevo empuja este pendiente**: los temporales se van solos cuando
+  el usuario elige, pero los que se quedan se acumulan en una fila que ya ocupa
+  cuatro renglones al pie de la vista.
 
   **El selector de cadencia (v0.46) NO es de este grupo y no se movió acá a
   propósito**: no es una preferencia sino el **alcance de los datos**, igual que
