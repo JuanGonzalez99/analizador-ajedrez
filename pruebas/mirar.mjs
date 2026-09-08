@@ -450,7 +450,18 @@ const armarTira = async (conNumero = false, estilo = "borde", fade = 0) =>
   cont.style.cssText = "display:flex;align-items:center;gap:6px;margin:10px 0;";
   const galon = t => {
     const b = document.createElement("button");
-    b.textContent = t;
+    /* EL CHEVRON SE DIBUJA, NO SE ESCRIBE. `‹` y `›` son comillas angulares y en
+       casi toda tipografía se apoyan a la altura de la minúscula, no en el
+       centro del renglón: por eso se veían corridos aunque las cajas de texto
+       midieran centradas. Dibujado es la MISMA forma que los galones del
+       tablero, que son el mismo gesto, y queda centrado por construcción. */
+    if (est !== "borde") {
+      const h = t === "\u2039" ? 1 : -1;
+      b.innerHTML = '<svg width="13" height="20" viewBox="-7 -10 14 20" ' +
+        'aria-hidden="true"><path d="M ' + (h * 3.5) + ' -6 L ' + (-h * 3.5) +
+        ' 0 L ' + (h * 3.5) + ' 6" fill="none" stroke="currentColor" ' +
+        'stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    } else b.textContent = t;
     /* el galón sin recuadro pesa mucho menos, y ya hay dos iguales en el
        tablero: los tres serían el mismo gesto dibujado igual */
     /* el galón va pelado en TODAS las variantes nuevas: así lo único que cambia
@@ -459,14 +470,18 @@ const armarTira = async (conNumero = false, estilo = "borde", fade = 0) =>
       /* 44 px es el objetivo mínimo para un dedo, y `display:flex` + `line-height:1`
          es lo que los alinea de verdad con las jugadas: con el `line-height` de
          un botón, el chevron se apoya en su propia caja y queda corrido. */
-      ? "flex:0 0 34px;height:44px;padding:0;font-size:24px;border:none;" +
+      ? "flex:0 0 34px;height:44px;padding:0;border:none;" +
         "background:none;color:var(--tenue);display:flex;align-items:center;" +
         "justify-content:center;line-height:1;"
       : "flex:0 0 38px;height:38px;padding:0;font-size:16px;";
     return b;
   };
   const medio = document.createElement("div");
-  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;align-items:center;" +
+  /* ALINEADO POR LA BASE y no por el centro: el número va en 12 px y la jugada
+     en 13, así que centrando las cajas las bases quedan a distinta altura, que
+     es lo que el ojo lee como corrido. Los galones no tienen base —son un
+     dibujo— y por eso viven afuera, centrados. */
+  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;align-items:baseline;" +
     "overflow-x:auto;scrollbar-width:none;";
   /* EL DESVANECIDO. Los recuadros de antes tapaban las jugadas de las puntas y
      eso decía "hay más para allá"; sin recuadro, las jugadas se cortaban en
@@ -641,8 +656,46 @@ for (const [est, fade] of [["tenue", 0], ["tenue", 24], ["tenue", 48]]) {
   /* PRIMERO la pantalla, que es la que centra la tira, y DESPUÉS el recorte: al
      revés la tira salía sin centrar, mostrando el arranque de la partida. */
   const nom = "tenue-fade" + fade;
+  if (fade === 24) {
+    /* SE MIDE, no se mira: el ojo alinea por la caja del TEXTO, no por la del
+       elemento, así que se le pide al navegador el rectángulo real de cada
+       texto con un Range. Si las bases no coinciden, se ve corrido aunque los
+       elementos estén centrados. */
+    console.log("alineación:", await pg.evaluate(() => {
+      const t = document.querySelector("#tiraH");
+      const caja = el => {
+        const n = [...el.childNodes].find(x => x.nodeType === 3 && x.textContent.trim())
+               || [...el.querySelectorAll("*")].map(x => [...x.childNodes]
+                  .find(y => y.nodeType === 3 && y.textContent.trim())).find(Boolean);
+        if (!n) return null;
+        const r = document.createRange(); r.selectNodeContents(n);
+        const b = r.getBoundingClientRect();
+        return { txt: n.textContent.trim().slice(0, 6), arriba: +b.top.toFixed(1),
+                 abajo: +b.bottom.toFixed(1), medio: +((b.top + b.bottom) / 2).toFixed(1) };
+      };
+      /* del galón dibujado se mide el TRAZO, no la caja del botón: es lo que
+         se ve. `getBoundingClientRect` sobre el <path> da justo eso. */
+      const trazo = t.querySelector("button path");
+      const rg = trazo && trazo.getBoundingClientRect();
+      const galon = t.querySelector("button");
+      const medio = t.querySelector("div");
+      const num = [...medio.children].find(e => /^\d+\.$/.test(e.textContent.trim()));
+      const jug = [...medio.children].find(e => e.querySelector && e.querySelector(".sa"));
+      return JSON.stringify({
+        galonDibujado: rg ? { arriba: +rg.top.toFixed(1), abajo: +rg.bottom.toFixed(1),
+                              medio: +((rg.top + rg.bottom) / 2).toFixed(1) } : caja(galon),
+        numero: caja(num), jugada: caja(jug) });
+    }));
+  }
   await desdeArriba("dist-E-" + nom);
   await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira-" + nom + SUFIJO + ".png") });
+  if (fade === 24) {
+    /* un recorte chico de la punta izquierda: la tira entera a 2x no alcanza
+       para juzgar una diferencia de un píxel entre el galón y las jugadas */
+    const c = await pg.locator("#tiraH").boundingBox();
+    await pg.screenshot({ path: path.join(SALIDA, "tira-lupa" + SUFIJO + ".png"),
+                          clip: { x: c.x, y: c.y, width: 190, height: c.height } });
+  }
 }
 console.log("maquetas: dist-D-hoy, dist-A, dist-B, dist-C, dist-E, dist-E-compacta, tira");
 
