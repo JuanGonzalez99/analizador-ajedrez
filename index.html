@@ -240,6 +240,13 @@
      subtítulo: es lo único de la tarjeta que cambia en cada jugada, así que si
      se pinta como el resto se pierde entre dos renglones grises. */
   .veredicto .exp { font-size: 12.5px; margin-top: 2px; }
+  /* La frase que señala algo en el tablero. Subrayado punteado y no un chip con
+     fondo: son una o dos por tarjeta y a veces ocupan el renglón entero, así
+     que un fondo las convertiría en un bloque de color en el medio del texto.
+     El punteado dice "esto se toca" sin dejar de ser una frase. */
+  .senala { cursor: pointer; border-bottom: 1px dotted currentColor; }
+  .senala.on { background: #e8a33d; border-radius: 3px; padding: 0 2px;
+               border-bottom-color: transparent; color: #1a1815; }
   /* La tarjeta de la prueba va PUNTEADA: dice "esto no pasó" sin gastar una
      palabra en decirlo. El violeta es el mismo de la flecha en el tablero, así
      que la tarjeta y la jugada dibujada se leen como una sola cosa. */
@@ -349,7 +356,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.68 · 08-09";
+  window.VERSION = "v0.69 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1531,42 +1538,77 @@ const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
    `mio` dice si la jugada es del usuario, y lo único que cambia es "el caballo"
    → "tu caballo". El resto queda impersonal a propósito: con un PGN pegado no
    se sabe de qué lado jugaba, y una frase que tutea a medias se lee peor que
-   una que no tutea nunca. */
-function explicarJugada(f, mejorSan = null, mio = null, sanRival = null, obs = null) {
-  /* En una forzada no hubo decisión y la tarjeta ya lo dice entera (§4.6bis):
-     cualquier cosa que agreguemos acá juzga algo que no se eligió. */
-  if (!f || f.forzada) return "";
+   una que no tutea nunca.
+
+   Desde la v0.69 la función que hace todo esto devuelve PARTES y no una cadena;
+   `explicarJugada` es el join, y está al final. */
+
+/* La explicación, EN PARTES. Cada parte es una frase con su referencia al
+   tablero: `{ txt, sq }` para una pieza y `{ txt, uci }` para una jugada.
+
+   ESO ES LO QUE CAMBIÓ EN LA v0.69, y sale de una captura del usuario: cuando
+   chess.com resalta una palabra —"indefenso"— NO te la explica, te la MUESTRA
+   en el tablero. La frase y el tablero son la misma cosa dicha dos veces, y
+   tocar una la enciende en el otro.
+
+   Por eso la explicación deja de ser una cadena y pasa a ser una lista: la
+   cadena se sigue armando —`explicarJugada` es el join— y todo lo que la
+   probaba sigue valiendo, pero ahora además se sabe QUÉ señala cada frase.
+
+   El resto de las reglas no cambió: como mucho dos frases, nada que no esté
+   medido, y "" cuando no hay nada honesto que decir. */
+function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, obs = null) {
+  /* En una forzada no hubo decisión y la tarjeta ya lo dice entera: cualquier
+     cosa que agreguemos acá juzga algo que no se eligió. */
+  if (!f || f.forzada) return [];
   const pieza = (mio ? PIEZA_TU : PIEZA_EL)[f.pieza] || "la pieza";
   const donde = (f.uci || "").slice(2, 4);
+  const suya = t => (mio ? PIEZA_TU : PIEZA_EL)[t] || "la pieza";
 
-  /* 1. EL MECANISMO: qué pasó. Uno solo, el más grave, o la tarjeta se vuelve
-     una lista. El corte de 0,5 es el mismo que ya usan las señales: un
+  /* 1. EL MECANISMO: qué salió mal. Uno solo, el más grave, o la tarjeta se
+     vuelve una lista. El corte de 0,5 es el mismo que ya usan las señales: un
      mecanismo que no costó nada no es un hallazgo, es una coincidencia. */
-  let mecanismo = "";
-  if (f.mateContra) mecanismo = `Deja mate forzado en ${f.mateContra} en contra.`;
+  let mecanismo = null;
+  if (f.mateContra)
+    mecanismo = { txt: `Deja mate forzado en ${f.mateContra} en contra.` };
   else if (f.colgada && f.perdida >= 0.5)
-    mecanismo = `${mayus(pieza)} queda comible en ${donde}.`;
+    mecanismo = { txt: `${mayus(pieza)} queda comible en ${donde}.`, sq: donde };
   else if (f.tomoConOtra && f.perdida >= 0.5 && f.cap)
-    mecanismo = `La captura iba con otra pieza: ${f.cap.san}.`;
-  /* La pieza colgada que NO es la que moviste. Es el error más común de todos y
-     hasta la v0.67 la app solo miraba la que se había movido: te podías dejar
-     la dama en otro lado y la tarjeta hablaba del peón que empujaste.
-     Sale de `observarJugada`, que se calcula al pintar y no en el barrido. */
-  else if (obs && obs.colgadas.length && f.perdida >= 0.5) {
-    const c = obs.colgadas[0];
-    mecanismo = `${mayus((mio ? PIEZA_TU : PIEZA_EL)[c.pieza] || "la pieza")} de ` +
-                `${c.sq} queda sin defender.`;
+    mecanismo = { txt: `La captura iba con otra pieza: ${f.cap.san}.` };
+  /* La pieza colgada que NO es la que moviste, y que ANTES no lo estaba. Es el
+     error más común de todos y hasta la v0.67 la app solo miraba la que se
+     había movido: te podías dejar la dama en otro lado y la tarjeta hablaba del
+     peón que empujaste.
+     Que antes no lo estuviera es lo que la vuelve una consecuencia DE ESTA
+     JUGADA. Es la frase de la captura del usuario: "tu peón estaba defendido,
+     pero ahora está indefenso". */
+  else if (obs && obs.nuevas && obs.nuevas.length && f.perdida >= 0.5) {
+    const c = obs.nuevas[0];
+    mecanismo = { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda sin defender.`,
+                  sq: c.sq };
   }
 
-  /* 2. QUÉ HABÍA en su lugar. */
-  let habia = "";
-  if (f.oportunidad && f.oportunidad.tipo === "mate")
-    habia = `Había mate forzado en ${f.oportunidad.n}` +
-            `${mejorSan ? `, con ${mejorSan}` : ""}.`;
-  else if (f.oportunidad && f.oportunidad.tipo === "material")
-    habia = `Había ${f.oportunidad.san}, que ${loQueSeLlevaba(f.oportunidad)}.`;
+  /* 2. LO QUE LA JUGADA SALVA, que es el espejo del anterior y lo que faltaba
+     para poder decir algo de las jugadas del rival: "tu rival defendió su peón
+     amenazado" es media revisión de chess.com. */
+  let salvada = null;
+  if (obs && obs.salvadas && obs.salvadas.length) {
+    const s = obs.salvadas[0];
+    salvada = { txt: `${s.seFue ? "Saca" : "Salva"} ${suya(s.pieza)} de ${s.sq}, ` +
+                     `que estaba sin defender.`,
+                sq: s.seFue ? donde : s.sq };
+  }
 
-  /* 3. EL MÉRITO, para las buenas.
+  /* 3. QUÉ HABÍA en su lugar. */
+  let habia = null;
+  if (f.oportunidad && f.oportunidad.tipo === "mate")
+    habia = { txt: `Había mate forzado en ${f.oportunidad.n}` +
+                   `${mejorSan ? `, con ${mejorSan}` : ""}.`, uci: f.mejor };
+  else if (f.oportunidad && f.oportunidad.tipo === "material")
+    habia = { txt: `Había ${f.oportunidad.san}, que ${loQueSeLlevaba(f.oportunidad)}.`,
+              uci: f.mejor };
+
+  /* 4. EL MÉRITO, para las buenas.
 
      "Brillante" y "Genial" ya tienen su frase fija, así que acá va SOLO lo que
      esa frase no dice: dónde está el material entregado, o cuánto le sacaba la
@@ -1576,35 +1618,40 @@ function explicarJugada(f, mejorSan = null, mio = null, sanRival = null, obs = n
      que evita mentir: la categoría se dispara por dos motivos distintos
      (`unicaBuena` o el cruce) y solo uno de los dos es "no había otra". Cuando
      entró por el cruce, el mérito lo cuenta el rumbo, más abajo. */
-  let merito = "";
+  let merito = null;
   if (f.cat === "brillante")
-    merito = f.colgada ? `${mayus(pieza)} queda comible en ${donde}, y aun así es la mejor.`
-                       : "Entrega material y aun así es la mejor del motor.";
+    merito = f.colgada
+      ? { txt: `${mayus(pieza)} queda comible en ${donde}, y aun así es la mejor.`, sq: donde }
+      : { txt: "Entrega material y aun así es la mejor del motor." };
   else if (f.cat === "genial" && f.unicaBuena)
-    merito = `Era la única: la segunda del motor quedaba ` +
-             `${(f.huecoSegunda / 100).toFixed(2)} atrás.`;
-  else if (f.tomoBuena) merito = "Es la captura que había para hacer.";
+    merito = { txt: `Era la única: la segunda del motor quedaba ` +
+                    `${(f.huecoSegunda / 100).toFixed(2)} atrás.` };
+  else if (f.tomoBuena)
+    merito = { txt: "Es la captura que había para hacer.", sq: donde };
   /* Una recaptura no es un mérito y tampoco un descuido: el material ya estaba
      perdido y solo lo estás recuperando. Es la misma distinción que le sacó los
      falsos positivos a "Genial" (§8), dicha en la tarjeta. */
-  else if (f.esRecaptura) merito = "Es una recaptura: el material ya estaba perdido.";
+  else if (f.esRecaptura)
+    merito = { txt: "Es una recaptura: el material ya estaba perdido.", sq: donde };
 
-  /* 3bis. LO QUE LA JUGADA ATACA. Es lo que chess.com dice en las jugadas que
+  /* 5. LO QUE LA JUGADA ATACA. Es lo que chess.com dice en las jugadas que
      salieron bien —"echás al alfil rival con un peón"— y lo que a la tarjeta le
      faltaba para tener algo que decir cuando no hubo ni error ni hallazgo.
      Solo cuenta atacar algo que vale MÁS que la pieza que movés: eso es una
      amenaza de verdad, porque el rival tiene que hacer algo. Atacar algo que
      vale igual o menos es una oferta de cambio, no una amenaza. */
-  let ataque = "";
+  let ataque = null;
   if (obs && obs.amenazadas.length >= 2) {
     const [a, b] = obs.amenazadas;
-    ataque = `Ataca a la vez ${piezaEn(a.pieza, a.sq)} y ${piezaEn(b.pieza, b.sq)}.`;
+    ataque = { txt: `Ataca a la vez ${piezaEn(a.pieza, a.sq)} y ${piezaEn(b.pieza, b.sq)}.`,
+               sq: [a.sq, b.sq] };
   } else if (obs && obs.amenazadas.length === 1) {
     const a = obs.amenazadas[0];
-    ataque = `Ataca ${piezaEn(a.pieza, a.sq)} con ${PIEZA_UN[f.pieza] || "una pieza"}.`;
+    ataque = { txt: `Ataca ${piezaEn(a.pieza, a.sq)} con ${PIEZA_UN[f.pieza] || "una pieza"}.`,
+               sq: a.sq };
   }
 
-  /* 4. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
+  /* 6. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
      (`banda`, arriba). Inventar acá una segunda escala de "cómo va la partida"
      sería tener dos respuestas para la misma pregunta en la misma pantalla.
 
@@ -1612,36 +1659,43 @@ function explicarJugada(f, mejorSan = null, mio = null, sanRival = null, obs = n
      la partida ya terminada (la barra muestra el resultado, no una evaluación),
      y cualquiera de los dos mates forzados, donde el tope de 1000 aplasta el
      número y "pasa de ganando a ganando" sería falso de puro saturado. */
-  let rumbo = "";
+  let rumbo = null;
   const hayNumeros = typeof f.franja === "number" && typeof f.evalBlancas === "number";
   if (hayNumeros && !f.remate && !f.mateContra && f.mateDe === null) {
     const a = banda(f.franja);
     const b = banda((f.turno === "w" ? f.evalBlancas : -f.evalBlancas) / 100);
-    if (a !== b) rumbo = `La posición pasa de ${a} a ${b}.`;
+    if (a !== b) rumbo = { txt: `La posición pasa de ${a} a ${b}.` };
   }
 
-  /* 5. LA ALTERNATIVA, y va última de las que hablan de esta jugada: el
+  /* 7. LA ALTERNATIVA, y va última de las que hablan de esta jugada: el
      cuadrito "Mejor" ya la muestra, así que acá suma solo cuando no hay nada
-     mejor que decir. `mejorSan` llega en null cuando la jugada ya era la
-     mejor, y ahí no hay alternativa que ofrecer.
+     mejor que decir. `mejorSan` llega en null cuando la jugada ya era la mejor,
+     y ahí no hay alternativa que ofrecer.
 
      Y no se repite: cuando había un mate, la frase de arriba YA nombró la
      jugada que lo daba, y "Había mate forzado en 8, con Rd5. La mejor era Rd5."
      es la clase de eco que la v0.44 le sacó a las leyendas. */
-  const alternativa = (mejorSan && !habia.includes(mejorSan))
-    ? `La mejor era ${mejorSan}.` : "";
+  const alternativa = (mejorSan && !(habia && habia.txt.includes(mejorSan)))
+    ? { txt: `La mejor era ${mejorSan}.`, uci: f.mejor } : null;
 
-  /* 6. LA RESPUESTA DEL RIVAL. Sale de una evaluación que ya estaba hecha —la
+  /* 8. LA RESPUESTA DEL RIVAL. Sale de una evaluación que ya estaba hecha —la
      de la posición siguiente— y es lo que convierte la tarjeta en el comienzo
-     de una variante: te nombra la jugada que vas a querer probar en el
-     tablero. Va al final porque casi siempre hay una, así que si fuera antes
-     taparía a todo lo demás.
-     Se calla con la partida terminada: no hay respuesta que dar. */
-  const respuesta = (sanRival && !f.remate) ? `El rival tiene ${sanRival}.` : "";
+     de una variante: te nombra la jugada que vas a querer probar en el tablero.
+     Va al final porque casi siempre hay una, así que si fuera antes taparía a
+     todo lo demás. Se calla con la partida terminada: no hay respuesta que dar. */
+  const respuesta = (sanRival && !f.remate)
+    ? { txt: `El rival tiene ${sanRival}.`, uci: f.mejorRival, deDespues: true } : null;
 
-  return [merito, mecanismo, ataque, habia, rumbo, alternativa, respuesta]
-    .filter(Boolean).slice(0, 2).join(" ");
+  /* Como mucho DOS. Es una tarjeta de celular y compite con el tablero por la
+     pantalla; este orden es el que decide cuáles dos sobreviven. */
+  return [merito, mecanismo, salvada, ataque, habia, rumbo, alternativa, respuesta]
+    .filter(Boolean).slice(0, 2);
 }
+
+/* La misma explicación, en una sola cadena. Es lo que usa todo lo que no
+   necesita señalar el tablero, y lo que prueban las pruebas. */
+const explicarJugada = (...a) =>
+  partesDeLaExplicacion(...a).map(p => p.txt).join(" ");
 
 
 /* ============ lo que se ve mirando la posición (v0.68) ============
@@ -1668,10 +1722,29 @@ const conElTurnoDadoVuelta = fen => {
   return p.join(" ");
 };
 
-function observarJugada(f) {
-  const vacio = { amenazadas: [], colgadas: [] };
+/* Qué piezas de `color` quedan comibles en esa posición. El turno se acomoda
+   solo: `quedaComible` mira las jugadas del que mueve, así que para preguntar
+   por MIS piezas tiene que mover el rival. */
+function colgadasDe(fen, color) {
+  const mueve = fen.split(" ")[1];
+  const f = mueve === color ? conElTurnoDadoVuelta(fen) : fen;
+  const tablero = new Chess(fen).board();
+  const out = [];
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const p = tablero[r][c];
+    /* el rey no: no se puede capturar, y "el rey queda comible" es jaque mate */
+    if (!p || p.color !== color || p.type === "k") continue;
+    const sq = "abcdefgh"[c] + (8 - r);
+    if (quedaComible(f, sq)) out.push({ sq, pieza: p.type });
+  }
+  /* la más cara primero: si hay dos, la que duele es esa */
+  return out.sort((a, b) => (VALOR[b.pieza] || 0) - (VALOR[a.pieza] || 0));
+}
+
+function observarJugada(f, fenAntes = null) {
+  const vacio = { amenazadas: [], colgadas: [], nuevas: [], salvadas: [] };
   if (!f || !f.fen || !f.uci) return vacio;
-  const donde = f.uci.slice(2, 4);
+  const donde = f.uci.slice(2, 4), deDonde = f.uci.slice(0, 2);
   try {
     const mio = f.turno;
     /* 1. QUÉ ATACA la pieza que moví. Se le pregunta a chess.js dando vuelta el
@@ -1683,21 +1756,29 @@ function observarJugada(f) {
                    (VALOR[m.captured] || 0) > (VALOR[f.pieza] || 0))
       .map(m => ({ sq: m.to, pieza: m.captured }));
 
-    /* 2. QUÉ PIEZA MÍA QUEDA COLGADA que no sea la que moví. Es el error más
-       común de todos y la app solo miraba la pieza movida. `quedaComible` es
-       exactamente esta pregunta y ya estaba escrita: se le pasa otra casilla. */
-    const tablero = new Chess(f.fen).board();
-    const colgadas = [];
-    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
-      const p = tablero[r][c];
-      if (!p || p.color !== mio || p.type === "k") continue;
-      const sq = "abcdefgh"[c] + (8 - r);
-      if (sq === donde) continue;
-      if (quedaComible(f.fen, sq)) colgadas.push({ sq, pieza: p.type });
+    /* 2. QUÉ PIEZAS MÍAS QUEDAN COLGADAS, y sobre todo CUÁLES CAMBIARON.
+
+       Comparar antes contra después es lo que separa "esto pasa" de "esto lo
+       causó la jugada", y es la frase de la captura del usuario: "tu peón
+       estaba defendido, pero ahora está indefenso". Sin la comparación, una
+       pieza que ya venía colgada de tres jugadas atrás se le echaría a esta.
+
+       Sin `fenAntes` no hay comparación posible, y ahí `nuevas` y `salvadas`
+       quedan vacías en vez de adivinar. */
+    const colgadas = colgadasDe(f.fen, mio).filter(c => c.sq !== donde);
+    const antes = fenAntes ? colgadasDe(fenAntes, mio) : null;
+    let nuevas = [], salvadas = [];
+    if (antes) {
+      const eran = new Set(antes.map(c => c.sq));
+      const son = new Set(colgadas.map(c => c.sq));
+      nuevas = colgadas.filter(c => !eran.has(c.sq));
+      /* Salvada: estaba colgada y ya no. Son dos cosas distintas y la frase
+         cambia: si la casilla es la de donde salió la jugada, la pieza SE FUE;
+         si no, se quedó y ahora está defendida. */
+      salvadas = antes.filter(c => !son.has(c.sq) && c.sq !== donde)
+                      .map(c => ({ ...c, seFue: c.sq === deDonde }));
     }
-    /* la más cara primero: si hay dos, la que duele es esa */
-    colgadas.sort((a, b) => (VALOR[b.pieza] || 0) - (VALOR[a.pieza] || 0));
-    return { amenazadas, colgadas };
+    return { amenazadas, colgadas, nuevas, salvadas };
   } catch (e) { return vacio; }
 }
 
@@ -1718,6 +1799,29 @@ function anotarConfig() {
 }
 
 const ver = (id, si) => $(id).classList.toggle("oculto", !si);
+
+/* La explicación, escrita como frases que se tocan. La que tiene algo para
+   señalar en el tablero se marca; la que no, va como texto y no se toca, o
+   sería un botón que no hace nada. */
+function pintarExplicacion(id, partes) {
+  const el = $(id);
+  el.innerHTML = partes.map((p, i) => {
+    const ref = p.sq ? ` data-sq="${[].concat(p.sq).join(",")}"`
+              : p.uci ? ` data-uci="${p.uci}"` : "";
+    const enc = RESALTA && RESALTA.i === i ? " on" : "";
+    return `<span class="fr${ref ? " senala" : ""}${enc}"${ref} data-i="${i}">${p.txt}</span>`;
+  }).join(" ");
+  el.querySelectorAll("span.senala").forEach(sp => {
+    sp.onclick = seguro("señalar", () => {
+      const i = +sp.dataset.i;
+      RESALTA = (RESALTA && RESALTA.i === i) ? null
+              : { i, sq: sp.dataset.sq ? sp.dataset.sq.split(",") : null,
+                  uci: sp.dataset.uci || null };
+      pintarRevision();
+    });
+  });
+  return partes.length > 0;
+}
 
 /* Partida y Mes son dos vistas equivalentes y se ve una por vez.
    TODO lo que muestra u oculta esas zonas pasa por acá: antes cada final de
@@ -2397,6 +2501,16 @@ function dibujar(fen, jugada, mejor, prueba) {
     `<defs>${PIEZAS}</defs>`;
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
     s += `<rect x="${fx(f)}" y="${ry(r)}" width="${S}" height="${S}" fill="${(r + f) % 2 === 0 ? "var(--claro)" : "var(--oscuro)"}"/>`;
+  /* LO QUE LA FRASE ESTÁ SEÑALANDO (v0.69). Va acá, DEBAJO de las piezas: es un
+     fondo, no una marca, así que no puede tapar la pieza de la que habla.
+     El ámbar es el cuarto color y no pisa a ninguno: azul es lo que se jugó,
+     verde lo que decía el motor, violeta lo inventado. */
+  const resalta = (prueba && prueba.resalta) || null;
+  if (resalta && resalta.sq) for (const sq of [].concat(resalta.sq)) {
+    const c = "abcdefgh".indexOf(sq[0]), r = 8 - +sq[1];
+    if (c < 0 || r < 0 || r > 7) continue;
+    s += `<rect x="${fx(c)}" y="${ry(r)}" width="${S}" height="${S}" fill="#e8a33d" opacity=".55"/>`;
+  }
   /* Cburnett trae la convención de siempre: siluetas distintas por pieza, las
      blancas huecas y las negras rellenas. Reemplaza la regla de la v26 —misma
      silueta para los dos bandos, el bando distinguido por el relleno—, que
@@ -2421,6 +2535,7 @@ function dibujar(fen, jugada, mejor, prueba) {
      azul es lo que se jugó y verde lo que decía el motor. Con tres flechas a la
      vez el color es lo único que las distingue. */
   if (prueba && prueba.uci) s += flecha(prueba.uci, "#6a1b9a", 5);
+  if (resalta && resalta.uci) s += flecha(resalta.uci, "#e8a33d", 5);
   for (let f = 0; f < 8; f++)
     s += `<text x="${fx(f) + S / 2}" y="${T + M + 10}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".55">${"abcdefgh"[f]}</text>`;
   for (let r = 0; r < 8; r++)
@@ -2507,6 +2622,8 @@ function irA(i) {
   if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
   IDX = i;
   MEJOR_EN = null;
+  /* y el señalado se apaga solo, igual que el vistazo: señala una posición */
+  RESALTA = null;
   /* Cambiar de jugada corta la prueba, por el mismo motivo que apaga el vistazo
      a la mejor: una prueba pertenece a UNA posición, y arrastrarla a la
      siguiente mostraría una jugada evaluada contra una posición que no es la
@@ -2550,6 +2667,14 @@ function irA(i) {
    `ver` es cuántas jugadas de la variante se están mostrando: 0 es la posición
    de arranque, y por eso ir y volver no vuelve a llamar al motor. */
 let PRUEBA = null;
+
+/* QUÉ FRASE DE LA EXPLICACIÓN ESTÁ SEÑALANDO EL TABLERO (v0.69), o null.
+   Sale de una captura del usuario: cuando chess.com resalta una palabra no te
+   la explica, te la MUESTRA en el tablero. Acá la frase entera es el botón —no
+   una palabra suelta— porque en un celular una palabra de seis letras es un
+   objetivo de 40 px y la frase entera es de 300.
+   Guarda el índice de la parte para poder apagarla tocándola de nuevo. */
+let RESALTA = null;
 
 /* La posición de arranque de la variante y su evaluación. Las dos salen de la
    partida ya analizada: la evaluación de la posición de la que sale la primera
@@ -2679,7 +2804,9 @@ function textoPrueba(prof) {
       tit: `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} — ${c.nombre}`,
       sub: `pierde ${f.perdida.toFixed(2)}` + (p.ver === 1 ? contra : ""),
       exp: explicarJugada(f, null, lado ? f.turno === lado : null,
-                          sanDeUci(f.fen, f.mejorRival), observarJugada(f)),
+                          sanDeUci(f.fen, f.mejorRival),
+                          observarJugada(f, p.ver > 1 ? p.linea[p.ver - 2].fen
+                                                      : fenDeLaJugada(p.desde0))),
       color: `var(--c-${c.clave})`
     };
   }
@@ -4239,9 +4366,11 @@ function pintarRevision() {
      El SAN de la mejor va en null cuando la jugada ya era la mejor, porque ahí
      no hay alternativa que ofrecer. */
   const ladoUsr = ladoDelUsuario(R);
-  const explicado = explicarJugada(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
-                                   ladoUsr ? f.turno === ladoUsr : null,
-                                   sanDeUci(f.fen, f.mejorRival), observarJugada(f));
+  const partes = partesDeLaExplicacion(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
+                                       ladoUsr ? f.turno === ladoUsr : null,
+                                       sanDeUci(f.fen, f.mejorRival),
+                                       observarJugada(f, fenDeLaJugada(IDX)));
+  const explicado = partes.map(p => p.txt).join(" ");
   const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
   $("vIco").textContent = c.icono;
@@ -4255,7 +4384,7 @@ function pintarRevision() {
       ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
       ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria`;
   const enTarjeta = DONDE_EXP === "tarjeta" && !!explicado;
-  $("vExp").textContent = enTarjeta ? explicado : "";
+  if (enTarjeta) pintarExplicacion("vExp", partes); else $("vExp").innerHTML = "";
   $("vExp").classList.toggle("oculto", !enTarjeta);
   /* si el número ya viaja en la barra, la tarjeta no lo repite */
   $("vEv").textContent = MODO_EVAL === "tarjeta" ? f.evalTexto : "";
@@ -4337,12 +4466,18 @@ function pintarRevision() {
      una inventada. Parado en el arranque de la variante hay azul —lo que se
      jugó de verdad desde ahí— y no hay violeta; una jugada adentro, al revés,
      porque la partida ya no pasa por esa posición. */
-  const capa = PRUEBA && { desde: PRUEBA.desde, destinos: PRUEBA.destinos,
-                           uci: PRUEBA.ver ? PRUEBA.linea[PRUEBA.ver - 1].uci : null };
+  /* La capa va SIEMPRE, porque el resaltado de la explicación existe se esté
+     probando o no. Los campos de la variante quedan en null fuera de ella. */
+  const capa = {
+    desde: PRUEBA ? PRUEBA.desde : null,
+    destinos: PRUEBA ? PRUEBA.destinos : [],
+    uci: PRUEBA && PRUEBA.ver ? PRUEBA.linea[PRUEBA.ver - 1].uci : null,
+    resalta: RESALTA
+  };
   $("tablero").innerHTML = PRUEBA
     ? dibujar(vista.fen, PRUEBA.ver === 0 ? (real && real.uci) : null,
               PRUEBA.ver === 0 && verMejor ? f.mejor : null, capa)
-    : dibujar(f.fen, f.uci, verMejor ? f.mejor : null, null);
+    : dibujar(f.fen, f.uci, verMejor ? f.mejor : null, capa);
   $("tileMejor").classList.toggle("activo", verMejor);
   $("tileMejor").classList.toggle("inerte", yaEraLaMejor);
   $("tileMejor").setAttribute("aria-disabled", yaEraLaMejor ? "true" : "false");
@@ -4403,10 +4538,11 @@ function pintarRevision() {
   /* La explicación y las señales dicen lo mismo con distinto vestido, así que
      donde va una no va la otra: repetirlas sería el eco que la v0.44 le sacó a
      las leyendas. */
-  const abajo = DONDE_EXP === "senales" && explicado
-    ? explicado
-    : (notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "");
-  $("senales").textContent = abajo;
+  const enSenales = DONDE_EXP === "senales" && !!explicado;
+  const abajo = enSenales ? explicado
+                          : (notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "");
+  if (enSenales) pintarExplicacion("senales", partes);
+  else $("senales").textContent = abajo;
   $("senales").classList.toggle("oculto", !abajo);
   /* La tarjeta de la variante. Sin variante abierta no existe, y la pantalla
      queda exactamente como antes de la v0.65. */

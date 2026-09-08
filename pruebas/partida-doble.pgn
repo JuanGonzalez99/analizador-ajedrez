@@ -1,0 +1,12 @@
+[Event "Prueba: el ataque doble"]
+[Site "pruebas"]
+[Date "2025.09.04"]
+[White "Santico26"]
+[Black "MewoneX"]
+[Result "1-0"]
+[WhiteElo "600"]
+[BlackElo "601"]
+[TimeControl "600"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. Nxe5 Nxe5 5. d4 Bxd4 6. Qxd4 Nc6 7. Qxg7 Qf6
+8. Qxf6 Nxf6 9. Nc3 d6 10. Bg5 1-0

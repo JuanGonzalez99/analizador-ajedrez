@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.68**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.69**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -147,7 +147,8 @@ cuánto entra de verdad en la pantalla.
 
 **Hay varias partidas y se elige cuál:** `npm run mirar <nombre>` lee
 `pruebas/partida-<nombre>.pgn`. Están la larga de 36 jugadas (`de-prueba`, la de
-por defecto), una que termina **en mate** y una que termina **ahogada**. Existen
+por defecto), una que termina **en mate**, una que termina **ahogada** y
+`doble`, donde en la jugada 5 un peón ataca al alfil y al caballo a la vez. Existen
 porque *cómo termina la partida* es una pantalla propia y la larga no llega
 nunca a ninguna de ellas.
 
@@ -1624,6 +1625,50 @@ Lo que mira hoy:
 **Solo cuenta atacar algo que vale MÁS que la pieza que movés.** Atacar algo que
 vale igual o menos es una oferta de cambio, no una amenaza: el rival no está
 obligado a nada. Es lo que hace que la frase no se dispare en cada jugada.
+
+### No te lo explica, te lo muestra (v0.69)
+
+Otra captura del usuario, y es la que más cambia el diseño: cuando chess.com
+resalta una palabra —"indefenso"— **no te la explica, te la MUESTRA**: la
+posición de la que habla queda encendida en el tablero. No es un glosario.
+
+Así que **la explicación dejó de ser una cadena y pasó a ser una lista de
+partes**, cada una con su referencia: `{ txt, sq }` para una pieza y
+`{ txt, uci }` para una jugada. `explicarJugada` sigue existiendo y es el join
+de las partes, así que todo lo que la probaba sigue valiendo.
+
+**La frase entera es el botón, no una palabra suelta.** En un celular una
+palabra de seis letras es un objetivo de 40 px y la frase entera es de 300. El
+subrayado punteado dice "esto se toca" sin convertir el texto en un bloque de
+color; el fondo ámbar aparece recién al tocarla, y es el mismo ámbar que se
+enciende en el tablero.
+
+**El ámbar es el cuarto color y no pisa a ninguno**: azul es lo que se jugó,
+verde lo que decía el motor, violeta lo inventado, ámbar lo que la frase está
+señalando. El resaltado de casillas va **debajo de las piezas** —es un fondo, no
+una marca— o taparía justo la pieza de la que habla.
+
+### Comparar antes contra después (v0.69)
+
+`observarJugada` ahora recibe también la posición de ANTES, y eso es lo que
+separa **"esto pasa"** de **"esto lo causó la jugada"**. Es la frase de la
+captura: *"tu peón estaba defendido, pero ahora está indefenso"*. Sin la
+comparación, una pieza que venía colgada de tres jugadas atrás se le echaría a
+esta.
+
+De ahí salen dos frases nuevas, y son espejo una de la otra:
+
+| frase | cuándo |
+|---|---|
+| "Tu peón de e4 queda sin defender." | estaba defendido y **esta jugada** lo dejó solo |
+| "Salva tu peón de e4, que estaba sin defender." | estaba colgado y **esta jugada** lo defendió |
+| "Saca tu peón de e4, que estaba sin defender." | estaba colgado y la jugada **lo movió**, que no es lo mismo que defenderlo |
+
+La segunda es la que faltaba para poder decir algo de **las jugadas del rival**:
+*"tu rival defendió su peón amenazado"* es media revisión de chess.com.
+
+**Sin la posición de antes, `nuevas` y `salvadas` quedan vacías en vez de
+adivinar**, y hay una prueba que lo fija.
 
 ### El botón dice qué hacer ahora (v0.68)
 

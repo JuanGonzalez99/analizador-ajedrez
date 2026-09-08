@@ -243,14 +243,32 @@ for (let i = 0; ; i++) {
   if (await pg.locator("#sig").isDisabled()) break;
   await pg.click("#sig");
 }
+/* Se prefiere la que MÁS tiene para explicar, salvo que haya un ataque doble:
+   esa es la frase que la partida de prueba `doble` existe para mostrar, y
+   dejarla al azar del largo la escondía detrás de otra más larga. */
 let mejor = 0;
 textos.forEach((t, i) => { if (t.length > textos[mejor].length) mejor = i; });
+const conDoble = textos.findIndex(t => t.includes("a la vez"));
+if (conDoble >= 0) mejor = conDoble;
 for (let i = textos.length - 1; i > mejor; i--) await pg.click("#ant");
 console.log("explicación:", JSON.stringify(textos[mejor]),
             `(jugada ${mejor + 1} de ${textos.length}; ` +
             `${textos.filter(Boolean).length} tienen algo que decir)`);
 /* la vista arranca en el tablero, que es como se mira la jugada: la pregunta de
    las tres es si el renglón nuevo empuja algo fuera de la pantalla */
+/* TOCAR LA FRASE ENCIENDE EL TABLERO (v0.69): no te lo explica, te lo muestra.
+   La frase que señala algo lleva la clase `senala`; si no hay ninguna en esta
+   jugada, se dice y no se saca la foto, en vez de sacar una foto vacía. */
+const senala = pg.locator("#vExp span.senala").first();
+if (await senala.count()) {
+  await senala.click();
+  await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -60));
+  await foto("senala-encendida");
+  console.log("señala: ", JSON.stringify((await senala.textContent()).trim()));
+  await senala.click();
+} else console.log("señala:  (esta jugada no señala nada)");
+
 for (const donde of ["tarjeta", "reemplaza", "senales"]) {
   await pg.selectOption("#dondeExp", donde);
   await pg.waitForTimeout(200);

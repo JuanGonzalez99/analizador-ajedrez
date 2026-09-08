@@ -1884,7 +1884,7 @@ test("la explicación se deriva al pintar y no viaja en la caché", () => {
   /* Es lo que deja que una partida ya analizada estrene el texto sin volver a
      correr el motor: lo que se guarda son las evaluaciones, no las filas. */
   assert.ok(!html.includes("explicacion:"), "no hay campo guardado en la fila");
-  assert.ok(html.includes("const explicado = explicarJugada("),
+  assert.ok(html.includes("const partes = partesDeLaExplicacion("),
     "se arma en pintarRevision, en cada pintada");
   const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
   for (const c of ["oportunidad", "cap", "mateContra", "unicaBuena"])
@@ -2136,25 +2136,78 @@ test("una jugada que da jaque no dice que ataca al rey", () => {
     "el rey no está en la lista: " + JSON.stringify(obs.amenazadas));
 });
 
-test("observarJugada ve la pieza colgada que NO es la que moviste", () => {
-  /* Torre blanca en h5, torre negra en h8 que la mira por la columna, y las
-     blancas empujan el peón de a2. La jugada no tiene nada de malo por sí sola:
-     lo que cuelga está en el otro lado del tablero. Hasta la v0.67 la app solo
-     miraba la pieza movida, así que esto no se veía. */
+test("observarJugada ve la pieza que ESTA jugada dejó sin defender", () => {
+  /* Es el caso de la captura del usuario: "tu peón estaba defendido, pero ahora
+     está indefenso". El peón de e4 lo defendía el de d3; al avanzar a d4, el
+     defensor se fue y el caballo de f6 se lo lleva gratis. La jugada no toca la
+     pieza que queda colgada, que es lo que hasta la v0.67 no se veía.
+     Las dos posiciones las verifica chess.js. */
+  const antes = "4k3/8/5n2/8/4P3/3P4/8/4K3 w - - 0 1";
+  const f = unaFila(antes, "d4",
+    [{ cp: 100, mate: null, mejor: "e1e2", segunda: { cp: 80, mate: null } },
+     { cp: 100, mate: null, mejor: "f6e4", segunda: null }]);
+  const obs = A.observarJugada(f, antes);
+  assert.deepEqual(obs.nuevas, [{ sq: "e4", pieza: "p" }]);
+  assert.ok(A.explicarJugada(f, null, true, null, obs)
+    .startsWith("Tu peón de e4 queda sin defender."),
+    A.explicarJugada(f, null, true, null, obs));
+  assert.deepEqual(A.observarJugada(f).nuevas, [],
+    "sin la posición de antes no se puede saber, y no se inventa");
+});
+
+test("una pieza que YA venía colgada no se le echa a esta jugada", () => {
+  /* Torre blanca en h5 que la torre de h8 ya miraba antes de mover el peón de
+     a2: comparar antes contra después es lo que separa "esto pasa" de "esto lo
+     causó la jugada". */
   const antes = "4k2r/8/8/7R/8/8/P7/4K3 w k - 0 1";
   const f = unaFila(antes, "a4",
     [{ cp: 100, mate: null, mejor: "h5h8", segunda: { cp: 80, mate: null } },
      { cp: 400, mate: null, mejor: "h8h5", segunda: null }]);
-  const obs = A.observarJugada(f);
-  assert.deepEqual(obs.colgadas, [{ sq: "h5", pieza: "r" }]);
-  /* La frase entera sale "Tu torre de h5 queda sin defender. Había Rxh8+, que se
-     llevaba la torre.": el mecanismo y la alternativa, que es la tarjeta que se
-     quería. Se comprueba el mecanismo, que es lo nuevo. */
-  assert.ok(A.explicarJugada(f, null, true, null, obs)
-    .startsWith("Tu torre de h5 queda sin defender."),
+  const obs = A.observarJugada(f, antes);
+  assert.deepEqual(obs.colgadas, [{ sq: "h5", pieza: "r" }], "colgada sí está");
+  assert.deepEqual(obs.nuevas, [], "pero no es nueva, y por eso no se dice");
+});
+
+test("lo que la jugada SALVA es el espejo, y es lo que faltaba para el rival", () => {
+  /* La misma posición al revés: el peón de e4 está colgado —el caballo de f6 lo
+     mira y nadie lo defiende— y las blancas lo defienden con d3. Es "tu rival
+     defendió su peón amenazado", que es media revisión de chess.com. */
+  const antes = "4k3/8/5n2/8/4P3/8/3P4/4K3 w - - 0 1";
+  const f = unaFila(antes, "d3",
+    [{ cp: 100, mate: null, mejor: "d2d3", segunda: { cp: 80, mate: null } },
+     { cp: -100, mate: null, mejor: "f6d5", segunda: null }]);
+  const obs = A.observarJugada(f, antes);
+  assert.deepEqual(obs.salvadas, [{ sq: "e4", pieza: "p", seFue: false }]);
+  assert.equal(A.explicarJugada(f, null, true, null, obs),
+    "Salva tu peón de e4, que estaba sin defender.");
+});
+
+test("sacar la pieza colgada no es lo mismo que defenderla", () => {
+  /* Si la pieza que estaba colgada es la que se movió, no la defendiste: la
+     sacaste. Son dos frases porque son dos cosas. */
+  const antes = "4k3/8/5n2/8/4P3/8/8/4K3 w - - 0 1";
+  const f = unaFila(antes, "e5",
+    [{ cp: 100, mate: null, mejor: "e4e5", segunda: { cp: 80, mate: null } },
+     { cp: -100, mate: null, mejor: "f6d5", segunda: null }]);
+  const obs = A.observarJugada(f, antes);
+  assert.equal(obs.salvadas.length, 1);
+  assert.equal(obs.salvadas[0].seFue, true, "la casilla de la que salió la jugada");
+  assert.ok(A.explicarJugada(f, null, true, null, obs).startsWith("Saca tu peón de e4"),
     A.explicarJugada(f, null, true, null, obs));
-  assert.ok(A.explicarJugada(f, null, null, null, obs)
-    .startsWith("La torre de h5 queda sin defender."), "sin lado conocido, impersonal");
+});
+
+test("la explicación en partes dice qué señala cada frase", () => {
+  /* Es lo que deja que tocar la frase encienda el tablero: no te lo explica, te
+     lo muestra. La cadena se sigue armando igual, que es el join de las partes. */
+  const antes = "4k3/8/5n2/8/4P3/3P4/8/4K3 w - - 0 1";
+  const f = unaFila(antes, "d4",
+    [{ cp: 100, mate: null, mejor: "e1e2", segunda: { cp: 80, mate: null } },
+     { cp: 100, mate: null, mejor: "f6e4", segunda: null }]);
+  const partes = A.partesDeLaExplicacion(f, "Ke2", true, null, A.observarJugada(f, antes));
+  assert.equal(partes[0].sq, "e4", "la frase del peón señala e4");
+  assert.equal(partes[1].uci, "e1e2", "la de la alternativa señala la jugada");
+  assert.equal(A.explicarJugada(f, "Ke2", true, null, A.observarJugada(f, antes)),
+    partes.map(p => p.txt).join(" "), "la cadena es el join de las partes");
 });
 
 test("el turno dado vuelta limpia el paso al vuelo", () => {
@@ -2170,7 +2223,8 @@ test("lo que mira la posición NO vive en derivarFilas", () => {
   const cuerpo = html.slice(html.indexOf("function derivarFilas"),
                             html.indexOf("function mediana"));
   assert.ok(!cuerpo.includes("observarJugada"), "el barrido no lo paga");
-  assert.ok(html.includes("observarJugada(f))"), "la pantalla sí lo pide");
+  assert.ok(html.includes("observarJugada(f, fenDeLaJugada(IDX))"),
+    "la pantalla sí lo pide, y con la posición de antes para poder comparar");
 });
 
 test("el botón grande lo decide el veredicto, y con otro criterio que las tablas", () => {
@@ -2181,4 +2235,26 @@ test("el botón grande lo decide el veredicto, y con otro criterio que las tabla
   assert.ok(html.includes('$("btnProbar").classList.toggle("primario", !PRUEBA && paraProbar);'));
   assert.ok(html.includes("const esMala = f => f.perdida >= 3;"),
     "y el de las tablas sigue siendo el de siempre");
+});
+
+test("hay una partida de prueba donde el ataque doble se dispara", () => {
+  /* "Se puede forzar?" — sí, y de la única forma honesta: con una partida donde
+     pasa de verdad. En la jugada 5 el peón de d4 ataca al alfil de c5 y al
+     caballo de e5, los dos valen más que un peón, y la posición la verifica
+     chess.js acá mismo. */
+  const pgn = fs.readFileSync(new URL("./partida-doble.pgn", import.meta.url), "utf8");
+  const j = new Chess();
+  assert.ok(j.load_pgn(pgn), "el PGN de prueba tiene que ser legal");
+  const { jugadas, fens } = A.prepararPartida(pgn);
+  const i = 8;  /* 5. d4, la novena media jugada */
+  assert.equal(jugadas[i].san, "d4");
+  const f = A.derivarFilas([jugadas[i]], [fens[i], fens[i + 1]],
+    [{ cp: 40, mate: null, mejor: "c4b5", segunda: { cp: 20, mate: null } },
+     { cp: -40, mate: null, mejor: "c5d4", segunda: null }],
+    SIN_LIBRO_EXP, i, "critico", null).filas[0];
+  const obs = A.observarJugada(f, fens[i]);
+  assert.deepEqual(obs.amenazadas.map(a => a.sq).sort(), ["c5", "e5"]);
+  const partes = A.partesDeLaExplicacion(f, "Bb5", true, null, obs);
+  assert.equal(partes[0].txt, "Ataca a la vez el alfil de c5 y el caballo de e5.");
+  assert.deepEqual(partes[0].sq, ["c5", "e5"], "y señala las dos casillas");
 });
