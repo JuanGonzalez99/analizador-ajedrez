@@ -431,7 +431,7 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
    están dibujadas en la lista vertical, para poder verla sin construirla. */
 
 /* cuántas jugadas entran de verdad: se dibuja con 5, 7 y 9 y se mira */
-const armarTira = async (n) => await pg.evaluate((cuantas) => {
+const armarTira = async (n, conNumero = false) => await pg.evaluate(([cuantas, conNum]) => {
   const vieja = document.getElementById("tiraH");
   if (vieja) vieja.remove();
   const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
@@ -448,21 +448,41 @@ const armarTira = async (n) => await pg.evaluate((cuantas) => {
     return b;
   };
   const medio = document.createElement("div");
-  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;justify-content:center;overflow:hidden;";
+  /* SE DESLIZA. La primera maqueta la hizo con recorte y eso mentía: una tira
+     que no se puede arrastrar obliga a los galones para todo. Con scroll, los
+     galones son el paso fino y el dedo el paso grueso. */
+  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;justify-content:center;" +
+    "overflow-x:auto;scrollbar-width:none;";
   for (const e of trozo) {
-    const s = document.createElement("span");
-    s.innerHTML = e.innerHTML;
     const esta = e.classList.contains("sel");
-    s.style.cssText = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;" +
+    if (conNum) {
+      /* el número sale de la fila de la lista vertical, que ya lo tiene. Va
+         antes de la jugada de las blancas, y antes de una de las negras solo si
+         es la primera de la tira: es como se escribe una partida. */
+      const fila = e.parentElement;
+      const jgs = [...fila.querySelectorAll(".jg")].filter(x => x.textContent.trim());
+      const esBlancas = jgs.indexOf(e) === 0;
+      const primera = e === trozo[0];
+      if (esBlancas || primera) {
+        const num = document.createElement("span");
+        num.textContent = fila.querySelector(".np").textContent + (esBlancas ? "." : "\u2026");
+        num.style.cssText = "font-size:12px;color:var(--tenue);align-self:center;" +
+          "white-space:nowrap;";
+        medio.appendChild(num);
+      }
+    }
+    const sp = document.createElement("span");
+    sp.innerHTML = e.innerHTML;
+    sp.style.cssText = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;" +
       "border:1px solid " + (esta ? "currentColor" : "var(--linea)") + ";color:" + e.style.color +
       (esta ? ";font-weight:700" : "");
-    medio.appendChild(s);
+    medio.appendChild(sp);
   }
   cont.append(galon("‹"), medio, galon("›"));
   /* adentro de zonaRevision, o `armar` no la encuentra: busca ahí y solo ahí */
   document.getElementById("zonaRevision").appendChild(cont);
   return cont.id;
-}, n);
+}, [n, conNumero]);
 
 /* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
    a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
@@ -471,6 +491,11 @@ const armar = async (orden, opc = {}) => await pg.evaluate(([ids, o]) => {
   /* SIEMPRE dentro de zonaRevision: `.fila` existe también arriba, en la zona de
      búsqueda, y un querySelector suelto se traía ese en vez de este. */
   const dentro = sel => z.querySelector("#" + sel) || z.querySelector("." + sel);
+  /* la línea de métricas que mete la variante compacta se saca SIEMPRE al
+     empezar: si no, la maqueta siguiente la hereda y muestra los números dos
+     veces, adentro de la tarjeta y en los cuadritos */
+  const vieja = z.querySelector("#metricasEnTarjeta");
+  if (vieja) vieja.remove();
   const piezas = ids.map(dentro).filter(Boolean);
   /* todo lo que NO entra en la maqueta se esconde: si queda visible, aparece
      arriba de todo, porque lo demás se reordena appendeando al final */
@@ -496,6 +521,7 @@ const armar = async (orden, opc = {}) => await pg.evaluate(([ids, o]) => {
     const m = dentro("metricas");
     const txt = z.querySelector("#veredicto .txt");
     const linea = document.createElement("div");
+    linea.id = "metricasEnTarjeta";
     linea.style.cssText = "font-size:12px;color:var(--tenue);margin-top:4px;" +
       "font-variant-numeric:tabular-nums;";
     linea.textContent = [...m.children]
@@ -550,8 +576,23 @@ for (const n of [5, 7, 9]) {
   await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "fila"],
               { ...OCULTAR, metricasAdentro: true });
   await desdeArriba("dist-C-7");
+
+  /* E, la que propuso el usuario: barra · tarjeta · tablero · navegación · curva.
+     La tarjeta ARRIBA del tablero, que es lo que ninguna de las otras probó. */
+  await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"],
+              OCULTAR);
+  await desdeArriba("dist-E-7");
+  /* y la misma con los números de jugada en la tira */
+  await armarTira(7, true);
+  await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"],
+              OCULTAR);
+  await desdeArriba("dist-E-7-numeros");
+  await armarTira(5, true);
+  await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"],
+              OCULTAR);
+  await desdeArriba("dist-E-5-numeros");
 }
-console.log("maquetas: dist-D-hoy, dist-A-5/7/9, dist-B-7, dist-C-7");
+console.log("maquetas: dist-D-hoy, dist-A-5/7/9, dist-B-7, dist-C-7, dist-E-7, dist-E-7/5-numeros");
 
 console.log("listo: capturas/");
 await b.close();
