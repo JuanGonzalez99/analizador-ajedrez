@@ -301,32 +301,6 @@ await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-mala" + S
 await pg.evaluate(() => document.querySelector(".nav").scrollIntoView({ block: "end" }));
 await foto("pantalla-botones");
 
-/* MAQUETAS de dónde va la fila de navegación (v0.73). El usuario marcó que
-   navegar sin ver el tablero no sirve, y hoy la fila vive abajo de todo. Las dos
-   la mudan a pegada al tablero, una con el alto de siempre y otra compacta.
-   Son maquetas: mueven el DOM en la página abierta y no tocan index.html.
-   Se van cuando el usuario elija. */
-const alTablero = async (alto, nombre) => {
-  await pg.evaluate((h) => {
-    const nav = document.querySelector(".nav");
-    document.querySelector(".revtab").after(nav);
-    nav.style.marginTop = "8px";
-    nav.querySelectorAll("button").forEach(b => { b.style.height = h + "px"; });
-  }, alto);
-  await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
-  await pg.evaluate(() => window.scrollBy(0, -60));
-  await foto(nombre);
-};
-await alTablero(48, "maqueta-nav-tablero");
-await alTablero(36, "maqueta-nav-tablero-compacta");
-await pg.reload();
-await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 30000 }).catch(() => {});
-/* MAQUETA para decidir: la misma fila con DOS botones, que es como quedaría si
-   "Siguiente" saltara a la próxima jugada tuya. Se esconde el del medio y se
-   saca la foto; no cambia nada de la app. Esto se va cuando el usuario elija. */
-await pg.evaluate(() => { document.getElementById("btnProbar").style.display = "none"; });
-await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-dos" + SUFIJO + ".png") });
-await pg.evaluate(() => { document.getElementById("btnProbar").style.display = ""; });
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("tarjeta-y-botones");
@@ -371,8 +345,9 @@ else {
      de la categoría mirando las dos. */
     console.log("variante:", JSON.stringify(
       (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
-    /* volver al arranque de la variante tocando su tira */
-    await pg.click('#pLinea span[data-v="0"]');
+    /* volver a la PRIMERA jugada de la variante tocando su tira. Iba al
+       arranque con data-v="0" hasta la v0.71, que le sacó ese eslabón. */
+    await pg.click('#pLinea span[data-v="1"]');
     await foto("prueba-6-volviendo");
   }
   console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
@@ -438,6 +413,146 @@ console.log("cabecera:", JSON.stringify(await pg.locator("#revRival").textConten
             JSON.stringify(await pg.locator("#revFin").textContent()));
 const cierreEl = pg.locator(".jugadas .cierre");
 console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl.textContent()).trim()) : "(no hay)");
+
+/* ============ LAS CUATRO DISTRIBUCIONES (maquetas, v0.73) ============
+
+   Van AL FINAL a propósito: mueven el DOM de la página abierta y no lo dejan
+   como estaba, así que nada de lo de arriba puede depender de esto. NO TOCAN
+   index.html: son un dibujo para decidir mirando, y se van cuando el usuario
+   elija.
+
+   Lo que se está comparando es dónde va cada bloque de la vista Partida:
+     A  estado arriba   → cabecera · barra · CURVA · tablero · tira · tarjeta · cuadritos
+     B  tarjeta primero → igual que A pero la tarjeta antes de la tira
+     C  compacta        → A con los cuadritos metidos adentro de la tarjeta
+     D  la de hoy       → para tener contra qué comparar
+
+   La TIRA HORIZONTAL no existe en la app: se arma acá con las jugadas que ya
+   están dibujadas en la lista vertical, para poder verla sin construirla. */
+
+/* cuántas jugadas entran de verdad: se dibuja con 5, 7 y 9 y se mira */
+const armarTira = async (n) => await pg.evaluate((cuantas) => {
+  const vieja = document.getElementById("tiraH");
+  if (vieja) vieja.remove();
+  const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
+  const sel = Math.max(0, jg.findIndex(e => e.classList.contains("sel")));
+  const desde = Math.max(0, Math.min(Math.max(0, jg.length - cuantas), sel - Math.floor(cuantas / 2)));
+  const trozo = jg.slice(desde, desde + cuantas);
+  const cont = document.createElement("div");
+  cont.id = "tiraH";
+  cont.style.cssText = "display:flex;align-items:center;gap:6px;margin:10px 0;";
+  const galon = t => {
+    const b = document.createElement("button");
+    b.textContent = t;
+    b.style.cssText = "flex:0 0 38px;height:38px;padding:0;font-size:16px;";
+    return b;
+  };
+  const medio = document.createElement("div");
+  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;justify-content:center;overflow:hidden;";
+  for (const e of trozo) {
+    const s = document.createElement("span");
+    s.innerHTML = e.innerHTML;
+    const esta = e.classList.contains("sel");
+    s.style.cssText = "white-space:nowrap;font-size:13px;padding:4px 7px;border-radius:6px;" +
+      "border:1px solid " + (esta ? "currentColor" : "var(--linea)") + ";color:" + e.style.color +
+      (esta ? ";font-weight:700" : "");
+    medio.appendChild(s);
+  }
+  cont.append(galon("‹"), medio, galon("›"));
+  /* adentro de zonaRevision, o `armar` no la encuentra: busca ahí y solo ahí */
+  document.getElementById("zonaRevision").appendChild(cont);
+  return cont.id;
+}, n);
+
+/* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
+   a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
+const armar = async (orden, opc = {}) => await pg.evaluate(([ids, o]) => {
+  const z = document.getElementById("zonaRevision");
+  /* SIEMPRE dentro de zonaRevision: `.fila` existe también arriba, en la zona de
+     búsqueda, y un querySelector suelto se traía ese en vez de este. */
+  const dentro = sel => z.querySelector("#" + sel) || z.querySelector("." + sel);
+  const piezas = ids.map(dentro).filter(Boolean);
+  /* todo lo que NO entra en la maqueta se esconde: si queda visible, aparece
+     arriba de todo, porque lo demás se reordena appendeando al final */
+  /* al esconder se GUARDA el display que tenía: la tira es un flex, y
+     devolvérselo con "" la dejaba en block, con los galones uno abajo del otro.
+     Es la misma clase de error que el de los márgenes: tocar un elemento le
+     cambia cosas que no estabas mirando. */
+  for (const el of [...z.children]) {
+    if (piezas.includes(el)) continue;
+    if (el.dataset.disp === undefined) el.dataset.disp = el.style.display;
+    el.style.display = "none";
+  }
+  for (const el of piezas) {
+    if (el.dataset.disp !== undefined) { el.style.display = el.dataset.disp; delete el.dataset.disp; }
+    el.style.marginTop = "10px";
+    el.style.marginBottom = "0";
+    z.appendChild(el);
+  }
+  if (o.metricasAdentro) {
+    /* SCOPEADO, como todo lo demás: la cabecera de la vista Mes también se
+       llama `.metricas`, y viene antes en el documento. Es el mismo error que
+       ya había pasado con `.fila`. */
+    const m = dentro("metricas");
+    const txt = z.querySelector("#veredicto .txt");
+    const linea = document.createElement("div");
+    linea.style.cssText = "font-size:12px;color:var(--tenue);margin-top:4px;" +
+      "font-variant-numeric:tabular-nums;";
+    linea.textContent = [...m.children]
+      .map(d => d.querySelector(".et").textContent + " " + d.querySelector(".va").textContent)
+      .join("  ·  ");
+    txt.appendChild(linea);
+    m.style.display = "none";
+  }
+}, [orden, opc]);
+
+const desdeArriba = async nombre => {
+  await pg.evaluate(() => window.scrollTo(0, 0));
+  await pg.evaluate(() => {
+    const z = document.getElementById("zonaRevision");
+    z.scrollIntoView({ block: "start" });
+    window.scrollBy(0, -8);
+  });
+  await foto(nombre);
+};
+
+/* D primero, que es la de hoy y todavía no se tocó nada */
+await desdeArriba("dist-D-hoy");
+
+const OCULTAR = {};
+for (const n of [5, 7, 9]) {
+  /* se rearma desde cero en cada vuelta: la anterior dejó el DOM movido, y una
+     recarga deja la página en blanco, así que se vuelve a entrar por la lista
+     igual que la primera vez. La partida ya está en la caché: es instantáneo. */
+  await pg.reload();
+  await pg.fill("#usuario", cabPgn("White", "Blancas"));
+  await pg.click("#buscar");
+  await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+  await pg.click("#partidas div[data-i]");
+  await pg.waitForSelector("#analizar", { state: "visible", timeout: 20000 });
+  await pg.click("#analizar");
+  await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
+  await avanzar(mejor);
+  await armarTira(n);
+  await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "metricas", "fila"],
+              OCULTAR);
+  await desdeArriba(`dist-A-${n}`);
+  if (n === 5) console.log("orden A:", (await pg.evaluate(() =>
+    [...document.getElementById("zonaRevision").children]
+      .filter(e => e.style.display !== "none")
+      .map(e => e.id || e.className || e.tagName).join(" · "))));
+  if (n !== 7) continue;
+  /* B y C solo con la cantidad del medio: lo que comparan es el ORDEN, no
+     cuántas jugadas entran */
+  await armar(["revcab", "evalh", "curva", "revtab", "veredicto", "tiraH", "metricas", "fila"],
+              OCULTAR);
+  await desdeArriba("dist-B-7");
+  await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "fila"],
+              { ...OCULTAR, metricasAdentro: true });
+  await desdeArriba("dist-C-7");
+}
+console.log("maquetas: dist-D-hoy, dist-A-5/7/9, dist-B-7, dist-C-7");
+
 console.log("listo: capturas/");
 await b.close();
 srv.close();
