@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.72**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.72.1**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1571,9 +1571,15 @@ que una jugada sin elección no mostrara números que invitaran a juzgar algo qu
 no se decidió, y ahora no los muestra ninguna. La regla sigue viva en
 `explicarJugada`, que en una forzada devuelve vacío.
 
-Lo único que se pierde es el número en **centipeones** entre paréntesis: el
-cuadrito PÉRDIDA lo dice en peones. Si alguna vez hace falta, va ahí y no de
-vuelta en la tarjeta.
+**No se perdió nada de la pérdida**: 166 cp son 1,66 peones, que es lo que el
+cuadrito PÉRDIDA dice con sus dos decimales. Lo pensé al revés al escribirlo y
+lo corrigió el usuario.
+
+**Lo que sí se perdía era un decimal de la caída**, y se arregló en la v0.72.1:
+el cuadrito redondeaba a entero —"21 pt"— mientras la tarjeta decía "20,9". No
+es adorno: la caída es la medida en la que se apoyan el modo amigable y la
+precisión, así que redondearla borra la diferencia justo en el rango donde una
+imprecisión y una jugada buena más se parecen.
 
 ### Cuánto habla, y qué se hizo cuando hablaba poco (v0.67)
 

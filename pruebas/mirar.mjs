@@ -296,6 +296,10 @@ console.log("botones:  ", JSON.stringify(await pg.locator("#vTit").textContent()
             await pg.locator("#btnProbar").evaluate(e => e.classList.contains("primario"))
               ? "Probar otra" : "Siguiente");
 await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-mala" + SUFIJO + ".png") });
+/* la fila de botones EN LA PANTALLA, que es donde se juzga: sola no se ve qué
+   tiene encima ni cuánto hay que scrollear para llegar */
+await pg.evaluate(() => document.querySelector(".nav").scrollIntoView({ block: "end" }));
+await foto("pantalla-botones");
 /* MAQUETA para decidir: la misma fila con DOS botones, que es como quedaría si
    "Siguiente" saltara a la próxima jugada tuya. Se esconde el del medio y se
    saca la foto; no cambia nada de la app. Esto se va cuando el usuario elija. */

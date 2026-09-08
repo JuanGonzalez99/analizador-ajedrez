@@ -359,7 +359,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.72 · 08-09";
+  window.VERSION = "v0.72.1 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4453,7 +4453,13 @@ function pintarRevision() {
 
   $("mMejor").title = f.mejor || "";
   $("mPerdida").textContent = f.perdida.toFixed(2);
-  $("mCaida").textContent = f.caida.toFixed(0) + " pt";
+  /* UN DECIMAL, no cero. El cuadrito redondeaba —"21 pt"— mientras la tarjeta
+     decía "20.9 puntos de victoria"; cuando los números se fueron de la tarjeta
+     en la v0.72, ese decimal se perdía. Y no es adorno: la caída es la medida en
+     la que se apoyan el modo amigable y la precisión, así que redondearla a
+     entero borra la diferencia entre una imprecisión y una jugada buena en el
+     rango donde más se parecen. La pérdida, al lado, siempre tuvo dos. */
+  $("mCaida").textContent = f.caida.toFixed(1) + " pt";
   /* Cuando la jugada jugada YA era la mejor no hay nada distinto que mostrar.
      El cuadrito se grisa y deja de responder: sin eso parecia que tocarlo no
      hacia nada, o sea un bug. */
