@@ -1906,15 +1906,57 @@ test("las tres ubicaciones existen, y ninguna deja hueco cuando no hay texto", (
 
 test("la jugada probada se juzga por el MISMO camino que las de la partida", () => {
   /* Si se juzgara aparte, el día que cambie cómo se categoriza una jugada la
-     prueba diría otra cosa que la partida, sobre la misma posición. */
+     variante diría otra cosa que la partida, sobre la misma posición. */
   const cuerpo = html.slice(html.indexOf("async function probarJugada"),
-                            html.indexOf("function textoPrueba"));
+                            html.indexOf("const jugadaReal"));
   assert.ok(cuerpo.includes("derivarFilas("), "arma la fila con derivarFilas");
-  assert.ok(cuerpo.includes("R.evs[IDX]"),
-    "la evaluación de ANTES es la de la partida, no una nueva");
+  assert.ok(cuerpo.includes("[vista.ev, ev]"),
+    "la evaluación de ANTES ya estaba: la de la partida, o la que dejó la jugada anterior");
   assert.ok(cuerpo.includes("MATE_VISTA()"), "y respeta el dial del usuario");
-  assert.ok(/R\.jugadas && R\.jugadas\[IDX - 1\]/.test(cuerpo),
-    "la jugada previa va, o una recaptura probada no se reconocería");
+  assert.ok(cuerpo.includes("vista.previa"),
+    "la jugada previa va, o una recaptura de la variante no se reconocería");
+  assert.ok(cuerpo.includes("p.desde0 + k"),
+    "el número de jugada y el turno siguen la cuenta de la partida");
+});
+
+test("encadenar N jugadas cuesta N evaluaciones, no 2N", () => {
+  /* La posición de la que sale cada jugada ya está evaluada: la de arranque
+     viene de la partida y el resto las dejó la jugada anterior. */
+  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+                            html.indexOf("const jugadaReal"));
+  assert.equal((cuerpo.match(/evaluarPosiciones\(/g) || []).length, 1);
+  const vista = html.slice(html.indexOf("const posicionVista"),
+                           html.indexOf("function abrirPrueba"));
+  assert.ok(vista.includes("R.evs[p.desde0]"), "la de arranque sale de la partida");
+  assert.ok(vista.includes("p.linea[k - 1].ev"), "y el resto, de la jugada anterior");
+});
+
+test("jugar parado en el medio de la variante corta lo que venía después", () => {
+  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+                            html.indexOf("const jugadaReal"));
+  assert.ok(cuerpo.includes("p.linea = p.linea.slice(0, p.ver);"));
+});
+
+test("ir y volver por la variante no vuelve a llamar al motor", () => {
+  const cuerpo = html.slice(html.indexOf("function verDeLaVariante"),
+                            html.indexOf("function tocarCasilla"));
+  assert.ok(!cuerpo.includes("evaluarPosiciones"), "solo cambia qué se muestra");
+  assert.ok(cuerpo.includes("PRUEBA.ver = k;"));
+});
+
+test("las dos puertas arrancan de posiciones distintas", () => {
+  /* El botón pregunta "¿y si en vez de esto?" y arranca ANTES de la jugada;
+     tocar una pieza pregunta "¿y ahora qué?" y arranca DESPUÉS, que es también
+     lo que deja probar las del rival: ahí le toca a él. */
+  assert.ok(html.includes("abrirPrueba(IDX);"), "el botón, antes de la jugada");
+  assert.ok(html.includes("if (!PRUEBA) abrirPrueba(IDX + 1);"),
+    "tocar una pieza, después de la jugada");
+});
+
+test("la comparación contra la jugada real es solo para la primera", () => {
+  /* De la segunda en adelante la posición ya no es la de la partida, así que no
+     hay contra qué comparar. */
+  assert.ok(html.includes("(p.ver === 1 ? contra : \"\")"));
 });
 
 test("probar no escribe en el análisis ni en la caché", () => {
@@ -1941,20 +1983,37 @@ test("cambiar de jugada corta la prueba", () => {
   assert.ok(cuerpo.includes("MEJOR_EN = null;"), "y sigue apagando el vistazo");
 });
 
-test("con el tablero tocable no se dibujan las zonas de los galones", () => {
+test("las zonas de toque de los galones se fueron, y los galones se quedaron", () => {
   /* El comentario de la v32 lo venía anunciando: las zonas se comen 10 px de
-     las columnas a y h, así que en cuanto tocar una casilla hace algo, tapan
-     casillas de verdad. */
-  assert.ok(html.includes("if (!prueba) s += galon("), "los galones");
-  assert.ok(html.includes("if (!prueba) s += zona(0, -1) + zona(T + M - 10, 1);"),
-    "y sus zonas de toque");
-  assert.ok(html.includes('data-sq="'), "las casillas tocables existen");
+     las columnas a y h, "si alguna vez se puede tocar una casilla, hay que
+     reducirlas". Se sacaron enteras: tocar una pieza gana sobre tocar para
+     navegar, porque navegar tiene otros cuatro caminos y el toque sobre la
+     pieza no tiene ninguno. El DIBUJO del galón se queda: es lo que avisa que
+     el tablero se desliza. */
+  assert.ok(!html.includes("data-nav"), "no queda ninguna zona de navegación");
+  assert.ok(html.includes("s += galon(M / 2 - 1, 1)"), "el dibujo se queda");
+  assert.ok(html.includes('data-sq="'), "y las 64 casillas reciben el toque");
 });
 
-test("deslizar no pasa jugadas mientras se prueba", () => {
+test("el tablero se toca siempre, no solo con una variante abierta", () => {
+  /* Es lo que hace que tocar una pieza sea la puerta de entrada: si las
+     casillas solo existieran adentro del modo, habría que entrar al modo antes
+     de poder tocar, que es justo lo que se sacó. */
+  const cuerpo = html.slice(html.indexOf("el tablero se toca SIEMPRE"),
+                            html.indexOf('return s + "</svg>"'));
+  assert.ok(!/if \(prueba\) \{[\s\S]*data-sq/.test(cuerpo),
+    "las casillas no cuelgan de que haya prueba");
+  assert.ok(cuerpo.includes("if (prueba && prueba.desde)"),
+    "lo que sí depende de la prueba son las marcas");
+});
+
+test("deslizar recorre la variante cuando hay una abierta", () => {
   const cuerpo = html.slice(html.indexOf('$("tablero").addEventListener("touchend"'),
                             html.indexOf('$("tablero").addEventListener("click"'));
-  assert.ok(cuerpo.includes("if (!tocado || !R || PRUEBA) return;"));
+  assert.ok(cuerpo.includes("if (dx < 0) adelante(); else atras();"),
+    "el mismo gesto para la misma promesa");
+  assert.ok(html.includes("const atras = () => PRUEBA ? verDeLaVariante(PRUEBA.ver - 1) : irA(IDX - 1);"),
+    "y adentro de la variante, anterior es la posición anterior DE LA VARIANTE");
 });
 
 test("no se puede probar mientras corre un análisis", () => {

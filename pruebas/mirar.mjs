@@ -261,16 +261,17 @@ for (const donde of ["tarjeta", "reemplaza", "senales"]) {
 }
 await pg.selectOption("#dondeExp", "tarjeta");
 
-/* PROBAR UNA JUGADA (v0.65), sobre esa misma jugada. La alternativa NO se elige
-   a ojo: se le pide a chess.js una jugada legal en la posición de antes que no
-   sea la que se jugó de verdad, así la captura muestra una comparación y no la
+/* PROBAR JUGADAS: LA VARIANTE (v0.66), sobre esa misma jugada. Las jugadas NO
+   se eligen a ojo: se le piden a chess.js, y la primera es una legal que no sea
+   la que se jugó de verdad, para que la captura muestre una comparación y no la
    misma jugada dos veces. */
 const posPrueba = new Chess(fens[mejor]);
 const real = jugadas[mejor];
 const alterna = posPrueba.moves({ verbose: true })
   .find(m => !(m.from === real.from && m.to === real.to));
-if (!alterna) console.log("OJO: sin alternativa legal, no hay capturas de la prueba");
+if (!alterna) console.log("OJO: sin alternativa legal, no hay capturas de la variante");
 else {
+  /* PUERTA 1, el botón: la posición de ANTES de la jugada. */
   await pg.click("#btnProbar");
   await foto("prueba-1-eligiendo");
   await pg.click(`#tablero [data-sq="${alterna.from}"]`);
@@ -280,28 +281,44 @@ else {
     () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
     null, { timeout: 30000 });
   await foto("prueba-3-resultado");
-  await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
+
+  /* LA RESPUESTA DEL RIVAL, que es lo que la v0.65 no dejaba hacer. Sale de la
+     posición que quedó, así que también se la pide chess.js. */
+  posPrueba.move(alterna.san);
+  const respuesta = posPrueba.moves({ verbose: true })[0];
+  if (respuesta) {
+    await pg.click(`#tablero [data-sq="${respuesta.from}"]`);
+    await pg.click(`#tablero [data-sq="${respuesta.to}"]`);
+    await pg.waitForFunction(
+      () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
+      null, { timeout: 30000 });
+    await foto("prueba-5-encadenada");
+    await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
+    console.log("variante:", JSON.stringify(
+      (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
+    /* volver al arranque de la variante tocando su tira */
+    await pg.click('#pLinea span[data-v="0"]');
+    await foto("prueba-6-volviendo");
+  }
   console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
               JSON.stringify(await pg.locator("#pSub").textContent()),
               JSON.stringify(await pg.locator("#pExp").textContent()));
-  /* al volver, la pantalla tiene que quedar EXACTAMENTE como estaba: es lo que
-     dice, mirándolo, que la jugada probada no ensució nada */
+  /* al volver a la partida, la pantalla tiene que quedar EXACTAMENTE como
+     estaba: es lo que dice, mirándolo, que la variante no ensució nada */
   await pg.click("#btnProbar");
   await foto("prueba-4-vuelta");
+
+  /* PUERTA 2, tocar una pieza sin abrir nada: arranca de la posición de DESPUÉS
+     de la jugada, o sea la del rival. */
+  const posDespues = new Chess(fens[mejor + 1]);
+  const delRival = posDespues.moves({ verbose: true })[0];
+  if (delRival) {
+    await pg.click(`#tablero [data-sq="${delRival.from}"]`);
+    await foto("prueba-7-tocando-sin-boton");
+  }
+  await pg.click("#btnProbar");
 }
 
-/* hasta la ÚLTIMA jugada: en la partida que termina en mate es la que importa,
-   y en la larga avanzar() frena solo cuando el botón se deshabilita */
-/* en las partidas cortas se va hasta la ÚLTIMA jugada, que es la que importa;
-   avanzar() frena solo cuando el botón se deshabilita */
-await avanzar(CUAL === "de-prueba" ? 20 : 99);
-/* las tres formas de marca, sobre la misma jugada: es lo único que cambia */
-/* eslint-disable-next-line no-unused-vars */
-for (const forma of ["punto", "puntoChico", "raya"]) {
-  await pg.selectOption("#marcasCurva", forma);
-  await pg.waitForTimeout(200);
-  await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "marcas-" + forma + ".png") });
-}
 /* el tablero, el veredicto y la curva en una sola pantalla: es la pregunta de
    si algo nuevo empuja la lista de jugadas fuera de la vista */
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));

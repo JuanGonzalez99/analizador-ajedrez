@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.65**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.66**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1570,85 +1570,106 @@ producen— casi no se disparan. La proporción de verdad hay que mirarla en el
 celu, con el motor real. Si resultara baja, lo que falta no es aflojar la regla
 de arriba: es medir más mecanismos.
 
-## 4sexdecies. Probar una jugada en el tablero (v0.65)
+## 4sexdecies. Probar jugadas: la variante (v0.65, rehecha en la v0.66)
 
-El "Reintentar" de chess.com: poner otra jugada en la misma posición y ver qué
-dice el motor. Es lo que destapó que `Nxe5` perdía 2 puntos en la jugada 5.
+El "Reintentar" de chess.com, pero navegable. En la v0.65 se probaba **una**
+jugada y ahí terminaba. El usuario pidió tres cosas que son la misma: encadenar,
+poder jugar también las del rival, e ir y volver por lo inventado. Y dio el
+criterio de fondo, que ordena todo lo de abajo: **la experiencia de uso primero**.
 
-Lo que faltaba **no era el motor ni las jugadas legales** —los dos ya estaban en
-la página— sino el camino: aceptar una jugada que no es la de la partida,
-evaluar esa posición sola y mostrarla sin ensuciar nada.
+### Las tres reglas de fondo, que no cambiaron
 
-### Las tres reglas, que son todo el diseño
-
-**1. No toca nada guardado.** No escribe en `R.filas` ni en la caché. La fila de
-la jugada probada se arma con `derivarFilas`, o sea **el mismo camino que las
-jugadas de la partida**, pasando una jugada suelta — el mismo llamado que ya
-hacía la segunda opinión del barrido. Por eso la jugada probada trae categoría,
-señales y explicación sin una línea de código paralela: el día que cambie cómo
-se juzga una jugada, cambia también acá. Una prueba se tira al salir.
+**1. No toca nada guardado.** No escribe en `R.filas` ni en la caché. Cada
+jugada inventada se juzga con `derivarFilas` —el mismo llamado de una jugada
+suelta que ya hacía la segunda opinión del barrido— así que trae categoría,
+señales y explicación **sin una línea de código paralela**: el día que cambie
+cómo se juzga una jugada, cambia también acá. La variante se tira al salir.
 
 **2. Se evalúa a `R.profBase`**, la profundidad de la partida. Números de
-distinta profundidad no se comparan (§5.3), y todo el sentido de esto es
-comparar contra lo que se jugó. `previa` va también: sin ella, una recaptura
-probada no se reconocería como recaptura.
+distinta profundidad no se comparan (§5.3).
 
-**3. El tablero cambia de posición al entrar.** Se prueba una alternativa a la
-jugada, así que hay que estar **antes** de ella; la revisión muestra siempre la
-de después. La flecha azul sigue siendo lo que se jugó de verdad y la violeta lo
-que se está probando: las dos salen de la misma posición, que es lo que hace que
-la comparación signifique algo.
+**3. Una evaluación por jugada, no dos.** La posición de la que sale cada jugada
+**ya está evaluada**: es la de arranque para la primera —que viene de la
+partida— y la que dejó la anterior para el resto. Encadenar diez jugadas cuesta
+diez llamadas al motor, no veinte, y eso es lo que hace que encadenar sea usable
+en un celular. Ir y volver por la variante no llama al motor ni una vez.
 
-### Lo que la v32 ya había anunciado
+### Dos puertas, porque son dos preguntas
 
-El comentario de las zonas de los galones decía: *"OJO: se comen los 10 px
-exteriores de las columnas a y h. Hoy no molesta porque tocar el tablero no hace
-nada; si alguna vez se puede tocar una casilla, hay que reducirlas."*
+| pregunta | puerta | arranca en |
+|---|---|---|
+| *"¿y si en vez de esto jugaba otra cosa?"* | el botón, que **nombra la jugada**: "Probar en vez de Re1" | la posición **antes** de la jugada |
+| *"¿y ahora qué?"* | **tocar una pieza**, sin abrir nada | la posición **después**, o sea la del rival |
 
-Llegó ese día. **No se reducen: mientras se prueba, no se dibujan**, ni ellas ni
-los galones ni el deslizamiento. Mientras se prueba una jugada el tablero es del
-dedo, y para pasar de jugada están los botones, que no se van a ningún lado.
+La segunda es también la que contesta "probar las del rival", que era el pedido:
+en la posición de después le toca a él. Y el botón **nombra la jugada que
+reemplaza** porque sin eso no se sabe desde qué posición arranca, y el tablero
+saltando una jugada atrás al tocarlo se lee como un error.
 
-Las 64 casillas que reciben el toque van **al final del SVG**, por encima de las
-piezas: un `<use>` se come el click y el `<rect>` del fondo no se entera.
+### Las zonas de toque de los galones se fueron
 
-### Cambiar de jugada corta la prueba
+El comentario de la v32 lo venía anunciando: *"se comen los 10 px exteriores de
+las columnas a y h… si alguna vez se puede tocar una casilla, hay que
+reducirlas"*. Llegó ese día y **no se redujeron: se sacaron**.
 
-Va en `irA`, que es por donde pasan **todos** los caminos —los botones, la tira,
-la curva, las flechas del teclado y el deslizamiento—, exactamente por el mismo
-motivo que ahí se apaga el vistazo a la mejor. Una prueba pertenece a UNA
-posición: arrastrarla a la siguiente mostraría una jugada evaluada contra una
-posición que no es la suya.
+El criterio, que es del usuario y sirve para más cosas que esta: **tocar una
+pieza gana sobre tocar para navegar, porque navegar tiene otros cuatro caminos
+—el deslizamiento, los botones, la tira de jugadas y la curva— y el toque sobre
+la pieza no tiene ninguno.**
 
-### No se puede probar mientras corre un análisis
+**El dibujo del galón se queda.** Es lo que avisa que el tablero se desliza, que
+es para lo que la v32 lo puso; lo que se fue es el rectángulo invisible que
+recibía el toque. Sacar también el dibujo dejaría el deslizamiento sin nada que
+lo anuncie, y eso es lo que la v32 ya había resuelto.
 
-Los dos usan el mismo grupo de motores, y `pool.asegurar` puede cambiarle el
-MultiPV o el Hash a motores que están trabajando: los números de la corrida
-dejarían de ser los que dice la configuración, que es justo lo que §4.2 midió.
-El botón se apaga desde `ocupado()`.
+### Anterior y siguiente recorren la variante
 
-### Las decisiones chicas
+Adentro de una variante, los botones y el deslizamiento se mueven **por la
+variante**. Es la misma promesa de siempre —la posición anterior y la
+siguiente— y no dos botones que significan una cosa u otra según dónde estés: lo
+que cambia es qué línea se está recorriendo. De la variante se sale por el
+botón, que es lo único que dice "volver".
 
-| decisión | por qué |
-|---|---|
-| la coronación va a **dama** y no pregunta | preguntar es una pantalla más para el caso más raro de todos; si alguna vez hace falta subascender, se agrega ahí |
-| tocar cualquier casilla sin salidas **desmarca** | no hay forma de quedarse trabado con una pieza elegida |
-| la tarjeta de la prueba va **arriba** de la del veredicto, no en su lugar | se están comparando dos jugadas desde la misma posición, así que las dos tienen que verse a la vez |
-| la tarjeta va **punteada** | dice "esto no pasó" sin gastar una palabra |
-| **una** jugada, no una línea | encadenar variantes es otra pantalla y otra tanda |
+La **tira de la variante** vive adentro de su tarjeta y lleva el símbolo y el
+color de cada categoría, igual que la tira de jugadas de la partida. Envuelve en
+vez de scrollear: un carrusel horizontal adentro de una tarjeta que ya vive
+adentro de una página que scrollea son tres scrolls encimados.
 
-### Lo que quedó abierto, y es de gusto
+Jugar estando parado en el medio de la variante **corta lo que venía después**,
+que es lo que hace cualquier tablero: la continuación que había ya no sale de
+esa posición.
 
-- **Después de probar, el tablero se queda en la posición de ANTES**, con la
-  flecha violeta encima. Es lo contrario de lo que hace el resto de la app, que
-  dibuja siempre la posición de después. Se eligió así porque deja probar una
-  jugada atrás de otra sin volver a entrar, y porque las dos flechas juntas son
-  la comparación. La alternativa —saltar a la posición resultante, como
-  chess.com— es igual de defendible y se decide mirando.
-- **El borde de la tarjeta se pinta del color de la categoría** cuando llega el
-  resultado, así que deja de ser violeta justo cuando la flecha del tablero
-  sigue siéndolo. La otra opción es dejar el violeta siempre y que el color de
-  la categoría viva solo en el símbolo.
+### Los colores no se mezclan
+
+**Azul es una jugada de la partida y violeta una inventada**, y nunca hay las
+dos a la vez: parado en el arranque de la variante hay azul —lo que se jugó de
+verdad desde ahí, que es contra lo que se compara— y no hay violeta; una jugada
+adentro, al revés, porque la partida ya no pasa por esa posición.
+
+Por el mismo motivo **la comparación contra la jugada real es solo para la
+primera** de la variante: de la segunda en adelante la posición ya no es la de
+la partida, así que no hay contra qué comparar.
+
+### Lo demás
+
+- No se puede probar mientras corre un análisis: los dos usan el mismo grupo de
+  motores y `pool.asegurar` puede cambiarle el MultiPV o el Hash a motores que
+  están trabajando, que es justo lo que §4.2 midió. El botón se apaga desde
+  `ocupado()`.
+- La coronación va a **dama** y no pregunta. Es el caso más raro de todos y
+  preguntar es una pantalla entera; si alguna vez hace falta subascender, se
+  agrega ahí.
+- Salir de la jugada por cualquiera de los caminos de la partida —la tira, la
+  curva— cierra la variante, y eso vive en `irA` porque ahí pasan todos.
+
+### Lo que quedó abierto
+
+- **El borde de la tarjeta** se pinta del color de la categoría cuando llega el
+  resultado, así que deja de ser violeta justo cuando la flecha sigue siéndolo.
+  La otra opción es violeta siempre y el color de la categoría solo en el
+  símbolo.
+- **La variante no se guarda.** Al salir se tira. Guardarla —para volver a una
+  línea que encontraste— es otra tanda y toca la caché.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
@@ -2532,14 +2553,13 @@ decidir si "Genial" tiene sentido cuando la partida ya está resuelta.
   para elegirlo mirando— y **cuánto habla de verdad**: con el motor falseado del
   arnés habla en 5 de 36 jugadas, y ese número no vale.
 
-- ~~**No se puede jugar una variante y verla evaluada.**~~ **HECHO en la
-  v0.65**, con las tres reglas y las trampas del tablero en §4sexdecies. La
-  jugada probada se juzga con `derivarFilas`, o sea el mismo camino que las de
-  la partida, y no toca ni `R.filas` ni la caché.
-  **Falta lo que se dejó afuera a propósito: encadenar.** Hoy se prueba UNA
-  jugada; seguir jugando la línea y verla evaluada jugada a jugada es otra
-  pantalla —hace falta decidir qué se muestra de una variante de seis jugadas—
-  y otra tanda. Y quedan dos decisiones de gusto, las dos en §4sexdecies.
+- ~~**No se puede jugar una variante y verla evaluada.**~~ **HECHO en la v0.65
+  y ampliado en la v0.66**: la variante se encadena, se juegan también las del
+  rival y se va y se vuelve por ella. Todo en §4sexdecies. La jugada probada se
+  juzga con `derivarFilas`, o sea el mismo camino que las de la partida, y no
+  toca ni `R.filas` ni la caché.
+  **Lo que falta es guardarla**: al salir se tira, así que una línea que
+  encontraste no se puede volver a mirar. Eso toca la caché y es otra tanda.
 
 - **La lista de cuentas de entrenador tiene un solo nombre.** Falta el resto.
   Tiene que ser coincidencia **exacta**, no por prefijo: los nombres de usuario
