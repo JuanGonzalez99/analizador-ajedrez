@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.76**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.77**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2153,6 +2153,96 @@ chanchos", "la clavada", "peón pasado"), y eso enseña; pero un texto que se
 pasa de coloquial deja de poder decir un número. Es la misma tensión que §5
 regla 1 resuelve para los datos, ahora sobre el tono.
 
+## 4novodecies. Catorce conceptos más, y el dial de cuánto habla (v0.77)
+
+La v0.75 dejó tres conceptos entrando por **una sola ranura**. La lluvia sumó
+catorce más, y con eso la pregunta dejó de ser cuáles se pueden medir y pasó a
+ser **cuáles caben**.
+
+### Los catorce, y con qué se contesta cada uno
+
+Ninguno necesita un dato nuevo ni una llamada más al motor: todos son barrer el
+tablero o leer el SAN y el FEN, y viven en `observarJugada`, o sea a la hora de
+pintar la tarjeta.
+
+| frase | cómo se contesta |
+|---|---|
+| `Acá se terminó la teoría.` | la fila anterior es "Libro" y esta no |
+| `Coronás: el peón vuelve como dama.` | el SAN trae `=` |
+| `Enrocás y el rey se pone a salvo.` | el SAN trae `O-O` |
+| `Pierde el enroque corto.` | el campo 3 del FEN, contra el de antes |
+| `El peón de d4 queda aislado.` | ningún peón propio en las columnas de al lado |
+| `Te quedan peones doblados en la c.` | dos propios en la columna adonde fue |
+| `El caballo de d5 se planta: ningún peón lo puede echar.` | ningún peón rival puede llegar a atacarla |
+| `La torre entra en la séptima.` | la fila de destino: 7 en blancas, 2 en negras |
+| `Se van las damas del tablero.` | había damas antes y ya no |
+| `Las torres quedan conectadas.` | se ven, sin nada en el medio |
+| `Toma la columna semiabierta d.` | sin peones míos, con peones del rival |
+| `Queda un peón pasado en contra en b5.` | `esPasado` mirando los del rival |
+| `Te quedás con la pareja de alfiles.` | dos míos y el rival ya sin los dos |
+| `Al rival le quedan 2 jugadas: ojo con el ahogado.` | jugadas legales del rival, sin jaque |
+
+Tres decisiones adentro de esa tabla, que no son obvias:
+
+- **`esAislado` mira las columnas ENTERAS y `esPasado` solo hacia adelante**, y
+  es a propósito: un peón propio que quedó atrás igual puede venir a defender,
+  pero un peón rival que ya te pasó no vuelve a frenarte.
+- **El puesto avanzado pide estar del medio para adelante** —fila 5 o más en
+  blancas—. Un caballo inechable en la propia fila 2 no es un puesto avanzado,
+  es un caballo en su casa.
+- **El aviso de ahogado solo sale si el que movió VA GANANDO.** Ahogar es un
+  accidente del que gana; al que pierde, el ahogado lo salva, y avisarle sería
+  avisarle de algo bueno.
+
+### Los dos pesos, y la prueba que los destapó
+
+El usuario los pidió: los conceptos que se agregaban "con un valor menor a la
+hora de decidir cuál entra". Quedó así: **fuertes** —clava, peón pasado, corona,
+aislado, doblados— y **menores**, que son los otros nueve.
+
+**Y el peso no es solo entre ellos: es en todo el orden de la tarjeta.** Puestos
+arriba, los menores ganaban lugares que no les tocaban, y eso lo agarró una
+prueba que ya existía: `Pierde el enroque corto.` le tapó a `había Bxd7, que
+ganaba 9 peones`. O sea que un concepto menor estaba tapando **una oportunidad
+perdida**, que es de lo más caro que la tarjeta tiene para decir. Los menores
+entran ahora **después de la alternativa**, y hay una prueba que lo fija.
+
+### El dial: corta, media y larga
+
+| posición | qué cambia |
+|---|---|
+| **corta** | una ranura: la posición y "cómo llegaste" compiten por el mismo lugar. Dos frases |
+| **media** *(por defecto)* | dos ranuras, una para cada familia. Dos frases |
+| **larga** | igual que media, y entra una tercera frase |
+
+"Cómo llegaste" es la otra familia: no habla de la posición sino de cómo se
+llegó a jugar eso. Hoy tiene **un solo miembro** —salir del libro— y en la v0.78
+suma "el rival acababa de errar".
+
+**Medido con el arnés sobre la partida de prueba entera (36 jugadas):**
+
+| | jugadas que hablan | frases | la más larga |
+|---|---|---|---|
+| corta | 34 | 64 | 82 caracteres |
+| media | 34 | 64 | 82 |
+| larga | 34 | 80 | 119 |
+
+**Corta y media dan IDÉNTICO, y el motivo importa:** la familia "cómo llegaste"
+tiene hoy una sola frase y esa frase dispara **una vez por partida**. Así que
+hasta la v0.78 el dial es en los hechos de dos posiciones, no de tres. Está
+anotado para que nadie mida esto de nuevo esperando otra cosa.
+
+### Lo que quedó afuera a propósito
+
+- **"Acá se terminó la teoría" no nombra la apertura.** El nombre está —el libro
+  trae 3810— pero viene con el código ECO y en inglés (`B01 Scandinavian
+  Defense`), y la cabecera ya lo muestra. Meterlo en la frase la alarga y mezcla
+  idiomas para repetir algo que está dos renglones más arriba.
+- **La séptima no dice "los chanchos"** cuando están las dos torres. Es una
+  línea, y no se hizo porque el tono es una tanda propia (la jerga, en
+  §4octodecies).
+- **Los doblados que le quedan AL RIVAL** no se dicen, solo los propios.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -2801,6 +2891,13 @@ no tener que leer la sección entera para saber qué hay.
 7. **Dónde van las jugadas probadas** (v0.76). La tarjeta punteada ya reemplaza
    a la real, que era el pedido; lo que falta es elegir entre las cuatro formas
    del dial. En §4sexdecies, con lo que ocupa cada una.
+8. **Cuánto habla la tarjeta** (v0.77): corta, media o larga, el otro dial. En
+   §4novodecies, con lo que mide cada una. Ojo que corta y media son iguales
+   hasta que la v0.78 sume la segunda frase de "cómo llegaste".
+9. **La tanda cara de los conceptos** (v0.78): pieza atrapada con su medición,
+   jaque descubierto, ataque a la descubierta, "el rival acababa de errar y así
+   se cobraba" y "la mejor era X, que hacía tal cosa". Las cinco están
+   acordadas con el usuario y ninguna está escrita.
 
 **Del resto, lo que sigue vivo:** comparar dos jugadores y las dos estadísticas
 de reloj que faltan (§7), el listado de partidas sin rediseñar y la pantalla de

@@ -2530,14 +2530,77 @@ test("la columna abierta no tiene peones de NADIE", () => {
   assert.equal(A.columnaAbierta(t, "c1"), true, "sin peones de nadie");
 });
 
-test("los tres conceptos entran por UN solo renglón, no por tres", () => {
-  /* Como mucho entran dos frases en la tarjeta: si cada uno tuviera su turno,
-     entre los tres taparían al mecanismo y a la alternativa, que importan más. */
-  const cuerpo = html.slice(html.indexOf("let posicional = null;"),
+test("los conceptos compiten por una ranura, no tienen una cada uno", () => {
+  /* Como mucho entran dos frases en la tarjeta: si cada concepto tuviera su
+     turno, entre todos taparían al mecanismo y a la alternativa, que importan
+     más. Desde la v0.77 son muchos más que tres y van en DOS pesos, pero la
+     regla de fondo no cambió: de la posición sale UNA sola frase. */
+  const cuerpo = html.slice(html.indexOf("const fuertes = [], menores = [];"),
                             html.indexOf("/* 6. EL RUMBO"));
-  assert.ok(cuerpo.includes("obs.clavadas") && cuerpo.includes("obs.pasado") &&
-            cuerpo.includes("obs.columna"));
-  assert.equal((cuerpo.match(/posicional = \{/g) || []).length, 3, "los tres, en un if/else");
-  assert.ok(html.includes("[merito, mecanismo, salvada, ataque, posicional, habia, rumbo,"),
-    "y ocupa un solo lugar en el orden");
+  assert.ok(cuerpo.includes("o.clavadas") && cuerpo.includes("o.pasado") &&
+            cuerpo.includes("o.columna"), "los tres de la v0.75 siguen ahí");
+  assert.equal((cuerpo.match(/const posicional = /g) || []).length, 1,
+    "una sola frase sale de la posición");
+  assert.equal((cuerpo.match(/const menor = /g) || []).length, 1,
+    "y una sola de las menores");
+});
+
+test("una frase menor no le puede ganar el lugar a una oportunidad perdida", () => {
+  /* Lo destapó una prueba de verdad: puesto arriba, "Pierde el enroque corto"
+     tapaba a "había Bxd7, que ganaba 9 peones". El peso menor no es solo entre
+     los conceptos: es en TODO el orden de la tarjeta. */
+  const orden = html.slice(html.indexOf("  return [merito, mecanismo, salvada, ataque, posicional,"),
+                           html.indexOf("].filter(Boolean).slice(0, ranuras >= 3 ? 3 : 2);"));
+  assert.ok(orden.indexOf("menor") > orden.indexOf("habia"), "después de la oportunidad");
+  assert.ok(orden.indexOf("menor") > orden.indexOf("alternativa"), "y de la alternativa");
+  assert.ok(orden.indexOf("posicional") < orden.indexOf("habia"),
+    "pero la fuerte sigue yendo antes");
+});
+
+/* --- los conceptos de la v0.77, uno por uno y con la posición verificada --- */
+
+const tabl = f => new Chess(f).board();
+
+test("aislado: ningún peón propio en las columnas de al lado", () => {
+  /* mira las dos columnas ENTERAS y no solo adelante, al revés que el pasado:
+     un peón de atrás también podría venir a defenderlo */
+  assert.equal(A.esAislado(tabl("4k3/8/8/8/3P4/8/8/4K3 w - - 0 1"), "d4", "w"), true);
+  assert.equal(A.esAislado(tabl("4k3/8/8/8/3P4/2P5/8/4K3 w - - 0 1"), "d4", "w"), false);
+});
+
+test("semiabierta y abierta no se pisan", () => {
+  /* la d tiene un peón NEGRO: para las blancas es semiabierta, para las negras
+     no es ninguna de las dos, y abierta no es para nadie */
+  const t = tabl("3rk3/3p4/8/8/8/8/8/3RK3 w - - 0 1");
+  assert.equal(A.columnaSemiabierta(t, "d1", "w"), true);
+  assert.equal(A.columnaSemiabierta(t, "d8", "b"), false);
+  assert.equal(A.columnaAbierta(t, "d1"), false);
+});
+
+test("plantado: ningún peón rival puede llegar a echarlo", () => {
+  /* el peón negro de c4 ya pasó al caballo de d5 y no vuelve; el de c7 sí puede
+     bajar a c6 y echarlo */
+  assert.equal(A.estaPlantado(tabl("4k3/8/8/3N4/2p5/8/8/4K3 w - - 0 1"), "d5", "w"), true);
+  assert.equal(A.estaPlantado(tabl("4k3/2p5/8/3N4/8/8/8/4K3 w - - 0 1"), "d5", "w"), false);
+  /* y en la propia fila 3 no es un puesto avanzado, es un caballo en su casa */
+  assert.equal(A.estaPlantado(tabl("4k3/8/8/8/8/3N4/8/4K3 w - - 0 1"), "d3", "w"), false);
+});
+
+test("la pareja de alfiles es tener dos cuando el rival ya no", () => {
+  assert.equal(A.hayPareja(tabl("4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1"), "w"), true);
+  assert.equal(A.hayPareja(tabl("2b1kb2/8/8/8/8/8/8/2B1KB2 w - - 0 1"), "w"), false);
+});
+
+test("torres conectadas: devuelve las casillas, y nada en el medio", () => {
+  /* devuelve las dos casillas y no un sí, porque la frase las señala */
+  assert.deepEqual(A.torresConectadas(tabl("4k3/8/8/8/8/8/8/K2R3R w - - 0 1"), "w"),
+                   ["d1", "h1"]);
+  assert.equal(A.torresConectadas(tabl("4k3/8/8/8/8/8/8/K2R1N1R w - - 0 1"), "w"), null);
+});
+
+test("los enroques se leen del propio FEN", () => {
+  assert.deepEqual(A.enroquesDe("4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1", "w"),
+                   { corto: true, largo: true });
+  assert.deepEqual(A.enroquesDe("4k3/8/8/8/8/8/8/4K3 w Kq - 0 1", "w"),
+                   { corto: true, largo: false });
 });

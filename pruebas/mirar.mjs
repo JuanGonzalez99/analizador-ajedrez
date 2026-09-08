@@ -273,6 +273,25 @@ if (await senala.count()) {
   await senala.click();
 } else console.log("señala:  (esta jugada no señala nada)");
 
+/* LAS TRES POSICIONES DEL DIAL DE LA v0.77, sobre la misma jugada: cuánto habla
+   la tarjeta. Se va con el dial, cuando el usuario elija. Además se recorre la
+   partida entera en cada una y se cuenta cuántas jugadas hablan y cuántas
+   frases salen, que es el número que decide. */
+for (const largo of ["corta", "media", "larga"]) {
+  await pg.selectOption("#largoExp", largo);
+  await pg.waitForTimeout(150);
+  await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -190));
+  await foto("largo-" + largo);
+  await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + largo + SUFIJO + ".png") });
+  console.log("largo " + largo.padEnd(6), JSON.stringify(await pg.evaluate(() => {
+    const t = document.getElementById("vExp");
+    return { frases: t.querySelectorAll("span.fr").length,
+             texto: (t.textContent || "").trim() };
+  })));
+}
+await pg.selectOption("#largoExp", "media");
+
 /* La tarjeta como quedó: el título y UN renglón, que es la explicación o la
    frase fija de la categoría. Las tres ubicaciones que se comparaban acá se
    fueron con el interruptor en la v0.72. */
@@ -428,6 +447,29 @@ console.log("tira:     ", await pg.evaluate(() => {
     recuadroArriba: +((base - cap) - sel.top).toFixed(1),
     recuadroAbajo: +(sel.bottom - base).toFixed(1) });
 }));
+
+/* CUÁNTO HABLA LA TARJETA, recorriendo la partida entera en cada posición del
+   dial: es el número que decide cuál queda. Las evaluaciones son inventadas
+   (motor falseado), pero cuántas jugadas tienen algo que decir no depende de
+   eso sino de la posición, que es de verdad. */
+for (const largo of ["corta", "media", "larga"]) {
+  await pg.selectOption("#largoExp", largo);
+  while (!(await pg.locator("#ant").isDisabled())) await pg.click("#ant");
+  let hablan = 0, frases = 0, largos = 0;
+  for (let i = 0; ; i++) {
+    const d = await pg.evaluate(() => {
+      const t = document.getElementById("vExp");
+      return { n: t.classList.contains("oculto") ? 0 : t.querySelectorAll("span.fr").length,
+               c: (t.textContent || "").trim().length };
+    });
+    if (d.n) { hablan++; frases += d.n; largos = Math.max(largos, d.c); }
+    if (await pg.locator("#sig").isDisabled()) break;
+    await pg.click("#sig");
+  }
+  console.log(`habla ${largo.padEnd(6)}`, JSON.stringify(
+    { jugadasQueHablan: hablan, frases, masLarga: largos }));
+}
+await pg.selectOption("#largoExp", "media");
 
 console.log("cabecera:", JSON.stringify(await pg.locator("#revRival").textContent()),
             JSON.stringify(await pg.locator("#revFin").textContent()));

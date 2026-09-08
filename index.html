@@ -393,7 +393,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.76 · 08-09";
+  window.VERSION = "v0.77 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -762,6 +762,11 @@
          app, como el interruptor de margen contra gris de la v0.48. SE VA
          cuando esté elegida: ver §4sexdecies. -->
     <select id="formaPrueba" class="chico" aria-label="Cómo se ve la pantalla mientras se prueba una jugada"></select>
+    <!-- DIAL TEMPORAL (v0.77): cuánto habla la tarjeta. Con quince conceptos
+         compitiendo por una sola ranura, los de abajo del orden no salían
+         nunca; las tres posiciones son las tres salidas que se dibujaron, y el
+         usuario elige usando la app. SE VA cuando esté elegida: §4novodecies. -->
+    <select id="largoExp" class="chico" aria-label="Cuánto habla la tarjeta"></select>
   </div>
 </div>
 
@@ -1607,7 +1612,8 @@ const mayus = s => s.charAt(0).toUpperCase() + s.slice(1);
 
    El resto de las reglas no cambió: como mucho dos frases, nada que no esté
    medido, y "" cuando no hay nada honesto que decir. */
-function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, obs = null) {
+function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
+                               obs = null, ctx = null) {
   /* En una forzada no hubo decisión y la tarjeta ya lo dice entera: cualquier
      cosa que agreguemos acá juzga algo que no se eligió. */
   if (!f || f.forzada) return [];
@@ -1717,17 +1723,98 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
      tres taparían al mecanismo y a la alternativa, que importan más.
      El orden es el de cuánto cambia la partida: una clavada obliga al rival, un
      peón pasado decide finales, una columna abierta es una mejora. */
-  let posicional = null;
-  if (obs && obs.clavadas && obs.clavadas.length) {
-    const c = obs.clavadas[0];
-    posicional = { txt: `Clava ${piezaEn(c.pieza, c.sq)}.`, marca: "Clava", sq: c.sq };
-  } else if (obs && obs.pasado) {
-    posicional = { txt: `${mayus(pieza)} de ${donde} queda pasado.`,
-                   marca: "pasado", sq: donde };
-  } else if (obs && obs.columna) {
-    posicional = { txt: `Toma la columna abierta ${obs.columna}.`,
-                   marca: "columna abierta", sq: donde };
+  /* LOS CANDIDATOS VAN EN DOS PESOS (v0.77), y el peso lo puso el usuario: los
+     FUERTES son los que cambian la partida —una clavada obliga al rival ya
+     mismo, un peón pasado decide el final— y los MENORES solo salen cuando
+     arriba no hubo nada. Sin los dos pesos, "las torres quedan conectadas"
+     taparía a "clava el caballo" el día que las dos pasen juntas.
+
+     Cada frase lleva su `marca`, que es el nombre del concepto y tiene que
+     aparecer TAL CUAL adentro del texto: es lo que se toca para encenderlo en
+     el tablero (v0.70). Hay una prueba que las mantiene alineadas. */
+  const o = obs || {};
+  const fuertes = [], menores = [];
+  if (o.clavadas && o.clavadas.length) {
+    const c = o.clavadas[0];
+    fuertes.push({ txt: `Clava ${piezaEn(c.pieza, c.sq)}.`, marca: "Clava", sq: c.sq });
   }
+  if (o.pasado)
+    fuertes.push({ txt: `${mayus(pieza)} de ${donde} queda pasado.`,
+                   marca: "pasado", sq: donde });
+  /* "Coronás." a secas es demasiado seco —criterio del usuario—, así que la
+     frase dice además qué pasa: el peón vuelve, y vuelve dama. */
+  if (o.corona)
+    fuertes.push({ txt: `${mio ? "Coronás" : "Corona"}: el peón vuelve como dama.`,
+                   marca: mio ? "Coronás" : "Corona", sq: donde });
+  if (o.aislado)
+    fuertes.push({ txt: `El peón de ${o.aislado} queda aislado.`,
+                   marca: "aislado", sq: o.aislado });
+  if (o.doblados)
+    fuertes.push({ txt: `${mio ? "Te" : "Le"} quedan peones doblados en la ${o.doblados}.`,
+                   marca: "doblados", sq: donde });
+
+  if (o.plantado)
+    menores.push({ txt: `El caballo de ${o.plantado} se planta: ningún peón lo puede echar.`,
+                   marca: "se planta", sq: o.plantado });
+  if (o.septima)
+    menores.push({ txt: `La torre entra en la séptima.`,
+                   marca: "la séptima", sq: o.septima });
+  if (o.sinDamas)
+    menores.push({ txt: `Se van las damas del tablero.`, marca: "las damas" });
+  if (o.conectadas)
+    menores.push({ txt: `Las torres quedan conectadas.`,
+                   marca: "conectadas", sq: o.conectadas });
+  if (o.columna)
+    menores.push({ txt: `Toma la columna abierta ${o.columna}.`,
+                   marca: "columna abierta", sq: donde });
+  if (o.semiabierta)
+    menores.push({ txt: `Toma la columna semiabierta ${o.semiabierta}.`,
+                   marca: "columna semiabierta", sq: donde });
+  if (o.pasadoContra)
+    menores.push({ txt: `Queda un peón pasado en contra en ${o.pasadoContra}.`,
+                   marca: "pasado en contra", sq: o.pasadoContra });
+  if (o.pareja)
+    menores.push({ txt: `${mio ? "Te quedás" : "Se queda"} con la pareja de alfiles.`,
+                   marca: "pareja de alfiles" });
+  if (o.enroque)
+    menores.push({ txt: `${mio ? "Enrocás" : "Enroca"} y el rey se pone a salvo.`,
+                   marca: mio ? "Enrocás" : "Enroca", sq: donde });
+  if (o.pierdeEnroque)
+    menores.push({ txt: o.pierdeEnroque === "los dos"
+                     ? `Pierde el enroque de los dos lados.`
+                     : `Pierde el enroque ${o.pierdeEnroque}.`,
+                   marca: "el enroque" });
+  /* EL AVISO DE AHOGADO solo cuando el que movió VA GANANDO: ahogar es un
+     accidente del que gana, y al que pierde el ahogado lo salva. Decirle
+     "cuidado" al que va perdiendo sería avisarle de algo bueno. */
+  const voyGanando = typeof f.evalBlancas === "number" &&
+    (f.turno === "w" ? f.evalBlancas : -f.evalBlancas) / 100 >= 2;
+  if (o.legalesRival !== null && o.legalesRival !== undefined &&
+      o.legalesRival <= 2 && voyGanando)
+    menores.push({ txt: `Al rival le quedan ${o.legalesRival} jugadas: ojo con el ahogado.`,
+                   marca: "el ahogado" });
+
+  /* CÓMO LLEGASTE A LA JUGADA es otra familia y no habla de la posición: por
+     eso puede tener ranura propia (el dial de abajo). Hoy tiene un solo
+     miembro; la v0.78 le suma "el rival acababa de errar". */
+  const llegada = (ctx && ctx.salioDelLibro)
+    ? { txt: `Acá se terminó la teoría.`, marca: "la teoría" } : null;
+
+  /* CUÁNTAS RANURAS — dial temporal de la v0.77. Con una, todo compite por el
+     mismo lugar y "cómo llegaste" entra a la misma cola. Con dos, la posición y
+     la llegada tienen cada una la suya. Con tres, además entra una frase más
+     en la tarjeta. */
+  const ranuras = (ctx && ctx.ranuras) || 1;
+  /* CON UNA SOLA RANURA, "cómo llegaste" entra a la misma cola que la posición;
+     con dos, tiene la suya. Los MENORES nunca entran acá: van al final del
+     orden, abajo. */
+  const posicional = (ranuras >= 2 ? fuertes
+                                   : [llegada, ...fuertes].filter(Boolean))[0] || null;
+  /* EL MENOR VA TARDE EN EL ORDEN, y esto lo destapó una prueba: puesto arriba,
+     "Pierde el enroque corto" le ganaba el lugar a "había Bxd7, que ganaba 9
+     peones". Un concepto menor no puede tapar una oportunidad perdida, así que
+     entra recién después de la alternativa y solo si sobró lugar. */
+  const menor = menores[0] || null;
 
   /* 6. EL RUMBO, y usa las MISMAS bandas que decide "Genial" por cruce
      (`banda`, arriba). Inventar acá una segunda escala de "cómo va la partida"
@@ -1767,8 +1854,10 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null, 
 
   /* Como mucho DOS. Es una tarjeta de celular y compite con el tablero por la
      pantalla; este orden es el que decide cuáles dos sobreviven. */
-  return [merito, mecanismo, salvada, ataque, posicional, habia, rumbo,
-          alternativa, respuesta].filter(Boolean).slice(0, 2);
+  return [merito, mecanismo, salvada, ataque, posicional,
+          ranuras >= 2 ? llegada : null,
+          habia, rumbo, alternativa, menor, respuesta]
+    .filter(Boolean).slice(0, ranuras >= 3 ? 3 : 2);
 }
 
 /* La misma explicación, en una sola cadena. Es lo que usa todo lo que no
@@ -1865,6 +1954,109 @@ const columnaAbierta = (tablero, sq) => {
   return !tablero.some(fila => fila[col] && fila[col].type === "p");
 };
 
+/* Cuántos peones de un color hay en una columna. Lo usan las tres frases de
+   estructura —aislado, doblados y semiabierta—, que preguntan lo mismo con
+   distintos argumentos. */
+function peonesEnColumna(tablero, col, color) {
+  let n = 0;
+  for (let r = 0; r < 8; r++) {
+    const q = tablero[r][col];
+    if (q && q.type === "p" && q.color === color) n++;
+  }
+  return n;
+}
+
+/* ¿Peón sin ningún peón PROPIO en las columnas de al lado? Aislado quiere decir
+   que ninguno lo puede defender nunca, y por eso mira las dos columnas
+   ENTERAS y no solo hacia adelante: un peón de atrás también podría venir a
+   defenderlo. Es justo al revés que `esPasado`, que solo mira adelante porque
+   un peón rival que quedó atrás ya no lo puede frenar. */
+function esAislado(tablero, sq, color) {
+  const col = "abcdefgh".indexOf(sq[0]);
+  for (const c of [col - 1, col + 1]) {
+    if (c < 0 || c > 7) continue;
+    if (peonesEnColumna(tablero, c, color)) return false;
+  }
+  return true;
+}
+
+/* Semiabierta: sin peones MÍOS y con al menos uno del rival. Si no hay de nadie
+   está abierta, que es otra cosa y la contesta `columnaAbierta`: las dos
+   frases no se pueden pisar. */
+function columnaSemiabierta(tablero, sq, color) {
+  const col = "abcdefgh".indexOf(sq[0]);
+  return peonesEnColumna(tablero, col, color) === 0 &&
+         peonesEnColumna(tablero, col, color === "w" ? "b" : "w") > 0;
+}
+
+/* ¿Casilla que NINGÚN peón rival puede atacar nunca? Es el puesto avanzado, y
+   se contesta con la misma barrida que `esPasado` pero en las dos columnas de
+   al lado y nada más: para atacarla, un peón rival tiene que estar por delante
+   de ella —del lado del que avanza hacia mí—; uno que ya la pasó no vuelve.
+
+   Se pide además que esté del medio para adelante (fila 5 o más para las
+   blancas). Un caballo inechable en la propia fila 2 no es un puesto avanzado,
+   es un caballo en su casa. */
+function estaPlantado(tablero, sq, color) {
+  const fila = +sq[1];
+  if (color === "w" ? fila < 5 : fila > 4) return false;
+  const col = "abcdefgh".indexOf(sq[0]), r0 = 8 - fila;
+  const paso = color === "w" ? -1 : 1;
+  const rival = color === "w" ? "b" : "w";
+  for (const c of [col - 1, col + 1]) {
+    if (c < 0 || c > 7) continue;
+    for (let r = r0 + paso; r >= 0 && r <= 7; r += paso) {
+      const q = tablero[r][c];
+      if (q && q.type === "p" && q.color === rival) return false;
+    }
+  }
+  return true;
+}
+
+/* La pareja de alfiles: dos míos y el rival ya sin los dos. Tener dos alfiles
+   cuando el rival también los tiene no es la pareja, es el reparto de siempre. */
+function hayPareja(tablero, color) {
+  let mios = 0, suyos = 0;
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const q = tablero[r][c];
+    if (q && q.type === "b") (q.color === color ? mios++ : suyos++);
+  }
+  return mios >= 2 && suyos < 2;
+}
+
+/* Torres conectadas: las dos se ven, sin nada en el medio. Se contesta
+   caminando la fila o la columna que comparten. */
+function torresConectadas(tablero, color) {
+  const t = [];
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const q = tablero[r][c];
+    if (q && q.type === "r" && q.color === color) t.push([r, c]);
+  }
+  if (t.length !== 2) return null;
+  const [[r1, c1], [r2, c2]] = t;
+  if (r1 !== r2 && c1 !== c2) return null;
+  const dr = Math.sign(r2 - r1), dc = Math.sign(c2 - c1);
+  for (let r = r1 + dr, c = c1 + dc; r !== r2 || c !== c2; r += dr, c += dc)
+    if (tablero[r][c]) return null;
+  /* devuelve LAS DOS CASILLAS y no un sí: la frase las señala en el tablero, y
+     un booleano obligaría a volver a buscarlas afuera */
+  return [`${"abcdefgh"[c1]}${8 - r1}`, `${"abcdefgh"[c2]}${8 - r2}`];
+}
+
+const hayDamas = tablero => tablero.some(f => f.some(q => q && q.type === "q"));
+
+/* La séptima es la fila donde el rival ARRANCA con los peones: la 7 para las
+   blancas y la 2 para las negras. */
+const esLaSeptima = (sq, color) => +sq[1] === (color === "w" ? 7 : 2);
+
+/* Los enroques que le quedan a un color, leídos del propio FEN. Es exacto y no
+   cuesta nada: el campo 3 del FEN es justamente eso. */
+function enroquesDe(fen, color) {
+  const campo = (fen.split(" ")[2] || "");
+  const k = color === "w" ? "K" : "k", q = color === "w" ? "Q" : "q";
+  return { corto: campo.includes(k), largo: campo.includes(q) };
+}
+
 const casillaDelRey = (tablero, color) => {
   for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
     const p = tablero[r][c];
@@ -1875,7 +2067,15 @@ const casillaDelRey = (tablero, color) => {
 
 function observarJugada(f, fenAntes = null) {
   const vacio = { amenazadas: [], colgadas: [], nuevas: [], salvadas: [],
-                  clavadas: [], pasado: false, columna: null };
+                  clavadas: [], pasado: false, columna: null,
+                  /* los de la v0.77: todos se comparan contra ANTES, así que
+                     sin `fenAntes` la mayoría se queda en falso en vez de
+                     atribuirle a esta jugada algo que ya estaba */
+                  semiabierta: null, aislado: null, doblados: null,
+                  pasadoContra: null, pareja: false, septima: null,
+                  sinDamas: false, conectadas: null, plantado: null,
+                  corona: false, enroque: null, pierdeEnroque: null,
+                  legalesRival: null };
   if (!f || !f.fen || !f.uci) return vacio;
   const donde = f.uci.slice(2, 4), deDonde = f.uci.slice(0, 2);
   try {
@@ -1934,7 +2134,73 @@ function observarJugada(f, fenAntes = null) {
        sin peones no significa nada */
     const columna = (f.pieza === "r" || f.pieza === "q") &&
                     columnaAbierta(tablero, donde) ? donde[0] : null;
-    return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna };
+
+    /* 4. LO DE LA v0.77. Todo lo de acá es barrer el tablero: ni un FEN cargado
+       ni una llamada al motor, así que se paga sin pensarlo. Y TODO se compara
+       contra ANTES por el mismo motivo de siempre: lo que ya estaba no lo causó
+       esta jugada. */
+    const tAntes = fenAntes ? new Chess(fenAntes).board() : null;
+    const torreODama = f.pieza === "r" || f.pieza === "q";
+
+    /* la semiabierta la toman la torre y la dama, igual que la abierta */
+    const semiabierta = torreODama && columnaSemiabierta(tablero, donde, mio)
+                        ? donde[0] : null;
+
+    /* el peón que ACABA de quedar aislado es el que se movió: los demás ya lo
+       estaban o no, y esta jugada no los tocó */
+    const aislado = f.pieza === "p" && esAislado(tablero, donde, mio) &&
+      !(tAntes && esAislado(tAntes, deDonde, mio)) ? donde : null;
+
+    /* doblados en la columna adonde fue la jugada, y solo si ANTES no lo
+       estaban: es la marca de haber comido con un peón hacia el costado */
+    const col = "abcdefgh".indexOf(donde[0]);
+    const doblados = peonesEnColumna(tablero, col, mio) >= 2 &&
+      !(tAntes && peonesEnColumna(tAntes, col, mio) >= 2) ? donde[0] : null;
+
+    /* un peón DEL RIVAL que quedó pasado por esta jugada. Es la otra cara de
+       `pasado`, y la que más suele doler: se paga en el final. */
+    let pasadoContra = null;
+    for (let r = 0; r < 8 && !pasadoContra; r++) for (let c = 0; c < 8; c++) {
+      const q = tablero[r][c];
+      if (!q || q.type !== "p" || q.color !== rival) continue;
+      const sq = "abcdefgh"[c] + (8 - r);
+      if (!esPasado(tablero, sq, rival)) continue;
+      if (tAntes && esPasado(tAntes, sq, rival)) continue;
+      pasadoContra = sq; break;
+    }
+
+    const pareja = hayPareja(tablero, mio) && !(tAntes && hayPareja(tAntes, mio));
+    const septima = f.pieza === "r" && esLaSeptima(donde, mio) ? donde : null;
+    const sinDamas = !hayDamas(tablero) && !!(tAntes && hayDamas(tAntes));
+    const conectadas = tAntes && torresConectadas(tAntes, mio)
+                     ? null : torresConectadas(tablero, mio);
+    const plantado = f.pieza === "n" && estaPlantado(tablero, donde, mio) &&
+      !(tAntes && estaPlantado(tAntes, deDonde, mio)) ? donde : null;
+
+    /* estas tres las contesta el SAN y el propio FEN, sin mirar el tablero */
+    const corona = /=/.test(f.san || "");
+    const enroque = /^O-O-O/.test(f.san || "") ? "largo"
+                  : /^O-O/.test(f.san || "") ? "corto" : null;
+    let pierdeEnroque = null;
+    if (fenAntes && !enroque) {
+      const a = enroquesDe(fenAntes, mio), b = enroquesDe(f.fen, mio);
+      const perdidos = [a.corto && !b.corto ? "corto" : null,
+                        a.largo && !b.largo ? "largo" : null].filter(Boolean);
+      if (perdidos.length === 2) pierdeEnroque = "los dos";
+      else if (perdidos.length === 1) pierdeEnroque = perdidos[0];
+    }
+
+    /* cuántas jugadas legales le quedan al rival: es el aviso de ahogado, y
+       solo significa algo si NO está en jaque —en jaque, pocas jugadas es mate
+       a la vista, que es otra cosa y ya la dice la barra—. */
+    const jr = new Chess(f.fen);
+    const legalesRival = jr.turn() === rival && !jr.in_check()
+                       ? jr.moves().length : null;
+
+    return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
+             semiabierta, aislado, doblados, pasadoContra, pareja, septima,
+             sinDamas, conectadas, plantado, corona, enroque, pierdeEnroque,
+             legalesRival };
   } catch (e) { return vacio; }
 }
 
@@ -2571,6 +2837,48 @@ function aplicarModoEval(id) {
   });
 })();
 
+/* CUÁNTO HABLA LA TARJETA — DIAL TEMPORAL (v0.77).
+
+   La v0.77 sumó catorce conceptos nuevos a una explicación que tenía UNA sola
+   ranura para todos, así que la pregunta dejó de ser cuáles medimos y pasó a
+   ser cuáles CABEN. Las tres salidas:
+
+   | posición | qué cambia |
+   |---|---|
+   | **corta** | una ranura: la posición y "cómo llegaste" compiten por el mismo lugar. Dos frases |
+   | **media** | dos ranuras: una para lo que se ve en la posición y otra para cómo llegaste. Dos frases |
+   | **larga** | lo mismo que media, y entra una frase más: tres |
+
+   "Cómo llegaste" es otra familia —salir del libro hoy, y el rival acababa de
+   errar en la v0.78—: no habla de la posición sino de cómo se llegó a jugar
+   eso, y por eso puede tener ranura propia sin repetir nada.
+
+   POR DEFECTO VA "media". Se elige usando la app y después se queda una. */
+const LARGOS_EXP = {
+  corta: { nombre: "Explicación: corta", ranuras: 1 },
+  media: { nombre: "Explicación: media", ranuras: 2 },
+  larga: { nombre: "Explicación: larga", ranuras: 3 }
+};
+let LARGO_EXP = "media";
+const ranurasDeLaExplicacion = () =>
+  (LARGOS_EXP[LARGO_EXP] || LARGOS_EXP.media).ranuras;
+function aplicarLargoExp(id) {
+  LARGO_EXP = LARGOS_EXP[id] ? id : "media";
+  try { localStorage.setItem("largoExp", LARGO_EXP); } catch (e) { /* incógnito */ }
+}
+(function iniciarLargoExp() {
+  let guardado = "media";
+  try { guardado = localStorage.getItem("largoExp") || "media"; } catch (e) { /* incógnito */ }
+  $("largoExp").innerHTML = Object.entries(LARGOS_EXP)
+    .map(([k, l]) => `<option value="${k}">${l.nombre}</option>`).join("");
+  aplicarLargoExp(guardado);
+  $("largoExp").value = LARGO_EXP;
+  $("largoExp").onchange = seguro("largo de la explicación", () => {
+    aplicarLargoExp($("largoExp").value);
+    if (R) pintarRevision();
+  });
+})();
+
 /* CÓMO SE VE LA PANTALLA MIENTRAS SE PRUEBA UNA JUGADA — DIAL TEMPORAL (v0.76).
 
    El pedido que lo abrió es del usuario y es una sola cosa: CON UNA PRUEBA
@@ -3055,10 +3363,13 @@ function textoPrueba(prof) {
       ico: c.icono,
       tit: `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} — ${c.nombre}`,
       sub: `pierde ${f.perdida.toFixed(2)}` + (p.ver === 1 ? contra : ""),
+      /* SIN "salió del libro" en la variante, y es correcto: una jugada
+         inventada no está en ningún libro, así que la pregunta no aplica. */
       exp: explicarJugada(f, null, lado ? f.turno === lado : null,
                           sanDeUci(f.fen, f.mejorRival),
                           observarJugada(f, p.ver > 1 ? p.linea[p.ver - 2].fen
-                                                      : fenDeLaJugada(p.desde0))),
+                                                      : fenDeLaJugada(p.desde0)),
+                          { ranuras: ranurasDeLaExplicacion() }),
       color: `var(--c-${c.clave})`
     };
   }
@@ -4635,10 +4946,17 @@ function pintarRevision() {
      El SAN de la mejor va en null cuando la jugada ya era la mejor, porque ahí
      no hay alternativa que ofrecer. */
   const ladoUsr = ladoDelUsuario(R);
+  /* SALIR DEL LIBRO se sabe mirando la fila ANTERIOR: la teoría se terminó en
+     la primera jugada que ya no está en el libro, viniendo de una que sí. La
+     categoría alcanza para preguntarlo —`categorizar` devuelve "libro" antes
+     que ninguna otra cosa, así que vale en los dos modos— y así el dato no
+     necesita un campo nuevo en la fila. */
+  const salioDelLibro = IDX > 0 && R.filas[IDX - 1].cat === "libro" && f.cat !== "libro";
   const partes = partesDeLaExplicacion(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
                                        ladoUsr ? f.turno === ladoUsr : null,
                                        sanDeUci(f.fen, f.mejorRival),
-                                       observarJugada(f, fenDeLaJugada(IDX)));
+                                       observarJugada(f, fenDeLaJugada(IDX)),
+                                       { ranuras: ranurasDeLaExplicacion(), salioDelLibro });
   const explicado = partes.map(p => p.txt).join(" ");
   const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
