@@ -233,7 +233,6 @@ await foto("revision-1");
    avanza hasta la primera que tenga algo que explicar, leyendo la pantalla— y
    por eso sirve igual en cualquiera de las partidas de prueba.
    Esto se va junto con el interruptor, cuando el usuario elija una. */
-await pg.selectOption("#dondeExp", "tarjeta");
 /* La jugada NO se elige a ojo: se recorre la partida leyendo la pantalla y se
    vuelve a la que MÁS tiene para explicar. Una que solo dice el rumbo no sirve
    para juzgar la disposición, porque es la frase más corta de todas. */
@@ -254,8 +253,6 @@ for (let i = textos.length - 1; i > mejor; i--) await pg.click("#ant");
 console.log("explicación:", JSON.stringify(textos[mejor]),
             `(jugada ${mejor + 1} de ${textos.length}; ` +
             `${textos.filter(Boolean).length} tienen algo que decir)`);
-/* la vista arranca en el tablero, que es como se mira la jugada: la pregunta de
-   las tres es si el renglón nuevo empuja algo fuera de la pantalla */
 /* TOCAR LA FRASE ENCIENDE EL TABLERO (v0.69): no te lo explica, te lo muestra.
    La frase que señala algo lleva la clase `senala`; si no hay ninguna en esta
    jugada, se dice y no se saca la foto, en vez de sacar una foto vacía. */
@@ -269,15 +266,13 @@ if (await senala.count()) {
   await senala.click();
 } else console.log("señala:  (esta jugada no señala nada)");
 
-for (const donde of ["tarjeta", "reemplaza", "senales"]) {
-  await pg.selectOption("#dondeExp", donde);
-  await pg.waitForTimeout(200);
-  await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
-  await pg.evaluate(() => window.scrollBy(0, -60));
-  await foto("explicacion-" + donde);
-  await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + donde + SUFIJO + ".png") });
-}
-await pg.selectOption("#dondeExp", "tarjeta");
+/* La tarjeta como quedó: el título y UN renglón, que es la explicación o la
+   frase fija de la categoría. Las tres ubicaciones que se comparaban acá se
+   fueron con el interruptor en la v0.72. */
+await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
+await pg.evaluate(() => window.scrollBy(0, -60));
+await foto("revision-tarjeta");
+await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta" + SUFIJO + ".png") });
 
 /* LOS TRES BOTONES GRANDES (v0.68). Cuál es el grande lo decide el veredicto,
    así que hacen falta las dos fotos: una jugada buena y una mala. La mala NO se

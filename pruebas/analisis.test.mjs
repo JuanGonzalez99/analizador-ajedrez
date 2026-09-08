@@ -1094,9 +1094,12 @@ test("los dos lugares que pintan una jugada usan el mismo presentador", () => {
   assert.ok(!html.includes("CATEGORIAS[x.cat].icono"), "quedó el camino viejo en la tira");
   assert.ok(!html.includes("const c = CATEGORIAS[f.cat];"), "quedó el camino viejo en la tarjeta");
   /* y en una forzada no se muestran los números: no hubo elección que juzgar */
-  assert.ok(html.includes('$("vSub").textContent = f.forzada ? cabeza'));
-  assert.ok(html.includes('const cabeza = (DONDE_EXP === "reemplaza" && explicado) ? explicado : c.desc;'),
-    "la explicación puede ocupar el lugar de la frase fija, pero no el de los números");
+  /* Los números se fueron de la tarjeta en la v0.72 —eran los mismos que los
+     cuadritos de abajo— y con ellos el caso especial de la forzada, que existía
+     para que una jugada sin elección no los mostrara. */
+  assert.ok(!html.includes("puntos de victoria`"), "los números ya no están en la tarjeta");
+  assert.ok(html.includes('$("vSub").textContent = hayExp ? "" : c.desc;'),
+    "un solo renglón: la explicación, o la frase fija cuando no hay");
 });
 
 /* --- el mate soltado y el dial "mate a la vista", v0.53 --- */
@@ -1891,11 +1894,14 @@ test("la explicación se deriva al pintar y no viaja en la caché", () => {
     assert.ok(!campos.includes('"' + c + '"'), c + " no tiene por qué viajar a las tablas");
 });
 
-test("las tres ubicaciones existen, y ninguna deja hueco cuando no hay texto", () => {
-  assert.ok(html.includes("const DONDE_EXP_OPC = {"), "el interruptor temporal");
-  for (const k of ["tarjeta", "reemplaza", "senales"])
-    assert.ok(html.includes(k + ":"), "falta la ubicación " + k);
-  assert.ok(html.includes('$("vExp").classList.toggle("oculto", !enTarjeta);'));
+test("la explicación y la frase fija nunca aparecen juntas", () => {
+  /* El interruptor de las tres ubicaciones vivió de la v0.64 a la v0.72 y
+     cumplió: el usuario eligió mirándolas. Quedó una sola forma, y la regla que
+     la ordena es que donde va una no va la otra —el eco de la v0.44—. */
+  assert.ok(!html.includes("DONDE_EXP"), "el interruptor se fue entero");
+  assert.ok(!html.includes('id="dondeExp"'), "y su selector también");
+  assert.ok(html.includes('$("vSub").classList.toggle("oculto", hayExp);'));
+  assert.ok(html.includes('$("vExp").classList.toggle("oculto", !hayExp);'));
   assert.ok(html.includes('$("senales").classList.toggle("oculto", !abajo);'));
 });
 

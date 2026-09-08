@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.71**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.72**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1548,19 +1548,32 @@ topeada en 1000, así que "pasa de ganando a ganando" sería falso de puro
 saturado. Es el mismo tope que ya obligó a tratar el mate aparte en la barra
 (v0.62) y en la categoría (v0.53).
 
-### Dónde va: interruptor temporal de tres posiciones
+### Dónde va: decidido en la v0.72, y los números se fueron
 
-**Sin decidir todavía**, y el interruptor existe para decidirlo con la app en la
-mano, como el de margen contra gris de la v0.48:
+El interruptor de tres posiciones vivió de la v0.64 a la v0.72 y cumplió su
+función, igual que el de margen contra gris de la v0.48: estaban las tres
+puestas, el usuario las miró en el celu y eligió.
 
-| opción | qué gana | qué cuesta |
-|---|---|---|
-| **en la tarjeta** | no pierde nada; el texto va con la tinta normal y es lo único que cambia en cada jugada | la tarjeta crece un renglón, y la pantalla del celu es de 760 |
-| **en vez de la frase fija** | no crece nada, y es lo más parecido a chess.com | se pierde "Empeora la posición" —que igual está en el título, al lado del símbolo— y hereda el gris del subtítulo |
-| **abajo, con las señales** | la tarjeta no se toca | queda lejos de la jugada y en gris |
+**Quedó una sola forma: la explicación OCUPA EL LUGAR de la frase fija de la
+categoría, pero con el aspecto que tenía cuando iba aparte** —tinta de texto
+normal, renglón propio, concepto tocable—. Las dos nunca aparecen juntas: cuando
+hay explicación va ella, y cuando no, la frase fija en gris. Repetirlas sería el
+eco que la v0.44 le sacó a las leyendas.
 
-Cuando el usuario elija, **las otras dos se van** junto con el selector y con las
-capturas del arnés que las dibujan.
+**Y de la misma mirada salieron los números.** La tarjeta decía "pierde 0.00 (0
+cp) · 0.0 puntos de victoria" mientras los cuadritos de abajo decían PÉRDIDA
+`0.00` y CAÍDA `0 pt`: **el mismo número dos veces a un dedo de distancia**, y
+uno de los dos era la única cosa de la tarjeta que no cambiaba de jugada a
+jugada. Lo vio el usuario.
+
+Con ellos se fue **el caso especial de la forzada** de la v0.54: existía para
+que una jugada sin elección no mostrara números que invitaran a juzgar algo que
+no se decidió, y ahora no los muestra ninguna. La regla sigue viva en
+`explicarJugada`, que en una forzada devuelve vacío.
+
+Lo único que se pierde es el número en **centipeones** entre paréntesis: el
+cuadrito PÉRDIDA lo dice en peones. Si alguna vez hace falta, va ahí y no de
+vuelta en la tarjeta.
 
 ### Cuánto habla, y qué se hizo cuando hablaba poco (v0.67)
 

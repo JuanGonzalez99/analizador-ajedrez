@@ -359,7 +359,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.71 · 08-09";
+  window.VERSION = "v0.72 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -714,7 +714,6 @@
     <select id="tema" class="chico" aria-label="Tema del tablero"></select>
     <select id="verEval" class="chico" aria-label="Dónde se ve la evaluación"></select>
     <select id="marcasCurva" class="chico" aria-label="Cómo se marcan las categorías en la curva"></select>
-    <select id="dondeExp" class="chico" aria-label="Dónde va la explicación de la jugada"></select>
   </div>
 </div>
 
@@ -2434,43 +2433,10 @@ function aplicarModoEval(id) {
   });
 })();
 
-/* DÓNDE VA LA EXPLICACIÓN. Las tres se defienden solas y por eso están las
-   tres, para decidir usando la app (§10). Es un interruptor TEMPORAL, como el
-   de margen contra gris de la v0.48: cuando el usuario elija, las otras dos se
-   van y esto queda en una sola forma.
-
-   - "en la tarjeta": un renglón más abajo del subtítulo. No pierde nada, pero
-     la tarjeta crece y la pantalla del celu es de 760 de alto.
-   - "en vez de la frase fija": la explicación ocupa el lugar de "Empeora la
-     posición". No crece nada y es lo más parecido a chess.com; se pierde la
-     frase de la categoría, que igual está en el título al lado del símbolo.
-   - "abajo, con las señales": la tarjeta no se toca y el texto reemplaza a la
-     lista de mecanismos, que dice lo mismo en telegrama.
-
-   En las tres, si no hay nada honesto que decir la pantalla queda como estaba:
-   la explicación vacía nunca deja un hueco. */
-const DONDE_EXP_OPC = {
-  tarjeta:   "Explicación: en la tarjeta",
-  reemplaza: "Explicación: en vez de la frase",
-  senales:   "Explicación: abajo, con las señales"
-};
-let DONDE_EXP = "tarjeta";
-function aplicarDondeExp(id) {
-  DONDE_EXP = DONDE_EXP_OPC[id] ? id : "tarjeta";
-  try { localStorage.setItem("dondeExp", DONDE_EXP); } catch (e) { /* incógnito */ }
-}
-(function iniciarDondeExp() {
-  let guardado = "tarjeta";
-  try { guardado = localStorage.getItem("dondeExp") || "tarjeta"; } catch (e) { /* incógnito */ }
-  $("dondeExp").innerHTML = Object.entries(DONDE_EXP_OPC)
-    .map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
-  aplicarDondeExp(guardado);
-  $("dondeExp").value = DONDE_EXP;
-  $("dondeExp").onchange = seguro("dónde va la explicación", () => {
-    aplicarDondeExp($("dondeExp").value);
-    if (R) pintarRevision();
-  });
-})();
+/* EL INTERRUPTOR DE "DÓNDE VA LA EXPLICACIÓN" VIVIÓ DE LA v0.64 A LA v0.72 y
+   cumplió su función, igual que el de margen contra gris de la v0.48: tenía las
+   tres formas puestas, el usuario las miró en el celu y eligió. Lo elegido está
+   abajo, en pintarRevision, y las otras dos se fueron con el selector. */
 
 (function iniciarModoEval() {
   let guardado = "horizontal";
@@ -4407,16 +4373,23 @@ function pintarRevision() {
   $("vIco").textContent = c.icono;
   $("vIco").style.color = color;
   $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
-  /* En una forzada los números sobran: no hubo elección, así que "pierde 0.00"
-     invita a juzgar algo que no se decidió. */
-  const cabeza = (DONDE_EXP === "reemplaza" && explicado) ? explicado : c.desc;
-  $("vSub").textContent = f.forzada ? cabeza
-    : cabeza +
-      ` \u00b7 pierde ${f.perdida.toFixed(2)} (${Math.round(f.perdida * 100)} cp)` +
-      ` \u00b7 ${f.caida.toFixed(1)} puntos de victoria`;
-  const enTarjeta = DONDE_EXP === "tarjeta" && !!explicado;
-  if (enTarjeta) pintarExplicacion("vExp", partes); else $("vExp").innerHTML = "";
-  $("vExp").classList.toggle("oculto", !enTarjeta);
+  /* UN SOLO RENGLÓN ABAJO DEL TÍTULO, y qué dice depende de si hay algo que
+     decir: la explicación de esta jugada, o la frase fija de la categoría
+     cuando no la hay. Nunca las dos, que era el eco de la v0.44.
+     La explicación va con la tinta del texto normal y con su concepto tocable;
+     la frase fija va en gris, porque es la misma para 400 jugadas.
+
+     LOS NÚMEROS SE FUERON EN LA v0.72. "pierde 0.00" es exactamente el cuadrito
+     PÉRDIDA y "0.0 puntos de victoria" es exactamente CAÍDA, los tres a un dedo
+     de distancia en la misma pantalla. Lo vio el usuario.
+     Con ellos se fue también el caso especial de la forzada (v0.54): existía
+     para que una jugada sin elección no mostrara números, y ahora no los
+     muestra ninguna. */
+  const hayExp = !!explicado;
+  $("vSub").textContent = hayExp ? "" : c.desc;
+  $("vSub").classList.toggle("oculto", hayExp);
+  if (hayExp) pintarExplicacion("vExp", partes); else $("vExp").innerHTML = "";
+  $("vExp").classList.toggle("oculto", !hayExp);
   /* si el número ya viaja en la barra, la tarjeta no lo repite */
   $("vEv").textContent = MODO_EVAL === "tarjeta" ? f.evalTexto : "";
 
@@ -4566,14 +4539,8 @@ function pintarRevision() {
   const notas = f.senales.slice();
   if (f.rev) notas.push(`a profundidad ${f.rev.prof}: pierde ${f.rev.perdida.toFixed(2)} ` +
     `y es ${CATEGORIAS[f.rev.cat].nombre.toLowerCase()}`);
-  /* La explicación y las señales dicen lo mismo con distinto vestido, así que
-     donde va una no va la otra: repetirlas sería el eco que la v0.44 le sacó a
-     las leyendas. */
-  const enSenales = DONDE_EXP === "senales" && !!explicado;
-  const abajo = enSenales ? explicado
-                          : (notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "");
-  if (enSenales) pintarExplicacion("senales", partes);
-  else $("senales").textContent = abajo;
+  const abajo = notas.length ? "\u00b7 " + notas.join(" \u00b7 ") : "";
+  $("senales").textContent = abajo;
   $("senales").classList.toggle("oculto", !abajo);
   /* La tarjeta de la variante. Sin variante abierta no existe, y la pantalla
      queda exactamente como antes de la v0.65. */
