@@ -430,14 +430,20 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
    La TIRA HORIZONTAL no existe en la app: se arma acá con las jugadas que ya
    están dibujadas en la lista vertical, para poder verla sin construirla. */
 
-/* cuántas jugadas entran de verdad: se dibuja con 5, 7 y 9 y se mira */
-const armarTira = async (n, conNumero = false) => await pg.evaluate(([cuantas, conNum]) => {
+/* LA TIRA LLEVA LA PARTIDA ENTERA y se centra sola en la jugada actual.
+
+   No es una ventana de N jugadas: eso obligaba a elegir un N, y con cualquiera
+   las puntas quedaban cortadas o no según dónde estuvieras. Con la partida
+   entera adentro y el scroll centrado, **siempre se ve que hay más para los dos
+   lados cuando lo hay**, y cuando no lo hay —el arranque y el final— tampoco se
+   ve, que es la información correcta. Es lo que pidió el usuario.
+
+   Además así el dedo llega a cualquier jugada de la partida, no solo a las
+   vecinas, y los galones quedan para el paso fino. */
+const armarTira = async (conNumero = false) => await pg.evaluate((conNum) => {
   const vieja = document.getElementById("tiraH");
   if (vieja) vieja.remove();
   const jg = [...document.querySelectorAll("#jugadas .jg")].filter(e => e.textContent.trim());
-  const sel = Math.max(0, jg.findIndex(e => e.classList.contains("sel")));
-  const desde = Math.max(0, Math.min(Math.max(0, jg.length - cuantas), sel - Math.floor(cuantas / 2)));
-  const trozo = jg.slice(desde, desde + cuantas);
   const cont = document.createElement("div");
   cont.id = "tiraH";
   cont.style.cssText = "display:flex;align-items:center;gap:6px;margin:10px 0;";
@@ -448,26 +454,18 @@ const armarTira = async (n, conNumero = false) => await pg.evaluate(([cuantas, c
     return b;
   };
   const medio = document.createElement("div");
-  /* SE DESLIZA. La primera maqueta la hizo con recorte y eso mentía: una tira
-     que no se puede arrastrar obliga a los galones para todo. Con scroll, los
-     galones son el paso fino y el dedo el paso grueso. */
-  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;justify-content:center;" +
+  medio.style.cssText = "flex:1;min-width:0;display:flex;gap:5px;align-items:center;" +
     "overflow-x:auto;scrollbar-width:none;";
-  for (const e of trozo) {
+  let elegida = null;
+  for (const e of jg) {
     const esta = e.classList.contains("sel");
     if (conNum) {
-      /* el número sale de la fila de la lista vertical, que ya lo tiene. Va
-         antes de la jugada de las blancas, y antes de una de las negras solo si
-         es la primera de la tira: es como se escribe una partida. */
       const fila = e.parentElement;
       const jgs = [...fila.querySelectorAll(".jg")].filter(x => x.textContent.trim());
-      const esBlancas = jgs.indexOf(e) === 0;
-      const primera = e === trozo[0];
-      if (esBlancas || primera) {
+      if (jgs.indexOf(e) === 0) {
         const num = document.createElement("span");
-        num.textContent = fila.querySelector(".np").textContent + (esBlancas ? "." : "\u2026");
-        num.style.cssText = "font-size:12px;color:var(--tenue);align-self:center;" +
-          "white-space:nowrap;";
+        num.textContent = fila.querySelector(".np").textContent + ".";
+        num.style.cssText = "font-size:12px;color:var(--tenue);white-space:nowrap;";
         medio.appendChild(num);
       }
     }
@@ -477,12 +475,15 @@ const armarTira = async (n, conNumero = false) => await pg.evaluate(([cuantas, c
       "border:1px solid " + (esta ? "currentColor" : "var(--linea)") + ";color:" + e.style.color +
       (esta ? ";font-weight:700" : "");
     medio.appendChild(sp);
+    if (esta) elegida = sp;
   }
-  cont.append(galon("‹"), medio, galon("›"));
-  /* adentro de zonaRevision, o `armar` no la encuentra: busca ahí y solo ahí */
+  cont.append(galon("\u2039"), medio, galon("\u203a"));
   document.getElementById("zonaRevision").appendChild(cont);
+  /* centrar DESPUÉS de estar en el documento: antes no hay anchos que medir */
+  if (elegida) medio.scrollLeft = elegida.offsetLeft -
+    (medio.clientWidth - elegida.offsetWidth) / 2;
   return cont.id;
-}, [n, conNumero]);
+}, conNumero);
 
 /* deja la vista con los bloques en el orden pedido, y con los márgenes puestos
    a mano: mover un elemento le cambia los márgenes a sus DOS vecinos (§10) */
@@ -533,6 +534,15 @@ const armar = async (orden, opc = {}) => await pg.evaluate(([ids, o]) => {
 }, [orden, opc]);
 
 const desdeArriba = async nombre => {
+  /* CENTRAR LA TIRA ACÁ y no al armarla: `armar` la mueve de lugar, y mover un
+     elemento le resetea el scroll. Es la tercera vez que aparece el mismo tipo
+     de error en estas maquetas: tocar algo cambia cosas que no estabas mirando. */
+  await pg.evaluate(() => {
+    const t = document.querySelector("#tiraH > div");
+    if (!t) return;
+    const sel = [...t.children].find(e => e.style.fontWeight === "700");
+    if (sel) t.scrollLeft = sel.offsetLeft - (t.clientWidth - sel.offsetWidth) / 2;
+  });
   await pg.evaluate(() => window.scrollTo(0, 0));
   await pg.evaluate(() => {
     const z = document.getElementById("zonaRevision");
@@ -542,57 +552,38 @@ const desdeArriba = async nombre => {
   await foto(nombre);
 };
 
+/* Se vuelve a la jugada de las capturas de la explicación: la prueba de la
+   curva de más arriba clickea una marca y deja la vista en otra jugada, y las
+   maquetas tienen que compararse contra las capturas anteriores. Se toca la
+   jugada en la lista, que es exacto, en vez de contar pasos. */
+await pg.click(`#jugadas span[data-i="${mejor}"]`);
+await pg.waitForTimeout(200);
+
 /* D primero, que es la de hoy y todavía no se tocó nada */
 await desdeArriba("dist-D-hoy");
 
 const OCULTAR = {};
-for (const n of [5, 7, 9]) {
-  /* se rearma desde cero en cada vuelta: la anterior dejó el DOM movido, y una
-     recarga deja la página en blanco, así que se vuelve a entrar por la lista
-     igual que la primera vez. La partida ya está en la caché: es instantáneo. */
-  await pg.reload();
-  await pg.fill("#usuario", cabPgn("White", "Blancas"));
-  await pg.click("#buscar");
-  await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
-  await pg.click("#partidas div[data-i]");
-  await pg.waitForSelector("#analizar", { state: "visible", timeout: 20000 });
-  await pg.click("#analizar");
-  await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
-  await avanzar(mejor);
-  await armarTira(n);
-  await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "metricas", "fila"],
-              OCULTAR);
-  await desdeArriba(`dist-A-${n}`);
-  if (n === 5) console.log("orden A:", (await pg.evaluate(() =>
-    [...document.getElementById("zonaRevision").children]
-      .filter(e => e.style.display !== "none")
-      .map(e => e.id || e.className || e.tagName).join(" · "))));
-  if (n !== 7) continue;
-  /* B y C solo con la cantidad del medio: lo que comparan es el ORDEN, no
-     cuántas jugadas entran */
-  await armar(["revcab", "evalh", "curva", "revtab", "veredicto", "tiraH", "metricas", "fila"],
-              OCULTAR);
-  await desdeArriba("dist-B-7");
-  await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "fila"],
-              { ...OCULTAR, metricasAdentro: true });
-  await desdeArriba("dist-C-7");
+await armarTira(true);
+/* A, B y C se quedan para comparar contra la elegida */
+await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "metricas", "fila"], OCULTAR);
+await desdeArriba("dist-A");
+await armar(["revcab", "evalh", "curva", "revtab", "veredicto", "tiraH", "metricas", "fila"], OCULTAR);
+await desdeArriba("dist-B");
+await armar(["revcab", "evalh", "curva", "revtab", "tiraH", "veredicto", "fila"],
+            { ...OCULTAR, metricasAdentro: true });
+await desdeArriba("dist-C");
 
-  /* E, la que propuso el usuario: barra · tarjeta · tablero · navegación · curva.
-     La tarjeta ARRIBA del tablero, que es lo que ninguna de las otras probó. */
-  await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"],
-              OCULTAR);
-  await desdeArriba("dist-E-7");
-  /* y la misma con los números de jugada en la tira */
-  await armarTira(7, true);
-  await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"],
-              OCULTAR);
-  await desdeArriba("dist-E-7-numeros");
-  await armarTira(5, true);
-  await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"],
-              OCULTAR);
-  await desdeArriba("dist-E-5-numeros");
-}
-console.log("maquetas: dist-D-hoy, dist-A-5/7/9, dist-B-7, dist-C-7, dist-E-7, dist-E-7/5-numeros");
+/* E, la elegida: barra · tarjeta · tablero · navegación · curva */
+const E = ["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "metricas", "fila"];
+await armar(E, OCULTAR);
+await desdeArriba("dist-E");
+/* y la E con los cuadritos adentro de la tarjeta, que es lo que falta decidir */
+await armar(["revcab", "evalh", "veredicto", "revtab", "tiraH", "curva", "fila"],
+            { ...OCULTAR, metricasAdentro: true });
+await desdeArriba("dist-E-compacta");
+/* la tira sola, grande, para mirarle las puntas */
+await pg.locator("#tiraH").screenshot({ path: path.join(SALIDA, "tira" + SUFIJO + ".png") });
+console.log("maquetas: dist-D-hoy, dist-A, dist-B, dist-C, dist-E, dist-E-compacta, tira");
 
 console.log("listo: capturas/");
 await b.close();
