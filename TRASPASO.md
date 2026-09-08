@@ -3052,6 +3052,13 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
   navegación al lado del tablero la dejó pegada a la tarjeta de abajo, y lo vio
   el usuario en la captura que le mandamos nosotros. Mover un elemento de lugar
   le cambia los márgenes a sus dos vecinos, no a uno.
+- **Cuando algo se ve corrido y las cuentas dicen que está centrado, lo que
+  está mal es QUÉ se está midiendo.** Costó tres vueltas en la tira de la v0.74,
+  y las tres el error fue el mismo: se medía la caja del renglón —que incluye el
+  espacio de las colas y las tildes— cuando lo que el ojo alinea es la
+  mayúscula. La salida no es corregir el número sino preguntarle al usuario
+  **contra qué** tiene que quedar alineado, y medir eso. Él lo dijo en una
+  línea: *"el centro del chevron debería coincidir con el centro de la N"*.
 - **Un cambio que toca lo que se dibuja se MIRA en la pantalla, no solo se
   mide.** Se puede levantar la app en un navegador headless, simular la API de
   chess.com y sacar capturas (§2). Verificar de forma estrecha —medir justo lo
