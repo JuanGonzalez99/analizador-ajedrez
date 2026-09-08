@@ -248,8 +248,11 @@
   .senala.on { background: #e8a33d; border-radius: 3px; padding: 0 2px;
                border-bottom-color: transparent; color: #1a1815; }
   /* La tarjeta de la prueba va PUNTEADA: dice "esto no pasó" sin gastar una
-     palabra en decirlo. El violeta es el mismo de la flecha en el tablero, así
-     que la tarjeta y la jugada dibujada se leen como una sola cosa. */
+     palabra en decirlo, y es lo único que la distingue de la del veredicto.
+     El violeta de acá es el de ANTES de que llegue el resultado, cuando todavía
+     no hay categoría; con el resultado, la barra de la izquierda toma el color
+     de la categoría, igual que la tarjeta del veredicto. Elegido por el usuario
+     mirándolo, contra la otra opción, que era dejarla violeta siempre. */
   .veredicto.prueba { border-style: dashed; border-left-color: #6a1b9a;
                       margin-bottom: 8px; }
   /* La tira de la variante. Envuelve en vez de scrollear: una variante de diez
@@ -356,7 +359,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.70 · 08-09";
+  window.VERSION = "v0.71 · 08-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2843,22 +2846,24 @@ function textoPrueba(prof) {
            exp: "", color: "#6a1b9a" };
 }
 
-/* La tira de la variante: la posición de arranque y cada jugada inventada, para
-   ir y volver de un toque. Es la misma idea que la tira de jugadas de la
-   partida —el símbolo dice la categoría y el color la refuerza— pero de la
-   variante, y por eso vive adentro de su tarjeta y no al lado de la otra. */
+/* La tira de la variante: cada jugada inventada, para ir y volver de un toque.
+   Es la misma idea que la tira de jugadas de la partida —el símbolo dice la
+   categoría y el color la refuerza— pero de la variante, y por eso vive adentro
+   de su tarjeta y no al lado de la otra.
+
+   NO tiene un eslabón para la posición de arranque. Lo tuvo en la v0.66 —decía
+   "◂ desde acá"— y lo sacó el usuario: para volver al arranque ya están el
+   botón `‹` y el deslizamiento, así que era un tercer camino para lo mismo
+   ocupando el lugar más visible de la tira. Parado en el arranque no hay ningún
+   eslabón marcado, que se lee solo. */
 function tiraDeLaVariante() {
   const p = PRUEBA;
   if (!p || !p.linea.length) return "";
-  const chip = (i, txt, col) =>
-    `<span class="vj ${i === p.ver ? "sel" : ""}" data-v="${i}"` +
-    `${col ? ` style="color:${col}"` : ""}>${txt}</span>`;
-  return chip(0, "◂ desde acá", "") +
-    p.linea.map((x, i) => {
-      const c = presentar(x.fila);
-      return chip(i + 1, `<span class="sm">${c.icono}</span>${x.san}`,
-                  `var(--c-${c.clave})`);
-    }).join("");
+  return p.linea.map((x, i) => {
+    const c = presentar(x.fila);
+    return `<span class="vj ${i + 1 === p.ver ? "sel" : ""}" data-v="${i + 1}" ` +
+           `style="color:var(--c-${c.clave})"><span class="sm">${c.icono}</span>${x.san}</span>`;
+  }).join("");
 }
 let VER_AMBOS = false;
 let MES = null;

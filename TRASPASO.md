@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.70**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.71**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -1792,12 +1792,21 @@ la partida, así que no hay contra qué comparar.
 - Salir de la jugada por cualquiera de los caminos de la partida —la tira, la
   curva— cierra la variante, y eso vive en `irA` porque ahí pasan todos.
 
+### Dos cosas que se decidieron mirándolas (v0.71)
+
+- **El borde de la tarjeta se queda con el color de la categoría.** Se dibujaron
+  las dos —esa y el violeta siempre— y el usuario eligió la primera. El violeta
+  queda solo para el estado en que todavía no hay categoría, o sea mientras el
+  motor piensa. Que el borde y la flecha del tablero dejen de hacer juego es el
+  precio, y se aceptó: la categoría dice más.
+- **La tira de la variante no tiene eslabón para la posición de arranque.** Lo
+  tuvo, decía "◂ desde acá", y lo sacó el usuario: para volver al arranque ya
+  están el botón `‹` y el deslizamiento, así que era un tercer camino para lo
+  mismo ocupando el lugar más visible de la tira. Parado en el arranque no hay
+  ningún eslabón marcado, y eso se lee solo.
+
 ### Lo que quedó abierto
 
-- **El borde de la tarjeta** se pinta del color de la categoría cuando llega el
-  resultado, así que deja de ser violeta justo cuando la flecha sigue siéndolo.
-  La otra opción es violeta siempre y el color de la categoría solo en el
-  símbolo.
 - **La variante no se guarda.** Al salir se tira. Guardarla —para volver a una
   línea que encontraste— es otra tanda y toca la caché.
 

@@ -284,12 +284,17 @@ await pg.selectOption("#dondeExp", "tarjeta");
    elige a ojo: se recorre la partida leyendo el título de la tarjeta. */
 const malas = ["Imprecisión", "Error", "Omisión"];
 await pg.locator(".nav").screenshot({ path: path.join(SALIDA, "botones-buena" + SUFIJO + ".png") });
-const antesDeBuscar = mejor;
+/* se cuentan los pasos que se dan, para poder DESHACERLOS exactamente. Antes se
+   volvía comparando el número de jugada del título, y eso paraba en la mitad
+   equivocada del par —"5… Bxd4" en vez de "5. d4"—, así que las capturas de la
+   variante salían de otra posición que la que se había elegido. */
+let pasos = 0;
 for (let i = 0; i < 60; i++) {
   const t = (await pg.locator("#vTit").textContent()) || "";
   if (malas.some(m => t.includes(m))) break;
   if (await pg.locator("#sig").isDisabled()) break;
   await pg.click("#sig");
+  pasos++;
 }
 console.log("botones:  ", JSON.stringify(await pg.locator("#vTit").textContent()),
             "→ el grande es",
@@ -305,14 +310,9 @@ await pg.evaluate(() => { document.getElementById("btnProbar").style.display = "
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("tarjeta-y-botones");
-/* y se vuelve a la jugada de las capturas de la explicación */
-while (true) {
-  const t = (await pg.locator("#vTit").textContent()) || "";
-  if (await pg.locator("#ant").isDisabled()) break;
-  const n = parseInt(t, 10);
-  if (!isNaN(n) && n <= Math.floor(antesDeBuscar / 2) + 1) break;
-  await pg.click("#ant");
-}
+/* y se vuelve a la jugada de las capturas de la explicación, deshaciendo
+   exactamente los pasos que se dieron */
+for (let i = 0; i < pasos; i++) await pg.click("#ant");
 
 /* PROBAR JUGADAS: LA VARIANTE (v0.66), sobre esa misma jugada. Las jugadas NO
    se eligen a ojo: se le piden a chess.js, y la primera es una legal que no sea
@@ -347,10 +347,8 @@ else {
       null, { timeout: 30000 });
     await foto("prueba-5-encadenada");
     await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
-  /* MAQUETA para decidir: la misma tarjeta con el borde violeta en vez del color
-   de la categoría. Se va cuando el usuario elija. */
-  await pg.evaluate(() => { document.getElementById("prueba").style.borderLeftColor = "#6a1b9a"; });
-  await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba-violeta" + SUFIJO + ".png") });
+  /* la maqueta del borde violeta se fue en la v0.71: el usuario eligió el color
+     de la categoría mirando las dos. */
     console.log("variante:", JSON.stringify(
       (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
     /* volver al arranque de la variante tocando su tira */
