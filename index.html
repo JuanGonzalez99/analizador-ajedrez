@@ -162,6 +162,7 @@
   /* el margen de abajo separa el bloque del tablero de la tarjeta del veredicto:
      sin él la barra de evaluación termina pegada al borde de la tarjeta */
   .revtab { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
+  .comidas { display: none; }
   .revtab > #tablero { flex: 1; min-width: 0; }
   /* el tablero trae margen propio para cuando va suelto; al lado de la barra
      sobra, y desalinea las dos por 10 px */
@@ -501,6 +502,19 @@
        tablero y la fila se centra entera, las dos juntas. */
     .revtab { justify-content: center; }
     .revtab > #tablero { flex: 0 1 var(--ladoTab); }
+    /* LA TIRA DE COMIDAS EXISTE SOLO ACÁ. En el celular no hay ancho de sobra;
+       es `display: none` afuera y por eso las capturas del celu no se mueven. */
+    /* 132 y no 108: son los 100 de las cinco piezas del renglón, el hueco de 6 y
+       el número. Con 108 el "+3" no entraba al lado y se caía a un renglón
+       propio, que es la misma información contada en dos veces el alto. */
+    .comidas { display: flex; flex-direction: column; justify-content: space-between;
+               flex: 0 0 132px; padding: 2px 0 22px; }
+    /* los 22 de abajo la alinean con el tablero y no con su caja: el SVG lleva
+       un margen propio de 15 unidades para las coordenadas, y sin esto el grupo
+       de abajo quedaba a la altura de las letras en vez de la fila 1 */
+    .cGrupo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 20px; }
+    .cDif { font-size: 12.5px; font-weight: 700; color: var(--tenue);
+            font-variant-numeric: tabular-nums; }
   }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
@@ -573,7 +587,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.86 · 09-09";
+  window.VERSION = "v0.87 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -909,6 +923,7 @@
   <div class="revtab">
     <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
     <div id="tablero"></div>
+    <div class="comidas"><div class="cGrupo" id="cArriba"></div><div class="cGrupo" id="cAbajo"></div></div>
   </div>
   <!-- La tira de jugadas: lleva la partida ENTERA y se centra sola en la
        jugada actual, que es de donde sale que siempre se vea que hay más para
@@ -1010,6 +1025,43 @@ function precisionJugada(caidaPuntos) {
 
 /* ============ geometría ============ */
 const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+/* LAS PIEZAS COMIDAS (v0.87). Salen del FEN y no cuestan motor: se cuenta lo que
+   hay en el tablero y se resta de lo que había al empezar.
+
+   LA CUENTA DE COMIDAS ES APROXIMADA CUANDO HAY CORONACIÓN, y no se puede
+   arreglar mirando una sola posición: un peón blanco coronado en dama deja al
+   blanco con 7 peones y 2 damas, o sea que la resta dice "el negro le comió un
+   peón" y que no le comió ninguna dama. Es la misma aproximación que hacen
+   lichess y chess.com, y la alternativa sería recorrer la partida entera para
+   cada posición. Se elige a sabiendas.
+
+   LA DIFERENCIA DE MATERIAL NO SE SACA DE LAS COMIDAS SINO DEL TABLERO, y eso sí
+   es exacto con coronaciones: se suma lo que hay de cada lado. Son dos números y
+   por eso salen de dos lugares distintos —el de arriba puede mentir, el de abajo
+   no—, que es justo lo que se quiere: la fila de piezas cuenta la historia y el
+   número dice el estado. */
+const INICIALES = { q: 1, r: 2, b: 2, n: 2, p: 8 };
+const ORDEN_COMIDAS = ["q", "r", "b", "n", "p"];
+function piezasComidas(fen) {
+  const hay = { w: { q: 0, r: 0, b: 0, n: 0, p: 0 }, b: { q: 0, r: 0, b: 0, n: 0, p: 0 } };
+  let dif = 0;
+  for (const fila of new Chess(fen).board()) for (const c of fila) {
+    if (!c) continue;
+    if (c.type !== "k") hay[c.color][c.type]++;
+    dif += (c.color === "w" ? 1 : -1) * VALOR[c.type];
+  }
+  /* `faltan.w` son piezas BLANCAS que ya no están, o sea lo que comió el negro */
+  const faltan = col => {
+    const o = {};
+    for (const t of ORDEN_COMIDAS) {
+      const n = INICIALES[t] - hay[col][t];
+      if (n > 0) o[t] = n;
+    }
+    return o;
+  };
+  return { w: faltan("w"), b: faltan("b"), dif };
+}
 
 /* ¿la pieza parada en `sq` se la llevan sin devolución? */
 function quedaComible(fenDespues, sq) {
@@ -3448,6 +3500,10 @@ const sqCy = sq => sqY(8 - +sq[1]) + TAB_S / 2;
    No corre mientras hay una variante abierta: ahí el tablero ya está mostrando
    otra cosa y pisarla sería mentir sobre qué se está probando. */
 let TABLERO_PREVIO = null;
+/* La posición que está dibujada de verdad, para poder VOLVER a ella: la previa
+   pisa el tablero y la tira de comidas, y el HTML guardado alcanza para el
+   tablero pero no para la tira, que se recalcula. */
+let FEN_VISTO = null;
 function previsualizar(i) {
   if (!R || PRUEBA || !R.filas[i]) return;
   if (TABLERO_PREVIO === null) TABLERO_PREVIO = $("tablero").innerHTML;
@@ -3456,6 +3512,9 @@ function previsualizar(i) {
      "¿qué convenía?". La capa va vacía y no ausente porque `dibujar` la lee. */
   $("tablero").innerHTML = dibujar(f.fen, f.uci, null,
     { desde: null, destinos: [], uci: null, resalta: null, sinMarcas: true });
+  /* la tira sigue a la posición previsualizada: si se quedara en la de antes
+     estaría contando las comidas de un tablero que no es el que se ve */
+  pintarComidas(f.fen);
 }
 function volverDeLaPrevia() {
   if (TABLERO_PREVIO === null) return;
@@ -3464,6 +3523,7 @@ function volverDeLaPrevia() {
   /* el HTML guardado es de ANTES de la previa: si mientras tanto se dibujó una
      marca, volvería sin ella */
   pintarMarcas();
+  if (FEN_VISTO) pintarComidas(FEN_VISTO);
 }
 /* Con mouse de verdad y no en una pantalla táctil, donde `mouseenter` lo dispara
    el propio toque y la previa pelearía contra el clic que navega.
@@ -3480,6 +3540,51 @@ function previaEn(sp, i) {
 /* `prueba` es lo que agrega la v0.65 y va en null en el camino normal:
    { desde, destinos, uci }. Cuando viene, el tablero deja de ser un dibujo y
    pasa a recibir toques por casilla. */
+/* LA TIRA DE PIEZAS COMIDAS (v0.87). Al costado del tablero y SOLO en una compu:
+   en el celular no hay ancho de sobra y la vista ya está apretada. Lo que se
+   muestra al lado de cada jugador es lo que comió ÉL, que es la convención de
+   todos lados; por eso el cruce, las piezas que comió el blanco son negras.
+
+   VA EN LA FILA DEL TABLERO y no arriba ni abajo, porque lo que escasea en una
+   compu es el ALTO —es lo que limita el tablero (§4duovicies)— y lo que sobra es
+   el ancho. Sumarlo arriba le habría sacado tablero, que es lo contrario de lo
+   que viene haciendo esta tanda. En una ventana muy alta, de 1010 para arriba,
+   el tablero llega a los 680 y ahí sí le cede los 108 px a la tira: es el único
+   caso donde cuesta, y ahí el tablero ya es enorme.
+
+   El número es la DIFERENCIA de material y va solo del lado del que va ganando:
+   "+3" en las dos puntas sería el mismo dato dos veces con el signo cambiado. */
+const LADO_COMIDA = 20, POR_FILA_COMIDAS = 5;
+function svgComidas(color, faltan) {
+  const lista = [];
+  for (const t of ORDEN_COMIDAS)
+    for (let i = 0; i < (faltan[t] || 0); i++) lista.push(t);
+  if (!lista.length) return "";
+  const filas = Math.ceil(lista.length / POR_FILA_COMIDAS);
+  const esc = (LADO_COMIDA / LADO_PIEZA).toFixed(4);
+  const an = POR_FILA_COMIDAS * LADO_COMIDA, al = filas * LADO_COMIDA;
+  /* el `use` apunta a los símbolos que viven en el `<defs>` del tablero: son el
+     mismo documento, así que la referencia vale aunque sean dos SVG distintos */
+  return `<svg width="${an}" height="${al}" viewBox="0 0 ${an} ${al}">` +
+    lista.map((t, i) =>
+      `<use href="#cb-${color}${t}" transform="translate(${(i % POR_FILA_COMIDAS) * LADO_COMIDA}` +
+      ` ${Math.floor(i / POR_FILA_COMIDAS) * LADO_COMIDA}) scale(${esc})"/>`).join("") +
+    "</svg>";
+}
+function pintarComidas(fen) {
+  const c = piezasComidas(fen);
+  /* arriba del tablero juega el negro, salvo que esté girado */
+  const pintar = (id, come) => {
+    /* lo que comió el blanco son piezas NEGRAS: por eso se cruza */
+    const perdio = come === "w" ? "b" : "w";
+    const dif = come === "w" ? c.dif : -c.dif;
+    $(id).innerHTML = svgComidas(perdio, c[perdio]) +
+      (dif > 0 ? `<span class="cDif">+${dif}</span>` : "");
+  };
+  pintar("cArriba", GIRADO ? "w" : "b");
+  pintar("cAbajo", GIRADO ? "b" : "w");
+}
+
 /* LAS MARCAS DEL USUARIO (v0.85). Con el botón derecho: apretar y soltar en la
    misma casilla la pinta, apretar en una y soltar en otra dibuja una flecha, y
    repetir el mismo gesto la borra. Es la convención de lichess y de chess.com,
@@ -5669,6 +5774,13 @@ function pintarRevision() {
   const tinta = gananBlancas ? "#1a1815" : "#e8e4d8";
   const nv = $("evalnum"), nh = $("evalnumh");
   nv.textContent = modo === "barra" ? f.evalTexto : "";
+  /* EL NÚMERO SE ACHICA CUANDO ES LARGO. "+0.26" entra en los 36 px de la barra
+     a 9,5; "+10.00" no, y la barra recorta lo que sobra SIN AVISAR, porque tiene
+     `overflow: hidden` por las esquinas del relleno. Es la segunda vez que ese
+     recorte silencioso esconde un número en dos versiones seguidas: se arregla
+     midiendo el largo, que es lo único que cambia entre un caso y el otro.
+     Ensanchar la barra otra vez no alcanzaba: "-100.00" son siete caracteres. */
+  nv.style.fontSize = f.evalTexto.length > 5 ? "8px" : "9.5px";
   nv.style.color = tinta;
   /* con el tablero girado las blancas quedan arriba, así que su punta también */
   const blancasArriba = GIRADO;
@@ -5724,10 +5836,14 @@ function pintarRevision() {
      esta función. Una flecha pertenece a UNA posición; arrastrarla a la
      siguiente sería señalar en un tablero que ya no es el que se dibujó. */
   MARCAS_TAB = [];
+  /* UNA SOLA VARIABLE para la posición que se dibuja, así la tira de comidas no
+     puede desincronizarse del tablero: las dos leen exactamente el mismo FEN. */
+  const fenVisto = FEN_VISTO = PRUEBA ? vista.fen : f.fen;
   $("tablero").innerHTML = PRUEBA
-    ? dibujar(vista.fen, PRUEBA.ver === 0 ? (real && real.uci) : null,
+    ? dibujar(fenVisto, PRUEBA.ver === 0 ? (real && real.uci) : null,
               PRUEBA.ver === 0 && verMejor ? f.mejor : null, capa)
-    : dibujar(f.fen, f.uci, verMejor ? f.mejor : null, capa);
+    : dibujar(fenVisto, f.uci, verMejor ? f.mejor : null, capa);
+  pintarComidas(fenVisto);
   /* lo que había guardado la previa ya no existe: este es el tablero nuevo */
   TABLERO_PREVIO = null;
   $("tileMejor").classList.toggle("activo", verMejor);

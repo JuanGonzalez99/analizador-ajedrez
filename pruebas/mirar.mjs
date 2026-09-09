@@ -760,18 +760,51 @@ console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)
    barra quedaba a 170 px del tablero y "+0.26" salía cortado. */
 await pg.selectOption("#verEval", "barra");
 await pg.waitForTimeout(250);
-console.log("barra vertical: ", JSON.stringify(await pg.evaluate(() => {
+/* SE MIDE EN DOS JUGADAS: una con el número corto y otra con el largo. "+0.26"
+   entra en la barra y "+10.00" no entraba, y el recorte no avisa. */
+const barra = () => pg.evaluate(() => {
   const b = document.getElementById("evalbar").getBoundingClientRect();
   const t = document.querySelector("svg.tab").getBoundingClientRect();
   const n = document.getElementById("evalnum");
   return { texto: n.textContent, hastaElTablero: Math.round(t.left - b.right),
-           numeroEntero: n.scrollWidth <= Math.ceil(b.width) };
-})));
+           entero: n.scrollWidth <= Math.ceil(b.width) };
+});
+const barraCorta = await barra();
+await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("sig").click(); });
+await pg.waitForTimeout(500);
+const barraLarga = await barra();
+console.log("barra vertical: ", JSON.stringify({ corto: barraCorta, largo: barraLarga }));
+await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("ant").click(); });
+await pg.waitForTimeout(500);
 await pg.selectOption("#verEval", "barra");
 await pg.waitForTimeout(250);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -10));
 await foto("ancho-eval-barra");
+
+/* LA TIRA DE PIEZAS COMIDAS (v0.87). Se va a una jugada donde ya se comieron
+   cosas de los dos lados y se mide qué quedó dibujado, no que exista el div.
+   La jugada sale de chess.js y no de mirar el tablero. */
+await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("sig").click(); });
+await pg.waitForTimeout(500);
+await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+await pg.evaluate(() => window.scrollBy(0, -10));
+await pg.waitForTimeout(250);
+await foto("ancho-comidas");
+console.log("comidas:       ", JSON.stringify(await pg.evaluate(() => {
+  const g = id => {
+    const e = document.getElementById(id);
+    const b = e.getBoundingClientRect();
+    return { piezas: e.querySelectorAll("use").length,
+             dif: (e.querySelector(".cDif") || {}).textContent || "",
+             x: Math.round(b.x) };
+  };
+  const t = document.querySelector("svg.tab").getBoundingClientRect();
+  return { arriba: g("cArriba"), abajo: g("cAbajo"),
+           /* pegada al tablero y no flotando: el hueco es el gap y nada más */
+           delTableroALaTira: Math.round(document.getElementById("cArriba").getBoundingClientRect().x - t.right),
+           lado: Math.round(t.width), desborde: document.documentElement.scrollWidth > window.innerWidth };
+})));
 
 /* MARCAR CON EL BOTÓN DERECHO (v0.85), con el mouse de verdad. Se cuentan los
    hijos de las dos capas y no se mira el dibujo: lo que importa es que el gesto

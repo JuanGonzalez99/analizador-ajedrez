@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.86**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.87**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2851,6 +2851,55 @@ limpias: el valor se decide una sola vez, al arrancar, así que hay que recargar
 
 ---
 
+## 4septvicies. Las piezas comidas, al costado (v0.87)
+
+Al lado de cada jugador va lo que comió **él** —por eso las piezas que se muestran
+arriba son blancas: arriba juega el negro—, y el número es la diferencia de
+material, que va **solo del lado del que va ganando**: "+3" en las dos puntas
+sería el mismo dato dos veces con el signo cambiado.
+
+**VA EN LA FILA DEL TABLERO Y NO ARRIBA NI ABAJO.** Lo que escasea en una compu
+es el ALTO —es lo que limita el tablero, §4duovicies— y lo que sobra es el ancho.
+Sumar una fila arriba le habría sacado tablero, que es lo contrario de lo que
+viene haciendo esta tanda. Medido: con la tira puesta, el lado del tablero sigue
+siendo 496. En una ventana de 1010 px de alto para arriba el tablero llega a los
+680 y ahí sí le cede los 132 a la tira; es el único caso donde cuesta, y ahí el
+tablero ya es enorme.
+
+**Solo existe en la compu.** Es `display: none` afuera de la media query, y por
+eso las 28 capturas del celular siguen idénticas byte a byte.
+
+**Dos números que salen de dos lugares distintos, a propósito:**
+
+- **Las piezas comidas salen de una RESTA** —lo que había al empezar menos lo que
+  hay— y por eso **mienten con una coronación**: un peón blanco coronado en dama
+  deja al blanco con 7 peones y 2 damas, así que la resta dice "el negro le comió
+  un peón" y no ve la dama de más. Mirando una sola posición no hay forma de
+  distinguirlo; la alternativa sería recorrer la partida entera para cada
+  posición. Es la misma aproximación que hacen lichess y chess.com y se elige a
+  sabiendas. Hay una prueba que la deja escrita.
+- **La diferencia de material sale del TABLERO**, sumando lo que hay de cada
+  lado, y esa sí es exacta con coronaciones. La fila de piezas cuenta la historia
+  y el número dice el estado: por eso no se deriva uno del otro.
+
+**La tira lee el MISMO FEN que el tablero**, guardado en una variable sola
+(`fenVisto`, y `FEN_VISTO` para poder volver de la previa). Sin eso las dos se
+podían desincronizar y la tira contaría las comidas de una posición que no es la
+que se ve. La previa también la mueve, por lo mismo.
+
+**El "+3" no entraba al lado de las piezas** y se caía a un renglón propio: la
+tira medía 108 px y son 100 de las cinco piezas más el hueco más el número. Son
+132. Se vio en la captura.
+
+**Y apareció otra vez el recorte silencioso de la barra de evaluación**, dos
+versiones seguidas: "+10.00" no entra en 36 px a 9,5 y la barra tiene
+`overflow: hidden`, así que lo que sobra desaparece sin avisar. Ensancharla otra
+vez no alcanzaba —"-100.00" son siete caracteres—, así que el número se achica a
+8 px cuando pasa de cinco. El arnés ahora lo mide en dos jugadas, una con el
+número corto y otra con el largo.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3377,7 +3426,7 @@ Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
 usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
 propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 
-**Hechas: 9 de 13** (v0.80 a v0.86, §4duovicies a §4sexvicies)
+**Hechas: 10 de 13** (v0.80 a v0.87, §4duovicies a §4septvicies)
 
 | | |
 |---|---|
@@ -3390,22 +3439,21 @@ propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 | ✅ | Arrastrar la pieza |
 | ✅ | Flechas y casillas con el botón derecho |
 | ✅ | La barra de evaluación vertical por defecto en PC |
+| ✅ | Las piezas comidas al costado del tablero |
 
 **Lo que falta, en el orden en que conviene hacerlo:**
 
-1. **Las piezas comidas al costado del tablero.** Se derivan del FEN, no cuesta
-   motor. Es un elemento visual nuevo: **dibujarlo y mostrarlo antes**.
-2. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
+1. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
    elemento que mejora siendo ancho. **No es tan barata como suena**: la curva
    vive adentro de `.principal`, y para cruzar las dos columnas hay que sacarla
    a una fila propia de la grilla, lo que la deja DEBAJO de los cuadritos y los
    botones. O sea que cambia el orden de la vista que se decidió en la v0.74.
    Dibujarlo y que lo mire el usuario.
-3. **La segunda y tercera mejor del motor, al lado del tablero.** La más
+2. **La segunda y tercera mejor del motor, al lado del tablero.** La más
    ambiciosa y la que más convertiría esto en una app de análisis. El dato ya
    viaja: `evs[i].segunda` y la pasada MultiPV híbrida, que hoy solo se usan
    para decidir si la jugada "era la única".
-4. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
+3. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
    INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
    arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
    también es primero, así que moverla no contradice esa razón — pero es

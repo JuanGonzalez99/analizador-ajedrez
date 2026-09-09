@@ -8,7 +8,7 @@ import { Chess } from "../chess.js";
 const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
 
 test("el bloque exporta lo que las pruebas necesitan", () => {
-  for (const n of ["categorizar", "derivarFilas", "quedaComible", "winPct", "mediana"])
+  for (const n of ["categorizar", "derivarFilas", "quedaComible", "winPct", "mediana", "piezasComidas"])
     assert.ok(n in A, `falta ${n}`);
 });
 
@@ -2606,6 +2606,38 @@ test("las reglas de hover no existen para el dedo", () => {
     "la jugada bajo el mouse se subraya, no se rellena");
   assert.ok(!/\.jugadas > div:hover \{ background/.test(html),
     "y el renglón no se tiñe: ese tono ya significa 'acá'");
+});
+
+test("las piezas comidas salen del FEN", () => {
+  /* la posición inicial: no falta nada y están parejos */
+  const a = A.piezasComidas(new Chess().fen());
+  assert.deepEqual(a, { w: {}, b: {}, dif: 0 });
+  /* una dama negra de menos: la comió el blanco, y son 9 de diferencia */
+  const b = A.piezasComidas("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+  assert.deepEqual(b.b, { q: 1 }, "falta la dama negra");
+  assert.deepEqual(b.w, {}, "y al blanco no le falta nada");
+  assert.equal(b.dif, 9, "nueve de ventaja para el blanco");
+  /* de los dos lados a la vez, y el signo del que va perdiendo */
+  const c = A.piezasComidas("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPP1/RNBQKBN1 w Qkq - 0 1");
+  assert.deepEqual(c.w, { r: 1, p: 1 }, "al blanco le falta torre y peón");
+  assert.equal(c.dif, -6, "y va perdiendo por seis");
+});
+
+test("las comidas mienten con una coronación, y se sabe", () => {
+  /* Un peón blanco coronado en dama: el blanco queda con 7 peones y 2 damas.
+     La RESTA dice "el negro le comió un peón" y no ve la dama de más, porque
+     mirando una sola posición no hay forma de distinguirlo. Es la misma
+     aproximación de lichess. La DIFERENCIA, en cambio, sale del tablero y da
+     bien: por eso los dos números salen de lugares distintos. */
+  const fen = "Qnbqkbnr/pppppppp/8/8/8/8/1PPPPPPP/RNBQKBNR b KQk - 0 1";
+  const c = A.piezasComidas(fen);
+  assert.deepEqual(c.w, { p: 1 }, "la resta dice que le falta un peón");
+  assert.ok(!c.w.q, "y no ve la dama de más");
+  /* dos damas y siete peones contra una dama, ocho peones y una torre de menos */
+  /* el blanco tiene una dama de más (+9) y un peón de menos (-1), y al negro le
+     falta la torre de a8 (+5) */
+  assert.deepEqual(c.b, { r: 1 }, "al negro le falta la torre");
+  assert.equal(c.dif, 9 - 1 + 5, "la diferencia sí sale del tablero");
 });
 
 test("la columna está centrada y no clavada a la izquierda", () => {
