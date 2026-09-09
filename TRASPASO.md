@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.77**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.78**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2243,6 +2243,101 @@ anotado para que nadie mida esto de nuevo esperando otra cosa.
   §4octodecies).
 - **Los doblados que le quedan AL RIVAL** no se dicen, solo los propios.
 
+## 4vicies. Los cinco caros, y la tarjeta que salió más barata (v0.78)
+
+Las cinco que faltaban de lo acordado con el usuario. Las tres primeras miran
+la posición y cargan FENs; las dos últimas usan datos que ya viajaban en la fila.
+
+### Atrapar una pieza
+
+`estaAtrapada(fen, sq)` pide **las dos cosas**: que la pieza esté comible donde
+está, y que **no tenga ninguna casilla adonde ir** donde deje de estarlo. Eso es
+exactamente lo que dice la frase —"no tiene salida"— y ni una palabra más: no
+promete que no haya otra forma de salvarla (defenderla, tapar, contraatacar).
+
+Quién contesta si una casilla es segura es `quedaComible`, y es el que sabe la
+distinción que el traspaso venía avisando: **una casilla defendida no es lo
+mismo que una casilla atacada**.
+
+**Y una pieza CLAVADA no está atrapada, está clavada.** Esto se vio en la
+pantalla, no en una prueba: la jugada 10 de la partida de prueba decía "Atrapa
+el caballo de e4" cuando lo que pasaba era que estaba clavado contra su rey. Una
+clavada **no tiene salidas legales**, así que cumplía la definición por el
+motivo equivocado, y encima ya hay una frase que lo dice mejor. Se descarta con
+`estaClavada` —no con la lista `clavadas`, que solo trae las nuevas: una pieza
+clavada desde hace tres jugadas sigue sin estar atrapada—.
+
+### Las dos descubiertas, y por qué hizo falta geometría propia
+
+**chess.js no puede contestar si una pieza ataca al rey**: `moves()` nunca
+genera la captura del rey, que es justo el caso que hace falta para saber si el
+jaque lo da la pieza que se movió o una que estaba tapada detrás. Y el truco de
+`estaClavada` —sacar la pieza del tablero y ver si queda jaque— **acá no sirve**:
+sacarla también podría abrir la línea de otra pieza mía, y eso daría un
+descubierto que no existe.
+
+Por eso `ataca(tablero, desde, hasta)`, que es geometría pura y camina la línea
+mirando bloqueos. Con eso:
+
+- **jaque descubierto** = hay jaque y `ataca(donde, reyRival)` es falso;
+- **ataque a la descubierta** = una pieza mía que antes no atacaba y ahora sí,
+  **con la casilla que se dejó justo en el medio** de esa línea (`enElMedio`).
+  Sin la condición del medio, cualquier ataque nuevo se llamaría descubierta.
+  Y solo cuenta contra algo que vale más, que es el mismo criterio de las
+  amenazadas: atacar algo que vale igual o menos es una oferta de cambio.
+
+### El error del rival, y la condición del usuario
+
+`El rival acababa de errar: Bb5 lo cobraba.` La condición la puso él y es la que
+hace la frase: **solo si dice cómo se cobraba**. Cuando la jugada que se hizo ya
+era la mejor no hay nada que ofrecer y la frase cambia a `El rival erró y lo
+cobraste.`
+
+**Solo se dice en las jugadas del usuario.** La frase habla del "rival" del que
+movió: mirando una jugada del rival, el que erró antes es el usuario, y "el
+rival acababa de errar" diría exactamente lo contrario de lo que pasó. Con el
+lado desconocido —un PGN pegado— tampoco se dice.
+
+Y **la imprecisión no cuenta como error**: "el rival acababa de errar" por una
+imprecisión de 0,3 es prometer más de lo que pasó. Solo error, error grave y
+omisión.
+
+### Qué hacía la mejor
+
+`La mejor era Bb5, que se llevaba un caballo.` El dato ya viajaba: `f.cap` lo
+llena `capturaBuena`, que trae la pieza que se comía **y** la ganancia neta, ya
+restada la recaptura. Por eso son dos frases y no una: *"se llevaba el caballo"*
+cuando nadie recapturaba y *"ganaba 2 peones en el cambio"* cuando sí. Si la
+mejor no era una captura buena no se agrega nada: no hay dato que decir.
+
+**Y no se repite con el error del rival**: si la llegada ya nombró la mejor,
+decir después "La mejor era Bb5" es el eco que la v0.44 le sacó a las leyendas.
+
+### La tarjeta salió MÁS BARATA que antes, y ese es el número que importa
+
+Sumar tres conceptos que cargan FENs debería haberla encarecido. Midiendo, lo
+caro no era ninguno de ellos: era `colgadasDe`, que llama a `quedaComible` por
+**cada pieza del color** y se llamaba dos veces por tarjeta.
+
+**Una pieza que no ataca nadie no puede ser comible**, y eso se contesta con
+geometría (`atacadaPor`) antes de cargar un solo FEN. Medido sobre la partida de
+prueba entera, con el mismo arnés:
+
+| | por tarjeta | la peor |
+|---|---|---|
+| v0.77, en vivo | 52,8 ms | 95 ms |
+| v0.78, con los tres conceptos nuevos | **21,6 ms** | **51 ms** |
+
+**2,4 veces más rápida**, con más para decir. El filtro no cambia ni un
+resultado y eso se verificó, no se supuso: `colgadasDe` de las dos versiones
+sobre las cuatro partidas de prueba, **170 llamadas comparadas, 0 distintas**.
+
+Por qué el filtro no se puede comer un caso: toda captura que chess.js genera
+—incluida la de peón que corona— cumple `ataca`. Al revés sí sobra alguna (la
+captura al paso apunta a otra casilla), y sobrar no importa, porque lo que pasa
+el filtro lo decide igual `quedaComible`. Hay una prueba con la captura que
+corona, que es la que menos se parece a las otras.
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -2894,10 +2989,9 @@ no tener que leer la sección entera para saber qué hay.
 8. **Cuánto habla la tarjeta** (v0.77): corta, media o larga, el otro dial. En
    §4novodecies, con lo que mide cada una. Ojo que corta y media son iguales
    hasta que la v0.78 sume la segunda frase de "cómo llegaste".
-9. **La tanda cara de los conceptos** (v0.78): pieza atrapada con su medición,
-   jaque descubierto, ataque a la descubierta, "el rival acababa de errar y así
-   se cobraba" y "la mejor era X, que hacía tal cosa". Las cinco están
-   acordadas con el usuario y ninguna está escrita.
+9. ~~**La tanda cara de los conceptos**~~ **HECHA en la v0.78**: las cinco, en
+   §4vicies. Y con ellas la tarjeta quedó 2,4 veces más rápida que antes,
+   porque medir dónde estaba el costo mostró que no estaba en lo nuevo.
 
 **Del resto, lo que sigue vivo:** comparar dos jugadores y las dos estadísticas
 de reloj que faltan (§7), el listado de partidas sin rediseñar y la pantalla de

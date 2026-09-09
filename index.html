@@ -393,7 +393,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.77 · 08-09";
+  window.VERSION = "v0.78 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1734,10 +1734,22 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      el tablero (v0.70). Hay una prueba que las mantiene alineadas. */
   const o = obs || {};
   const fuertes = [], menores = [];
+  /* ATRAPAR una pieza es lo más caro que puede decir la tarjeta, así que va
+     primera: el rival tiene que resolverlo ya mismo o la pierde. */
+  if (o.atrapada)
+    fuertes.push({ txt: `Atrapa ${piezaEn(o.atrapada.pieza, o.atrapada.sq)}: no tiene salida.`,
+                   marca: "Atrapa", sq: o.atrapada.sq });
+  if (o.descubierto)
+    fuertes.push({ txt: `Es un jaque descubierto: lo da ${piezaEn(o.descubierto.pieza, o.descubierto.sq)}.`,
+                   marca: "jaque descubierto", sq: o.descubierto.sq });
   if (o.clavadas && o.clavadas.length) {
     const c = o.clavadas[0];
     fuertes.push({ txt: `Clava ${piezaEn(c.pieza, c.sq)}.`, marca: "Clava", sq: c.sq });
   }
+  if (o.descubierta)
+    fuertes.push({ txt: `Descubre ${piezaEn(o.descubierta.pieza, o.descubierta.sq)} sobre ` +
+                        `${piezaEn(o.descubierta.suya, o.descubierta.sobre)}.`,
+                   marca: "Descubre", sq: [o.descubierta.sq, o.descubierta.sobre] });
   if (o.pasado)
     fuertes.push({ txt: `${mayus(pieza)} de ${donde} queda pasado.`,
                    marca: "pasado", sq: donde });
@@ -1797,8 +1809,22 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   /* CÓMO LLEGASTE A LA JUGADA es otra familia y no habla de la posición: por
      eso puede tener ranura propia (el dial de abajo). Hoy tiene un solo
      miembro; la v0.78 le suma "el rival acababa de errar". */
-  const llegada = (ctx && ctx.salioDelLibro)
-    ? { txt: `Acá se terminó la teoría.`, marca: "la teoría" } : null;
+  const c = ctx || {};
+  /* EL ERROR DEL RIVAL solo si dice CÓMO SE COBRABA —condición del usuario—:
+     avisar que erró sin decir con qué no le sirve a nadie. Cuando la jugada
+     que se hizo YA era la mejor, `mejorSan` viene en null y no hay nada que
+     ofrecer: ahí la frase cambia y dice que se cobró. */
+  /* Y SOLO EN LAS JUGADAS DEL USUARIO. La frase habla del "rival" del que
+     movió: mirando una jugada del rival, el que erró antes es el usuario, y
+     "el rival acababa de errar" diría exactamente lo contrario de lo que pasó.
+     Con el lado desconocido —un PGN pegado— tampoco se dice: no se puede. */
+  const llegada = c.rivalErro && mio && mejorSan
+      ? { txt: `El rival acababa de errar: ${mejorSan} lo cobraba.`,
+          marca: mejorSan, uci: f.mejor }
+    : c.rivalErro && mio
+      ? { txt: `El rival erró y lo cobraste.`, marca: "lo cobraste" }
+    : c.salioDelLibro
+      ? { txt: `Acá se terminó la teoría.`, marca: "la teoría" } : null;
 
   /* CUÁNTAS RANURAS — dial temporal de la v0.77. Con una, todo compite por el
      mismo lugar y "cómo llegaste" entra a la misma cola. Con dos, la posición y
@@ -1840,8 +1866,24 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      Y no se repite: cuando había un mate, la frase de arriba YA nombró la
      jugada que lo daba, y "Había mate forzado en 8, con Rd5. La mejor era Rd5."
      es la clase de eco que la v0.44 le sacó a las leyendas. */
-  const alternativa = (mejorSan && !(habia && habia.txt.includes(mejorSan)))
-    ? { txt: `La mejor era ${mejorSan}.`, marca: mejorSan, uci: f.mejor } : null;
+  /* QUÉ HACÍA LA MEJOR (v0.78). El dato ya viaja en la fila: `f.cap` lo llenó
+     `capturaBuena`, que trae la pieza que se comía y la ganancia NETA, ya
+     restada la recaptura. Por eso son dos frases y no una: "se llevaba el
+     caballo" cuando nadie recapturaba, y "ganaba 2 peones en el cambio" cuando
+     sí. Si la mejor no era una captura buena, no se agrega nada: no hay dato. */
+  const queHacia = (f.cap && mejorSan && f.cap.san === mejorSan)
+    ? (f.cap.gana >= (VALOR[f.cap.comida] || 0)
+        ? `, que se llevaba ${PIEZA_UN[f.cap.comida] || "una pieza"}`
+        : `, que ganaba ${f.cap.gana} ${f.cap.gana === 1 ? "peón" : "peones"} en el cambio`)
+    : "";
+  /* Y NO SE REPITE con la frase de arriba: si la llegada ya nombró la mejor
+     —"el rival acababa de errar: Bb5 lo cobraba"—, decir después "la mejor era
+     Bb5" es el eco que la v0.44 le sacó a las leyendas. Se mira la llegada que
+     de verdad está en juego, que con una sola ranura puede no estar. */
+  const llegadaEnJuego = ranuras >= 2 ? llegada : (posicional === llegada ? llegada : null);
+  const alternativa = (mejorSan && !(habia && habia.txt.includes(mejorSan)) &&
+                       !(llegadaEnJuego && llegadaEnJuego.txt.includes(mejorSan)))
+    ? { txt: `La mejor era ${mejorSan}${queHacia}.`, marca: mejorSan, uci: f.mejor } : null;
 
   /* 8. LA RESPUESTA DEL RIVAL. Sale de una evaluación que ya estaba hecha —la
      de la posición siguiente— y es lo que convierte la tarjeta en el comienzo
@@ -1897,12 +1939,23 @@ function colgadasDe(fen, color) {
   const mueve = fen.split(" ")[1];
   const f = mueve === color ? conElTurnoDadoVuelta(fen) : fen;
   const tablero = new Chess(fen).board();
+  const contra = color === "w" ? "b" : "w";
   const out = [];
   for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
     const p = tablero[r][c];
     /* el rey no: no se puede capturar, y "el rey queda comible" es jaque mate */
     if (!p || p.color !== color || p.type === "k") continue;
     const sq = "abcdefgh"[c] + (8 - r);
+    /* FILTRO GEOMÉTRICO ANTES DE CARGAR FENs (v0.78). `quedaComible` carga
+       varios FEN por casilla y esto se llama por CADA pieza del color: era, de
+       lejos, lo más caro de la tarjeta. Una pieza que NO ataca nadie no puede
+       ser comible, y eso se contesta con geometría pura.
+
+       Nunca se puede escapar un caso por acá: toda captura que chess.js genera
+       —incluidas las de peón que coronan— cumple `ataca`. Al revés sí sobra
+       alguno (la captura al paso apunta a otra casilla), y sobrar no importa:
+       lo que pasa el filtro lo decide igual `quedaComible`. */
+    if (!atacadaPor(tablero, sq, contra)) continue;
     if (quedaComible(f, sq)) out.push({ sq, pieza: p.type });
   }
   /* la más cara primero: si hay dos, la que duele es esa */
@@ -1953,6 +2006,97 @@ const columnaAbierta = (tablero, sq) => {
   const col = "abcdefgh".indexOf(sq[0]);
   return !tablero.some(fila => fila[col] && fila[col].type === "p");
 };
+
+/* ¿La pieza parada en `desde` ataca la casilla `hasta`, con el tablero como
+   está? Es geometría pura, y mira los bloqueos caminando la línea.
+
+   EXISTE PORQUE chess.js NO LO PUEDE CONTESTAR: `moves()` nunca genera la
+   captura del rey, que es justo el caso que hace falta para saber si el jaque
+   lo da la pieza que se movió o una que estaba tapada detrás. El truco de sacar
+   la pieza del tablero —el de `estaClavada`— acá no sirve: sacarla también
+   podría abrir la línea de OTRA pieza mía, y eso daría un descubierto que no
+   existe. */
+function ataca(tablero, desde, hasta) {
+  const cd = "abcdefgh".indexOf(desde[0]), fd = 8 - +desde[1];
+  const ch = "abcdefgh".indexOf(hasta[0]), fh = 8 - +hasta[1];
+  if (cd < 0 || ch < 0 || (cd === ch && fd === fh)) return false;
+  const p = tablero[fd] && tablero[fd][cd];
+  if (!p) return false;
+  const dc = ch - cd, df = fh - fd, ac = Math.abs(dc), af = Math.abs(df);
+  if (p.type === "n") return (ac === 1 && af === 2) || (ac === 2 && af === 1);
+  if (p.type === "k") return ac <= 1 && af <= 1;
+  /* el peón ataca en diagonal y SOLO hacia adelante: para las blancas, hacia
+     la fila 8, que en `board()` es el índice que baja */
+  if (p.type === "p") return ac === 1 && df === (p.color === "w" ? -1 : 1);
+  const recta = dc === 0 || df === 0, diagonal = ac === af;
+  if (!(p.type === "q" ? (recta || diagonal)
+                       : p.type === "r" ? recta
+                       : p.type === "b" ? diagonal : false)) return false;
+  const pc = Math.sign(dc), pf = Math.sign(df);
+  for (let c = cd + pc, f = fd + pf; c !== ch || f !== fh; c += pc, f += pf)
+    if (tablero[f][c]) return false;
+  return true;
+}
+
+/* ¿Alguna pieza de `color` ataca esta casilla? Es el filtro barato que va antes
+   de cualquier cosa que cargue un FEN. */
+function atacadaPor(tablero, casilla, color) {
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const q = tablero[r][c];
+    if (q && q.color === color && ataca(tablero, "abcdefgh"[c] + (8 - r), casilla))
+      return true;
+  }
+  return false;
+}
+
+/* ¿La casilla `medio` está en la línea que va de `desde` a `hasta`? Es lo que
+   convierte un ataque nuevo en un ataque DESCUBIERTO: la pieza que se fue
+   estaba justo tapando esa línea. Sin esto, cualquier ataque que apareció por
+   otro motivo se llamaría descubierta. */
+function enElMedio(desde, medio, hasta) {
+  const c = t => "abcdefgh".indexOf(t[0]), f = t => 8 - +t[1];
+  const dc = c(hasta) - c(desde), df = f(hasta) - f(desde);
+  if (dc !== 0 && df !== 0 && Math.abs(dc) !== Math.abs(df)) return false;
+  const pc = Math.sign(dc), pf = Math.sign(df);
+  for (let x = c(desde) + pc, y = f(desde) + pf; x !== c(hasta) || y !== f(hasta);
+       x += pc, y += pf)
+    if (x === c(medio) && y === f(medio)) return true;
+  return false;
+}
+
+/* ¿La pieza de `sq` está atrapada? Dos condiciones, y las dos hacen falta:
+   está comible DONDE ESTÁ, y no tiene ninguna casilla adonde ir donde deje de
+   estarlo. Eso es exactamente lo que dice la frase —"no tiene salida"— y no
+   más: no promete que no haya OTRA forma de salvarla (defenderla, contraatacar,
+   tapar), solo que la pieza sola no se salva moviéndose.
+
+   Cada salida cuesta un FEN cargado, así que se pregunta por UNA sola pieza
+   —la más cara de las que ya están comibles— y nunca por peones ni por el rey.
+   `quedaComible` es el que sabe que una casilla defendida no es lo mismo que
+   una casilla atacada, que es donde esto se equivoca fácil. */
+function estaAtrapada(fen, sq) {
+  const j = new Chess(fen);
+  const p = j.get(sq);
+  if (!p || p.type === "p" || p.type === "k") return false;
+  if (j.turn() !== p.color) return false;
+  const salidas = j.moves({ verbose: true }).filter(m => m.from === sq);
+  if (!salidas.length) return true;
+  /* El mismo filtro barato que `colgadasDe`: una casilla que no ataca nadie es
+     una salida, y eso es geometría. Mira el tablero de ANTES de la salida, y
+     por eso puede fallar para el lado seguro: si la pieza al moverse le DESTAPA
+     la línea a quien la ataca, acá figura como libre y la frase no se dice.
+     Callarse de más es el error que se banca; decir "no tiene salida" cuando sí
+     la tiene, no. */
+  const tablero = j.board();
+  const contra = p.color === "w" ? "b" : "w";
+  for (const m of salidas) if (!atacadaPor(tablero, m.to, contra)) return false;
+  for (const m of salidas) {
+    const j2 = new Chess(fen);
+    j2.move(m);
+    if (!quedaComible(j2.fen(), m.to)) return false;
+  }
+  return true;
+}
 
 /* Cuántos peones de un color hay en una columna. Lo usan las tres frases de
    estructura —aislado, doblados y semiabierta—, que preguntan lo mismo con
@@ -2075,7 +2219,9 @@ function observarJugada(f, fenAntes = null) {
                   pasadoContra: null, pareja: false, septima: null,
                   sinDamas: false, conectadas: null, plantado: null,
                   corona: false, enroque: null, pierdeEnroque: null,
-                  legalesRival: null };
+                  legalesRival: null,
+                  /* los caros, de la v0.78 */
+                  atrapada: null, descubierto: null, descubierta: null };
   if (!f || !f.fen || !f.uci) return vacio;
   const donde = f.uci.slice(2, 4), deDonde = f.uci.slice(0, 2);
   try {
@@ -2197,10 +2343,76 @@ function observarJugada(f, fenAntes = null) {
     const legalesRival = jr.turn() === rival && !jr.in_check()
                        ? jr.moves().length : null;
 
+    /* 5. LOS TRES CAROS (v0.78). Estos sí cargan FENs, y por eso están acá
+       abajo y acotados: la tarjeta se pinta UNA vez, el barrido de un año no
+       los paga nunca. */
+
+    /* ATRAPADA: se pregunta por UNA sola pieza, la más cara de las del rival
+       que ya están comibles, y nunca por un peón. Cada salida cuesta un FEN.
+       La comparación contra ANTES necesita el turno dado vuelta: en `fenAntes`
+       mueve el otro, y `estaAtrapada` pide que la pieza sea del que mueve. */
+    /* UNA PIEZA CLAVADA NO ESTÁ ATRAPADA, y esto se vio en la pantalla: la
+       jugada 10 de la partida de prueba decía "Atrapa el caballo de e4" cuando
+       lo que pasaba era que estaba CLAVADO. Una clavada no tiene salidas
+       legales, así que cumple la definición por el motivo equivocado, y encima
+       ya tenemos una frase que lo dice mejor. Se pregunta con `estaClavada` y
+       no con la lista `clavadas`, que solo trae las NUEVAS: una pieza clavada
+       desde hace tres jugadas sigue sin estar atrapada. */
+    const candidata = colgadasDe(f.fen, rival)
+      .find(c => c.pieza !== "p" && !estaClavada(f.fen, c.sq, reyRival));
+    let atrapada = null;
+    if (candidata && estaAtrapada(f.fen, candidata.sq)) {
+      let yaEstaba = false;
+      if (fenAntes) {
+        try { yaEstaba = estaAtrapada(conElTurnoDadoVuelta(fenAntes), candidata.sq); }
+        catch (e) { yaEstaba = false; }
+      }
+      if (!yaEstaba) atrapada = candidata;
+    }
+
+    /* JAQUE DESCUBIERTO: hay jaque y NO lo da la pieza que se movió. En `f.fen`
+       mueve el rival, así que `in_check` es el jaque en su contra. */
+    let descubierto = null;
+    if (reyRival && new Chess(f.fen).in_check() && !ataca(tablero, donde, reyRival)) {
+      for (let r = 0; r < 8 && !descubierto; r++) for (let c = 0; c < 8; c++) {
+        const q = tablero[r][c];
+        if (!q || q.color !== mio) continue;
+        const sq = "abcdefgh"[c] + (8 - r);
+        if (sq !== donde && ataca(tablero, sq, reyRival)) {
+          descubierto = { sq, pieza: q.type }; break;
+        }
+      }
+    }
+
+    /* ATAQUE A LA DESCUBIERTA: una pieza mía que ANTES no atacaba y ahora sí,
+       con la casilla que se dejó JUSTO EN EL MEDIO de la línea. Sin lo del
+       medio, cualquier ataque nuevo se llamaría descubierta. Y solo cuenta
+       contra algo que vale más que la que ataca, que es el mismo criterio de
+       las amenazadas: atacar algo que vale igual o menos es una oferta de
+       cambio, no una amenaza. */
+    let descubierta = null;
+    if (tAntes) {
+      for (let r = 0; r < 8 && !descubierta; r++) for (let c = 0; c < 8 && !descubierta; c++) {
+        const q = tablero[r][c];
+        if (!q || q.color !== mio || q.type === "k" || q.type === "n" || q.type === "p") continue;
+        const sq = "abcdefgh"[c] + (8 - r);
+        if (sq === donde) continue;
+        for (let r2 = 0; r2 < 8 && !descubierta; r2++) for (let c2 = 0; c2 < 8; c2++) {
+          const v = tablero[r2][c2];
+          if (!v || v.color !== rival || v.type === "k") continue;
+          if ((VALOR[v.type] || 0) <= (VALOR[q.type] || 0)) continue;
+          const sv = "abcdefgh"[c2] + (8 - r2);
+          if (!ataca(tablero, sq, sv) || ataca(tAntes, sq, sv)) continue;
+          if (!enElMedio(sq, deDonde, sv)) continue;
+          descubierta = { sq, pieza: q.type, sobre: sv, suya: v.type }; break;
+        }
+      }
+    }
+
     return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
              semiabierta, aislado, doblados, pasadoContra, pareja, septima,
              sinDamas, conectadas, plantado, corona, enroque, pierdeEnroque,
-             legalesRival };
+             legalesRival, atrapada, descubierto, descubierta };
   } catch (e) { return vacio; }
 }
 
@@ -4952,11 +5164,19 @@ function pintarRevision() {
      que ninguna otra cosa, así que vale en los dos modos— y así el dato no
      necesita un campo nuevo en la fila. */
   const salioDelLibro = IDX > 0 && R.filas[IDX - 1].cat === "libro" && f.cat !== "libro";
+  /* EL RIVAL ACABABA DE ERRAR: la fila anterior, que es del otro color por
+     definición —las filas alternan—, cayó en una de las tres categorías malas.
+     La imprecisión NO cuenta: "el rival acababa de errar" por una imprecisión
+     de 0,3 es prometer más de lo que pasó. */
+  const antesF = IDX > 0 ? R.filas[IDX - 1] : null;
+  const rivalErro = !!antesF && antesF.turno !== f.turno &&
+                    ["error", "grave", "omision"].includes(antesF.cat);
   const partes = partesDeLaExplicacion(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
                                        ladoUsr ? f.turno === ladoUsr : null,
                                        sanDeUci(f.fen, f.mejorRival),
                                        observarJugada(f, fenDeLaJugada(IDX)),
-                                       { ranuras: ranurasDeLaExplicacion(), salioDelLibro });
+                                       { ranuras: ranurasDeLaExplicacion(),
+                                         salioDelLibro, rivalErro });
   const explicado = partes.map(p => p.txt).join(" ");
   const color = `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;

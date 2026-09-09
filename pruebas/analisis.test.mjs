@@ -2598,6 +2598,102 @@ test("torres conectadas: devuelve las casillas, y nada en el medio", () => {
   assert.equal(A.torresConectadas(tabl("4k3/8/8/8/8/8/8/K2R1N1R w - - 0 1"), "w"), null);
 });
 
+/* --- los tres caros de la v0.78, con la posición verificada con chess.js --- */
+
+/* Juega `uci` sobre `antes` y devuelve lo que vio `observarJugada`. Es el mismo
+   camino que la tarjeta: la fila se arma con lo que devuelve chess.js, así que
+   ninguna posición se afirma de memoria (§10). */
+const mirar = (antes, uci) => {
+  const j = new Chess(antes);
+  const m = j.move({ from: uci.slice(0, 2), to: uci.slice(2, 4) });
+  assert.ok(m, `la jugada ${uci} tiene que ser legal en ${antes}`);
+  return A.observarJugada({ fen: j.fen(), uci, turno: m.color, pieza: m.piece,
+                            san: m.san }, antes);
+};
+
+test("el filtro geométrico no se come la captura que corona", () => {
+  /* Desde la v0.78, `colgadasDe` pregunta primero con geometría si la casilla
+     está atacada, y recién ahí carga FENs: era lo más caro de la tarjeta. El
+     caso que hay que cuidar es la captura de peón que ADEMÁS corona, porque es
+     una captura que no se parece a las otras. La torre de b8 se la lleva axb8,
+     y nadie recaptura. */
+  assert.deepEqual(A.colgadasDe("1r2k3/P7/8/8/8/8/8/4K3 w - - 0 1", "b"),
+                   [{ sq: "b8", pieza: "r" }]);
+});
+
+test("atrapada: está comible y no tiene adónde ir", () => {
+  /* caballo negro en a8; el peón b7 se lo lleva y las dos salidas —b6 y c7—
+     las cubren las torres. Con una sola torre, c7 es segura y no está atrapado. */
+  assert.equal(A.estaAtrapada("n3k3/1P6/8/8/8/8/8/1RR1K3 b - - 0 1", "a8"), true);
+  assert.equal(A.estaAtrapada("n3k3/1P6/8/8/8/8/8/1R2K3 b - - 0 1", "a8"), false);
+});
+
+test("atrapada: solo si la atrapó ESTA jugada", () => {
+  /* Rhc1 le tapa la última salida: antes tenía c7 */
+  assert.deepEqual(mirar("n3k3/1P6/8/8/8/6K1/8/1R5R w - - 0 1", "h1c1").atrapada,
+                   { sq: "a8", pieza: "n" });
+  /* y una jugada cualquiera con el caballo ya atrapado no se lo atribuye */
+  assert.equal(mirar("n3k3/1P6/8/8/8/8/8/1RR1K3 w - - 0 1", "e1f1").atrapada, null);
+});
+
+test("una pieza CLAVADA no está atrapada, está clavada", () => {
+  /* Lo vio la pantalla: "Atrapa el caballo de e4" cuando estaba clavado. Una
+     clavada no tiene salidas legales, así que cumplía la definición por el
+     motivo equivocado, y ya hay una frase que lo dice mejor. */
+  const o = mirar("4k3/8/8/8/4n3/8/8/R6K w - - 0 1", "a1e1");
+  assert.equal(o.atrapada, null);
+  assert.deepEqual(o.clavadas, [{ sq: "e4", pieza: "n" }]);
+});
+
+test("jaque descubierto: el jaque no lo da la pieza que se movió", () => {
+  /* el alfil se va de e4 a a8 y el jaque lo pasa a dar la torre de e1 */
+  assert.deepEqual(mirar("4k3/8/8/8/4B3/8/8/4R2K w - - 0 1", "e4a8").descubierto,
+                   { sq: "e1", pieza: "r" });
+  /* y un jaque de la propia pieza que se movió NO es descubierto */
+  assert.equal(mirar("4k3/8/8/8/8/8/8/R6K w - - 0 1", "a1a8").descubierto, null);
+});
+
+test("ataque a la descubierta: la casilla que se dejó estaba en el medio", () => {
+  /* el caballo se va de d4 y deja a la torre de d1 mirando la dama de d8 */
+  assert.deepEqual(mirar("3qk3/8/8/8/3N4/8/8/3RK3 w - - 0 1", "d4f5").descubierta,
+                   { sq: "d1", pieza: "r", sobre: "d8", suya: "q" });
+  /* la misma torre y la misma dama, pero el caballo NO estaba tapando esa
+     línea: se movió de a4, así que no descubrió nada */
+  assert.equal(mirar("3qk3/8/8/8/N7/8/8/3RK3 w - - 0 1", "a4b6").descubierta, null);
+});
+
+test("la mejor dice QUÉ HACÍA, y no se repite con el error del rival", () => {
+  const base = { fen: "4k3/8/8/1n6/8/8/8/4KB2 b - - 0 1", uci: "e2e4", turno: "w",
+                 pieza: "p", san: "e4", perdida: 0, evalBlancas: 0, franja: 0,
+                 mejor: "f1b5" };
+  const txt = (cap, ctx) => A.partesDeLaExplicacion({ ...base, cap }, "Bxb5", true,
+                                                    null, null, ctx).map(p => p.txt).join(" ");
+  /* sin recaptura se dice la pieza; con recaptura, la ganancia NETA */
+  assert.equal(txt({ san: "Bxb5", gana: 3, comida: "n" }, { ranuras: 2 }),
+               "La mejor era Bxb5, que se llevaba un caballo.");
+  assert.equal(txt({ san: "Bxb5", gana: 2, comida: "r" }, { ranuras: 2 }),
+               "La mejor era Bxb5, que ganaba 2 peones en el cambio.");
+  /* si la mejor no era una captura buena no se inventa nada */
+  assert.equal(txt(null, { ranuras: 2 }), "La mejor era Bxb5.");
+  /* y con el error del rival, la mejor se nombra UNA sola vez */
+  const eco = txt({ san: "Bxb5", gana: 3, comida: "n" }, { ranuras: 2, rivalErro: true });
+  assert.equal(eco, "El rival acababa de errar: Bxb5 lo cobraba.");
+  assert.ok(!eco.includes("La mejor era"), "sin eco");
+});
+
+test("el error del rival solo se dice en las jugadas del usuario", () => {
+  /* mirando una jugada del rival, el que erró antes es el usuario: "el rival
+     acababa de errar" diría exactamente lo contrario de lo que pasó */
+  const base = { fen: "4k3/8/8/1n6/8/8/8/4KB2 b - - 0 1", uci: "e2e4", turno: "w",
+                 pieza: "p", san: "e4", perdida: 0, evalBlancas: 0, franja: 0,
+                 mejor: "f1b5" };
+  const conLado = mio => A.partesDeLaExplicacion(base, "Bxb5", mio, null, null,
+                           { ranuras: 2, rivalErro: true }).map(p => p.txt).join(" ");
+  assert.ok(conLado(true).includes("El rival acababa de errar"));
+  assert.ok(!conLado(false).includes("acababa de errar"), "no en las del rival");
+  assert.ok(!conLado(null).includes("acababa de errar"), "ni con el lado desconocido");
+});
+
 test("los enroques se leen del propio FEN", () => {
   assert.deepEqual(A.enroquesDe("4k3/8/8/8/8/8/8/4K3 w KQkq - 0 1", "w"),
                    { corto: true, largo: true });
