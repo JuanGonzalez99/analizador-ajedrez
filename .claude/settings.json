@@ -5,5 +5,19 @@
       "mcp__github",
       "mcp__github__*"
     ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "git diff --quiet && git diff --cached --quiet && git checkout -B main origin/main || echo 'la rama quedó como estaba: el árbol no estaba limpio'",
+            "statusMessage": "Parándose en main…"
+          }
+        ]
+      }
+    ]
   }
 }

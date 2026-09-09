@@ -3513,6 +3513,22 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 - **Se pushea derecho a `main`, sin rama ni PR** (§1), así que **cada push es un
   deploy en vivo**: pruebas, chequeos estáticos y una mirada a la pantalla van
   antes, no después.
+- **La sesión remota arranca en una rama `claude/*` que no se usa, y el `main`
+  local que trae el contenedor viene viejo.** Son dos cosas distintas y las dos
+  muerden. La rama la arma la sesión sola a partir del título y **no hay forma
+  de configurarla**: no es una perilla del entorno de nube, que solo maneja red,
+  variables y script de arranque. Lo que sí se puede es correr un hook
+  `SessionStart` —está en `.claude/settings.json`, versionado como el `deny` del
+  MCP y por la misma razón— que deje el checkout parado en `main` antes del
+  primer turno. Y tiene que ser `git checkout -B main origin/main`: medido en la
+  sesión que agregó el hook, el `main` local estaba **36 commits atrás, en la
+  v0.63.1**, mientras que la rama `claude/*` sí apuntaba a la punta. Un
+  `git checkout main` a secas te muda a una copia vieja en silencio, y todo lo
+  que se lea a partir de ahí —el mapa del §3, una versión, una medición— es de
+  otro momento del repo. El hook lleva `matcher: "startup"` a propósito: si
+  corriera también en `compact`, un `-B` a mitad de sesión movería la rama y se
+  llevaría puestos los commits todavía sin pushear. Además está guardado por
+  `git diff --quiet`, así que con el árbol sucio no toca nada y lo dice.
 - **Cuando dos formas se defienden solas, ponerlas las dos y decidir usando la
   app.** Se hizo con margen contra gris (§4terdecies): el interruptor duró dos
   versiones, cumplió su función y se fue.

@@ -68,6 +68,13 @@ credencial. Si alguna vez hace falta un PR, se saca el `deny`.
   explota con `ERR_MODULE_NOT_FOUND` y se pierde una corrida en descubrirlo.
 - **Se pushea derecho a `main`, sin rama ni PR**, así que **cada push es un
   deploy en vivo**.
+- **La rama `claude/*` que asigna la sesión se ignora**, no se pregunta por ella
+  y no se pushea ahí: el trabajo va en `main`. Un hook `SessionStart` en
+  `.claude/settings.json` ya deja el checkout parado en `main` al arrancar. Si
+  alguna vez no corrió, el que corrige es `git checkout -B main origin/main`
+  —**anclado a `origin/main`**, porque el `main` local que trae el contenedor
+  viene viejo: llegó a estar 36 commits atrás—. Un `git checkout main` a secas
+  te deja trabajando sobre una copia vieja sin que se note.
 - **La versión de `index.html` tiene que subir en cada push que lo toque**, y
   hay que decirle al usuario cuál es la nueva: es lo que busca en la pantalla
   para saber si ya le llegó el cambio. Los tres niveles están en §10.
