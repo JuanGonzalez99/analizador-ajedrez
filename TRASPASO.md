@@ -3260,6 +3260,67 @@ escondió el bug.
 
 ## 7. Trabajo acordado, en orden
 
+### LO PRIMERO AL RETOMAR (cortado en la v0.84)
+
+Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
+usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
+propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
+
+**Hechas: 7 de 13** (v0.80 a v0.84, §4duovicies a §4quattuorvicies)
+
+| | |
+|---|---|
+| ✅ | Los combos ya no salen blancos sobre blanco |
+| ✅ | La tira se arrastra con el mouse y se mueve con la rueda |
+| ✅ | La lista de jugadas vuelve, en una segunda columna |
+| ✅ | El tablero crece en PC, limitado por el alto |
+| ✅ | El tiempo pensado, en las dos formas de la lista |
+| ✅ | Previa al pasar el mouse, rueda sobre el tablero, tecla `n`, y las primeras reglas `:hover` |
+| ✅ | Arrastrar la pieza |
+
+**Lo que falta, en el orden en que conviene hacerlo:**
+
+1. **Flechas y casillas con el botón derecho.** Era la que seguía cuando se
+   cortó. Convención de lichess y chess.com. Interacción pura: no mueve nada de
+   lugar, así que no necesita dibujarse antes.
+2. **La barra de evaluación vertical por defecto en PC.** Chica. Ojo: `verEval`
+   es una preferencia guardada, así que el cambio va solo cuando NO hay nada
+   guardado y la pantalla es ancha. Compra 26 px de tablero.
+3. **Las piezas comidas al costado del tablero.** Se derivan del FEN, no cuesta
+   motor. Es un elemento visual nuevo: **dibujarlo y mostrarlo antes**.
+4. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
+   elemento que mejora siendo ancho. **No es tan barata como suena**: la curva
+   vive adentro de `.principal`, y para cruzar las dos columnas hay que sacarla
+   a una fila propia de la grilla, lo que la deja DEBAJO de los cuadritos y los
+   botones. O sea que cambia el orden de la vista que se decidió en la v0.74.
+   Dibujarlo y que lo mire el usuario.
+5. **La segunda y tercera mejor del motor, al lado del tablero.** La más
+   ambiciosa y la que más convertiría esto en una app de análisis. El dato ya
+   viaja: `evs[i].segunda` y la pasada MultiPV híbrida, que hoy solo se usan
+   para decidir si la jugada "era la única".
+6. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
+   INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
+   arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
+   también es primero, así que moverla no contradice esa razón — pero es
+   exactamente el tipo de cambio que hay que dibujar y hacer mirar.
+
+**Y las tres anotaciones del usuario que siguen sin hacer**, ya medidas y
+diagnosticadas en esta sesión (los números están en §8):
+
+- **En la variante no aparece la mejor jugada**, y de yapa la flecha verde que
+  se dibuja al abrir la prueba tocando una pieza **es de la posición
+  equivocada**. Las dos las tapa el mismo arreglo.
+- **La tarjeta se achica al probar y el tablero salta 78 px**, justo mientras se
+  intenta encadenar la jugada siguiente.
+- **La partida tarda en aparecer en el listado.** Falta que el usuario haga el
+  test de 30 segundos que decide si es el CDN de chess.com o nuestro.
+
+**Cómo se trabajó esta tanda, que conviene repetir:** cada cambio con su
+captura mirada de verdad, `npm run mirar` con la pasada ancha, y **la
+comparación byte a byte de las 30 capturas de celular contra las de la v0.79**,
+que es lo que prueba que nada de PC se filtró al celular.
+
+
 ### Hecho (v18 a v25)
 
 Los cinco arreglos de la lista original están cerrados. Cada uno tiene su
@@ -3356,6 +3417,75 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
    de pruebas, o sea modo dev.)*
 
 ## 8. Pendientes de fondo, sin resolver
+
+### Tres fallas reportadas y MEDIDAS, todavía sin arreglar (v0.84)
+
+Las midió la sesión de la v0.80–v0.84 y no llegó a arreglarlas. **Los números
+están acá para no volver a medirlos.**
+
+**1. En la variante no aparece la mejor jugada — y hay un bug de yapa.**
+
+Contando las flechas del tablero por color (azul = la jugada de la partida,
+verde = la mejor, violeta = la inventada):
+
+```
+DENTRO de la variante, con "Mostrar la mejor" prendido : ["violeta"]
+FUERA de la variante,  con "Mostrar la mejor" prendido : ["azul", "VERDE"]
+```
+
+Está puesto a propósito en `pintarRevision` (`PRUEBA.ver === 0 && verMejor`) y
+tiene sentido: `f.mejor` es la mejor de la posición ORIGINAL, y dibujarla sobre
+una posición inventada sería mentira. **Pero el dato bueno ya lo tenemos**: cada
+jugada de la variante guarda su evaluación, y ahí viene la mejor de esa posición
+nueva. `posicionVista().ev.mejor` es exactamente la mejor de la posición que se
+está viendo, tanto adentro como afuera de la variante.
+
+**El bug de yapa**: abriendo la prueba TOCANDO UNA PIEZA, la variante arranca de
+la posición de *después* de la jugada, pero la flecha verde sigue siendo la de
+*antes*. Medido, coordenadas idénticas:
+
+```
+fuera de la variante   : VERDE 120,204 → 78,162
+recién tocada la pieza : VERDE 120,204 → 78,162   (el tablero ya muestra otra posición)
+```
+
+La azul sí cambia como corresponde; la verde se quedó pegada. **Hoy muestra una
+flecha equivocada sin avisar.** El mismo arreglo tapa las dos.
+
+**2. La tarjeta se achica al probar y el tablero salta.**
+
+La tarjeta va arriba del tablero (v0.74), así que todo lo que cambie de alto lo
+empuja. Medido en los tres momentos:
+
+| momento | alto de la tarjeta | dónde arranca el tablero |
+|---|---|---|
+| antes de probar | 82 px (veredicto) | y = 836 |
+| se toca la pieza y se pone la jugada | 61 px (prueba) | y = 816 |
+| contesta el motor | 120 px | y = 874 |
+
+**El tablero se va 20 px para arriba y después baja 58: 78 px de recorrido**
+justo mientras se intenta encadenar la jugada siguiente. La salida es reservarle
+el alto a la caja de la tarjeta mientras la prueba está abierta, para que no se
+achique.
+
+**3. La partida tarda en aparecer en el listado.**
+
+**No se pudo medir desde el entorno remoto**: `api.chess.com` da 403 por la
+política de red. Lo que sí es nuestro, y son dos cosas:
+
+- El mes se pide con un `fetch(url)` pelado, o sea con la **caché HTTP del
+  navegador por defecto**. Si el navegador la tiene guardada, devuelve el mes
+  viejo sin salir a la red.
+- **No hay forma de recargar el mes.** El combo reacciona a `onchange`, y elegir
+  el mes que ya estaba seleccionado no dispara nada. Hay que apretar "Buscar" de
+  nuevo, cosa que no está escrita en ningún lado.
+
+**El test que lo decide, y que el usuario todavía no hizo**: cuando una partida
+no aparezca, abrir en otra pestaña
+`https://api.chess.com/pub/player/USUARIO/games/AAAA/MM` y buscarla ahí. Si está
+y en la app no, es nuestro (caché). Si tampoco está, es el CDN de chess.com y
+del lado nuestro solo cabe un botón de recargar.
+
 
 > ⚠ **Las mediciones de esta sección se tomaron con las cadencias mezcladas y
 > sin márgenes.** Desde la v0.46 la vista Mes habla de una sola cadencia, y
