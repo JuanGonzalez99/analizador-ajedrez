@@ -3081,8 +3081,9 @@ no tener que leer la sección entera para saber qué hay.
    a la real, que era el pedido; lo que falta es elegir entre las cuatro formas
    del dial. En §4sexdecies, con lo que ocupa cada una.
 8. **Cuánto habla la tarjeta** (v0.77): corta, media o larga, el otro dial. En
-   §4novodecies, con lo que mide cada una. Ojo que corta y media son iguales
-   hasta que la v0.78 sume la segunda frase de "cómo llegaste".
+   §4novodecies, con lo que mide cada una. Corta y media **ya se distinguen**:
+   la v0.78 sumó la segunda frase de "cómo llegaste", que era lo que las
+   igualaba.
 9. ~~**La tanda cara de los conceptos**~~ **HECHA en la v0.78**: las cinco, en
    §4vicies. Y con ellas la tarjeta quedó 2,4 veces más rápida que antes,
    porque medir dónde estaba el costo mostró que no estaba en lo nuevo.
@@ -3092,10 +3093,11 @@ de reloj que faltan (§7), el listado de partidas sin rediseñar y la pantalla d
 configuración (abajo), la paleta despareja, las animaciones, y las mediciones de
 fondo que hay que rehacer por cadencia y con margen (el aviso de acá arriba).
 
-**Estado del repo al cerrar la tanda:** la v0.64 a la v0.75 vive en la rama
-`claude/cards-explanation-move-testing-maozyk` y **no está mergeada a `main`**,
-por decisión del usuario. O sea que **nada de esto está desplegado**: lo que hay
-en vivo es la v0.63.1.
+**Estado del repo:** toda la tanda está en `main` y **en vivo**, hasta la
+**v0.79** inclusive. La nota vieja de acá decía que la v0.64 a la v0.75 vivía sin
+mergear en `claude/cards-explanation-move-testing-maozyk` y que en vivo había
+v0.63.1; quedó desactualizada y se corrigió. **Lo que sigue abierto de esta lista
+es por decisión pendiente, no porque no esté desplegado.**
 
 ### De interfaz
 
