@@ -734,6 +734,53 @@ console.log("arrastre pieza:", JSON.stringify(
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 await pg.selectOption("#formaJugadas", "planilla");
 
+/* MARCAR CON EL BOTÓN DERECHO (v0.85), con el mouse de verdad. Se cuentan los
+   hijos de las dos capas y no se mira el dibujo: lo que importa es que el gesto
+   agregue y saque, y cuántos elementos tiene cada marca es cosa de `svgMarcas`
+   —una casilla es un <rect> y una flecha son dos, la línea y la punta—. */
+const derecho = async (a, z) => {
+  const p = await medio(a), q = await medio(z);
+  await pg.mouse.move(p.x, p.y);
+  await pg.mouse.down({ button: "right" });
+  if (a !== z) await pg.mouse.move(q.x, q.y);
+  await pg.mouse.up({ button: "right" });
+  await pg.waitForTimeout(120);
+};
+const marcas = () => pg.evaluate(() => {
+  const n = id => (document.getElementById(id) || { children: [] }).children.length;
+  return n("mBajo") + "+" + n("mAlto");
+});
+await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "center" }));
+await pg.waitForTimeout(250);
+const marcado = {};
+await derecho("g1", "f3"); await derecho("c1", "h6");
+await derecho("e5", "e5"); await derecho("d4", "d4");
+marcado.dosFlechasYDosCasillas = await marcas();
+await pg.locator("#tablero").screenshot({ path: path.join(SALIDA, "marcas" + SUFIJO + ".png") });
+/* repetir el mismo gesto borra */
+await derecho("e5", "e5"); await derecho("g1", "f3");
+marcado.repitiendoElGesto = await marcas();
+/* soltar afuera del tablero cancela */
+const esq = await medio("a1");
+await pg.mouse.move(esq.x, esq.y);
+await pg.mouse.down({ button: "right" });
+await pg.mouse.move(5, 5);
+await pg.mouse.up({ button: "right" });
+await pg.waitForTimeout(120);
+marcado.soltandoAfuera = await marcas();
+/* y el clic izquierdo las borra todas, por `pintarRevision` */
+const h3 = await medio("h3");
+await pg.mouse.click(h3.x, h3.y);
+await pg.waitForTimeout(400);
+marcado.trasClicIzquierdo = await marcas();
+marcado.menuCancelado = await pg.evaluate(() => {
+  const e = new MouseEvent("contextmenu", { bubbles: true, cancelable: true });
+  document.querySelector("#tablero svg").dispatchEvent(e);
+  return e.defaultPrevented;
+});
+console.log("marcas:        ", JSON.stringify(marcado));
+if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
+
 console.log("listo: capturas/");
 await b.close();
 srv.close();

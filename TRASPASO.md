@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.84**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.85**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -222,7 +222,7 @@ lo que hay que mirar.
 | caché | IndexedDB |
 | análisis | `analizarPartida`, barrido, híbrido |
 | bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace` |
-| interfaz | tablero SVG, mes, banco de pruebas, revisión, resúmenes |
+| interfaz | tablero SVG (geometría `TAB_S`/`sqX`, `dibujar`, `svgMarcas`), mes, banco de pruebas, revisión, resúmenes |
 
 Desde la v0.80 la vista Partida se parte en **dos columnas de 1050 px para
 arriba** (§4duovicies): `.principal` es la de siempre, de 700, y `.lateral` es
@@ -2740,6 +2740,73 @@ jugada haya entrado en la variante.
 
 ---
 
+## 4quinvicies. Dibujar sobre el tablero (v0.85)
+
+Botón derecho: apretar y soltar en la misma casilla la pinta, apretar en una y
+soltar en otra dibuja una flecha, repetir el mismo gesto lo borra, soltar afuera
+del tablero cancela. Es la convención de lichess y de chess.com, o sea que **no
+hay nada que aprender y no hay dónde explicarlo**: quien la conoce la prueba, y
+quien no, no se topa con ella nunca.
+
+**NO SON UNA JUGADA, y esa es la decisión.** No pasan por `tocarCasilla`, no
+abren la variante y no tocan nada guardado. Son un lápiz sobre el tablero para
+pensar —"esta pieza mira acá", "el problema son estas dos casillas"—, y por eso
+tampoco hay nada que decidir sobre qué se puede marcar y desde dónde: se marca
+cualquier casilla, incluso una vacía, porque no se está proponiendo nada.
+
+**Se borran al cambiar de posición**, y no hubo que acordarse de hacerlo en cada
+camino: las limpia `pintarRevision`, que es por donde pasan todos —navegar,
+girar el tablero, entrar y salir de la variante, soltar una pieza arrastrada—.
+Una flecha señala UNA posición; arrastrarla a la siguiente sería señalar en un
+tablero que ya no es el que se dibujó. De ahí sale gratis lo otro que hace
+lichess: **el clic izquierdo las borra todas**, porque cualquier clic en el
+tablero termina en `tocarCasilla` y entonces en `pintarRevision`.
+
+**Dos capas y no una.** Las casillas van DEBAJO de las piezas, igual que el
+resaltado de la explicación (§4-la del resalte ámbar): son un fondo y no pueden
+tapar la pieza de la que hablan. Las flechas van ARRIBA, porque una flecha que
+pasa por debajo de una pieza se corta a la mitad. Los dos grupos —`#mBajo` y
+`#mAlto`— se dibujan siempre, vacíos o no, y así `pintarMarcas` los encuentra
+por id.
+
+**`pintarMarcas` reescribe SOLO esos dos grupos y no repinta la vista.** No es
+optimización: `pintarRevision` recentra la tira y vuelve a scrollear la lista
+—es el mismo problema que ya había obligado a la previa a guardar y devolver el
+HTML del tablero (§4trevicies)—, y dibujar una flecha no tiene por qué mover
+nada de lugar abajo del mouse. Para poder dibujar afuera de `dibujar` hubo que
+sacarle la geometría: `TAB_S`, `TAB_M`, `sqX`, `sqY`, `sqCx` y `sqCy` ahora
+viven arriba y las usan las dos.
+
+**LA PUNTA es lo que las distingue de las cuatro flechas de la app**, que son
+una línea con una bolita en el extremo. Un color se puede confundir con otro
+—los cuatro que significan algo ya están tomados: azul lo jugado, verde lo que
+decía el motor, violeta lo probado, ámbar lo que señala la frase—; una forma
+distinta, no. La cola arranca a 13 unidades del centro del origen y la punta
+termina a 5 del centro del destino, así no tapa ni la pieza que sale ni la que
+llega, que son justo las dos que se están mirando.
+
+**El color se eligió mirando**, con las mismas cuatro marcas dibujadas en gris
+pizarra, en el verde de lichess y en cian. Salió el **gris pizarra** (`--marca:
+#3f5163`): es el único que no compite con ninguno de los cuatro que ya
+significan algo, y se lee como "esto lo dibujaste vos, no lo dice la app". Vive
+en una variable CSS, o sea que cambiarlo es una línea y vale para los cinco
+tableros.
+
+**La previa no muestra las marcas** (`sinMarcas` en la capa): son de otra
+posición y pintarlas encima sería mentir. Y `volverDeLaPrevia` llama a
+`pintarMarcas`, porque el HTML que devuelve es de ANTES de la previa y volvería
+sin la marca que se dibujó mientras tanto.
+
+**Es solo con mouse**, y no hace falta más: con el dedo no hay botón derecho, y
+el gesto de dos dedos de lichess costaría inventar una forma de cancelar que
+hoy no existe. En el celular la app no cambió en nada.
+
+El arnés lo mide con el mouse de verdad: que las cuatro marcas aparezcan, que
+repetir el gesto las borre, que soltar afuera no dibuje nada, que el clic
+izquierdo limpie todo y que el menú del navegador quede cancelado.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3266,7 +3333,7 @@ Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
 usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
 propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 
-**Hechas: 7 de 13** (v0.80 a v0.84, §4duovicies a §4quattuorvicies)
+**Hechas: 8 de 13** (v0.80 a v0.85, §4duovicies a §4quinvicies)
 
 | | |
 |---|---|
@@ -3277,28 +3344,26 @@ propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 | ✅ | El tiempo pensado, en las dos formas de la lista |
 | ✅ | Previa al pasar el mouse, rueda sobre el tablero, tecla `n`, y las primeras reglas `:hover` |
 | ✅ | Arrastrar la pieza |
+| ✅ | Flechas y casillas con el botón derecho |
 
 **Lo que falta, en el orden en que conviene hacerlo:**
 
-1. **Flechas y casillas con el botón derecho.** Era la que seguía cuando se
-   cortó. Convención de lichess y chess.com. Interacción pura: no mueve nada de
-   lugar, así que no necesita dibujarse antes.
-2. **La barra de evaluación vertical por defecto en PC.** Chica. Ojo: `verEval`
+1. **La barra de evaluación vertical por defecto en PC.** Chica. Ojo: `verEval`
    es una preferencia guardada, así que el cambio va solo cuando NO hay nada
    guardado y la pantalla es ancha. Compra 26 px de tablero.
-3. **Las piezas comidas al costado del tablero.** Se derivan del FEN, no cuesta
+2. **Las piezas comidas al costado del tablero.** Se derivan del FEN, no cuesta
    motor. Es un elemento visual nuevo: **dibujarlo y mostrarlo antes**.
-4. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
+3. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
    elemento que mejora siendo ancho. **No es tan barata como suena**: la curva
    vive adentro de `.principal`, y para cruzar las dos columnas hay que sacarla
    a una fila propia de la grilla, lo que la deja DEBAJO de los cuadritos y los
    botones. O sea que cambia el orden de la vista que se decidió en la v0.74.
    Dibujarlo y que lo mire el usuario.
-5. **La segunda y tercera mejor del motor, al lado del tablero.** La más
+4. **La segunda y tercera mejor del motor, al lado del tablero.** La más
    ambiciosa y la que más convertiría esto en una app de análisis. El dato ya
    viaja: `evs[i].segunda` y la pasada MultiPV híbrida, que hoy solo se usan
    para decidir si la jugada "era la única".
-6. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
+5. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
    INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
    arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
    también es primero, así que moverla no contradice esa razón — pero es

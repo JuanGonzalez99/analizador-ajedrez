@@ -14,6 +14,9 @@
     --c-imprecision: #d4a017; --c-error: #e08030;
     --c-omision: #d0453b; --c-grave: #c0392b;
     --c-forzada: #8a8578;
+    /* lo que dibuja el usuario con el botón derecho (v0.85). Un color solo y
+       acá, así se cambia en un lugar y vale para los cinco tableros. */
+    --marca: #3f5163;
   }
   * { box-sizing: border-box; }
   /* overflow-anchor: none porque la app intercambia zonas enteras —Partida y
@@ -545,7 +548,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.84 · 09-09";
+  window.VERSION = "v0.85 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3381,6 +3384,14 @@ $("salirDev").onclick = seguro("salir de dev", () => {
   $("tema").onchange = seguro("tema", () => aplicarTema($("tema").value));
 })();
 let GIRADO = false;
+/* LA GEOMETRÍA DEL TABLERO sale de adentro de `dibujar` en la v0.85, porque
+   ahora la usan dos: `dibujar`, que arma el SVG entero, y `svgMarcas`, que
+   reescribe SOLO las marcas del usuario adentro del SVG que ya está dibujado. */
+const TAB_S = 42, TAB_M = 15;
+const sqX = f => (GIRADO ? 7 - f : f) * TAB_S + TAB_M;
+const sqY = r => (GIRADO ? 7 - r : r) * TAB_S + TAB_M;
+const sqCx = sq => sqX("abcdefgh".indexOf(sq[0])) + TAB_S / 2;
+const sqCy = sq => sqY(8 - +sq[1]) + TAB_S / 2;
 
 /* VER UNA JUGADA SIN IR A ELLA (v0.82). Pasar el mouse por una jugada —en la
    lista de al lado o en la tira— muestra esa posición en el tablero, y al salir
@@ -3404,12 +3415,15 @@ function previsualizar(i) {
   /* sin flecha verde y sin resaltado: la previa contesta "¿qué pasó acá?", no
      "¿qué convenía?". La capa va vacía y no ausente porque `dibujar` la lee. */
   $("tablero").innerHTML = dibujar(f.fen, f.uci, null,
-    { desde: null, destinos: [], uci: null, resalta: null });
+    { desde: null, destinos: [], uci: null, resalta: null, sinMarcas: true });
 }
 function volverDeLaPrevia() {
   if (TABLERO_PREVIO === null) return;
   $("tablero").innerHTML = TABLERO_PREVIO;
   TABLERO_PREVIO = null;
+  /* el HTML guardado es de ANTES de la previa: si mientras tanto se dibujó una
+     marca, volvería sin ella */
+  pintarMarcas();
 }
 /* Con mouse de verdad y no en una pantalla táctil, donde `mouseenter` lo dispara
    el propio toque y la previa pelearía contra el clic que navega.
@@ -3426,13 +3440,68 @@ function previaEn(sp, i) {
 /* `prueba` es lo que agrega la v0.65 y va en null en el camino normal:
    { desde, destinos, uci }. Cuando viene, el tablero deja de ser un dibujo y
    pasa a recibir toques por casilla. */
+/* LAS MARCAS DEL USUARIO (v0.85). Con el botón derecho: apretar y soltar en la
+   misma casilla la pinta, apretar en una y soltar en otra dibuja una flecha, y
+   repetir el mismo gesto la borra. Es la convención de lichess y de chess.com,
+   o sea que no hay nada que aprender y no hay dónde explicarlo.
+
+   NO SON UNA JUGADA, y esa es la decisión: no pasan por `tocarCasilla`, no abren
+   la variante y no tocan nada guardado. Son un lápiz sobre el tablero para pensar
+   —"esta pieza mira acá", "el problema son estas dos casillas"— y por eso se
+   borran solas en cuanto la posición cambia: las limpia `pintarRevision`, que es
+   por donde pasan todos los caminos que mueven el tablero.
+
+   VAN EN DOS CAPAS y no en una. Las casillas van DEBAJO de las piezas, igual que
+   el resaltado de la explicación, porque son un fondo y no pueden tapar la pieza
+   de la que hablan. Las flechas van ARRIBA, porque una flecha que pasa por debajo
+   de una pieza se corta a la mitad.
+
+   LA PUNTA es lo que las distingue de las cuatro flechas de la app, que son una
+   línea con una bolita en la punta. Un color se puede confundir con otro; una
+   forma distinta, no. El color vive en `--marca` para poder cambiarlo en un solo
+   lugar. */
+let MARCAS_TAB = [];
+function svgMarcas(capa) {
+  let s = "";
+  for (const m of MARCAS_TAB) {
+    const casilla = m.a === m.z;
+    if (capa === "bajo" && casilla) {
+      const c = "abcdefgh".indexOf(m.a[0]), r = 8 - +m.a[1];
+      s += `<rect x="${sqX(c)}" y="${sqY(r)}" width="${TAB_S}" height="${TAB_S}"
+        fill="var(--marca)" opacity=".42"/>`;
+    }
+    if (capa === "alto" && !casilla) {
+      const x1 = sqCx(m.a), y1 = sqCy(m.a), x2 = sqCx(m.z), y2 = sqCy(m.z);
+      const largo = Math.hypot(x2 - x1, y2 - y1) || 1;
+      const ux = (x2 - x1) / largo, uy = (y2 - y1) / largo;
+      /* la cola arranca a 13 del centro de la casilla de origen y la punta
+         termina a 5 del centro de la de destino: la flecha no tapa ni la pieza
+         que sale ni la que llega, que son justo las dos que se están mirando */
+      const ax = x1 + ux * 13, ay = y1 + uy * 13;
+      const zx = x2 - ux * 5, zy = y2 - uy * 5;
+      /* la base de la punta, y los dos costados perpendiculares al tiro */
+      const bx = zx - ux * 13, by = zy - uy * 13, w = 6.5;
+      const n = v => v.toFixed(1);
+      s += `<line x1="${n(ax)}" y1="${n(ay)}" x2="${n(bx)}" y2="${n(by)}"
+        stroke="var(--marca)" stroke-width="5.5" stroke-linecap="round" opacity=".78"/>
+        <path d="M ${n(zx)} ${n(zy)} L ${n(bx - uy * w)} ${n(by + ux * w)}
+          L ${n(bx + uy * w)} ${n(by - ux * w)} Z" fill="var(--marca)" opacity=".78"/>`;
+    }
+  }
+  return s;
+}
+/* Reescribe SOLO las dos capas de marcas del tablero que ya está en pantalla.
+   No repinta la vista: `pintarRevision` recentra la tira y vuelve a scrollear la
+   lista, y dibujar una flecha no tiene por qué mover nada de lugar. */
+function pintarMarcas() {
+  const bajo = $("mBajo"), alto = $("mAlto");
+  if (bajo) bajo.innerHTML = svgMarcas("bajo");
+  if (alto) alto.innerHTML = svgMarcas("alto");
+}
 function dibujar(fen, jugada, mejor, prueba) {
   const b = new Chess(fen).board();
-  const S = 42, M = 15, T = S * 8;
-  const fx = f => (GIRADO ? 7 - f : f) * S + M;
-  const ry = r => (GIRADO ? 7 - r : r) * S + M;
-  const cx = sq => fx("abcdefgh".indexOf(sq[0])) + S / 2;
-  const cy = sq => ry(8 - +sq[1]) + S / 2;
+  const S = TAB_S, M = TAB_M, T = S * 8;
+  const fx = sqX, ry = sqY, cx = sqCx, cy = sqCy;
   let s = `<svg class="tab" viewBox="0 0 ${T + M * 2} ${T + M * 2}" xmlns="http://www.w3.org/2000/svg">` +
     `<defs>${PIEZAS}</defs>`;
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
@@ -3447,6 +3516,10 @@ function dibujar(fen, jugada, mejor, prueba) {
     if (c < 0 || r < 0 || r > 7) continue;
     s += `<rect x="${fx(c)}" y="${ry(r)}" width="${S}" height="${S}" fill="#e8a33d" opacity=".55"/>`;
   }
+  /* las casillas marcadas por el usuario, también debajo de las piezas. El grupo
+     va SIEMPRE, vacío o no: `pintarMarcas` lo busca por id para no repintar. */
+  const conMarcas = !(prueba && prueba.sinMarcas);
+  s += `<g id="mBajo">${conMarcas ? svgMarcas("bajo") : ""}</g>`;
   /* Cburnett trae la convención de siempre: siluetas distintas por pieza, las
      blancas huecas y las negras rellenas. Reemplaza la regla de la v26 —misma
      silueta para los dos bandos, el bando distinguido por el relleno—, que
@@ -3475,6 +3548,8 @@ function dibujar(fen, jugada, mejor, prueba) {
      vez el color es lo único que las distingue. */
   if (prueba && prueba.uci) s += flecha(prueba.uci, "#6a1b9a", 5);
   if (resalta && resalta.uci) s += flecha(resalta.uci, "#e8a33d", 5);
+  /* y las flechas del usuario arriba de todo lo demás */
+  s += `<g id="mAlto">${conMarcas ? svgMarcas("alto") : ""}</g>`;
   for (let f = 0; f < 8; f++)
     s += `<text x="${fx(f) + S / 2}" y="${T + M + 10}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".55">${"abcdefgh"[f]}</text>`;
   for (let r = 0; r < 8; r++)
@@ -5601,6 +5676,12 @@ function pintarRevision() {
     uci: PRUEBA && PRUEBA.ver ? PRUEBA.linea[PRUEBA.ver - 1].uci : null,
     resalta: RESALTA
   };
+  /* LAS MARCAS DEL USUARIO SE VAN ACÁ, y por eso no hay que acordarse de
+     borrarlas en ningún otro lado: cada camino que cambia lo que muestra el
+     tablero —navegar, probar, girar, entrar y salir de la variante— termina en
+     esta función. Una flecha pertenece a UNA posición; arrastrarla a la
+     siguiente sería señalar en un tablero que ya no es el que se dibujó. */
+  MARCAS_TAB = [];
   $("tablero").innerHTML = PRUEBA
     ? dibujar(vista.fen, PRUEBA.ver === 0 ? (real && real.uci) : null,
               PRUEBA.ver === 0 && verMejor ? f.mejor : null, capa)
@@ -5952,6 +6033,40 @@ $("curva").addEventListener("click", seguro("curva", ev => {
   cont.addEventListener("click", ev => {
     if (arrastro) { ev.stopPropagation(); ev.preventDefault(); }
   }, true);
+})();
+
+/* EL BOTÓN DERECHO DIBUJA (v0.85). Acá está solo el gesto; el porqué y el dibujo
+   están arriba, en el comentario de `svgMarcas`. Va aparte del arrastre porque no
+   comparte nada con él —el arrastre solo escucha el botón izquierdo— y meterlos
+   en la misma función la obligaría a acordarse de qué botón la llamó.
+
+   BORRAR ES REPETIR EL MISMO GESTO, que es como funciona afuera. Y para borrar
+   todo de una está el clic izquierdo, sin escribir una línea: cualquier clic en
+   el tablero termina en `tocarCasilla`, o sea en `pintarRevision`, que las limpia. */
+(function marcarConElDerecho() {
+  const cont = $("tablero");
+  let desde = null;
+  const casillaDe = ev => {
+    const t = ev.target.closest && ev.target.closest("[data-sq]");
+    return t && t.getAttribute("data-sq");
+  };
+  /* sin esto el menú del navegador se come el gesto a mitad de camino */
+  cont.addEventListener("contextmenu", ev => ev.preventDefault());
+  cont.addEventListener("pointerdown", seguro("marcar", ev => {
+    if (ev.button !== 2) return;
+    desde = casillaDe(ev);
+  }));
+  cont.addEventListener("pointerup", seguro("marcar-soltar", ev => {
+    if (ev.button !== 2) return;
+    const a = desde, z = casillaDe(ev);
+    desde = null;
+    /* soltar afuera del tablero cancela: es la forma de arrepentirse a mitad de
+       una flecha sin dejar nada dibujado */
+    if (!a || !z) return;
+    const i = MARCAS_TAB.findIndex(m => m.a === a && m.z === z);
+    if (i >= 0) MARCAS_TAB.splice(i, 1); else MARCAS_TAB.push({ a, z });
+    pintarMarcas();
+  }));
 })();
 
 /* SALTAR AL PRÓXIMO ERROR (v0.82). Una partida se revisa por los errores, no
