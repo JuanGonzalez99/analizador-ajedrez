@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.89**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.90**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -227,8 +227,10 @@ lo que hay que mirar.
 Desde la v0.80 la vista Partida se parte en **dos columnas de 1110 px para
 arriba** (§4duovicies): `.principal` es la de siempre, de 700, y `.lateral` es
 la lista de jugadas, que en el celular no existe. Desde la v0.88 la principal
-está partida en dos, `.parriba` y `.pabajo`, con la curva en el medio cruzando
-las dos columnas (§4octovicies). Todo lo demás sigue siendo una
+está partida, y desde la v0.90 son tres bloques —`.parriba` (encabezado),
+`.tarjetas`, `.pmedio` (tablero y tira)— más `.curva` y `.pabajo`, todos hijos
+directos de la grilla. De 1500 px para arriba la tarjeta se muda a una columna
+propia a la izquierda (§4trigies). Todo lo demás sigue siendo una
 sola columna en cualquier pantalla.
 
 **El registro está en un script clásico a propósito:** corre aunque el módulo
@@ -3007,6 +3009,58 @@ llegar la respuesta y que tocar la segunda abra la variante con esa jugada.
 
 ---
 
+## 4trigies. Tres columnas: la tarjeta al costado (v0.90)
+
+El cambio invasivo de la tanda, y el que más tablero compra. **De 1500 px para
+arriba** la vista se parte en tres: la tarjeta a la izquierda, el tablero en el
+medio, la lista a la derecha, y la curva cruzando las tres. Abajo de ese ancho
+siguen valiendo las dos columnas de la v0.80, intactas.
+
+**LA v0.74 PUSO LA TARJETA ARRIBA PORQUE "SE LEE PRIMERO", y eso no se
+contradice:** en una pantalla ancha la izquierda también es primero. Lo que se
+mueve es dónde está el "antes", no que esté antes.
+
+**El corte es 1500 y no menos porque la cuenta no cierra:** 300 de tarjeta, 360
+de lista, 44 de barra de evaluación, 132 de piezas comidas y dos huecos de 22 son
+880 px sin una sola casilla de tablero.
+
+**Lo que compra, medido: el lado del tablero pasa de 496 a 569 a 1500 × 800.**
+Son **73 px, no los ~90** que decía la lista de pendientes, y la diferencia no es
+redondeo: el presupuesto de alto se ajustó hasta que quedaran los mismos **25 px
+de aire abajo de la curva** que en dos columnas, que es la reserva que la v0.74
+puso a propósito para que la curva no se lea cortada. La primera estimación
+—descontar "lo que mide la tarjeta"— erraba por 17 px. Los números salen de
+medir, no de sumar el CSS.
+
+**Las dos tarjetas viven ahora en un bloque propio** (`.tarjetas`, con el
+veredicto y la de la variante), hijo directo de la grilla, que es lo que deja
+mudarlas de columna. En el celular y en dos columnas es un div de más y nada
+cambia: las 28 capturas siguen idénticas byte a byte.
+
+**Y el hueco de la grilla pasó a ser solo entre COLUMNAS** (`column-gap: 22px;
+row-gap: 0`). Las filas son la misma vista partida en pedazos, así que cada
+bloque se separa con su propio margen, igual que cuando eran hermanos adentro de
+un solo div. Esto reemplaza a los márgenes negativos de la v0.88, que eran la
+misma corrección hecha a mano y que con cinco filas habría habido que repetir
+cuatro veces.
+
+**LA TRAMPA, y es la que costó la vuelta:** el tope de alto de la lista se mide
+sobre la columna del tablero, y la lista **cruza las filas de la grilla**. O sea
+que si la lista es más alta las estira, y medir la columna de punta a punta
+estaría midiendo la lista misma: **la medida se define en función de sí misma**.
+La primera pintada, cuando todavía no hay medida y vale el `100vh` de reserva, la
+deja inflada, y de ahí no baja nunca —queda trabada arriba, no diverge, que es
+peor porque parece estable—. Se vio en el aire de la curva: 25 px pasaron a -2.
+Se corta sacando la lista de la pantalla un instante (`display: none`), midiendo,
+y devolviéndola: el navegador pinta recién al terminar la función, así que no se
+ve nada.
+
+El arnés dibuja 1500 y 1499, que son los dos lados del corte, mide que la tarjeta
+termine antes de donde empieza el tablero, el ancho de la curva y el aire de
+abajo en las dos formas de la evaluación.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3533,7 +3587,7 @@ Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
 usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
 propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 
-**Hechas: 12 de 13** (v0.80 a v0.89, §4duovicies a §4novovicies)
+**Hechas: 13 de 13** (v0.80 a v0.90, §4duovicies a §4trigies)
 
 | | |
 |---|---|
@@ -3549,14 +3603,14 @@ propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 | ✅ | Las piezas comidas al costado del tablero |
 | ✅ | El gráfico de la partida a lo ancho de las dos columnas |
 | ✅ | La segunda y tercera mejor del motor, al lado del tablero |
+| ✅ | Tablero más grande corriendo la tarjeta al costado (tres columnas) |
 
-**Lo que falta, en el orden en que conviene hacerlo:**
-
-1. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
-   INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
-   arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
-   también es primero, así que moverla no contradice esa razón — pero es
-   exactamente el tipo de cambio que hay que dibujar y hacer mirar.
+**La tanda está cerrada: las trece.** Lo de PC se hizo de corrido, sin dibujar y
+mostrar antes, porque el usuario lo pidió así —*"no voy a revisar nada de lo que
+sea solo PC"*—. **La regla de §10 sigue en pie para todo lo que se vea en el
+celular**: eso se dibuja y se espera el ok, siempre. Lo que la reemplazó acá fue
+la comparación byte a byte de las 28 capturas de celular en cada versión, que es
+lo que prueba que nada de PC se filtró.
 
 **Y las tres anotaciones del usuario que siguen sin hacer**, ya medidas y
 diagnosticadas en esta sesión (los números están en §8):

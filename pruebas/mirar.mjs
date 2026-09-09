@@ -604,8 +604,11 @@ console.log("");
    pasada ancha estaría midiendo una pantalla que no es la que se quiere probar.
    Va por CDP porque `hasTouch` se fija al crear la página y no se puede cambiar,
    y crear otra costaría volver a analizar la partida entera. */
+/* 1500 y 1499 son los dos lados del corte de TRES columnas (v0.90), igual que
+   1110 y 1109 lo son del de dos. */
 for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
-                         [1109, 800, "ancho-angosto"]]) {
+                         [1109, 800, "ancho-angosto"], [1500, 800, "tres"],
+                         [1499, 800, "tres-angosto"]]) {
   await pg.setViewportSize({ width: w, height: h });
   await pg.waitForTimeout(300);
   await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
@@ -630,8 +633,12 @@ for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
     const y = q => Math.round(document.querySelector(q).getBoundingClientRect().y);
     const orden = [["tira", "#tira"], ["curva", "#curva"], ["cuadritos", ".pabajo .metricas"]]
       .sort((a, b) => y(a[1]) - y(b[1])).map(p => p[0]).join(" > ");
+    /* la tarjeta al costado no se ve en el orden vertical sino en la X: en tres
+       columnas termina ANTES de donde empieza el tablero */
+    const tj = document.getElementById("veredicto").getBoundingClientRect();
+    const tb = document.querySelector("svg.tab").getBoundingClientRect();
     return { principal: r(".principal"), lista: r("#jugadas"), tablero: Math.round(t.width),
-             curva: r("#curva"), orden,
+             curva: r("#curva"), orden, tarjetaAlaIzq: Math.round(tj.right) <= Math.round(tb.left),
              eval: document.getElementById("verEval").value,
              desborde: document.documentElement.scrollWidth > window.innerWidth };
   })));
@@ -788,15 +795,32 @@ const curvaEn = async forma => {
   await pg.waitForTimeout(150);
   return pg.evaluate(() => {
     const c = document.getElementById("curva").getBoundingClientRect();
-    const col = document.querySelector(".parriba").getBoundingClientRect();
+    /* la columna del tablero TERMINA en `.pmedio` desde la v0.90: `.parriba` es
+       solo el encabezado, así que comparar contra él daría siempre que desborda */
+    const col = document.querySelector(".pmedio").getBoundingClientRect();
     const li = document.getElementById("lateral").getBoundingClientRect();
     return { ancho: Math.round(c.width),
-             listaDesbordaLaColumna: Math.round(li.bottom - col.bottom) > 0,
+             listaDesbordaLaColumna: Math.round(li.bottom - col.bottom) > 1,
              aireAbajo: Math.round(window.innerHeight - c.bottom) };
   });
 };
 console.log("curva ancha:   ", JSON.stringify(
   { horizontal: await curvaEn("horizontal"), barra: await curvaEn("barra") }));
+/* Y LO MISMO EN TRES COLUMNAS (v0.90): ahí el presupuesto de alto es otro
+   —la tarjeta se fue a la columna de al lado y deja de gastar— y el aire de
+   abajo de la curva es lo que dice si el número está bien puesto. */
+await pg.setViewportSize({ width: 1500, height: 800 });
+await pg.waitForTimeout(300);
+const tres = { horizontal: await curvaEn("horizontal"), barra: await curvaEn("barra") };
+tres.lado = await pg.evaluate(() =>
+  Math.round(document.querySelector("svg.tab").getBoundingClientRect().width));
+/* con la barra vertical, que es la de fábrica en compu: es la pantalla que ve
+   de verdad el que tiene el monitor ancho */
+await foto("tres-barra");
+console.log("tres columnas: ", JSON.stringify(tres));
+await pg.setViewportSize({ width: 1280, height: 800 });
+await pg.selectOption("#formaJugadas", "planilla");
+await pg.waitForTimeout(300);
 await pg.selectOption("#formaJugadas", "planilla");
 await pg.waitForTimeout(300);
 

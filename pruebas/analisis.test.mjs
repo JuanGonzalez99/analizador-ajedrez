@@ -2672,6 +2672,17 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      `overflow: hidden` de las esquinas redondeadas. */
   assert.ok(html.includes(".evalbar.ancha { width: 36px; }"),
     "la barra ancha da para el número entero");
+  /* TRES COLUMNAS DE 1500 PARA ARRIBA (v0.90): la tarjeta se va al costado y
+     deja de gastar alto arriba del tablero. Los dos presupuestos siguen
+     separados por los 26 de la barra horizontal, igual que en dos columnas. */
+  assert.ok(html.includes("@media (min-width: 1500px)"),
+    "hay un corte de tres columnas");
+  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - 257px), 680px)") &&
+            html.includes("--ladoTab: clamp(360px, calc(100vh - 231px), 680px)"),
+    "y su propio presupuesto de alto");
+  assert.equal(257 - 231, 330 - 304, "la diferencia entre los dos es la barra horizontal");
+  assert.ok(html.includes("#zonaRevision > .tarjetas { grid-column: 1; grid-row: 1 / span 2; }"),
+    "la tarjeta va en la primera columna");
   /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de
      360 y el tablero quedaría más chico que en el celular. */
   const regla = html.indexOf("--ladoTab: clamp(360px");

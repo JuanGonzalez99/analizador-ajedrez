@@ -453,8 +453,13 @@
      no entran y la principal se achica de nuevo. */
   @media (min-width: 1110px) {
     body { max-width: 1110px; }
+    /* EL HUECO ES ENTRE COLUMNAS Y NO ENTRE FILAS. Las filas son la misma vista
+       partida en pedazos —tarjetas, tablero, curva, cuadritos—, así que cada
+       bloque se separa con SU margen, igual que cuando eran hermanos adentro de
+       un solo div. Con `gap: 22px` a secas cada corte sumaba 22 px de aire que
+       no existía, y el primero que lo pagaba era el de abajo de la curva. */
     #zonaRevision { display: grid; grid-template-columns: 700px 360px;
-                    gap: 22px; align-items: start; }
+                    column-gap: 22px; row-gap: 0; align-items: start; }
     /* LAS CUATRO PIEZAS VAN PUESTAS A MANO y no por acomodo automático: con la
        curva de hija directa, el automático la mandaría a la columna de al lado
        de la primera mitad. Tres renglones: arriba la vista y la lista, en el
@@ -463,21 +468,13 @@
        tiempo de 40 a 100 puntos, y a 700 px cada jugada tiene 7 px de ancho
        contra 15 a 1082. Todo lo demás —el tablero es cuadrado, la tarjeta es
        texto— o no gana nada o empeora. */
-    #zonaRevision > .parriba { grid-column: 1; grid-row: 1; }
-    #zonaRevision > .lateral { grid-column: 2; grid-row: 1; }
-    #zonaRevision > .curva   { grid-column: 1 / -1; grid-row: 2; }
-    #zonaRevision > .pabajo  { grid-column: 1; grid-row: 3; }
-    /* EL HUECO DE 22 ES ENTRE LAS COLUMNAS, no entre estas dos filas: son la
-       misma vista partida, no dos cosas separadas. Sin esto la curva bajaba 22
-       px y se comía el aire que la v0.74 le había reservado a propósito —el
-       presupuesto descuenta 330 y no los 305 que da la suma justamente para que
-       la curva no termine pegada al filo, que se lee como cortada—. Medido a
-       1280x800: 13 px de aire abajo de la curva, y con esto vuelven a ser 25.
-       Los márgenes de un hijo de grilla no se colapsan con nada, así que el
-       negativo es exacto: 22 de hueco menos 12 son los 10 que la curva ya
-       traía puestos. */
-    #zonaRevision > .curva  { margin-top: -12px; }
-    #zonaRevision > .pabajo { margin-top: -22px; }
+    #zonaRevision > .parriba  { grid-column: 1; grid-row: 1; }
+    #zonaRevision > .tarjetas { grid-column: 1; grid-row: 2; }
+    #zonaRevision > .pmedio   { grid-column: 1; grid-row: 3; }
+    #zonaRevision > .lateral  { grid-column: 2; grid-row: 1 / span 3; }
+    #zonaRevision > .curva    { grid-column: 1 / -1; grid-row: 4; }
+    #zonaRevision > .pabajo   { grid-column: 1; grid-row: 5; }
+
     /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
     #zonaRevision.solaTira { grid-template-columns: 700px; }
     #zonaRevision.solaTira .lateral { display: none; }
@@ -559,6 +556,43 @@
     .cDif { font-size: 12.5px; font-weight: 700; color: var(--tenue);
             font-variant-numeric: tabular-nums; }
   }
+  /* TRES COLUMNAS, Y LA TARJETA AL COSTADO (v0.90). Es el cambio invasivo de la
+     tanda y el que más tablero compra: la tarjeta deja de gastar alto arriba del
+     tablero, y en una compu el alto ES el tablero. Medido: el lado pasa de 496 a
+     586 a 1500x800.
+
+     LA v0.74 PUSO LA TARJETA ARRIBA PORQUE "SE LEE PRIMERO", y eso no se
+     contradice: en una pantalla ancha la izquierda también es primero. Lo que se
+     mueve es dónde está el "antes", no que esté antes.
+
+     EL CORTE ES 1500 Y NO MENOS porque la cuenta no cierra: 300 de tarjeta, 360
+     de lista, 44 de barra de evaluación, 132 de piezas comidas y dos huecos de
+     22 son 880 sin una sola casilla de tablero. Abajo de eso siguen valiendo las
+     dos columnas de la v0.80, intactas. */
+  @media (min-width: 1500px) {
+    body { max-width: 1500px; }
+    #zonaRevision { grid-template-columns: 300px minmax(0, 1fr) 360px; }
+    #zonaRevision.solaTira { grid-template-columns: 300px minmax(0, 1fr); }
+    #zonaRevision > .parriba  { grid-column: 2; grid-row: 1; }
+    #zonaRevision > .tarjetas { grid-column: 1; grid-row: 1 / span 2; }
+    #zonaRevision > .pmedio   { grid-column: 2; grid-row: 2; }
+    #zonaRevision > .lateral  { grid-column: 3; grid-row: 1 / span 2; }
+    #zonaRevision > .curva    { grid-column: 1 / -1; grid-row: 3; }
+    #zonaRevision > .pabajo   { grid-column: 2; grid-row: 4; }
+    /* La tarjeta no gasta más alto arriba del tablero, así que el presupuesto
+       baja lo que ella medía. LOS NÚMEROS SALEN DE MEDIR, no de sumar el CSS:
+       se puso el descuento estimado, se leyó el aire que quedaba abajo de la
+       curva y se corrigió hasta que dieran los mismos 25 px que en dos columnas
+       —la reserva que la v0.74 puso a propósito para que la curva no se lea
+       cortada—. La primera estimación erraba por 17. Lo que compra: el lado
+       pasa de 496 a 569 a 1500x800, o sea 73 px, no los ~90 que decía la lista
+       de pendientes. La diferencia de 26 entre los dos números es la barra de
+       evaluación horizontal, igual que en dos columnas. */
+    #zonaRevision          { --ladoTab: clamp(360px, calc(100vh - 257px), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 231px), 680px); }
+    /* la tarjeta arriba de todo en su columna, no estirada a dos filas */
+    #zonaRevision > .tarjetas { align-self: start; }
+  }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
      nada avisa que se puede tocar. Reportado como "no responde nada".
@@ -631,7 +665,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.89 · 09-09";
+  window.VERSION = "v0.90 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -953,11 +987,17 @@
   <div class="revcab"><span id="revRival" class="rival"></span>
     <span id="revFin" class="fin"></span></div>
   <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
+  </div>
   <!-- EL ORDEN DE ESTA VISTA SE DECIDIÓ DIBUJÁNDOLO (v0.74, §4septdecies):
        arriba el ESTADO —la barra—, después lo que pasó en esta jugada —las dos
        tarjetas—, después el tablero, y abajo la navegación y la curva. La
        tarjeta va arriba del tablero porque se lee primero: bajás la vista,
-       encontrás el veredicto y recién entonces mirás la posición. -->
+       encontrás el veredicto y recién entonces mirás la posición.
+       DESDE LA v0.90 LAS DOS TARJETAS VIVEN EN UN BLOQUE PROPIO, hijo directo de
+       la grilla, para poder mudarlas a una columna al costado en una pantalla
+       muy ancha (§4trigies). En el celular y en dos columnas esto se apila
+       exactamente igual que antes: es un div de más y nada más. -->
+  <div class="tarjetas">
   <div class="veredicto prueba oculto" id="prueba">
     <div class="ico" id="pIco"></div>
     <div class="txt"><div class="tit" id="pTit"></div><div class="sub" id="pSub"></div>
@@ -971,6 +1011,8 @@
       <div class="exp oculto" id="vExp"></div></div>
     <div class="ev" id="vEv"></div>
   </div>
+  </div>
+  <div class="principal pmedio">
   <div class="revtab">
     <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
     <div id="tablero"></div>
@@ -6141,8 +6183,30 @@ function pintarRevision() {
        depende del tablero, que depende del alto de la ventana y de qué barra de
        evaluación esté puesta. La lista ya scrolleaba sola, así que lo único que
        cambia es que empieza a scrollear un poco antes. */
-    const col = document.querySelector(".parriba");
-    if (col) $("zonaRevision").style.setProperty("--altoCol", col.offsetHeight + "px");
+    /* DEL TECHO DE `.parriba` AL PISO DE `.pmedio`, y no el alto de un bloque:
+       desde la v0.90 la columna del tablero son dos o tres bloques y cuáles
+       depende del ancho de la pantalla —en tres columnas la tarjeta se va al
+       costado y deja de contar—. Medir de punta a punta sirve para las dos
+       formas sin preguntar cuál está puesta. */
+    const cA = document.querySelector(".parriba"), cB = document.querySelector(".pmedio");
+    if (cA && cB) {
+      /* SE MIDE CON LA LISTA AFUERA, y esto no es prolijidad: la lista cruza las
+         filas de la grilla, así que si es más alta las estira, y medir de punta
+         a punta estaría midiendo la lista misma. El tope de la lista sale de
+         esta medida, o sea que se estaría midiendo contra sí misma: la primera
+         pintada, cuando todavía no hay medida y vale el `100vh` de reserva, la
+         deja inflada y ya no baja nunca. Sacarla un instante corta el nudo. El
+         navegador pinta al terminar esta función, así que no se ve nada.
+         DEL TECHO DE `.parriba` AL PISO DE `.pmedio` y no el alto de un bloque:
+         desde la v0.90 la columna del tablero son dos o tres bloques, y cuáles
+         depende del ancho —en tres columnas la tarjeta se va al costado y deja
+         de contar—. Punta a punta sirve para las dos formas sin preguntar. */
+      const lat = $("lateral"), antes = lat.style.display;
+      lat.style.display = "none";
+      const alto = Math.round(cB.getBoundingClientRect().bottom - cA.getBoundingClientRect().top);
+      lat.style.display = antes;
+      $("zonaRevision").style.setProperty("--altoCol", alto + "px");
+    }
     /* El panel de las mejores también le come alto a la lista, y cuánto depende
        de si está abierto: se mide igual que la columna. EL MARGEN VA INCLUIDO y
        se lee del CSS en vez de repetirlo acá: `offsetHeight` no lo cuenta, y sin
