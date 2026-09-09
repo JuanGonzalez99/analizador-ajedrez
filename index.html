@@ -384,7 +384,11 @@
              overflow-y: auto; position: relative; }
   .jugadas > div { display: grid; gap: 4px; align-items: center; padding: 3px 7px;
                    border-bottom: 1px solid var(--linea); }
-  .jugadas.planilla > div { grid-template-columns: 28px 1fr 1fr; }
+  /* CINCO COLUMNAS: nº, jugada y reloj de cada lado. Es como está impresa una
+     planilla de papel, que trae una columna de reloj por jugador. El tiempo va
+     PEGADO a su jugada y no los dos al final, porque al final habría que contar
+     cuál es de quién. */
+  .jugadas.planilla > div { grid-template-columns: 28px 1fr auto 1fr auto; }
   .jugadas.renglon > div { grid-template-columns: 28px 1fr auto auto; }
   .jugadas > div:last-child { border-bottom: 0; }
   /* el renglón de la jugada elegida, tenue: la marca fuerte la lleva la jugada
@@ -541,7 +545,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.82 · 09-09";
+  window.VERSION = "v0.83 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5657,6 +5661,13 @@ function pintarRevision() {
      La lista muestra SIEMPRE la partida de verdad, nunca la variante: al lado
      del tablero es la referencia de lo que pasó, y la inventada ya se ve en la
      tira y en el tablero. */
+  /* Los segundos de una jugada, con la misma atenuación que su jugada: si el
+     rival se ve apagado, su reloj también. La celda va SIEMPRE, aunque no haya
+     jugada, o la grilla se corre de columna en la última fila de una partida
+     que termina con blancas. */
+  const segundos = x => !x ? `<span class="se"></span>`
+    : `<span class="se"${(!lado || VER_AMBOS || x.turno === lado) ? "" : ` style="opacity:.55"`}` +
+      ` title="segundos pensados">${tiempoCorto(x.seg)}</span>`;
   const fj = formaJugadas();
   $("zonaRevision").classList.toggle("solaTira", !fj.clase);
   if (fj.clase) {
@@ -5674,8 +5685,9 @@ function pintarRevision() {
       lista.innerHTML = [...pares.entries()].map(([num, par]) => {
         const aca = (par.w && par.w.i === selTira) || (par.b && par.b.i === selTira);
         return `<div class="${aca ? "aca" : ""}"><span class="np">${num}</span>` +
-          celda(par.w && par.w.x, par.w && par.w.i, selTira) +
-          celda(par.b && par.b.x, par.b && par.b.i, selTira) + `</div>`;
+          celda(par.w && par.w.x, par.w && par.w.i, selTira) + segundos(par.w && par.w.x) +
+          celda(par.b && par.b.x, par.b && par.b.i, selTira) + segundos(par.b && par.b.x) +
+          `</div>`;
       }).join("") + cierreDeLaTira(fin, R.filas);
     } else {
       /* el número acompaña a la de las BLANCAS, igual que en la tira y que como
@@ -5687,7 +5699,7 @@ function pintarRevision() {
         celda(x, i, selTira) +
         `<span class="pe"${(!lado || VER_AMBOS || x.turno === lado) ? "" : ` style="opacity:.55"`}>` +
         `${typeof x.perdida === "number" ? x.perdida.toFixed(2) : ""}</span>` +
-        `<span class="se" title="segundos pensados">${tiempoCorto(x.seg)}</span>` +
+        segundos(x) +
         `</div>`).join("") + cierreDeLaTira(fin, R.filas);
     }
     lista.querySelectorAll("span[data-i]").forEach(sp => {

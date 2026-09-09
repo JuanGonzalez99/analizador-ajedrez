@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.82**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.83**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2611,6 +2611,15 @@ para la mediana de la vista Mes. Va en su **propia columna** de la lista lateral
 en la forma "una por renglón", y no pegado a la pérdida: son dos magnitudes
 distintas y juntas se leen como una sola. Sin reloj dice **una raya y no un
 cero**, porque `null` es "no se sabe" y un cero sería mentira (§5).
+
+**En la v0.82 quedaron solo en la forma "una por renglón", y el usuario lo
+reportó enseguida**: la planilla es la que viene puesta de fábrica, así que la
+mitad de la gente no los veía. Desde la **v0.83** la planilla tiene cinco
+columnas —`nº | blancas | reloj | negras | reloj`—, que es como está impresa una
+planilla de papel. El reloj va **pegado a su jugada** y no los dos al final,
+porque al final habría que contar cuál es de quién. La celda del reloj se dibuja
+aunque no haya jugada: si no, en una partida que termina con blancas la última
+fila se corre de columna.
 
 Para poder mirarlo hubo que agregar una partida de prueba: ninguna de las cuatro
 traía relojes, así que la columna salía toda rayas. Está en

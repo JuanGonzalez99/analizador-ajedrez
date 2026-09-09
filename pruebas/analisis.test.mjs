@@ -2544,8 +2544,14 @@ test("el tiempo pensado sale en la lista, y null no es cero", () => {
   /* Pedido con la palabra "fundamental": ver que un error grave salió en dos
      segundos explica el error mejor que su evaluación. El dato ya existía
      (`fila.seg`), solo que no se mostraba en ningún lado. */
-  assert.ok(html.includes('<span class="se" title="segundos pensados">'),
+  assert.ok(html.includes('` title="segundos pensados">${tiempoCorto(x.seg)}</span>`'),
     "la lista muestra los segundos");
+  /* EN LAS DOS FORMAS. En la v0.82 quedaron solo en "una por renglón" y el
+     usuario lo reportó: la planilla es la que viene puesta de fábrica. */
+  assert.ok(html.includes("celda(par.w && par.w.x, par.w && par.w.i, selTira) + segundos(par.w && par.w.x)"),
+    "también en la planilla, y pegados a su jugada");
+  assert.ok(html.includes("const segundos = x => !x ? `<span class=\"se\"></span>`"),
+    "la celda va aunque no haya jugada, o la grilla se corre de columna");
   assert.ok(html.includes('if (seg == null) return "\\u00b7";'),
     "y sin reloj dice una raya, no un cero, que sería mentira");
   assert.ok(html.includes(".jugadas.renglon > div { grid-template-columns: 28px 1fr auto auto; }"),
@@ -2614,8 +2620,8 @@ test("el dial de las jugadas tiene las dos formas y el apagado", () => {
   /* Es un dial temporal, como el de la v0.76: se va cuando el usuario elija. */
   for (const k of ["planilla:", "renglon:", "no:"])
     assert.ok(html.includes(k), `está la forma ${k}`);
-  assert.ok(html.includes('grid-template-columns: 28px 1fr 1fr'),
-    "la planilla es la lista de la v0.73 tal cual: nº | blancas | negras");
+  assert.ok(html.includes("grid-template-columns: 28px 1fr auto 1fr auto"),
+    "la planilla es nº | blancas | reloj | negras | reloj, como la de papel");
   assert.ok(html.includes('#zonaRevision.solaTira { grid-template-columns: 700px; }'),
     "sin lista, la columna no queda vacía");
 });
