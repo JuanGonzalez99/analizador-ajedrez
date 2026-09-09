@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.81**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.82**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2595,6 +2595,91 @@ lado, y el cuerpo en sus 1050.
 rompe si alguien toca los anchos. Además maneja el mouse de verdad y mide que la
 tira se arrastre, que **no** seleccione texto, que un clic siga navegando y que
 la rueda no se lleve la página puesta.
+
+---
+
+## 4trevicies. La app empieza a responder al mouse (v0.82)
+
+De trece ideas que se le ofrecieron al usuario de PC, eligió **todas**, y una con
+nombre propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*. Esta
+tanda es la mitad que **no mueve nada de lugar**; las de disposición van aparte,
+porque una tanda invasiva va sola (§10).
+
+**El tiempo por jugada.** El dato ya estaba: `fila.seg`, los segundos pensados,
+que el reloj (§4nonies) calcula desde la v0.43 y que hasta acá solo se usaba
+para la mediana de la vista Mes. Va en su **propia columna** de la lista lateral,
+en la forma "una por renglón", y no pegado a la pérdida: son dos magnitudes
+distintas y juntas se leen como una sola. Sin reloj dice **una raya y no un
+cero**, porque `null` es "no se sabe" y un cero sería mentira (§5).
+
+Para poder mirarlo hubo que agregar una partida de prueba: ninguna de las cuatro
+traía relojes, así que la columna salía toda rayas. Está en
+`pruebas/partida-reloj.pgn` y se dibuja con **`npm run mirar reloj`**.
+
+**Ver una jugada sin ir a ella.** Pasar el mouse por una jugada —en la lista o en
+la tira— muestra esa posición en el tablero, y al salir vuelve todo. Deja
+recorrer la partida con el ojo sin perder dónde estabas parado.
+
+Se implementa **guardando el HTML del tablero y devolviéndolo**, no repintando la
+vista al salir. Repintar era lo obvio y es peor: `pintarRevision` recentra la
+tira y vuelve a scrollear la lista, así que el renglón se movía abajo del mouse y
+disparaba el hover del de al lado. Guardar y devolver no puede desincronizarse,
+porque lo que vuelve es exactamente lo que había. El arnés lo mide comparando el
+tablero **entero** antes y después.
+
+**La rueda sobre el tablero pasa jugadas.** Con acumulador: un trackpad manda
+docenas de eventos chiquitos por gesto, y una jugada por evento hacía volar la
+partida de un manotazo. Se pasa de jugada cada 40 de desplazamiento juntado.
+
+**La tecla `n` salta al próximo error** (`p` al anterior), entre las jugadas
+propias y usando las categorías que ya están calculadas. Una partida se revisa
+por los errores, no jugada por jugada.
+
+**Y el archivo pasa a tener reglas `:hover`, que no tenía ninguna.** Cero,
+contadas. Reportado como *"no responde nada"*.
+
+**Dos trampas de esta tanda**, las dos agarradas mirando y no midiendo:
+
+- **El mouse SUBRAYA, no rellena.** Primero se hizo rellenando más suave que la
+  elegida —10% contra 20%— y en la captura **las dos se veían iguales**: quedaban
+  dos "estás acá" en la misma lista. El problema no era la intensidad sino que
+  era la MISMA MARCA. Con un subrayado no hay confusión posible a ninguna
+  intensidad, porque son dos cosas distintas. Por eso tampoco se tiñe el
+  renglón: ese tono ya significa "acá".
+- **Todo el hover va adentro de `@media (hover: hover)`.** En una pantalla táctil
+  el navegador deja el estado pegado después de tocar, así que la última jugada
+  tocada se quedaría iluminada como si estuviera elegida. Con la consulta puesta,
+  el celular no ve una sola de esas reglas.
+
+**Dos cosas que se rompieron en el arnés y eran del arnés, no de la app:**
+
+- **Las capturas dependían de dónde hubiera quedado el mouse.** Al agregar el
+  hover, seis capturas del celular cambiaron: el puntero seguía encima del último
+  elemento clickeado y lo dejaba iluminado. En un celular eso no pasa nunca.
+  Ahora `foto()` y `fotoDe()` **estacionan el puntero** en la esquina antes de
+  disparar, lo que además hace la captura repetible — antes no lo era, y nadie
+  se había dado cuenta porque no había una sola regla que dependiera del mouse.
+- **`hasTouch` no sirve, aunque sea lo honesto.** Con él la página dice
+  `hover: none` y `pointer: coarse`, que es la verdad de un celular; pero se fija
+  al crear el contexto y no se puede revertir, así que la pasada ancha no podría
+  probar nada de lo que solo existe con mouse. Probado y descartado: forzar la
+  consulta de medios por CDP tampoco alcanza, porque en Chromium `hover` y
+  `pointer` **salen** de la emulación táctil, y apagarla a mitad de camino no
+  recalcula la consulta.
+
+**Y una que sí era de la app, encontrada por ese camino.** La previa leía
+`matchMedia("(hover: hover)").matches` **una sola vez al cargar** y guardaba el
+booleano. Ahora se guarda la consulta y se lee `.matches` cada vez. No es un
+detalle del arnés: a una tablet a la que le enchufan un teclado con trackpad le
+cambia la respuesta sin recargar la página, y con el booleano congelado la previa
+no aparecía nunca.
+
+**El ancho de la lista y el corte están atados.** La lista pasó de 300 a 360 para
+que entrara la columna del tiempo, y el corte se movió con ella: 700 + 22 + 360 +
+28 = **1110**. Mover uno sin el otro deja una franja donde las columnas no entran
+y la principal se achica de nuevo — pasó al escribirlo, y lo agarró la prueba.
+Por eso ahora el corte **se calcula** en la prueba a partir del ancho de la
+lista, en vez de estar escrito dos veces.
 
 ---
 

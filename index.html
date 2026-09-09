@@ -385,7 +385,7 @@
   .jugadas > div { display: grid; gap: 4px; align-items: center; padding: 3px 7px;
                    border-bottom: 1px solid var(--linea); }
   .jugadas.planilla > div { grid-template-columns: 28px 1fr 1fr; }
-  .jugadas.renglon > div { grid-template-columns: 28px 1fr auto; }
+  .jugadas.renglon > div { grid-template-columns: 28px 1fr auto auto; }
   .jugadas > div:last-child { border-bottom: 0; }
   /* el renglón de la jugada elegida, tenue: la marca fuerte la lleva la jugada
      misma —la misma que en la tira— y dos marcas fuertes en la misma fila se
@@ -401,8 +401,14 @@
   .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
   .jugadas .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
                      font-weight: 700; }
-  .jugadas .pe { font-variant-numeric: tabular-nums; font-size: 11.5px;
+  .jugadas .pe, .jugadas .se { font-variant-numeric: tabular-nums; font-size: 11.5px;
                  color: var(--tenue); padding-right: 3px; }
+  /* EL TIEMPO PENSADO (v0.82). Pedido explícito y con la palabra "fundamental":
+     ver que un error grave salió en dos segundos explica el error mejor que su
+     evaluación. Va en su propia columna, no pegado a la pérdida, porque son dos
+     magnitudes distintas y juntas se leen como una sola. Ancho mínimo para que
+     "1:05" y "9s" no bailen de fila en fila. */
+  .jugadas .se { min-width: 34px; text-align: right; }
   /* Cómo terminó la partida, cerrando la lista: es donde lo escribe una
      planilla. No suma alto porque vive adentro, que ya scrollea. */
   .jugadas .cierre { display: block; text-align: center; padding: 7px 10px;
@@ -427,10 +433,14 @@
      de los márgenes del papel. Da 1050 justo.
      Estuvo en 1000 y estaba mal, y se vio midiendo: ahí no entraban los tres,
      así que la columna principal se achicaba a 650 y el tablero con ella. El
-     corte tiene que ser el ancho en el que las dos columnas entran ENTERAS. */
-  @media (min-width: 1050px) {
-    body { max-width: 1050px; }
-    #zonaRevision { display: grid; grid-template-columns: 700px 300px;
+     corte tiene que ser el ancho en el que las dos columnas entran ENTERAS.
+     EN LA v0.82 LA LISTA PASÓ DE 300 A 360 —le entró la columna del tiempo— y
+     el corte se movió con ella: 700 + 22 + 360 + 28 = 1110. Mover el ancho sin
+     mover el corte es lo que rompe, porque entre los dos números las columnas
+     no entran y la principal se achica de nuevo. */
+  @media (min-width: 1110px) {
+    body { max-width: 1110px; }
+    #zonaRevision { display: grid; grid-template-columns: 700px 360px;
                     gap: 22px; align-items: start; }
     /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
     #zonaRevision.solaTira { grid-template-columns: 700px; }
@@ -459,6 +469,31 @@
        la cuenta da menos de 360 y el tablero terminaría más chico que en el
        celular, que es exactamente al revés de lo que se quiso. */
     svg.tab { max-width: clamp(360px, calc(100vh - 330px), 680px); }
+  }
+  /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
+     UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
+     nada avisa que se puede tocar. Reportado como "no responde nada".
+     TODO va adentro de `@media (hover: hover)`, y no es prolijidad: en una
+     pantalla táctil el navegador deja el estado de hover PEGADO después de
+     tocar, así que la última jugada que tocaste se queda iluminada como si
+     estuviera elegida. Serían dos "estás acá" al mismo tiempo. Con la consulta
+     puesta, el celular no ve una sola de estas reglas. */
+  @media (hover: hover) {
+    button:not(:disabled):hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+    select:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
+    /* LAS JUGADAS: EL MOUSE SUBRAYA, NO RELLENA. Primero se probó rellenando más
+       suave que la elegida —10% contra 20%— y en la captura las dos se veían
+       IGUAL: quedaban dos "estás acá" en la misma lista y no se sabía cuál era
+       cuál. El problema no era la intensidad sino que era la MISMA MARCA. Con un
+       subrayado no hay confusión posible a ninguna intensidad, porque son dos
+       cosas distintas: el relleno es dónde estás, el subrayado es dónde está el
+       mouse. Por eso tampoco se tiñe el renglón: ese tono ya significa "acá". */
+    .tira .jg:hover, .jugadas .jg:hover, .vlinea .vj:hover {
+      box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 45%, transparent); }
+    .tocable:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
+    .tira > button:hover { color: inherit; }
+    .curva:hover, .evalh:hover { border-color: color-mix(in srgb, currentColor 40%, transparent); }
+    .seccion > summary:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
   }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
@@ -506,7 +541,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.81 · 09-09";
+  window.VERSION = "v0.82 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3342,6 +3377,48 @@ $("salirDev").onclick = seguro("salir de dev", () => {
   $("tema").onchange = seguro("tema", () => aplicarTema($("tema").value));
 })();
 let GIRADO = false;
+
+/* VER UNA JUGADA SIN IR A ELLA (v0.82). Pasar el mouse por una jugada —en la
+   lista de al lado o en la tira— muestra esa posición en el tablero, y al salir
+   vuelve todo como estaba. Es el gesto de cualquier visor de ajedrez en compu, y
+   acá sirve doble: deja recorrer la partida con el ojo sin perder dónde estabas
+   parado, que es lo que pasa cuando navegar es la única forma de mirar.
+
+   SE GUARDA EL HTML DEL TABLERO Y SE LO DEVUELVE, en vez de repintar la vista
+   entera al salir. Repintar era lo obvio y es peor: `pintarRevision` recentra la
+   tira y vuelve a scrollear la lista, así que el renglón se movía abajo del
+   mouse y disparaba el hover del renglón de al lado. Guardar y devolver no puede
+   desincronizarse, porque lo que vuelve es exactamente lo que había.
+
+   No corre mientras hay una variante abierta: ahí el tablero ya está mostrando
+   otra cosa y pisarla sería mentir sobre qué se está probando. */
+let TABLERO_PREVIO = null;
+function previsualizar(i) {
+  if (!R || PRUEBA || !R.filas[i]) return;
+  if (TABLERO_PREVIO === null) TABLERO_PREVIO = $("tablero").innerHTML;
+  const f = R.filas[i];
+  /* sin flecha verde y sin resaltado: la previa contesta "¿qué pasó acá?", no
+     "¿qué convenía?". La capa va vacía y no ausente porque `dibujar` la lee. */
+  $("tablero").innerHTML = dibujar(f.fen, f.uci, null,
+    { desde: null, destinos: [], uci: null, resalta: null });
+}
+function volverDeLaPrevia() {
+  if (TABLERO_PREVIO === null) return;
+  $("tablero").innerHTML = TABLERO_PREVIO;
+  TABLERO_PREVIO = null;
+}
+/* Con mouse de verdad y no en una pantalla táctil, donde `mouseenter` lo dispara
+   el propio toque y la previa pelearía contra el clic que navega.
+   SE GUARDA LA CONSULTA Y SE LEE `.matches` CADA VEZ, no el booleano de una sola
+   lectura al cargar. Se descubrió en el arnés, y no es un detalle del arnés: una
+   tablet a la que le enchufan un teclado con trackpad cambia de respuesta sin
+   recargar la página, y con el booleano congelado la previa no aparecía nunca. */
+const MQ_MOUSE = window.matchMedia("(hover: hover)");
+function previaEn(sp, i) {
+  if (!MQ_MOUSE.matches) return;
+  sp.onmouseenter = () => previsualizar(i);
+  sp.onmouseleave = volverDeLaPrevia;
+}
 /* `prueba` es lo que agrega la v0.65 y va en null en el camino normal:
    { desde, destinos, uci }. Cuando viene, el tablero deja de ser un dibujo y
    pasa a recibir toques por casilla. */
@@ -4837,6 +4914,16 @@ function comoTermino(cab, meta) {
    SE CUENTA EN JUGADAS DE AJEDREZ Y NO EN FILAS. `filas.length` son medias
    jugadas: en la partida de prueba da 36 cuando en ajedrez son 18. El número
    sale del `n` de la última fila, que es el mismo que muestra la tarjeta. */
+/* CUÁNTO SE PENSÓ UNA JUGADA, corto (v0.82). `null` NO es cero: es "no se
+   sabe" —la partida no traía reloj— y se dice con una raya, no con un 0, que
+   sería mentira. Abajo del minuto va en segundos secos porque es el rango donde
+   está casi todo; arriba, en m:ss, que es como lo lee un ajedrecista. */
+function tiempoCorto(seg) {
+  if (seg == null) return "\u00b7";
+  const s = Math.round(seg);
+  return s < 60 ? s + "s" : Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+}
+
 function cierreDeLaTira(fin, filas) {
   if (!fin || !filas.length) return "";
   const jugadas = filas[filas.length - 1].n;
@@ -5509,6 +5596,8 @@ function pintarRevision() {
     ? dibujar(vista.fen, PRUEBA.ver === 0 ? (real && real.uci) : null,
               PRUEBA.ver === 0 && verMejor ? f.mejor : null, capa)
     : dibujar(f.fen, f.uci, verMejor ? f.mejor : null, capa);
+  /* lo que había guardado la previa ya no existe: este es el tablero nuevo */
+  TABLERO_PREVIO = null;
   $("tileMejor").classList.toggle("activo", verMejor);
   $("tileMejor").classList.toggle("inerte", yaEraLaMejor);
   $("tileMejor").setAttribute("aria-disabled", yaEraLaMejor ? "true" : "false");
@@ -5552,6 +5641,7 @@ function pintarRevision() {
     (varAbajo ? laVarianteEnLaTira() : cierreDeLaTira(fin, R.filas));
   $("tiraSc").querySelectorAll("span[data-i]").forEach(sp => {
     sp.onclick = () => irA(+sp.dataset.i);
+    previaEn(sp, +sp.dataset.i);
   });
   $("tiraSc").querySelectorAll("span[data-v]").forEach(sp => {
     sp.onclick = () => verDeLaVariante(+sp.dataset.v);
@@ -5597,10 +5687,12 @@ function pintarRevision() {
         celda(x, i, selTira) +
         `<span class="pe"${(!lado || VER_AMBOS || x.turno === lado) ? "" : ` style="opacity:.55"`}>` +
         `${typeof x.perdida === "number" ? x.perdida.toFixed(2) : ""}</span>` +
+        `<span class="se" title="segundos pensados">${tiempoCorto(x.seg)}</span>` +
         `</div>`).join("") + cierreDeLaTira(fin, R.filas);
     }
     lista.querySelectorAll("span[data-i]").forEach(sp => {
       sp.onclick = () => irA(+sp.dataset.i);
+      previaEn(sp, +sp.dataset.i);
     });
     /* que la elegida quede a la vista sin arrastrar la lista a mano. Y en la
        ÚLTIMA la lista baja del todo, o el cierre no se ve nunca: el scroll de
@@ -5739,14 +5831,61 @@ $("curva").addEventListener("click", seguro("curva", ev => {
   irA(jugadaEnLaCurva((ev.clientX - r.left) / r.width, R.filas.length));
 }));
 
+/* LA RUEDA SOBRE EL TABLERO PASA JUGADAS (v0.82). Es el gesto estándar de
+   cualquier visor de ajedrez en compu. Con el dedo no existe —una pantalla
+   táctil no manda `wheel`— así que el celular no se entera.
+
+   SE ACUMULA EL DESPLAZAMIENTO Y RECIÉN AHÍ SE PASA DE JUGADA: un trackpad manda
+   docenas de eventos chiquitos por gesto, y una jugada por evento hacía volar la
+   partida entera de un manotazo. El umbral de 40 es un "clic" de rueda de mouse
+   y un empujón corto de trackpad.
+
+   Mientras hay una variante abierta no hace nada: ahí pasar de jugada querría
+   decir dos cosas distintas —la partida o la variante— y adivinar cuál es peor
+   que no hacer nada. */
+(function ruedaEnElTablero() {
+  let junta = 0;
+  $("tablero").addEventListener("wheel", ev => {
+    if (!R || PRUEBA || $("zonaRevision").classList.contains("oculto")) return;
+    if (!ev.deltaY || ev.ctrlKey) return;
+    ev.preventDefault();
+    junta += ev.deltaY;
+    while (Math.abs(junta) >= 40) {
+      irA(junta > 0 ? IDX + 1 : IDX - 1);
+      junta -= Math.sign(junta) * 40;
+    }
+  }, { passive: false });
+})();
+
+/* SALTAR AL PRÓXIMO ERROR (v0.82). Una partida se revisa por los errores, no
+   jugada por jugada, y las categorías ya están calculadas: la tecla las usa.
+   Salta solo entre las JUGADAS PROPIAS, que es lo mismo que decide qué se pinta
+   en la tira, salvo que estén pintadas las dos. */
+const MALAS = new Set(["imprecision", "error", "omision", "grave"]);
+function saltarAMala(dir) {
+  if (!R) return;
+  const lado = ladoDelUsuario(R);
+  for (let i = IDX + dir; i >= 0 && i < R.filas.length; i += dir) {
+    const x = R.filas[i];
+    if (lado && !VER_AMBOS && x.turno !== lado) continue;
+    if (MALAS.has(presentar(x).clave)) { irA(i); return; }
+  }
+}
+
 /* en la compu, las flechas. Se ignoran mientras se escribe en un campo. */
 document.addEventListener("keydown", seguro("teclas", ev => {
-  if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+  const tecla = ev.key;
+  const nave = tecla === "ArrowLeft" || tecla === "ArrowRight";
+  /* `n` y `p` de próximo y previo error. Sin Ctrl ni Alt: si no, se comen los
+     atajos del navegador. */
+  const salto = (tecla === "n" || tecla === "p") && !ev.ctrlKey && !ev.altKey && !ev.metaKey;
+  if (!nave && !salto) return;
   if (!R || $("zonaRevision").classList.contains("oculto")) return;
   const t = ev.target.tagName;
   if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
   ev.preventDefault();
-  irA(ev.key === "ArrowRight" ? IDX + 1 : IDX - 1);
+  if (salto) saltarAMala(tecla === "n" ? 1 : -1);
+  else irA(tecla === "ArrowRight" ? IDX + 1 : IDX - 1);
 }));
 
 $("tabPartida").onclick = seguro("ver la partida", () => mostrarVista("partida"));

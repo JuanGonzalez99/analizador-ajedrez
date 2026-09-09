@@ -232,7 +232,26 @@ try {
 }
 await pg.waitForTimeout(800);
 
-const foto = async n => { await pg.waitForTimeout(300); await pg.screenshot({ path: path.join(SALIDA, n + SUFIJO + ".png") }); };
+/* SE ESTACIONA EL PUNTERO ANTES DE CADA CAPTURA (v0.82). Sin esto la captura
+   depende de dónde haya quedado el mouse: al agregar las reglas de hover, seis
+   capturas del celular cambiaron porque el puntero seguía encima del último
+   elemento clickeado y lo dejaba iluminado. En un celular eso no pasa nunca.
+   NO se emula un aparato táctil —con `hasTouch` la página dice `hover: none`,
+   que es lo honesto, pero se fija al crear el contexto y entonces la pasada
+   ancha no podría probar nada de lo que solo existe con mouse—. Estacionar da
+   el mismo dibujo y además hace la captura REPETIBLE, que antes no era. */
+const foto = async n => {
+  await pg.mouse.move(2, 2);
+  await pg.waitForTimeout(300);
+  await pg.screenshot({ path: path.join(SALIDA, n + SUFIJO + ".png") });
+};
+/* lo mismo para las capturas de UN elemento: dos de la curva salían distintas
+   porque el puntero quedaba encima y le encendía el borde */
+const fotoDe = async (sel, n) => {
+  await pg.mouse.move(2, 2);
+  await pg.waitForTimeout(120);
+  await pg.locator(sel).screenshot({ path: path.join(SALIDA, n + ".png") });
+};
 /* frena solo al llegar a la última: el botón se deshabilita ahí, y sin esto
    el arnés se muere de timeout clickeando algo que no responde */
 const avanzar = async n => {
@@ -299,7 +318,7 @@ for (const largo of ["corta", "media", "larga"]) {
   await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -190));
   await foto("largo-" + largo);
-  await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta-" + largo + SUFIJO + ".png") });
+  await fotoDe("#veredicto", "tarjeta-" + largo + SUFIJO);
   console.log("largo " + largo.padEnd(6), JSON.stringify(await pg.evaluate(() => {
     const t = document.getElementById("vExp");
     return { frases: t.querySelectorAll("span.fr").length,
@@ -314,7 +333,7 @@ await pg.selectOption("#largoExp", "media");
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("revision-tarjeta");
-await pg.locator("#veredicto").screenshot({ path: path.join(SALIDA, "tarjeta" + SUFIJO + ".png") });
+await fotoDe("#veredicto", "tarjeta" + SUFIJO);
 
 /* PROBAR JUGADAS: LA VARIANTE (v0.66), sobre esa misma jugada. Las jugadas NO
    se eligen a ojo: se le piden a chess.js, y la primera es una legal que no sea
@@ -355,7 +374,7 @@ else {
   }
   if (respuesta) {
     await foto("prueba-5-encadenada");
-    await pg.locator("#prueba").screenshot({ path: path.join(SALIDA, "tarjeta-prueba" + SUFIJO + ".png") });
+    await fotoDe("#prueba", "tarjeta-prueba" + SUFIJO);
   /* la maqueta del borde violeta se fue en la v0.71: el usuario eligió el color
      de la categoría mirando las dos. */
     /* LAS CUATRO FORMAS DEL DIAL DE LA v0.76, sobre la misma variante
@@ -471,10 +490,10 @@ await pg.evaluate(() => window.scrollBy(0, -60));
 await foto("revision-tablero-y-curva");
 await avanzar(13);
 await foto("revision-final");
-await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "curva.png") });
+await fotoDe("#curva", "curva");
 /* la barra sola: cómo termina la partida se juega en 16 px de alto, y en la
    captura de la pantalla entera esa franja es demasiado chica para juzgarla */
-await pg.locator("#evalh").screenshot({ path: path.join(SALIDA, "barra" + SUFIJO + ".png") });
+await fotoDe("#evalh", "barra" + SUFIJO);
 /* la jugada ANTERIOR a la última: en la partida que termina en mate es la que
    permite el mate, o sea la otra mitad del arreglo de la v0.60 */
 await pg.click("#ant");
@@ -495,10 +514,10 @@ else {
   const caja = await pg.locator("#curva").boundingBox();
   await pg.mouse.click(caja.x + caja.width * donde, caja.y + caja.height / 2);
   await pg.waitForTimeout(250);
-  await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "marcas-encima-punto.png") });
+  await fotoDe("#curva", "marcas-encima-punto");
   await pg.selectOption("#marcasCurva", "raya");
   await pg.waitForTimeout(250);
-  await pg.locator("#curva").screenshot({ path: path.join(SALIDA, "marcas-encima-raya.png") });
+  await fotoDe("#curva", "marcas-encima-raya");
 }
 await pg.selectOption("#marcasCurva", "punto");
 
@@ -563,8 +582,13 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
    Se dibuja a 1280 x 800, y además a 1050 y 1049, que son los dos lados del
    corte: es donde se rompe si alguien toca los anchos. */
 console.log("");
-for (const [w, h, n] of [[1280, 800, "ancho"], [1050, 800, "ancho-justo"],
-                         [1049, 800, "ancho-angosto"]]) {
+/* DE ACÁ PARA ABAJO SE DIBUJA UNA COMPU, así que hay que deshacer el `hasTouch`
+   de arriba: si no, las reglas de `@media (hover: hover)` no existirían y la
+   pasada ancha estaría midiendo una pantalla que no es la que se quiere probar.
+   Va por CDP porque `hasTouch` se fija al crear la página y no se puede cambiar,
+   y crear otra costaría volver a analizar la partida entera. */
+for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
+                         [1109, 800, "ancho-angosto"]]) {
   await pg.setViewportSize({ width: w, height: h });
   await pg.waitForTimeout(300);
   await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
@@ -623,6 +647,53 @@ await pg.waitForTimeout(250);
 console.log("rueda:         ", JSON.stringify(
   { tira: tiraAntes + " -> " + await izq(),
     pagina: pagAntes + " -> " + await pg.evaluate(() => window.scrollY) }));
+
+/* LO QUE SOLO EXISTE CON MOUSE (v0.82), medido y no leído del código. */
+await pg.setViewportSize({ width: 1280, height: 860 });
+await pg.selectOption("#formaJugadas", "renglon");
+await pg.waitForTimeout(350);
+await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+await pg.waitForTimeout(200);
+const tiempos = await pg.evaluate(() =>
+  [...document.querySelectorAll("#jugadas .se")].slice(0, 6).map(e => e.textContent));
+console.log("tiempos:       ", JSON.stringify(tiempos),
+  tiempos.every(t => t === "\u00b7")
+    ? "(esta partida no trae reloj; con `npm run mirar reloj` salen números)" : "");
+
+/* LA PREVIA: pasar el mouse por una jugada muestra esa posición y al salir
+   devuelve EXACTAMENTE lo que había. Se mide el tablero entero, no un pedazo:
+   lo que interesa es que no quede nada distinto. */
+const tablero = () => pg.evaluate(() => document.getElementById("tablero").innerHTML);
+const elegida = () => pg.evaluate(() =>
+  ((document.querySelector("#jugadas .jg.sel") || {}).textContent || "").trim());
+const t0 = await tablero(), e0 = await elegida();
+await pg.locator("#jugadas .jg").nth(12).hover();
+await pg.waitForTimeout(250);
+const t1 = await tablero();
+await pg.screenshot({ path: path.join(SALIDA, "previa" + SUFIJO + ".png") });
+await pg.mouse.move(5, 5);
+await pg.waitForTimeout(250);
+console.log("previa:        ", JSON.stringify(
+  { cambioElTablero: t0 !== t1, volvioIgual: t0 === (await tablero()),
+    yNoNavego: e0 === (await elegida()) }));
+
+/* LA RUEDA SOBRE EL TABLERO pasa de jugada. */
+const cajaTab = await pg.locator("#tablero").boundingBox();
+const antesRueda = await elegida();
+await pg.mouse.move(cajaTab.x + cajaTab.width / 2, cajaTab.y + cajaTab.height / 2);
+await pg.mouse.wheel(0, 120);
+await pg.waitForTimeout(400);
+console.log("rueda tablero: ", JSON.stringify({ de: antesRueda, a: await elegida() }));
+
+/* LA TECLA `n` SALTA AL PRÓXIMO ERROR, y el símbolo dice si acertó. */
+await pg.keyboard.press("n");
+await pg.waitForTimeout(400);
+console.log("tecla n:       ", JSON.stringify(await pg.evaluate(() => {
+  const s = document.querySelector("#jugadas .jg.sel");
+  return s ? { jugada: s.querySelector(".sa").textContent,
+               simbolo: s.querySelector(".sm").textContent } : null;
+})));
+await pg.selectOption("#formaJugadas", "planilla");
 
 console.log("listo: capturas/");
 await b.close();

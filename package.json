@@ -6,7 +6,8 @@
     "test": "node --test --test-reporter=dot pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
     "mirar": "node pruebas/mirar.mjs",
     "mirar:mate": "node pruebas/mirar.mjs mate",
-    "mirar:ahogado": "node pruebas/mirar.mjs ahogado"
+    "mirar:ahogado": "node pruebas/mirar.mjs ahogado",
+    "mirar:reloj": "node pruebas/mirar.mjs reloj"
   },
   "devDependencies": {
     "playwright": "^1.49.1"

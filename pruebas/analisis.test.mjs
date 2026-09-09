@@ -2522,15 +2522,66 @@ test("la lista lateral no le saca lugar al celular", () => {
      gana la última, y puesta después le ganaba al display de adentro y la lista
      no se veía NUNCA. Se rompió así al escribirla. */
   const base = html.indexOf(".lateral, #formaJugadas { display: none; }");
-  const ancha = html.indexOf("@media (min-width: 1050px)");
+  const ancha = html.indexOf("@media (min-width: 1110px)");
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,
     "la regla base va antes de la media query, o la lista no se ve nunca");
-  assert.ok(html.includes("grid-template-columns: 700px 300px"),
+  assert.ok(html.includes("grid-template-columns: 700px 360px"),
     "la columna principal sigue midiendo 700: es la medida de todas las decisiones");
-  /* el corte es la SUMA de lo que tiene que entrar, no un número redondo: con
-     1000 la principal se achicaba a 650 y el tablero con ella. */
-  assert.ok(html.includes("@media (min-width: 1050px)"), "y el corte es 700 + 22 + 300 + 28");
+  /* EL CORTE ES LA SUMA de lo que tiene que entrar, y está ATADO al ancho de la
+     lista: mover uno sin el otro deja una franja donde las columnas no entran y
+     la principal se achica de nuevo. Pasó al ensanchar la lista en la v0.82, y
+     lo agarró esta prueba. Por eso el corte se calcula acá y no se escribe. */
+  const anchoLista = +(html.match(/grid-template-columns: 700px (\d+)px/) || [])[1];
+  const corte = +(html.match(/@media \(min-width: (\d+)px\)\s*\{\s*body \{ max-width/) || [])[1];
+  assert.equal(corte, 700 + 22 + anchoLista + 28,
+    `el corte tiene que ser 700 + 22 + ${anchoLista} + 28, y es ${corte}`);
+  assert.ok(html.includes(`body { max-width: ${corte}px; }`),
+    "y el ancho del cuerpo es el mismo número que el corte");
+});
+
+test("el tiempo pensado sale en la lista, y null no es cero", () => {
+  /* Pedido con la palabra "fundamental": ver que un error grave salió en dos
+     segundos explica el error mejor que su evaluación. El dato ya existía
+     (`fila.seg`), solo que no se mostraba en ningún lado. */
+  assert.ok(html.includes('<span class="se" title="segundos pensados">'),
+    "la lista muestra los segundos");
+  assert.ok(html.includes('if (seg == null) return "\\u00b7";'),
+    "y sin reloj dice una raya, no un cero, que sería mentira");
+  assert.ok(html.includes(".jugadas.renglon > div { grid-template-columns: 28px 1fr auto auto; }"),
+    "con su propia columna, no pegado a la pérdida");
+});
+
+test("con mouse: previa, rueda y salto al error", () => {
+  /* Las tres se miden de verdad en el arnés; acá se fija lo que no puede
+     cambiar sin querer. */
+  assert.ok(html.includes("function previsualizar(i)") && html.includes("function volverDeLaPrevia()"),
+    "la previa guarda y devuelve el tablero");
+  assert.ok(html.includes("if (!R || PRUEBA || !R.filas[i]) return;"),
+    "y no pisa el tablero mientras hay una variante abierta");
+  assert.ok(html.includes('const MQ_MOUSE = window.matchMedia("(hover: hover)");'),
+    "en una pantalla táctil no se arma: el toque dispara mouseenter");
+  assert.ok(html.includes("if (!MQ_MOUSE.matches) return;"),
+    "y se lee viva, no una vez al cargar: con teclado enchufado la respuesta cambia");
+  assert.ok(html.includes("while (Math.abs(junta) >= 40)"),
+    "la rueda acumula: un trackpad manda docenas de eventos por gesto");
+  assert.ok(html.includes('const MALAS = new Set(["imprecision", "error", "omision", "grave"]);'),
+    "y `n` salta entre las categorías malas");
+});
+
+test("las reglas de hover no existen para el dedo", () => {
+  /* En una pantalla táctil el estado de hover queda PEGADO después de tocar:
+     la última jugada tocada se vería iluminada como si estuviera elegida. */
+  const i = html.indexOf("@media (hover: hover)");
+  assert.ok(i > 0, "las reglas viven adentro de @media (hover: hover)");
+  const bloque = html.slice(i, html.indexOf("\n  }", i));
+  assert.ok(bloque.includes(":hover"), "y ahí adentro está el hover");
+  /* EL MOUSE SUBRAYA, NO RELLENA: rellenando más suave que la elegida, las dos
+     se veían iguales en la captura y quedaban dos "estás acá". */
+  assert.ok(bloque.includes("box-shadow: inset 0 -2px 0"),
+    "la jugada bajo el mouse se subraya, no se rellena");
+  assert.ok(!/\.jugadas > div:hover \{ background/.test(html),
+    "y el renglón no se tiñe: ese tono ya significa 'acá'");
 });
 
 test("la columna está centrada y no clavada a la izquierda", () => {
@@ -2552,7 +2603,7 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
   /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de
      360 y el tablero quedaría más chico que en el celular. */
   const regla = html.indexOf("max-width: clamp(360px");
-  const media = html.indexOf("@media (min-width: 1050px)");
+  const media = html.indexOf("@media (min-width: 1110px)");
   assert.ok(media > 0 && regla > media,
     "y la regla vive adentro de la media query: en el celular el tablero no cambia");
   assert.ok(html.includes("svg.tab { width: 100%; max-width: 360px;"),
