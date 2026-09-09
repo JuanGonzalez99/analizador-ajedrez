@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.88**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.89**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2948,6 +2948,65 @@ curva, cuadritos— y el aire de abajo en las dos formas de la evaluación.
 
 ---
 
+## 4novovicies. Las tres mejores del motor (v0.89)
+
+Es lo que más acerca esto a una app de análisis: hasta acá el motor decía UNA
+jugada y por qué la tuya era peor, y ahora dice **qué otras cosas había**.
+
+**EL DATO NO VIAJABA, aunque este documento decía que sí.** `evs[i].segunda`
+existe solo donde el usuario jugó la primera del motor —es lo que la pasada
+híbrida necesita para decidir "era la única"—, o sea en una minoría de las
+posiciones, y de la tercera no había nada: el MultiPV del barrido es 2. Lo que sí
+estaba era toda la plomería: `Motor.analizar` ya parseaba las líneas de MultiPV
+y tiraba de la tercera para arriba. Ahora devuelve `tercera`, simétrica de
+`segunda`, y viene en null salvo con MultiPV 3.
+
+**NO SE CALCULAN SOLAS, y es la decisión de fondo.** Cada posición es una corrida
+de motor a la profundidad de la partida: pedirlas al pasar de jugada sería una
+corrida por flecha del teclado, peleando con la variante por el mismo grupo de
+motores. Se piden con un botón y **se guardan por posición y profundidad**, así
+que ir y volver por la partida no vuelve a pagar.
+
+**SON LAS MEJORES DE LA POSICIÓN QUE SE VE, y por eso se llaman "de acá".** El
+tablero muestra la posición DESPUÉS de la jugada, así que estas tres contestan
+"¿y ahora qué?", que es la misma pregunta que contesta la variante y por eso
+tocar una **abre la variante con esa jugada**: el panel no es un cartel. Ojo con
+la tentación de compararlas contra el cuadrito "Mejor": ese habla de la posición
+ANTERIOR, la de antes de la jugada, y son dos tableros distintos. Alternativas a
+la jugada jugada serían las de ese otro tablero, y el panel estaría hablando de
+algo que no se está viendo.
+
+**La primera de las tres ES la mejor jugada de esa posición**, y se deja: sacarla
+dejaría al panel diciendo "las otras dos", que no es una lista de las mejores. Va
+marcada con el verde que ya significa eso.
+
+**UNA SOLA FILA PARA TODO LO QUE LE PIDE AL MOTOR A DEMANDA.** Eran dos cosas
+—la variante— y ahora son tres, y `pool.asegurar` le puede cambiar el MultiPV o
+el Hash a un motor que está trabajando (§4.2). `COLA_MOTOR` encadena los pedidos;
+el `then(fn, fn)` es para que un error no deje la fila trabada para siempre. El
+barrido de la partida no pasa por ahí: se cubre con `TRABAJANDO`, que apaga hasta
+el toque en el tablero.
+
+**Dos detalles que costaron una vuelta cada uno:**
+
+- **Sin repetidas.** Un motor que manda la misma jugada en dos líneas dejaría el
+  panel diciendo dos veces lo mismo, y eso se lee como un error de la app. El
+  motor falso del arnés lo hacía —mandaba `mejor` en las tres líneas—, así que
+  ahora manda dos jugadas legales distintas, y la tercera **solo si se la
+  pidieron**: la segunda se sigue mandando igual que siempre para no correr ni
+  un veredicto de las capturas viejas.
+- **El margen del panel también le come alto a la lista.** `offsetHeight` no
+  cuenta el margen, así que la lista quedaba 10 px más alta que la columna de al
+  lado, empujaba la curva y le comía el aire: los 25 px de la v0.88 pasaban a ser
+  15. El margen se lee del CSS con `getComputedStyle` en vez de repetirlo en el
+  código, que es lo que evita que se despeguen.
+
+El arnés pide las tres, mide que antes de pedirlas el panel esté vacío, que las
+tres jugadas sean legales en la posición que se ve, que el botón desaparezca al
+llegar la respuesta y que tocar la segunda abra la variante con esa jugada.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3474,7 +3533,7 @@ Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
 usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
 propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 
-**Hechas: 11 de 13** (v0.80 a v0.88, §4duovicies a §4octovicies)
+**Hechas: 12 de 13** (v0.80 a v0.89, §4duovicies a §4novovicies)
 
 | | |
 |---|---|
@@ -3489,14 +3548,11 @@ propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 | ✅ | La barra de evaluación vertical por defecto en PC |
 | ✅ | Las piezas comidas al costado del tablero |
 | ✅ | El gráfico de la partida a lo ancho de las dos columnas |
+| ✅ | La segunda y tercera mejor del motor, al lado del tablero |
 
 **Lo que falta, en el orden en que conviene hacerlo:**
 
-1. **La segunda y tercera mejor del motor, al lado del tablero.** La más
-   ambiciosa y la que más convertiría esto en una app de análisis. El dato ya
-   viaja: `evs[i].segunda` y la pasada MultiPV híbrida, que hoy solo se usan
-   para decidir si la jugada "era la única".
-2. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
+1. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
    INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
    arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
    también es primero, así que moverla no contradice esa razón — pero es

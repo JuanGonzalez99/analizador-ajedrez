@@ -108,7 +108,12 @@ fens.forEach((fen, i) => {
   const mejor = (i % 3 === 0 && jugada) ? jugada : (otra || legales[0].from + legales[0].to);
   /* el motor habla desde EL QUE MUEVE; aBlancas lo da vuelta después */
   const cp = fen.split(" ")[1] === "w" ? forma(i) : -forma(i);
-  tabla[fen] = { cp, mejor, segunda: cp - 60 - (i % 7) * 40 };
+  /* DOS JUGADAS MÁS, distintas de la mejor: son las que el panel de
+     alternativas (v0.89) muestra en los renglones 2 y 3. Sin esto el falso
+     mandaba la MISMA jugada en las tres líneas y el panel no probaba nada. */
+  const otras = legales.map(x => x.from + x.to + (x.promotion || ""))
+    .filter(u => u !== mejor).slice(0, 2);
+  tabla[fen] = { cp, mejor, otras, segunda: cp - 60 - (i % 7) * 40 };
 });
 
 /* EL MOTOR FALSO TARDA A PROPÓSITO EN LAS POSICIONES PROBADAS (v0.79), y solo
@@ -123,9 +128,16 @@ const FALSO = `
 const T = ${JSON.stringify(tabla)};
 const LENTO = ${LENTO};
 let fen = null;
+/* CUÁNTAS LÍNEAS PIDIÓ, que hasta la v0.89 el falso ignoraba. Solo gatea la
+   TERCERA: la segunda se sigue mandando exactamente como antes —esté o no
+   pedida— para no cambiar ni un veredicto de las capturas viejas. */
+var mpv = 1;
 onmessage = function (e) {
   const s = String(e.data);
   if (s === "uci") return postMessage("uciok");
+  if (s.indexOf("setoption name MultiPV value ") === 0) {
+    mpv = +s.slice(29) || 1; return;
+  }
   if (s.startsWith("position fen ")) { fen = s.slice(13); return; }
   if (s.startsWith("go ")) {
     var v = T[fen];
@@ -145,8 +157,13 @@ onmessage = function (e) {
     var tipo = v.mate === undefined ? "cp " + v.cp : "mate " + v.mate;
     var contestar = function () {
       postMessage("info depth 16 multipv 1 score " + tipo + (v.mejor ? " pv " + v.mejor : ""));
+      var otras = v.otras || [];
       if (v.segunda !== null && v.segunda !== undefined)
-        postMessage("info depth 16 multipv 2 score cp " + v.segunda + " pv " + v.mejor);
+        postMessage("info depth 16 multipv 2 score cp " + v.segunda +
+                    " pv " + (otras[0] || v.mejor));
+      if (mpv >= 3 && otras[1] !== undefined)
+        postMessage("info depth 16 multipv 3 score cp " + ((v.segunda || 0) - 55) +
+                    " pv " + otras[1]);
       postMessage("bestmove " + (v.mejor || "(none)"));
     };
     /* deLaTabla es falso justo en las posiciones inventadas: ahí se demora.
@@ -823,6 +840,37 @@ await pg.waitForTimeout(250);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -10));
 await foto("ancho-eval-barra");
+
+/* LAS TRES MEJORES DEL MOTOR (v0.89). Se pide con el botón —no se calculan
+   solas— y se mide qué quedó dibujado, que la primera sea la mejor jugada que ya
+   dice el cuadrito, y que tocar una abra la variante con ESA jugada. */
+await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+await pg.waitForTimeout(200);
+const alt = {};
+alt.antesDePedir = await pg.locator("#altLista").innerText();
+await pg.click("#btnAlts");
+await pg.waitForFunction(() => document.querySelectorAll("#altLista .alt").length > 0,
+  null, { timeout: 30000 });
+await pg.waitForTimeout(200);
+alt.filas = await pg.evaluate(() => [...document.querySelectorAll("#altLista .alt")]
+  .map(e => e.querySelector(".as").textContent + " " + e.querySelector(".ae").textContent));
+/* Las tres son de la posición QUE SE VE, así que las tres tienen que ser legales
+   ahí. No se compara contra el cuadrito "Mejor": ese habla de la posición
+   ANTERIOR, la de antes de la jugada, y son dos tableros distintos. */
+alt.lasTresSonLegales = await pg.evaluate(() =>
+  [...document.querySelectorAll("#altLista .alt .as")].map(e => e.dataset.uci));
+alt.botonEscondido = await pg.locator("#btnAlts").isHidden();
+await foto("ancho-alternativas");
+/* tocar la segunda abre la variante CON ESA jugada */
+const san2 = await pg.locator("#altLista .alt").nth(1).locator(".as").textContent();
+await pg.locator("#altLista .alt").nth(1).locator(".as").click();
+await pg.waitForFunction(() => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
+  null, { timeout: 30000 });
+await pg.waitForTimeout(250);
+alt.alTocarLaSegunda = { pedida: san2, quedo: (await pg.locator("#pTit").textContent()).trim() };
+console.log("alternativas:  ", JSON.stringify(alt));
+if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
+await pg.waitForTimeout(300);
 
 /* LA TIRA DE PIEZAS COMIDAS (v0.87). Se va a una jugada donde ya se comieron
    cosas de los dos lados y se mide qué quedó dibujado, no que exista el div.

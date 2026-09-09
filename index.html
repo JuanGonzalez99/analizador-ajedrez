@@ -162,7 +162,7 @@
   /* el margen de abajo separa el bloque del tablero de la tarjeta del veredicto:
      sin él la barra de evaluación termina pegada al borde de la tarjeta */
   .revtab { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
-  .comidas { display: none; }
+  .comidas, .alts { display: none; }
   .revtab > #tablero { flex: 1; min-width: 0; }
   /* el tablero trae margen propio para cuando va suelto; al lado de la barra
      sobra, y desalinea las dos por 10 px */
@@ -490,7 +490,8 @@
     .lateral { display: block; position: sticky; top: 14px; margin-top: 24px; }
     /* el menor de los dos: la pantalla y la columna de al lado. El segundo lo
        mide `pintarRevision`; el `100vh` de reserva es para el primer pintado. */
-    .lateral .jugadas { max-height: min(calc(100vh - 28px), calc(var(--altoCol, 100vh) - 24px)); }
+    .lateral .jugadas { max-height: min(calc(100vh - 28px),
+      calc(var(--altoCol, 100vh) - 24px - var(--altoAlts, 0px))); }
     /* el dial de la lista no existe en el celular: elige entre cosas que ahí no
        se ven, y esa fila de controles ya viene cargada. */
     #formaJugadas { display: inline-block; }
@@ -534,6 +535,23 @@
        propio, que es la misma información contada en dos veces el alto. */
     .comidas { display: flex; flex-direction: column; justify-content: space-between;
                flex: 0 0 132px; padding: 2px 0 22px; }
+    /* EL PANEL DE ALTERNATIVAS EXISTE SOLO ACÁ, como todo lo de esta tanda. Va
+       arriba de la lista y no abajo: abajo se iría del pliegue. */
+    .alts { display: block; border: 1px solid var(--linea); border-radius: 8px;
+            padding: 8px 10px; margin-bottom: 10px; }
+    .altCab { display: flex; align-items: center; justify-content: space-between;
+              gap: 10px; font-size: 13px; color: var(--tenue); }
+    .altLista { margin-top: 6px; }
+    .altLista:empty { margin-top: 0; }
+    .alt { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px;
+           align-items: baseline; padding: 3px 4px; border-radius: 5px; }
+    .alt .an { color: var(--tenue); font-size: 12px; }
+    .alt .as { font-weight: 600; cursor: pointer; }
+    .alt .ae { font-variant-numeric: tabular-nums; color: var(--tenue); font-size: 13px; }
+    /* la primera ES la mejor jugada, la misma que ya pinta el cuadrito "Mejor":
+       se marca con el verde de siempre y no con uno nuevo */
+    .alt.primera .as { color: var(--c-mejor); }
+    .altNota { font-size: 12.5px; color: var(--tenue); }
     /* los 22 de abajo la alinean con el tablero y no con su caja: el SVG lleva
        un margen propio de 15 unidades para las coordenadas, y sin esto el grupo
        de abajo quedaba a la altura de las letras en vez de la fila 1 */
@@ -561,6 +579,7 @@
        mouse. Por eso tampoco se tiñe el renglón: ese tono ya significa "acá". */
     .tira .jg:hover, .jugadas .jg:hover, .vlinea .vj:hover {
       box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 45%, transparent); }
+    .alt:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
     .tocable:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
     .tira > button:hover { color: inherit; }
     .curva:hover, .evalh:hover { border-color: color-mix(in srgb, currentColor 40%, transparent); }
@@ -612,7 +631,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.88 · 09-09";
+  window.VERSION = "v0.89 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -972,7 +991,22 @@
     <button id="sig" aria-label="Jugada siguiente"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M -3.5 -6 L 3.5 0 L -3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
   </div>
-  <aside class="lateral" id="lateral"><div class="jugadas" id="jugadas"></div></aside>
+  <aside class="lateral" id="lateral">
+    <!-- LAS ALTERNATIVAS DEL MOTOR (v0.89). Solo en compu, arriba de la lista.
+         No se calculan solas: son una corrida de motor por posición y correrla
+         al pasar de jugada sería pelear con la variante por el mismo grupo. -->
+    <div class="alts" id="alts">
+      <!-- "DE ACÁ" no sobra: el tablero muestra la posición DESPUÉS de la
+           jugada, así que estas tres son las mejores de esa posición —"¿y ahora
+           qué?"—, que es la misma pregunta que contesta la variante. Alternativas
+           a la jugada que se jugó serían las de la posición ANTERIOR, o sea otro
+           tablero, y el panel estaría hablando de algo que no se está viendo. -->
+      <div class="altCab"><span>Las mejores de acá</span>
+        <button class="chico" id="btnAlts">Ver las tres mejores</button></div>
+      <div class="altLista" id="altLista"></div>
+    </div>
+    <div class="jugadas" id="jugadas"></div>
+  </aside>
   <div class="curva" id="curva" role="img"
        aria-label="Curva de quién va ganando a lo largo de la partida"></div>
   <div class="principal pabajo">
@@ -2933,7 +2967,11 @@ class Motor {
         } else if (s.startsWith("bestmove")) {
           quitar(); clearTimeout(corte);
           const uno = linea[1] || { cp: 0, mate: null, mov: null };
-          ok({ cp: uno.cp, mate: uno.mate, mejor: s.split(" ")[1] || uno.mov, segunda: linea[2] || null });
+          /* `tercera` es simétrica de `segunda` y viene en null salvo con MultiPV 3,
+             que hoy pide una sola cosa: el panel de alternativas (v0.89). El
+             barrido de la partida sigue corriendo en 1 o 2 y no paga nada. */
+          ok({ cp: uno.cp, mate: uno.mate, mejor: s.split(" ")[1] || uno.mov,
+               segunda: linea[2] || null, tercera: linea[3] || null });
         }
       };
       const quitar = () => { const i = this.oyentes.indexOf(fn); if (i >= 0) this.oyentes.splice(i, 1); };
@@ -3574,6 +3612,91 @@ function previaEn(sp, i) {
 /* `prueba` es lo que agrega la v0.65 y va en null en el camino normal:
    { desde, destinos, uci }. Cuando viene, el tablero deja de ser un dibujo y
    pasa a recibir toques por casilla. */
+/* LAS TRES MEJORES DEL MOTOR (v0.89). Es lo que más acerca esto a una app de
+   análisis: hasta acá el motor decía UNA jugada y por qué la tuya era peor, y
+   ahora dice qué otras cosas había.
+
+   NO SE CALCULAN SOLAS, y es la decisión de fondo. Cada posición es una corrida
+   de motor a la profundidad de la partida, así que pedirlas al pasar de jugada
+   sería una corrida por flecha del teclado, peleando con la variante por el
+   mismo grupo de motores. Se piden con un botón y se guardan por posición: ir y
+   volver por la partida no vuelve a pagar.
+
+   EL DATO NO VIAJABA, aunque el traspaso decía que sí. `evs[i].segunda` existe
+   solo donde el usuario jugó la primera del motor —es lo que la pasada híbrida
+   necesita para decidir "era la única"—, o sea en una minoría de las posiciones,
+   y de la tercera no había nada porque el MultiPV del barrido es 2. Lo que sí
+   estaba era toda la plomería: `Motor.analizar` ya parseaba las líneas de
+   MultiPV y tiraba de la tercera para arriba. Ahora la devuelve.
+
+   LA PRIMERA DE LAS TRES ES LA MEJOR JUGADA, la misma que ya muestra el cuadrito
+   "Mejor". Se deja igual y se marca con el verde de siempre: sacarla dejaría al
+   panel diciendo "las otras dos", que no es una lista de las mejores. */
+const ALTERNATIVAS = new Map();
+let ALT_PIDIENDO = null;
+const claveAlt = fen => fen + "|" + ((R && R.profBase) || +$("prof").value || 16);
+async function pedirAlternativas() {
+  /* con el barrido en curso no: ese usa el mismo grupo y ni el tablero responde */
+  if (!R || TRABAJANDO || !FEN_VISTO) return;
+  const clave = claveAlt(FEN_VISTO), fen = FEN_VISTO;
+  if (ALTERNATIVAS.has(clave) || ALT_PIDIENDO) return;
+  ALT_PIDIENDO = clave;
+  pintarAlternativas();
+  const prof = (R && R.profBase) || +$("prof").value || 16;
+  try {
+    const [ev] = await enFila(() => evaluarPosiciones([fen], prof, null,
+      Object.assign(opcionesDePantalla(), { multipv: 3 })));
+    ALTERNATIVAS.set(clave, ev);
+    window.LOG.add("·", `alternativas de ${fen.split(" ")[0].slice(0, 12)}… a profundidad ${prof}`);
+  } catch (e) {
+    ALTERNATIVAS.set(clave, { error: e.message || String(e) });
+  } finally {
+    ALT_PIDIENDO = null;
+    pintarAlternativas();
+  }
+}
+function pintarAlternativas() {
+  const lista = $("altLista"), bot = $("btnAlts");
+  if (!R || !FEN_VISTO) { lista.innerHTML = ""; return; }
+  const clave = claveAlt(FEN_VISTO);
+  const ev = ALTERNATIVAS.get(clave);
+  const pensando = ALT_PIDIENDO === clave;
+  ver("btnAlts", !ev && !pensando);
+  bot.disabled = TRABAJANDO;
+  if (pensando) { lista.innerHTML = `<div class="altNota">Pensando\u2026</div>`; return; }
+  if (!ev) { lista.innerHTML = ""; return; }
+  if (ev.error) { lista.innerHTML = `<div class="altNota">No se pudo: ${ev.error}</div>`; return; }
+  const turno = FEN_VISTO.split(" ")[1];
+  /* la primera sale de `mejor`, que es la del `bestmove`; las otras dos de las
+     líneas de MultiPV. Una posición con una o dos jugadas legales devuelve menos
+     de tres, y entonces se muestran las que hay. */
+  const filas = [{ uci: ev.mejor, cp: ev.cp, mate: ev.mate }]
+    .concat([ev.segunda, ev.tercera].filter(Boolean).map(l => ({ uci: l.mov, cp: l.cp, mate: l.mate })))
+    .filter(x => x.uci && sanDeUci(FEN_VISTO, x.uci))
+    /* sin repetidas: un motor que manda la misma jugada en dos líneas dejaría el
+       panel diciendo dos veces lo mismo, y eso se lee como un error de la app */
+    .filter((x, i, a) => a.findIndex(y => y.uci === x.uci) === i);
+  if (!filas.length) { lista.innerHTML = `<div class="altNota">No hay jugadas.</div>`; return; }
+  lista.innerHTML = filas.map((x, i) =>
+    `<div class="alt${i === 0 ? " primera" : ""}"><span class="an">${i + 1}</span>` +
+    `<span class="as" data-uci="${x.uci}" role="button" tabindex="0">${sanDeUci(FEN_VISTO, x.uci)}</span>` +
+    `<span class="ae">${textoEval({ cp: x.cp, mate: x.mate }, turno)}</span></div>`).join("");
+  lista.querySelectorAll("[data-uci]").forEach(sp => {
+    sp.onclick = seguro("probar alternativa", () => jugarAlternativa(sp.dataset.uci));
+  });
+}
+/* Tocar una alternativa la PRUEBA, o sea el mismo camino que tocar el tablero:
+   abre la variante desde la posición que se está viendo y juega ahí. Sin esto el
+   panel sería un cartel; con esto, la lista de alternativas es navegable. */
+$("btnAlts").onclick = seguro("alternativas", pedirAlternativas);
+function jugarAlternativa(uci) {
+  if (TRABAJANDO) return;
+  if (!PRUEBA) abrirPrueba(IDX + 1);
+  const m = new Chess(posicionVista().fen).moves({ verbose: true })
+    .find(x => x.from + x.to + (x.promotion || "") === uci);
+  if (m) probarJugada(m);
+}
+
 /* LA TIRA DE PIEZAS COMIDAS (v0.87). Al costado del tablero y SOLO en una compu:
    en el celular no hay ancho de sobra y la vista ya está apretada. Lo que se
    muestra al lado de cada jugador es lo que comió ÉL, que es la convención de
@@ -4042,6 +4165,16 @@ function probarJugada(m) {
   atenderCola();
 }
 
+/* UNA SOLA FILA PARA TODO LO QUE LE PIDE AL MOTOR A DEMANDA (v0.89). Eran dos
+   cosas la variante y ahora son tres con las alternativas, y `pool.asegurar` le
+   puede cambiar el MultiPV o el Hash a un motor que está trabajando —§4.2 lo
+   midió—. Encadenar es la forma más barata de que no se pisen: cada pedido
+   espera al anterior, y el `then(fn, fn)` es para que un error no deje la fila
+   trabada para siempre. Lo que NO pasa por acá es el barrido de la partida, que
+   se cubre con `TRABAJANDO`: ahí no se puede ni tocar el tablero. */
+let COLA_MOTOR = Promise.resolve();
+const enFila = fn => (COLA_MOTOR = COLA_MOTOR.then(fn, fn));
+
 /* La cola: evalúa las jugadas que todavía no tienen veredicto, de a una y en
    orden. Una sola corriendo por vez, porque el grupo de motores es uno solo y
    `pool.asegurar` le puede cambiar el MultiPV o el Hash a un motor que está
@@ -4067,7 +4200,7 @@ async function atenderCola() {
         continue;
       }
       try {
-        const [ev] = await evaluarPosiciones([e.fen], prof, null, opcionesDePantalla());
+        const [ev] = await enFila(() => evaluarPosiciones([e.fen], prof, null, opcionesDePantalla()));
         /* Si mientras el motor pensaba se salió de la variante o se cortó la
            línea, lo que vuelve no puede pisar la pantalla nueva. Se mira por
            IDENTIDAD y no por el largo: encadenando, el largo cambia todo el
@@ -5878,6 +6011,7 @@ function pintarRevision() {
               PRUEBA.ver === 0 && verMejor ? f.mejor : null, capa)
     : dibujar(fenVisto, f.uci, verMejor ? f.mejor : null, capa);
   pintarComidas(fenVisto);
+  pintarAlternativas();
   /* lo que había guardado la previa ya no existe: este es el tablero nuevo */
   TABLERO_PREVIO = null;
   $("tileMejor").classList.toggle("activo", verMejor);
@@ -6009,6 +6143,14 @@ function pintarRevision() {
        cambia es que empieza a scrollear un poco antes. */
     const col = document.querySelector(".parriba");
     if (col) $("zonaRevision").style.setProperty("--altoCol", col.offsetHeight + "px");
+    /* El panel de las mejores también le come alto a la lista, y cuánto depende
+       de si está abierto: se mide igual que la columna. EL MARGEN VA INCLUIDO y
+       se lee del CSS en vez de repetirlo acá: `offsetHeight` no lo cuenta, y sin
+       eso la lista quedaba 10 px más alta que la columna, empujaba la curva y le
+       comía el aire de abajo. Medido: 25 px de aire pasaban a ser 15. */
+    const pa = $("alts");
+    const mb = parseFloat(getComputedStyle(pa).marginBottom) || 0;
+    $("zonaRevision").style.setProperty("--altoAlts", (pa.offsetHeight + mb) + "px");
   }
 
   /* LA LISTA DE SEÑALES SE FUE EN LA v0.73, y el motivo es de disposición: era
