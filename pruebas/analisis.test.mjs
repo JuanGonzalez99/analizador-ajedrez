@@ -2533,6 +2533,17 @@ test("la lista lateral no le saca lugar al celular", () => {
   assert.ok(html.includes("@media (min-width: 1050px)"), "y el corte es 700 + 22 + 300 + 28");
 });
 
+test("la columna está centrada y no clavada a la izquierda", () => {
+  /* Con `margin: 0` la columna queda pegada al borde izquierdo en cuanto la
+     pantalla es más ancha que ella: en un monitor de 1900 son 850 px de vacío a
+     la derecha. En un celular no se nota —sin ancho de sobra, `auto` es cero—
+     y por eso vivió desde antes de que la app tuviera una segunda columna. */
+  assert.ok(html.includes("margin: 0 auto; padding: 16px 14px 60px;"),
+    "el cuerpo se centra solo");
+  assert.ok(!/body \{ font:[^}]*margin: 0;/.test(html),
+    "y no quedó el margin: 0 de antes");
+});
+
 test("en la compu el tablero crece, pero lo limita el alto", () => {
   /* Si el tablero se lleva todo el ancho disponible, la tira y la curva —que
      son la navegación— se van abajo del pliegue. Lo que manda es el alto. */

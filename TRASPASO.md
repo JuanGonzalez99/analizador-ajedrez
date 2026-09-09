@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.80**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.81**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2574,6 +2574,21 @@ terminaría **más chico que en el celular**, que es exactamente al revés de lo
 se quiso. Con el piso, a 600 de alto el tablero se queda en 360 y es la curva la
 que no entra: no hay forma de que entren las dos cosas, y entre achicar el
 tablero o scrollear un poco, se scrollea.
+
+**5. Y estaba clavada a la izquierda (v0.81).** Con las dos columnas puestas y
+el tablero grande, la primera captura desde la compu del amigo mostró lo que
+faltaba: **todo el bloque pegado al borde izquierdo**, con 850 px de vacío a la
+derecha en un monitor de 1900.
+
+La causa es de una palabra: `body` tenía `margin: 0` en vez de `margin: 0 auto`.
+**Venía de antes de la v0.80** —con la columna de 700 pasaba exactamente lo
+mismo— y nadie lo había visto porque en un celular no se nota: sin ancho de
+sobra, `auto` es cero. Es el mismo patrón que las otras tres de esta tanda, una
+cosa que solo existe en una pantalla que nadie miraba.
+
+Medido después del arreglo, a 1886 × 820 —el tamaño de su ventana, sacado de que
+el tablero le da 490 y la cuenta del alto lo confirma—: 418 px de margen a cada
+lado, y el cuerpo en sus 1050.
 
 **El arnés ahora tiene una pasada ancha** (`npm run mirar`, al final): dibuja a
 1280, y además a **1050 y 1049**, que son los dos lados del corte y donde se

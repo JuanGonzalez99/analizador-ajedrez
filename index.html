@@ -21,7 +21,14 @@
      cuenta cuando eso pasa. Peleaba contra el scroll que hacemos nosotros al
      abrir una partida desde la lista, y el tablero terminaba fuera de pantalla,
      arriba, según desde dónde vinieras. Medido: desde el tope daba -643 px. */
-  body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 16px 14px 60px;
+  /* `margin: 0 auto` y no `margin: 0`: con el margen en cero la columna queda
+     CLAVADA AL BORDE IZQUIERDO en cuanto la pantalla es más ancha que ella, y
+     en un monitor de 1900 eso son 850 px de vacío a la derecha. Reportado con
+     captura desde una compu, aunque venía de antes de la v0.80: con la columna
+     de 700 pasaba lo mismo, solo que la lista al costado lo dejó a la vista.
+     En un celular no cambia NADA —sin ancho de sobra, `auto` es cero— y por eso
+     las capturas del celu siguen siendo las mismas al byte. */
+  body { font: 16px/1.5 system-ui, sans-serif; margin: 0 auto; padding: 16px 14px 60px;
          max-width: 700px; overflow-anchor: none; }
   h1 { font-size: 20px; margin: 0 0 2px; }
   h2 { font-size: 15px; margin: 24px 0 4px; }
@@ -499,7 +506,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.80 · 09-09";
+  window.VERSION = "v0.81 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
