@@ -16,6 +16,18 @@ describe. §10 tiene las reglas de trabajo.
   etiqueta, la forma de una marca, cuánto se llena una barra. Se dibuja con el
   arnés (`npm run mirar`), se mandan las alternativas y él elige mirando. Ya
   evitó dos cambios que no le gustaban y destapó uno que se había colado.
+- **EXCEPCIÓN, y es decisión suya (v0.85–v0.90): lo que se ve SOLO en PC no lo
+  revisa.** Sus palabras: *"no voy a revisar nada de lo que sea solo PC"*, y
+  *"no te frenes cuando termines cada punto"*. O sea que ahí se aplica y se
+  cuenta, en commits separados, y se le resume al final. **La regla de arriba
+  sigue entera para todo lo que se vea en el celular**, que es donde usa la app.
+  Lo que reemplaza a la mirada suya en lo de PC es **comparar byte a byte las 28
+  capturas de celular contra la versión anterior**, en cada versión: es lo único
+  que prueba que un cambio de PC no se filtró al celu. Sale así, y con las de la
+  tanda anterior guardadas en un directorio aparte:
+  `for f in viejas/*.png; do cmp -s "$f" "capturas/$(basename $f)" || echo "$f"; done`
+  —salteando las que empiezan con `ancho`, `tres`, `marcas` y `previa`, que son
+  las de PC y tienen que cambiar—.
 - **Mirar la captura no es mirar lo que cambiaste: es mirar la pantalla.**
   Incluye los **espacios**: que nada quede pegado a nada. Ya pasó —una fila de
   botones mudada de lugar quedó pegada a la tarjeta de abajo, y lo vio el
@@ -37,13 +49,20 @@ Son los dos más grandes del repo y los dos se pagan en contexto:
   error). O sea que **cualquier `grep` que matchee devuelve el archivo entero**
   como un único renglón: unos 236.000 tokens de golpe. Se lo toca solo con
   `-c`, con `-o`, o con `head -c`. Nunca `cat`, nunca `grep` a secas.
-- **`index.html` son ~75.000 tokens.** No se lee entero nunca: para eso está el
-  mapa del §3 del traspaso, que dice qué función vive en qué zona. Se grepea el
-  nombre y se leen los renglones de alrededor. Mantener ese mapa al día no es
-  prolijidad: es lo que evita leer el archivo completo. Lo mismo vale para el
-  propio `TRASPASO.md`, que ya va por ~48.000: se lee por secciones.
-- Las **capturas** de `npm run mirar` salen a 824×1520, o sea **~1.670 tokens
-  cada una** si se las mira. La tanda entera son 27. Se miran una o dos, las que
+- **`index.html` son ~103.000 tokens** (v0.90). No se lee entero nunca: para eso
+  está el mapa del §3 del traspaso, que dice qué función vive en qué zona. Se
+  grepea el nombre y se leen los renglones de alrededor. Mantener ese mapa al día
+  no es prolijidad: es lo que evita leer el archivo completo. Lo mismo vale para
+  el propio `TRASPASO.md`, que ya va por ~66.000: se lee por secciones.
+  **Ojo con los greps demasiado abiertos ahí adentro**: `grep -n "^const PIEZAS"`
+  devuelve la constante entera con los doce dibujos de Cburnett, que son unos
+  10.000 tokens de un saque. Si un nombre puede estar pegado a un bloque enorme,
+  `grep -c` primero.
+- Las **capturas** de `npm run mirar` **ya no son todas del mismo tamaño**, y la
+  diferencia importa: las del celular salen a 824×1520 (**~1.670 tokens** cada
+  una si se las mira), las de la pasada ancha a 2560×1600 (**~5.500**) y las de
+  tres columnas a 3000×1600 (**~6.400**). Son **45** y mirarlas todas serían
+  ~116.000 tokens, o sea más que el archivo entero. Se miran una o dos, las que
   contestan la pregunta; el resumen de texto que imprime el arnés son 400 tokens
   y suele alcanzar.
 
