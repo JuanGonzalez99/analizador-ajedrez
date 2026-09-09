@@ -1943,13 +1943,13 @@ test("la explicación y la frase fija nunca aparecen juntas", () => {
 test("la jugada probada se juzga por el MISMO camino que las de la partida", () => {
   /* Si se juzgara aparte, el día que cambie cómo se categoriza una jugada la
      variante diría otra cosa que la partida, sobre la misma posición. */
-  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+  const cuerpo = html.slice(html.indexOf("function probarJugada"),
                             html.indexOf("const jugadaReal"));
   assert.ok(cuerpo.includes("derivarFilas("), "arma la fila con derivarFilas");
-  assert.ok(cuerpo.includes("[vista.ev, ev]"),
+  assert.ok(cuerpo.includes("[antes.ev, ev]"),
     "la evaluación de ANTES ya estaba: la de la partida, o la que dejó la jugada anterior");
   assert.ok(cuerpo.includes("MATE_VISTA()"), "y respeta el dial del usuario");
-  assert.ok(cuerpo.includes("vista.previa"),
+  assert.ok(cuerpo.includes("antes.previa"),
     "la jugada previa va, o una recaptura de la variante no se reconocería");
   assert.ok(cuerpo.includes("p.desde0 + k"),
     "el número de jugada y el turno siguen la cuenta de la partida");
@@ -1958,19 +1958,57 @@ test("la jugada probada se juzga por el MISMO camino que las de la partida", () 
 test("encadenar N jugadas cuesta N evaluaciones, no 2N", () => {
   /* La posición de la que sale cada jugada ya está evaluada: la de arranque
      viene de la partida y el resto las dejó la jugada anterior. */
-  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+  const cuerpo = html.slice(html.indexOf("function probarJugada"),
                             html.indexOf("const jugadaReal"));
   assert.equal((cuerpo.match(/evaluarPosiciones\(/g) || []).length, 1);
-  const vista = html.slice(html.indexOf("const posicionVista"),
+  const vista = html.slice(html.indexOf("const posicionAntesDe"),
                            html.indexOf("function abrirPrueba"));
   assert.ok(vista.includes("R.evs[p.desde0]"), "la de arranque sale de la partida");
   assert.ok(vista.includes("p.linea[k - 1].ev"), "y el resto, de la jugada anterior");
 });
 
 test("jugar parado en el medio de la variante corta lo que venía después", () => {
-  const cuerpo = html.slice(html.indexOf("async function probarJugada"),
+  const cuerpo = html.slice(html.indexOf("function probarJugada"),
                             html.indexOf("const jugadaReal"));
   assert.ok(cuerpo.includes("p.linea = p.linea.slice(0, p.ver);"));
+});
+
+/* --- la cola de la v0.79 --- */
+
+test("jugar una prueba NO espera al motor", () => {
+  /* Es el pedido del usuario, y es lo único que hace que el tablero no demore:
+     `probarJugada` mete la jugada, pinta y vuelve. Todo lo que espera está en
+     la cola, que corre después. */
+  const cuerpo = html.slice(html.indexOf("function probarJugada"),
+                            html.indexOf("async function atenderCola"));
+  assert.ok(!/\bawait\b/.test(cuerpo), "sin await: no espera nada");
+  assert.ok(!/^async function probarJugada/m.test(html), "y no es async");
+  assert.ok(cuerpo.indexOf("pintarRevision()") < cuerpo.indexOf("atenderCola()"),
+    "primero dibuja, después encola");
+  assert.ok(cuerpo.includes("ev: null, fila: null, error: null"),
+    "la jugada entra a la línea sin veredicto, y por eso se puede dibujar ya");
+});
+
+test("la cola evalúa de a una y en orden", () => {
+  /* De a una porque el grupo de motores es uno solo (§4.2), y EN ORDEN porque
+     cada jugada se juzga con la evaluación de la anterior. */
+  const cola = html.slice(html.indexOf("async function atenderCola"),
+                          html.indexOf("const jugadaReal"));
+  assert.ok(cola.includes("if (!p || p.corriendo) return;"), "una sola corriendo");
+  assert.ok(cola.includes("p.linea.findIndex(x => !x.fila && !x.error)"),
+    "siempre la primera sin veredicto");
+  assert.ok(cola.includes("finally { p.corriendo = false; }"),
+    "y la cola se libera aunque algo falle");
+});
+
+test("lo que vuelve tarde no pisa la pantalla: se mira por identidad", () => {
+  /* Encadenando, el largo de la línea cambia todo el tiempo sin que la jugada
+     que volvió deje de ser la misma, así que compararlo ya no sirve. Si se
+     cortó la línea, la jugada que vuelve ya no está en su lugar. */
+  const cola = html.slice(html.indexOf("async function atenderCola"),
+                          html.indexOf("const jugadaReal"));
+  assert.ok(cola.includes("if (PRUEBA !== p || p.linea[k] !== e) return;"));
+  assert.ok(!cola.includes("p.linea.length !== k"), "y ya no por el largo");
 });
 
 test("ir y volver por la variante no vuelve a llamar al motor", () => {

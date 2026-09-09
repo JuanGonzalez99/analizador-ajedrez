@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.78**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.79**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2337,6 +2337,80 @@ Por qué el filtro no se puede comer un caso: toda captura que chess.js genera
 captura al paso apunta a otra casilla), y sobrar no importa, porque lo que pasa
 el filtro lo decide igual `quedaComible`. Hay una prueba con la captura que
 corona, que es la que menos se parece a las otras.
+
+## 4unvicies. La prueba no espera al motor (v0.79)
+
+Pedido del usuario, y son dos cosas que resultaron ser la misma: *"que la
+evaluación cargue de fondo, así no demora el dibujo en el tablero, y además, si
+quiere probar varias seguidas, puede hacerlo"*.
+
+Antes, tocar el tablero para probar una jugada hacía esto: se pintaba
+"Probando Xx" en la tarjeta y ahí se esperaba al motor. El **tablero no se
+movía** —la jugada todavía no estaba en la línea, así que `posicionVista`
+seguía devolviendo la posición anterior— y cualquier toque nuevo **volvía sin
+hacer nada**, porque `tocarCasilla` cortaba con la variante pensando.
+
+### El estado pasó a vivir en cada jugada
+
+Era de la variante entera —`estado: "pensando" | "eligiendo" | "error"`— y ahora
+es de cada jugada de la línea: **tiene fila** (veredicto), **tiene error**, o
+está pensando. Ese cambio es el que deja encadenar: con la lista de estados
+separada, una jugada puede estar lista mientras la siguiente todavía piensa.
+
+`probarJugada` ya no espera nada: mete la jugada en la línea sin veredicto,
+pinta —y ahí el tablero ya muestra la jugada— y encola. **No es `async`, y hay
+una prueba que verifica que no tenga un solo `await`**: es lo único que
+garantiza que el dibujo no dependa del motor.
+
+### La cola: de a una y en orden
+
+De a una porque **el grupo de motores es uno solo** y `pool.asegurar` le puede
+cambiar el MultiPV o el Hash a un motor que está trabajando, que es justo lo que
+§4.2 midió. Y en orden porque **la jugada k se juzga con la evaluación de la
+k-1**: eso es lo que mantiene la regla 3 de §4sexdecies —una evaluación por
+jugada, no dos— encadenando diez.
+
+Si una jugada falla, las que venían atrás no se pueden juzgar: se les pone el
+error en vez de dejarlas pensando para siempre.
+
+**Lo que vuelve tarde se descarta por IDENTIDAD, no por el largo.** Antes
+alcanzaba con comparar `p.linea.length !== k`, porque solo podía haber una
+jugada en el aire. Encadenando, el largo cambia todo el tiempo sin que la jugada
+que volvió deje de ser la misma, así que ahora se compara el objeto:
+`p.linea[k] !== e`. Es lo que hace que cortar la línea —jugar parado en el
+medio— descarte sola la evaluación que ya no sirve.
+
+### Cómo se ve una jugada sin veredicto
+
+En las dos tiras —la de la tarjeta y la de abajo— la jugada **se dibuja igual**,
+en gris y con `…` en lugar del símbolo de la categoría. Se ve lo que jugaste
+mientras el motor piensa, que es lo que hace usable encadenar.
+
+### Medido contra la versión en vivo
+
+El arnés hace lo mismo en las dos: juega una prueba, mira la pantalla sin
+esperar, y encadena otra encima.
+
+| | v0.78 | v0.79 |
+|---|---|---|
+| la casilla de origen quedó vacía al toque (o sea, **el tablero ya movió**) | no | **sí** |
+| eslabones en la línea después de encadenar dos | 6 (ninguna entró) | **8** |
+| jugadas dibujadas sin veredicto todavía | 0 | **2** |
+
+**El arnés necesitó un motor falso que TARDE.** Contesta en el mismo tick, así
+que sin demora todo parece instantáneo y no se puede mirar lo único que esta
+versión cambia. Ahora demora 400 ms (`MOTOR_LENTO`) **solo en las posiciones que
+no están en su tabla**, que son exactamente las jugadas inventadas: el análisis
+de la partida no paga nada.
+
+**Dos trampas que costaron una medición cada una**, anotadas para no repetirlas:
+
+- **Mirar la casilla de DESTINO no sirve**: si la jugada es una captura, ahí hay
+  una pieza en las dos versiones —la que se come— y el número da "sí" aunque el
+  tablero no se haya movido. Se mira el **origen**, que o quedó vacío o no.
+- **La tarjeta no es testigo del tablero.** La versión vieja también decía
+  "Probando Xx" enseguida; lo que no hacía era mover el tablero. Medir la
+  tarjeta habría dado "arreglado" sin arreglar nada.
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 

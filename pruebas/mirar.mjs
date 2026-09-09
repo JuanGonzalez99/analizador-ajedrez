@@ -111,8 +111,17 @@ fens.forEach((fen, i) => {
   tabla[fen] = { cp, mejor, segunda: cp - 60 - (i % 7) * 40 };
 });
 
+/* EL MOTOR FALSO TARDA A PROPÓSITO EN LAS POSICIONES PROBADAS (v0.79), y solo
+   en esas: una posición que no está en la tabla es, por definición, una jugada
+   inventada. Sin esta demora no se puede mirar lo único que la v0.79 cambió
+   —que el tablero dibuje ANTES de que vuelva el motor—, porque el motor falso
+   contesta en el mismo tick y todo parece instantáneo. El análisis de la
+   partida no la paga: esas posiciones sí están en la tabla. */
+const LENTO = +(process.env.MOTOR_LENTO || 400);
+
 const FALSO = `
 const T = ${JSON.stringify(tabla)};
+const LENTO = ${LENTO};
 let fen = null;
 onmessage = function (e) {
   const s = String(e.data);
@@ -120,6 +129,7 @@ onmessage = function (e) {
   if (s.startsWith("position fen ")) { fen = s.slice(13); return; }
   if (s.startsWith("go ")) {
     var v = T[fen];
+    var deLaTabla = !!v;
     if (!v) {
       /* Una posición que NO está en la tabla es, desde la v0.65, una jugada
          probada: por definición no estaba en la partida. Se contesta un número
@@ -133,10 +143,16 @@ onmessage = function (e) {
       v = { cp: Math.abs(x % 601) - 300, mejor: null, segunda: null };
     }
     var tipo = v.mate === undefined ? "cp " + v.cp : "mate " + v.mate;
-    postMessage("info depth 16 multipv 1 score " + tipo + (v.mejor ? " pv " + v.mejor : ""));
-    if (v.segunda !== null && v.segunda !== undefined)
-      postMessage("info depth 16 multipv 2 score cp " + v.segunda + " pv " + v.mejor);
-    postMessage("bestmove " + (v.mejor || "(none)"));
+    var contestar = function () {
+      postMessage("info depth 16 multipv 1 score " + tipo + (v.mejor ? " pv " + v.mejor : ""));
+      if (v.segunda !== null && v.segunda !== undefined)
+        postMessage("info depth 16 multipv 2 score cp " + v.segunda + " pv " + v.mejor);
+      postMessage("bestmove " + (v.mejor || "(none)"));
+    };
+    /* deLaTabla es falso justo en las posiciones inventadas: ahí se demora.
+       OJO: nada de comillas invertidas acá adentro, que esto ES una plantilla
+       y una sola la corta al medio. Ya pasó, y el error no dice eso. */
+    if (deLaTabla || !LENTO) contestar(); else setTimeout(contestar, LENTO);
   }
 };
 `;
@@ -379,6 +395,69 @@ else {
   console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
               JSON.stringify(await pg.locator("#pSub").textContent()),
               JSON.stringify(await pg.locator("#pExp").textContent()));
+  /* EL TABLERO NO ESPERA AL MOTOR, Y SE PUEDEN ENCADENAR (v0.79). Con el motor
+     falso demorando a propósito, se miden dos tiempos desde el mismo click:
+     cuánto tarda la pantalla en mostrar la jugada, y cuánto en mostrar el
+     veredicto. Si el dibujo esperara al motor los dos números serían iguales.
+
+     Y SE MIRA EL TABLERO DE VERDAD, no la tarjeta: la versión vieja también
+     decía "Probando Xx" enseguida, pero el tablero se quedaba en la posición
+     anterior hasta que volvía el motor. Medido contra la v0.78, ahí está la
+     diferencia. Se lee la pieza dibujada en la casilla de destino, que se
+     puede porque el `<rect>` que recibe el toque y el `<use>` de la pieza
+     comparten las mismas coordenadas.
+
+     Y en el medio se juega OTRA sin esperar a la primera, que es lo que antes
+     no se podía: el toque volvía sin hacer nada mientras el motor pensaba. */
+  await pg.selectOption("#formaPrueba", "adentro");
+  /* AL FINAL DE LA LÍNEA PRIMERO: acá arriba el arnés volvió a la primera
+     jugada de la variante para mirarla, así que la posición en pantalla no es
+     la que `posPrueba` viene siguiendo. Sin esto, las jugadas de abajo son
+     ilegales en lo que se ve y los toques no hacen nada. */
+  while (!(await pg.locator("#sig").isDisabled())) await pg.click("#sig");
+  const desdeAca = new Chess(posPrueba.fen());
+  const uno = desdeAca.moves({ verbose: true })[0];
+  if (uno) {
+    const t0 = Date.now();
+    await pg.click(`#tablero [data-sq="${uno.from}"]`);
+    await pg.click(`#tablero [data-sq="${uno.to}"]`);
+    await pg.waitForFunction(
+      () => /^Probando/.test(document.getElementById("pTit").textContent || ""),
+      null, { timeout: 5000 });
+    const dibujo = Date.now() - t0;
+    /* ¿La casilla de ORIGEN ya quedó vacía, con el veredicto todavía sin
+       llegar? Se mira el origen y no el destino, y costó una medición: si la
+       jugada es una captura, en el destino hay una pieza en las dos versiones
+       —la que se come— y el número da true aunque el tablero no se haya movido.
+       El origen no tiene esa ambigüedad: o la pieza se fue, o sigue ahí. */
+    const origenVacio = await pg.evaluate(sq => {
+      const rect = document.querySelector(`#tablero [data-sq="${sq}"]`);
+      if (!rect) return null;
+      const t = `translate(${rect.getAttribute("x")} ${rect.getAttribute("y")})`;
+      return ![...document.querySelectorAll("#tablero use")]
+        .some(u => (u.getAttribute("transform") || "").startsWith(t));
+    }, uno.from);
+    desdeAca.move(uno.san);
+    /* la segunda, encadenada mientras la primera todavía piensa */
+    const dos = desdeAca.moves({ verbose: true })[0];
+    let encadenadas = 1;
+    if (dos) {
+      await pg.click(`#tablero [data-sq="${dos.from}"]`);
+      await pg.click(`#tablero [data-sq="${dos.to}"]`);
+      encadenadas = await pg.evaluate(() =>
+        document.querySelectorAll("#pLinea .vj").length);
+    }
+    const pendientes = await pg.evaluate(() =>
+      [...document.querySelectorAll("#pLinea .vj .sm")].filter(x => x.textContent === "\u2026").length);
+    await foto("encadenadas");
+    await pg.waitForFunction(
+      () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
+      null, { timeout: 30000 });
+    console.log("encadenar:", JSON.stringify({
+      dibujoMs: dibujo, veredictoMs: Date.now() - t0, origenVacio,
+      eslabonesAlToque: encadenadas, sinVeredictoTodavia: pendientes }));
+  }
+
   /* al volver a la partida, la pantalla tiene que quedar EXACTAMENTE como
      estaba: es lo que dice, mirándolo, que la variante no ensució nada */
   await pg.click("#btnProbar");

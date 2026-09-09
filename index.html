@@ -345,6 +345,8 @@
      el corte con la misma línea punteada que el borde de su tarjeta. El fondo
      de la elegida sale de `currentColor`, así que se tiñe solo. */
   .tira .jg.inv { color: #6a1b9a; }
+  /* la que todavía está en la cola: se ve, pero no dice un veredicto que no tiene */
+  .tira .jg.inv.pend { color: var(--tenue); }
   .tira .corte { flex: 0 0 0; width: 0; height: 17px; align-self: center;
                  border-left: 2px dashed #6a1b9a; margin: 0 5px; }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
@@ -393,7 +395,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.78 · 09-09";
+  window.VERSION = "v0.79 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3451,21 +3453,28 @@ let RESALTA = null;
 const fenDeLaJugada = i => (R.fens && R.fens[i]) ||
   (i > 0 ? R.filas[i - 1].fen : (R.cab.FEN || undefined));
 
-/* Lo que se está viendo: la posición de arranque, o la que dejó la jugada `ver`
-   de la variante. */
-const posicionVista = () => {
+/* De qué posición sale la jugada `k` de la variante: la de arranque para la
+   primera, y la que dejó la anterior para el resto. La usan las dos: la
+   pantalla —para dibujar lo que se está viendo— y la cola de evaluación, que
+   necesita la de ANTES para juzgar cada jugada. */
+const posicionAntesDe = k => {
   const p = PRUEBA;
   if (!p) return null;
-  const k = p.ver;
   return k === 0
     ? { fen: fenDeLaJugada(p.desde0), ev: R.evs[p.desde0],
         previa: (R.jugadas && R.jugadas[p.desde0 - 1]) || null }
     : { fen: p.linea[k - 1].fen, ev: p.linea[k - 1].ev, previa: p.linea[k - 1].hecho };
 };
+/* Lo que se está viendo: la posición de arranque, o la que dejó la jugada `ver`
+   de la variante. */
+const posicionVista = () => posicionAntesDe(PRUEBA ? PRUEBA.ver : 0);
 
 function abrirPrueba(desde0) {
-  PRUEBA = { desde0, linea: [], ver: 0, desde: null, destinos: [],
-             estado: "eligiendo", msg: "" };
+  /* `corriendo` es la cola: una sola evaluación por vez, porque el grupo de
+     motores es uno solo (§4.2). No hay `estado`: desde la v0.79 el estado vive
+     en CADA jugada de la línea —tiene fila, tiene error, o está pensando—, que
+     es lo que deja encadenar varias con unas listas y otras no. */
+  PRUEBA = { desde0, linea: [], ver: 0, desde: null, destinos: [], corriendo: false };
 }
 
 function salirDePrueba() { if (PRUEBA) { PRUEBA = null; pintarRevision(); } }
@@ -3475,7 +3484,6 @@ function verDeLaVariante(k) {
   if (!PRUEBA || k < 0 || k > PRUEBA.linea.length) return;
   PRUEBA.ver = k;
   PRUEBA.desde = null; PRUEBA.destinos = [];
-  if (PRUEBA.estado !== "pensando") PRUEBA.estado = "eligiendo";
   pintarRevision();
 }
 
@@ -3487,7 +3495,10 @@ function tocarCasilla(sq) {
      viendo, que es la de DESPUÉS de la jugada. Es la puerta del "¿y ahora
      qué?", y es la que deja probar las del rival: ahí le toca a él. */
   if (!PRUEBA) abrirPrueba(IDX + 1);
-  if (PRUEBA.estado === "pensando") return;
+  /* YA NO SE BLOQUEA MIENTRAS PIENSA (v0.79). Antes, tocar el tablero con una
+     evaluación en curso no hacía nada: había que esperar a que volviera el
+     motor para poder seguir. Ahora la jugada entra a la línea al toque y la
+     evaluación va atrás, en la cola. */
   const vista = posicionVista();
   const salidas = new Chess(vista.fen).moves({ verbose: true });
   /* con una pieza ya elegida, tocar un destino legal juega */
@@ -3504,11 +3515,19 @@ function tocarCasilla(sq) {
   const puede = salidas.filter(x => x.from === sq);
   PRUEBA.desde = puede.length ? sq : null;
   PRUEBA.destinos = puede.map(x => x.to);
-  PRUEBA.estado = "eligiendo"; PRUEBA.msg = "";
   pintarRevision();
 }
 
-async function probarJugada(m) {
+/* JUGAR NO ESPERA AL MOTOR (v0.79). La jugada entra a la línea ya —el tablero
+   la dibuja en el acto— y la evaluación se encola. De ahí salen las dos cosas
+   que pidió el usuario, y son la misma: el dibujo no espera, y se pueden
+   encadenar varias seguidas sin que la anterior haya vuelto.
+
+   Lo que NO cambia es cuánto se le pide al motor: sigue siendo UNA evaluación
+   por jugada (§4sexdecies, regla 3). La posición de la que sale cada jugada ya
+   está evaluada —la trae la anterior— y por eso la cola tiene que correr EN
+   ORDEN: la jugada k se juzga con la evaluación de la k-1. */
+function probarJugada(m) {
   const p = PRUEBA;
   const vista = posicionVista();
   const j = new Chess(vista.fen);
@@ -3516,37 +3535,67 @@ async function probarJugada(m) {
   if (!hecho) return;
   /* Jugar estando parado en el medio de la variante CORTA lo que venía después,
      que es lo que hace cualquier tablero: la continuación que había ya no sale
-     de esta posición. */
+     de esta posición. Si alguna de las cortadas estaba en la cola, la cola la
+     descarta sola: se mira por identidad. */
   p.linea = p.linea.slice(0, p.ver);
-  const k = p.ver;
-  p.desde = null; p.destinos = []; p.estado = "pensando"; p.msg = "";
-  p.pensando = hecho.san;
+  p.linea.push({ uci: hecho.from + hecho.to + (hecho.promotion || ""),
+                 san: hecho.san, hecho, fen: j.fen(),
+                 /* sin evaluar todavía: eso es lo que la cola viene a llenar */
+                 ev: null, fila: null, error: null });
+  p.ver = p.linea.length;
+  p.desde = null; p.destinos = [];
   pintarRevision();
+  atenderCola();
+}
+
+/* La cola: evalúa las jugadas que todavía no tienen veredicto, de a una y en
+   orden. Una sola corriendo por vez, porque el grupo de motores es uno solo y
+   `pool.asegurar` le puede cambiar el MultiPV o el Hash a un motor que está
+   trabajando, que es justo lo que §4.2 midió. */
+async function atenderCola() {
+  const p = PRUEBA;
+  if (!p || p.corriendo) return;
+  p.corriendo = true;
   const prof = R.profBase || +$("prof").value || 16;
   try {
-    const [ev] = await evaluarPosiciones([j.fen()], prof, null, opcionesDePantalla());
-    /* si mientras el motor pensaba se salió, se cambió de jugada o se cortó la
-       variante, lo que vuelve no puede pisar la pantalla nueva */
-    if (PRUEBA !== p || p.linea.length !== k) return;
-    /* MISMO camino que la partida: derivarFilas con una jugada suelta, igual
-       que la segunda opinión del barrido. `desde0 + k` es lo que hace que el
-       número de jugada y el turno sigan la cuenta de la partida, y `previa` es
-       lo que deja reconocer una recaptura adentro de la variante. */
-    const fila = derivarFilas([hecho], [vista.fen, j.fen()], [vista.ev, ev],
-      LIBRO || { pos: new Set(), nombres: {} }, p.desde0 + k, $("modo").value,
-      null, MATE_VISTA(), vista.previa).filas[0];
-    p.linea.push({ uci: hecho.from + hecho.to + (hecho.promotion || ""),
-                   san: hecho.san, hecho, fen: j.fen(), ev, fila });
-    p.ver = p.linea.length;
-    p.estado = "eligiendo";
-    window.LOG.add("·", `variante: ${hecho.san} (jugada ${p.desde0 + k + 1} de la ` +
-      `posición) a profundidad ${prof} · pierde ${fila.perdida.toFixed(2)}`);
-  } catch (e) {
-    if (PRUEBA !== p) return;
-    p.estado = "error";
-    p.msg = e.message || String(e);
-  }
-  pintarRevision();
+    for (;;) {
+      if (PRUEBA !== p) return;
+      const k = p.linea.findIndex(x => !x.fila && !x.error);
+      if (k < 0) return;
+      const e = p.linea[k];
+      const antes = posicionAntesDe(k);
+      /* Sin la evaluación de la anterior no se puede juzgar esta, y la única
+         forma de que falte es que la anterior haya fallado. Se dice, en vez de
+         dejarla pensando para siempre. */
+      if (!antes || !antes.ev) {
+        e.error = "no se pudo evaluar la jugada anterior";
+        pintarRevision();
+        continue;
+      }
+      try {
+        const [ev] = await evaluarPosiciones([e.fen], prof, null, opcionesDePantalla());
+        /* Si mientras el motor pensaba se salió de la variante o se cortó la
+           línea, lo que vuelve no puede pisar la pantalla nueva. Se mira por
+           IDENTIDAD y no por el largo: encadenando, el largo cambia todo el
+           tiempo sin que esta jugada deje de ser la misma. */
+        if (PRUEBA !== p || p.linea[k] !== e) return;
+        e.ev = ev;
+        /* MISMO camino que la partida: derivarFilas con una jugada suelta, igual
+           que la segunda opinión del barrido. `desde0 + k` es lo que hace que el
+           número de jugada y el turno sigan la cuenta de la partida, y `previa`
+           es lo que deja reconocer una recaptura adentro de la variante. */
+        e.fila = derivarFilas([e.hecho], [antes.fen, e.fen], [antes.ev, ev],
+          LIBRO || { pos: new Set(), nombres: {} }, p.desde0 + k, $("modo").value,
+          null, MATE_VISTA(), antes.previa).filas[0];
+        window.LOG.add("·", `variante: ${e.san} (jugada ${p.desde0 + k + 1} de la ` +
+          `posición) a profundidad ${prof} · pierde ${e.fila.perdida.toFixed(2)}`);
+      } catch (err) {
+        if (PRUEBA !== p || p.linea[k] !== e) return;
+        e.error = err.message || String(err);
+      }
+      pintarRevision();
+    }
+  } finally { p.corriendo = false; }
 }
 
 /* La jugada de la PARTIDA que sale de la posición de arranque, si la hay. Es
@@ -3560,11 +3609,16 @@ function textoPrueba(prof) {
   const contra = real
     ? ` · en la partida ${real.san} pierde ${real.perdida.toFixed(2)}`
     : "";
-  if (p.estado === "pensando")
-    return { ico: "…", tit: `Probando ${p.pensando}`,
-             sub: `Pensando a profundidad ${prof}.`, exp: "", color: "#6a1b9a" };
-  if (p.estado === "error")
-    return { ico: "!", tit: "No se pudo evaluar", sub: p.msg, exp: "", color: "#6a1b9a" };
+  /* EL ESTADO ES DE CADA JUGADA, no de la variante (v0.79): encadenando, la
+     que se está mirando puede tener veredicto mientras la siguiente todavía
+     piensa, o al revés. */
+  if (p.ver > 0 && !p.linea[p.ver - 1].fila) {
+    const e = p.linea[p.ver - 1];
+    return e.error
+      ? { ico: "!", tit: "No se pudo evaluar", sub: e.error, exp: "", color: "#6a1b9a" }
+      : { ico: "…", tit: `Probando ${e.san}`,
+          sub: `Pensando a profundidad ${prof}.`, exp: "", color: "#6a1b9a" };
+  }
   if (p.ver > 0) {
     const f = p.linea[p.ver - 1].fila, c = presentar(f);
     const lado = ladoDelUsuario(R);
@@ -3605,10 +3659,13 @@ function textoPrueba(prof) {
 function tiraDeLaVariante() {
   const p = PRUEBA;
   if (!p || !p.linea.length) return "";
+  /* Una jugada que todavía está en la cola SE DIBUJA IGUAL, en gris y con "…"
+     en lugar del símbolo: es lo que deja encadenar viendo lo que ya jugaste. */
   return p.linea.map((x, i) => {
-    const c = presentar(x.fila);
+    const c = x.fila ? presentar(x.fila) : null;
+    const col = c ? `var(--c-${c.clave})` : "var(--tenue)";
     return `<span class="vj ${i + 1 === p.ver ? "sel" : ""}" data-v="${i + 1}" ` +
-           `style="color:var(--c-${c.clave})"><span class="sm">${c.icono}</span>${x.san}</span>`;
+           `style="color:${col}"><span class="sm">${c ? c.icono : "\u2026"}</span>${x.san}</span>`;
   }).join("");
 }
 /* La variante EN LA TIRA DE LA PARTIDA (dial de la v0.76, forma "abajo"). Son
@@ -3619,9 +3676,9 @@ function laVarianteEnLaTira() {
   const p = PRUEBA;
   if (!p || !p.linea.length) return "";
   return `<span class="corte" aria-hidden="true"></span>` + p.linea.map((x, i) => {
-    const c = presentar(x.fila);
-    return `<span class="jg inv ${i + 1 === p.ver ? "sel" : ""}" data-v="${i + 1}">` +
-           `<span class="sm">${c.icono}</span>${x.san}</span>`;
+    const c = x.fila ? presentar(x.fila) : null;
+    return `<span class="jg inv ${c ? "" : "pend"} ${i + 1 === p.ver ? "sel" : ""}" ` +
+           `data-v="${i + 1}"><span class="sm">${c ? c.icono : "\u2026"}</span>${x.san}</span>`;
   }).join("");
 }
 
