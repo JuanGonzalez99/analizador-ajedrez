@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.85**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.86**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2807,6 +2807,50 @@ izquierdo limpie todo y que el menú del navegador quede cancelado.
 
 ---
 
+## 4sexvicies. La evaluación, vertical en la compu (v0.86)
+
+**La misma medición da dos respuestas distintas, y por eso el default depende del
+ancho.** La barra horizontal se SUMA al alto —16 px de barra más 10 de margen—;
+la vertical lo COMPARTE con el tablero. En el celular el tablero está limitado
+por el ANCHO, así que sumar alto sale gratis y horizontal gana, que es lo que se
+eligió mirando en su momento. En una compu el tablero está limitado por el ALTO
+(§4duovicies), así que esos 26 px salen del tablero. **Medido a 1280 × 800: el
+lado del tablero pasa de 470 a 496.**
+
+**No se escribe el default al arrancar.** `aplicarModoEval` ahora recibe si tiene
+que guardar, y desde el arranque va en falso: si el default se guardara solo,
+quedaría congelado el ancho de la PRIMERA carga y la pantalla dejaría de mandar.
+Se guarda cuando el usuario elige, que es cuando hay algo que recordar. La
+preferencia guardada le sigue ganando al ancho, siempre.
+
+**El presupuesto de alto sigue a la forma que está puesta, no a la de fábrica.**
+Las tres formas se siguen pudiendo elegir a mano, así que `pintarRevision` prende
+`.sinEvalH` en `#zonaRevision` y el CSS baja el presupuesto de 330 a 304. El lado
+del tablero vive ahora en `--ladoTab` porque lo necesitan dos reglas —el tamaño
+del SVG y el ancho de su caja—, y escrito dos veces se despegarían al primer
+ajuste.
+
+**Dos errores que solo se vieron en la captura**, y ninguno lo agarraba una
+cuenta:
+
+- **La barra quedaba a 170 px del tablero.** En el celular la columna mide lo
+  mismo que el tablero y el problema no existe. En una compu la columna son 700 y
+  el tablero 496: con `flex: 1`, la caja del tablero se estiraba a los 700, el
+  SVG se centraba adentro y la barra se quedaba sola contra el borde izquierdo.
+  Ahora la caja mide `var(--ladoTab)` y la fila se centra entera. Medido: 8 px
+  entre la barra y el tablero, que es el `gap` y nada más.
+- **"+0.26" salía CORTADO.** La barra ancha medía 30 px y el número no entraba;
+  como la barra tiene `overflow: hidden` por las esquinas redondeadas del
+  relleno, lo que no entra no se ve. **El error tenía tres versiones** y no lo
+  vio nadie porque nadie usaba la vertical: se destapó al volverla el default.
+  Son 36 px ahora, y no le cuestan tablero porque lo que manda es el alto.
+
+El arnés mide las tres formas y lo que cuesta cada una, que la barra quede pegada
+y que el número entre entero. El default por ancho se mide aparte, con dos cargas
+limpias: el valor se decide una sola vez, al arrancar, así que hay que recargar.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3333,7 +3377,7 @@ Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
 usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
 propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 
-**Hechas: 8 de 13** (v0.80 a v0.85, §4duovicies a §4quinvicies)
+**Hechas: 9 de 13** (v0.80 a v0.86, §4duovicies a §4sexvicies)
 
 | | |
 |---|---|
@@ -3345,25 +3389,23 @@ propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 | ✅ | Previa al pasar el mouse, rueda sobre el tablero, tecla `n`, y las primeras reglas `:hover` |
 | ✅ | Arrastrar la pieza |
 | ✅ | Flechas y casillas con el botón derecho |
+| ✅ | La barra de evaluación vertical por defecto en PC |
 
 **Lo que falta, en el orden en que conviene hacerlo:**
 
-1. **La barra de evaluación vertical por defecto en PC.** Chica. Ojo: `verEval`
-   es una preferencia guardada, así que el cambio va solo cuando NO hay nada
-   guardado y la pantalla es ancha. Compra 26 px de tablero.
-2. **Las piezas comidas al costado del tablero.** Se derivan del FEN, no cuesta
+1. **Las piezas comidas al costado del tablero.** Se derivan del FEN, no cuesta
    motor. Es un elemento visual nuevo: **dibujarlo y mostrarlo antes**.
-3. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
+2. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
    elemento que mejora siendo ancho. **No es tan barata como suena**: la curva
    vive adentro de `.principal`, y para cruzar las dos columnas hay que sacarla
    a una fila propia de la grilla, lo que la deja DEBAJO de los cuadritos y los
    botones. O sea que cambia el orden de la vista que se decidió en la v0.74.
    Dibujarlo y que lo mire el usuario.
-4. **La segunda y tercera mejor del motor, al lado del tablero.** La más
+3. **La segunda y tercera mejor del motor, al lado del tablero.** La más
    ambiciosa y la que más convertiría esto en una app de análisis. El dato ya
    viaja: `evs[i].segunda` y la pasada MultiPV híbrida, que hoy solo se usan
    para decidir si la jugada "era la única".
-5. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
+4. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
    INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
    arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
    también es primero, así que moverla no contradice esa razón — pero es

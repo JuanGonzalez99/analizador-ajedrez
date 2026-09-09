@@ -598,7 +598,14 @@ for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
     const r = q => { const e = document.querySelector(q); if (!e) return null;
       const b = e.getBoundingClientRect();
       return { x: Math.round(b.x), ancho: Math.round(b.width) }; };
-    return { principal: r(".principal"), lista: r("#jugadas"),
+    /* el LADO del tablero es lo que compran los cambios de la v0.86 en
+       adelante: en una compu el tablero está limitado por el alto, así que
+       cada píxel que otra cosa deja de gastar arriba es un píxel de tablero. */
+    /* el que importa es el SVG y no su caja: la caja se estira al ancho de la
+       columna y el tablero lo limita el ALTO (el clamp de la media query). */
+    const t = document.querySelector("svg.tab").getBoundingClientRect();
+    return { principal: r(".principal"), lista: r("#jugadas"), tablero: Math.round(t.width),
+             eval: document.getElementById("verEval").value,
              desborde: document.documentElement.scrollWidth > window.innerWidth };
   })));
 }
@@ -734,6 +741,38 @@ console.log("arrastre pieza:", JSON.stringify(
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 await pg.selectOption("#formaJugadas", "planilla");
 
+/* LAS TRES FORMAS DE LA EVALUACIÓN Y CUÁNTO TABLERO CUESTA CADA UNA (v0.86).
+   En una compu el tablero está limitado por el alto, así que la barra que se
+   suma arriba se le descuenta al lado. Se mide, no se estima. */
+await pg.setViewportSize({ width: 1280, height: 800 });
+await pg.waitForTimeout(250);
+const lado = () => pg.evaluate(() =>
+  Math.round(document.querySelector("svg.tab").getBoundingClientRect().width));
+const porForma = {};
+for (const f of ["horizontal", "barra", "tarjeta"]) {
+  await pg.selectOption("#verEval", f);
+  await pg.waitForTimeout(250);
+  porForma[f] = await lado();
+}
+console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)");
+/* LA BARRA PEGADA AL TABLERO Y EL NÚMERO ENTERO ADENTRO. Las dos fallaron en la
+   primera captura de la v0.86 y ninguna de las dos la agarraba una cuenta: la
+   barra quedaba a 170 px del tablero y "+0.26" salía cortado. */
+await pg.selectOption("#verEval", "barra");
+await pg.waitForTimeout(250);
+console.log("barra vertical: ", JSON.stringify(await pg.evaluate(() => {
+  const b = document.getElementById("evalbar").getBoundingClientRect();
+  const t = document.querySelector("svg.tab").getBoundingClientRect();
+  const n = document.getElementById("evalnum");
+  return { texto: n.textContent, hastaElTablero: Math.round(t.left - b.right),
+           numeroEntero: n.scrollWidth <= Math.ceil(b.width) };
+})));
+await pg.selectOption("#verEval", "barra");
+await pg.waitForTimeout(250);
+await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+await pg.evaluate(() => window.scrollBy(0, -10));
+await foto("ancho-eval-barra");
+
 /* MARCAR CON EL BOTÓN DERECHO (v0.85), con el mouse de verdad. Se cuentan los
    hijos de las dos capas y no se mira el dibujo: lo que importa es que el gesto
    agregue y saque, y cuántos elementos tiene cada marca es cosa de `svgMarcas`
@@ -780,6 +819,21 @@ marcado.menuCancelado = await pg.evaluate(() => {
 });
 console.log("marcas:        ", JSON.stringify(marcado));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
+
+/* EL DEFAULT DE LA EVALUACIÓN SALE DEL ANCHO (v0.86), y se mide con dos cargas
+   limpias porque el valor se decide UNA vez, al arrancar. Va al final de todo:
+   recarga la página y se lleva puesto el análisis. */
+const defaultEval = async w => {
+  await pg.setViewportSize({ width: w, height: 800 });
+  await pg.evaluate(() => { try { localStorage.removeItem("eval"); } catch (e) { /* incógnito */ } });
+  await pg.reload();
+  /* "attached" y no "visible": sin una partida abierta la fila de perillas está
+     escondida, pero el valor ya está puesto —se decide al arrancar— */
+  await pg.waitForSelector("#verEval", { state: "attached" });
+  return pg.evaluate(() => document.getElementById("verEval").value);
+};
+console.log("eval de fábrica:", JSON.stringify(
+  { compu: await defaultEval(1280), celu: await defaultEval(412) }));
 
 console.log("listo: capturas/");
 await b.close();

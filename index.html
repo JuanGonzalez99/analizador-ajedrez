@@ -171,8 +171,13 @@
              display: flex; flex-direction: column; justify-content: flex-end; }
   .evalbar.girada { justify-content: flex-start; }
   .evalbar > i { display: block; width: 100%; background: #f0ece2; transition: height .2s; }
-  /* con el número adentro la barra tiene que ser ancha: "+1.03" no entra en 10 px */
-  .evalbar.ancha { width: 30px; }
+  /* con el número adentro la barra tiene que ser ancha: "+1.03" no entra en 10 px.
+     SON 36 Y NO 30 desde la v0.86: con 30, "+0.26" salía CORTADO —la barra tiene
+     `overflow: hidden` por las esquinas redondeadas del relleno, así que lo que
+     no entra no se ve—. Se vio recién cuando la vertical pasó a ser el default en
+     compu, o sea que el error tenía tres versiones. Los 6 px no le cuestan
+     tablero: en una compu el tablero lo limita el ALTO, no el ancho. */
+  .evalbar.ancha { width: 36px; }
   .evalbar { position: relative; }
   .evalbar .num, .evalh .num { position: absolute; font-size: 9.5px; font-weight: 700;
                                font-variant-numeric: tabular-nums; pointer-events: none; }
@@ -475,7 +480,27 @@
        Va con `clamp` y no con un `min` por el PISO: en una ventana baja y ancha
        la cuenta da menos de 360 y el tablero terminaría más chico que en el
        celular, que es exactamente al revés de lo que se quiso. */
-    svg.tab { max-width: clamp(360px, calc(100vh - 330px), 680px); }
+    /* EL LADO DEL TABLERO, UNA VEZ Y EN UNA VARIABLE, porque ahora lo necesitan
+       dos reglas: el tamaño del SVG y el ancho de su caja. Escrito dos veces se
+       despegarían al primer ajuste.
+       SIN LA BARRA HORIZONTAL EL PRESUPUESTO BAJA 26 px: son los 16 de alto de
+       la barra más los 10 de su margen, que dejan de gastarse arriba del
+       tablero. Es lo que compra el default de la v0.86 en una compu, y es una
+       regla aparte y no un número distinto porque las tres formas de la eval se
+       siguen pudiendo elegir a mano: el presupuesto tiene que seguir a la que
+       esté puesta, no a la que se eligió de fábrica. Medido: 470 -> 496. */
+    #zonaRevision { --ladoTab: clamp(360px, calc(100vh - 330px), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 304px), 680px); }
+    svg.tab { max-width: var(--ladoTab); }
+    /* LA BARRA VERTICAL TIENE QUE QUEDAR PEGADA AL TABLERO. En el celular la
+       columna mide lo mismo que el tablero y el problema no existe; en una compu
+       la columna son 700 y el tablero 496, así que con `flex: 1` la caja del
+       tablero se estiraba a los 700, el SVG se centraba adentro y la barra
+       quedaba sola contra el borde izquierdo, a 170 px de lo que mide. Se vio en
+       la captura y no en ninguna cuenta. La caja pasa a medir lo que mide el
+       tablero y la fila se centra entera, las dos juntas. */
+    .revtab { justify-content: center; }
+    .revtab > #tablero { flex: 0 1 var(--ladoTab); }
   }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
@@ -548,7 +573,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.85 · 09-09";
+  window.VERSION = "v0.86 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3197,9 +3222,23 @@ const MODOS_EVAL = {
   barra: "Eval en la barra"
 };
 let MODO_EVAL = "horizontal";
-function aplicarModoEval(id) {
-  MODO_EVAL = MODOS_EVAL[id] ? id : "horizontal";
-  try { localStorage.setItem("eval", MODO_EVAL); } catch (e) { /* incógnito */ }
+/* EL DEFAULT DEPENDE DEL ANCHO desde la v0.86, y es la única perilla donde pasa.
+   No es una opinión distinta según la pantalla: es que la barra horizontal se
+   SUMA al alto —el bloque pasa de 329 a 353— y la vertical lo COMPARTE. En el
+   celular el tablero está limitado por el ANCHO, así que sumar alto sale gratis
+   y horizontal gana. En una compu el tablero está limitado por el ALTO (v0.80),
+   así que esos 24 px salen del tablero: la vertical le devuelve 26 px de lado.
+   Misma medida, dos respuestas, porque la pregunta no es la misma. */
+const CORTE_ANCHO = "(min-width: 1110px)";
+function evalPorDefecto() {
+  return window.matchMedia(CORTE_ANCHO).matches ? "barra" : "horizontal";
+}
+/* `guardar` va en falso al arrancar: si el default se escribiera solo, quedaría
+   congelado el del ancho de la PRIMERA carga y la pantalla dejaría de mandar.
+   Se guarda cuando el usuario elige, que es cuando hay algo que recordar. */
+function aplicarModoEval(id, guardar = true) {
+  MODO_EVAL = MODOS_EVAL[id] ? id : evalPorDefecto();
+  if (guardar) try { localStorage.setItem("eval", MODO_EVAL); } catch (e) { /* incógnito */ }
 }
 (function iniciarMarcaCurva() {
   let guardado = "punto";
@@ -3341,11 +3380,12 @@ function formaJugadas() { return FORMAS_JUGADAS[FORMA_JUGADAS] || FORMAS_JUGADAS
    abajo, en pintarRevision, y las otras dos se fueron con el selector. */
 
 (function iniciarModoEval() {
-  let guardado = "horizontal";
-  try { guardado = localStorage.getItem("eval") || "horizontal"; } catch (e) { /* incógnito */ }
+  let guardado = null;
+  try { guardado = localStorage.getItem("eval"); } catch (e) { /* incógnito */ }
   $("verEval").innerHTML = Object.entries(MODOS_EVAL)
     .map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
-  aplicarModoEval(guardado);
+  /* sin nada guardado manda el ancho, y sin escribirlo */
+  aplicarModoEval(guardado, !!guardado);
   $("verEval").value = MODO_EVAL;
   $("verEval").onchange = seguro("modo de eval", () => {
     aplicarModoEval($("verEval").value);
@@ -5621,6 +5661,8 @@ function pintarRevision() {
   $("evalfill").style.height = pct + "%";
 
   $("evalh").classList.toggle("oculto", modo !== "horizontal");
+  /* y el tablero se cobra el alto que la barra horizontal deja de gastar */
+  $("zonaRevision").classList.toggle("sinEvalH", modo !== "horizontal");
   $("evalfillh").style.width = pct + "%";
 
   /* claro sobre el relleno, oscuro sobre el fondo: el número siempre contrasta */

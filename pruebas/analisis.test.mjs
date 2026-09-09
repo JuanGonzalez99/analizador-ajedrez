@@ -2622,11 +2622,27 @@ test("la columna está centrada y no clavada a la izquierda", () => {
 test("en la compu el tablero crece, pero lo limita el alto", () => {
   /* Si el tablero se lleva todo el ancho disponible, la tira y la curva —que
      son la navegación— se van abajo del pliegue. Lo que manda es el alto. */
-  assert.ok(html.includes("max-width: clamp(360px, calc(100vh - 330px), 680px)"),
+  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - 330px), 680px)"),
     "el tablero se queda con lo que sobra de alto");
+  /* Y CON LA BARRA VERTICAL SOBRAN 26 px MÁS (v0.86): la horizontal se suma al
+     alto —16 de barra y 10 de margen— y la vertical lo comparte. Medido en el
+     arnés a 1280x800: el lado pasa de 470 a 496. */
+  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 304px), 680px)"),
+    "sin la barra horizontal el presupuesto baja 26");
+  assert.ok(html.includes('classList.toggle("sinEvalH"'),
+    "y alguien prende la clase según la forma que esté puesta");
+  /* LA BARRA TIENE QUE QUEDAR PEGADA AL TABLERO. Con `flex: 1` la caja se
+     estiraba a los 700 de la columna, el SVG se centraba adentro y la barra
+     quedaba contra el borde, a 170 px de lo que mide. */
+  assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab); }"),
+    "la caja del tablero mide lo que mide el tablero");
+  /* Y EL NÚMERO TIENE QUE ENTRAR: con 30 px, "+0.26" salía cortado por el
+     `overflow: hidden` de las esquinas redondeadas. */
+  assert.ok(html.includes(".evalbar.ancha { width: 36px; }"),
+    "la barra ancha da para el número entero");
   /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de
      360 y el tablero quedaría más chico que en el celular. */
-  const regla = html.indexOf("max-width: clamp(360px");
+  const regla = html.indexOf("--ladoTab: clamp(360px");
   const media = html.indexOf("@media (min-width: 1110px)");
   assert.ok(media > 0 && regla > media,
     "y la regla vive adentro de la media query: en el celular el tablero no cambia");
