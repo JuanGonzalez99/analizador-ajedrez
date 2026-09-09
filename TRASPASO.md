@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.83**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.84**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -2689,6 +2689,54 @@ que entrara la columna del tiempo, y el corte se movió con ella: 700 + 22 + 360
 y la principal se achica de nuevo — pasó al escribirlo, y lo agarró la prueba.
 Por eso ahora el corte **se calcula** en la prueba a partir del ancho de la
 lista, en vez de estar escrito dos veces.
+
+---
+
+## 4quattuorvicies. Arrastrar la pieza (v0.84)
+
+Con mouse, arrastrar es lo que la mano espera. El clic-clic de siempre no se
+toca y sigue siendo el único camino con el dedo.
+
+**NO ES UN CAMINO NUEVO PARA MOVER, y eso es la decisión de diseño.** Apretar
+hace exactamente lo que hacía tocar —`tocarCasilla` con la casilla de origen, que
+abre la variante y enciende los destinos— y soltar hace lo que hacía el segundo
+toque. Así, todo lo que ya estaba decidido sobre qué se puede probar y desde
+dónde (§4sexdecies, las dos puertas) vale igual sin repetirlo en ningún lado. Si
+mañana cambia esa regla, el arrastre la sigue solo.
+
+**La trampa, y costó encontrarla:** `tocarCasilla` llama a `pintarRevision`, que
+redibuja el SVG entero. O sea que **la pieza que se agarró deja de existir en ese
+mismo instante**. Hay que volver a buscarla después de encender los destinos, y
+para poder buscarla cada pieza lleva ahora `data-pz` con su casilla. De paso,
+esa es la razón de que el arrastre arranque recién al **cuarto píxel**: si
+arrancara en el `pointerdown`, redibujaría el tablero en cada apretón, incluido
+el que era solo un clic.
+
+Tres detalles que no son opcionales:
+
+- **La pieza en el aire va al final del SVG y sorda al mouse.** Al final para
+  quedar arriba de las otras; sorda (`pointer-events: none`) porque las 64
+  casillas transparentes que reciben el toque están por encima de las piezas, y
+  una pieza que escucha le tapa el `pointerup` a la casilla de abajo.
+- **El corrimiento se prepone al transform que la pieza ya tenía**, no lo pisa:
+  las transformaciones de SVG se aplican de izquierda a derecha. Y va en
+  **unidades del SVG**, no en píxeles: el tablero se dibuja en su propio sistema
+  y se escala al ancho que haya, así que hay que dividir por esa escala. Medido a
+  1280 de ancho: 14 px de mouse son 9.67 unidades.
+- **El click que el navegador dispara al final del arrastre se cancela**, o
+  soltar sobre una casilla la elegiría dos veces.
+
+**Soltar en la misma casilla deja la pieza ELEGIDA**, no todo como estaba. No es
+un descuido: agarrar ya fue un `tocarCasilla`, así que levantar la pieza y volver
+a apoyarla termina igual que hacerle un clic, que es lo que pasa en cualquier
+tablero de internet. Medido: la tarjeta queda diciendo "Elegiste a8".
+
+**La manito abierta se dibuja solo donde hay una pieza.** Sobre una casilla vacía
+prometería algo que no se puede hacer.
+
+El arnés arrastra con el mouse de verdad y mide las tres cosas: que la pieza se
+corra mientras está en el aire, que quede sorda al mouse, y que al soltar la
+jugada haya entrado en la variante.
 
 ---
 

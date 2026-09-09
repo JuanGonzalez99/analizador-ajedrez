@@ -693,6 +693,45 @@ console.log("tecla n:       ", JSON.stringify(await pg.evaluate(() => {
   return s ? { jugada: s.querySelector(".sa").textContent,
                simbolo: s.querySelector(".sm").textContent } : null;
 })));
+/* ARRASTRAR UNA PIEZA (v0.84), con el mouse de verdad. Se vuelve a una jugada
+   conocida para que la posición sea determinista y la jugada salga de chess.js,
+   no de mirar el tablero. */
+if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
+for (let i = 0; i < 60; i++) { if (await pg.locator("#ant").isDisabled()) break; await pg.click("#ant"); }
+for (let i = 0; i < 6; i++) await pg.click("#sig");
+await pg.waitForTimeout(300);
+await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "center" }));
+await pg.waitForTimeout(250);
+const mv = new Chess(fens[7]).moves({ verbose: true })[0];
+const medio = async sq => {
+  const c = await pg.locator(`#tablero [data-sq="${sq}"]`).boundingBox();
+  return { x: c.x + c.width / 2, y: c.y + c.height / 2 };
+};
+const desdeXY = await medio(mv.from), hastaXY = await medio(mv.to);
+await pg.mouse.move(desdeXY.x, desdeXY.y);
+await pg.mouse.down();
+await pg.mouse.move(desdeXY.x + 14, desdeXY.y + 14);
+await pg.waitForTimeout(150);
+const enElAire = await pg.evaluate(sq => {
+  const p = document.querySelector(`[data-pz="${sq}"]`);
+  /* el corrimiento va ADELANTE del transform que ya tenía, así que tiene que
+     haber DOS translate. Cuánto se corre depende del tamaño del tablero —son
+     unidades del SVG, no píxeles— así que se mira que no sea cero, no un número. */
+  const t = p.getAttribute("transform") || "";
+  const m = t.match(/^translate\(([-\d.]+) ([-\d.]+)\) translate\(/);
+  return p && { transform: t,
+                corrida: !!m && (Math.abs(+m[1]) > 1 || Math.abs(+m[2]) > 1),
+                sordaAlMouse: p.style.pointerEvents === "none" };
+}, mv.from);
+await pg.mouse.move(hastaXY.x, hastaXY.y);
+await pg.mouse.up();
+await pg.waitForFunction(() => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
+  null, { timeout: 30000 });
+await pg.waitForTimeout(300);
+console.log("arrastre pieza:", JSON.stringify(
+  { jugada: mv.from + "->" + mv.to, enElAire,
+    quedo: (await pg.locator("#pTit").textContent()).trim() }));
+if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 await pg.selectOption("#formaJugadas", "planilla");
 
 console.log("listo: capturas/");

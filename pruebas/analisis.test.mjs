@@ -2575,6 +2575,24 @@ test("con mouse: previa, rueda y salto al error", () => {
     "y `n` salta entre las categorías malas");
 });
 
+test("arrastrar la pieza no es un camino nuevo para mover", () => {
+  /* Apretar hace lo que hacía tocar y soltar lo que hacía el segundo toque, así
+     que todo lo decidido sobre qué se puede probar y desde dónde vale igual. */
+  assert.ok(html.includes("(function arrastrarPiezas()"), "existe el arrastre");
+  assert.ok(html.includes("tocarCasilla(desde);") && html.includes("else tocarCasilla(hasta);"),
+    "y pasa por tocarCasilla, no por un camino paralelo");
+  assert.ok(html.includes('if (ev.pointerType !== "mouse" || ev.button !== 0 || TRABAJANDO) return;'),
+    "con el dedo no existe, y con el motor ocupado tampoco");
+  /* LA TRAMPA: tocarCasilla repinta el SVG entero, así que la pieza que se
+     agarró deja de existir y hay que volver a buscarla. */
+  assert.ok(html.includes("pieza = cont.querySelector(`[data-pz=\"${desde}\"]`);"),
+    "la pieza se vuelve a buscar después de encender los destinos");
+  assert.ok(html.includes('data-pz="${"abcdefgh"[f]}${8 - r}"'),
+    "y cada pieza sabe en qué casilla está, que es lo que deja agarrarla");
+  assert.ok(html.includes("if (Math.abs(dx) + Math.abs(dy) < 4) return;"),
+    "el umbral de 4 px evita repintar el tablero en cada clic");
+});
+
 test("las reglas de hover no existen para el dedo", () => {
   /* En una pantalla táctil el estado de hover queda PEGADO después de tocar:
      la última jugada tocada se vería iluminada como si estuviera elegida. */

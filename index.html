@@ -545,7 +545,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.83 · 09-09";
+  window.VERSION = "v0.84 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3455,7 +3455,10 @@ function dibujar(fen, jugada, mejor, prueba) {
   for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
     const p = b[r][f];
     if (!p) continue;
-    s += `<use href="#cb-${p.color}${p.type}" ` +
+    /* `data-pz` es la casilla de la pieza, y existe para poder AGARRARLA: sin
+       eso, arrastrar tendría que adivinar cuál de los `<use>` corresponde a la
+       casilla que se apretó. No lo usa el dibujo, lo usa el arrastre. */
+    s += `<use href="#cb-${p.color}${p.type}" data-pz="${"abcdefgh"[f]}${8 - r}" ` +
       `transform="translate(${fx(f)} ${ry(r)}) scale(${esc.toFixed(4)})"/>`;
   }
   const flecha = (uci, color, ancho) => {
@@ -3525,9 +3528,11 @@ function dibujar(fen, jugada, mejor, prueba) {
     }
     /* las 64 casillas que reciben el toque, al final para quedar por encima de
        las piezas: un <use> se come el click y el <rect> del fondo no se entera */
+    /* la manito abierta SOLO donde hay una pieza: es lo que avisa que eso se
+       agarra y se arrastra, y sobre una casilla vacía prometería algo falso */
     for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
       s += `<rect x="${fx(f)}" y="${ry(r)}" width="${S}" height="${S}" fill="transparent"
-        data-sq="${"abcdefgh"[f]}${8 - r}" style="cursor:pointer"/>`;
+        data-sq="${"abcdefgh"[f]}${8 - r}" style="cursor:${b[r][f] ? "grab" : "pointer"}"/>`;
   }
   return s + "</svg>";
 }
@@ -5867,6 +5872,86 @@ $("curva").addEventListener("click", seguro("curva", ev => {
       junta -= Math.sign(junta) * 40;
     }
   }, { passive: false });
+})();
+
+/* ARRASTRAR LA PIEZA (v0.84). Con mouse, arrastrar es lo que la mano espera; el
+   clic-clic de siempre sigue funcionando igual y es el único camino con el dedo.
+
+   NO ES UN CAMINO NUEVO PARA MOVER: apretar hace exactamente lo que hacía tocar
+   —`tocarCasilla` con la casilla de origen, que abre la variante y enciende los
+   destinos— y soltar hace lo que hacía el segundo toque. Todo lo que ya estaba
+   decidido sobre qué se puede probar y desde dónde vale igual, sin repetirlo.
+
+   LA TRAMPA: `tocarCasilla` llama a `pintarRevision`, que redibuja el SVG entero.
+   O sea que la pieza que se agarró DEJA DE EXISTIR en ese mismo instante. Hay que
+   volver a buscarla después de encender los destinos, y por eso el arrastre
+   arranca recién al cuarto píxel: si arrancara en el `pointerdown`, redibujaría
+   el tablero en cada apretón, incluido el que era solo un clic. */
+(function arrastrarPiezas() {
+  const cont = $("tablero");
+  let desde = null, pieza = null, orig = "", x0 = 0, y0 = 0, k = 1, arrastro = false;
+  const soltarTodo = () => { desde = null; pieza = null; arrastro = false; };
+  const casillaDe = ev => {
+    const t = ev.target.closest && ev.target.closest("[data-sq]");
+    return t && t.getAttribute("data-sq");
+  };
+  cont.addEventListener("pointerdown", seguro("agarrar", ev => {
+    if (ev.pointerType !== "mouse" || ev.button !== 0 || TRABAJANDO) return;
+    const sq = casillaDe(ev);
+    /* solo se agarra donde HAY una pieza: sobre una casilla vacía el gesto es
+       arrastrar la página, no una jugada que no existe */
+    if (!sq || !cont.querySelector(`[data-pz="${sq}"]`)) return;
+    desde = sq; x0 = ev.clientX; y0 = ev.clientY; arrastro = false;
+  }));
+  cont.addEventListener("pointermove", seguro("arrastrar", ev => {
+    if (!desde) return;
+    const dx = ev.clientX - x0, dy = ev.clientY - y0;
+    if (!arrastro) {
+      if (Math.abs(dx) + Math.abs(dy) < 4) return;
+      arrastro = true;
+      tocarCasilla(desde);
+      const svg = cont.querySelector("svg.tab");
+      if (!svg) return soltarTodo();
+      /* de píxeles de pantalla a unidades del SVG: el tablero se dibuja en su
+         propio sistema y se escala al ancho que haya */
+      k = svg.viewBox.baseVal.width / svg.getBoundingClientRect().width;
+      pieza = cont.querySelector(`[data-pz="${desde}"]`);
+      if (!pieza) return soltarTodo();
+      orig = pieza.getAttribute("transform");
+      /* al final del SVG para que quede ARRIBA de las otras piezas, y sorda al
+         mouse para no taparle el `pointerup` a las casillas, que están encima */
+      pieza.style.pointerEvents = "none";
+      pieza.parentNode.appendChild(pieza);
+    }
+    if (!pieza) return;
+    /* las transformaciones se aplican de izquierda a derecha, así que el
+       corrimiento va ADELANTE del que ya tenía y no lo pisa */
+    pieza.setAttribute("transform",
+      `translate(${(dx * k).toFixed(2)} ${(dy * k).toFixed(2)}) ${orig}`);
+  }));
+  cont.addEventListener("pointerup", seguro("soltar", ev => {
+    if (!desde) return;
+    const hasta = casillaDe(ev);
+    const hubo = arrastro, origen = desde;
+    soltarTodo();
+    if (!hubo) return;                     /* fue un clic: lo atiende el click */
+    /* Soltar en la misma casilla, o fuera del tablero, devuelve la pieza a su
+       lugar —por eso el repintado— pero la deja ELEGIDA, con sus destinos
+       encendidos. No es un descuido: agarrar ya fue un `tocarCasilla`, así que
+       levantar la pieza y volver a apoyarla termina igual que hacerle un clic,
+       que es lo que pasa en cualquier tablero de internet. Medido: la tarjeta
+       queda diciendo "Elegiste a8". */
+    if (!hasta || hasta === origen) pintarRevision();
+    else tocarCasilla(hasta);
+  }));
+  cont.addEventListener("pointercancel", seguro("cancelar", () => {
+    if (arrastro) { soltarTodo(); pintarRevision(); } else soltarTodo();
+  }));
+  /* el click que el navegador dispara al final de un arrastre no tiene que
+     contar como toque: si no, soltar sobre una casilla la elegiría dos veces */
+  cont.addEventListener("click", ev => {
+    if (arrastro) { ev.stopPropagation(); ev.preventDefault(); }
+  }, true);
 })();
 
 /* SALTAR AL PRÓXIMO ERROR (v0.82). Una partida se revisa por los errores, no
