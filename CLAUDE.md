@@ -29,12 +29,33 @@ describe. §10 tiene las reglas de trabajo.
   ve de verdad.
 - Se escribe en **castellano rioplatense**, igual que el código y el traspaso.
 
+## Dos archivos que no se leen enteros
+
+Son los dos más grandes del repo y los dos se pagan en contexto:
+
+- **`aperturas.json` es una sola línea de 942 KB** (`wc -l` da 0, no es un
+  error). O sea que **cualquier `grep` que matchee devuelve el archivo entero**
+  como un único renglón: unos 236.000 tokens de golpe. Se lo toca solo con
+  `-c`, con `-o`, o con `head -c`. Nunca `cat`, nunca `grep` a secas.
+- **`index.html` son ~75.000 tokens.** No se lee entero nunca: para eso está el
+  mapa del §3 del traspaso, que dice qué función vive en qué zona. Se grepea el
+  nombre y se leen los renglones de alrededor. Mantener ese mapa al día no es
+  prolijidad: es lo que evita leer el archivo completo. Lo mismo vale para el
+  propio `TRASPASO.md`, que ya va por ~48.000: se lee por secciones.
+- Las **capturas** de `npm run mirar` salen a 824×1520, o sea **~1.670 tokens
+  cada una** si se las mira. La tanda entera son 27. Se miran una o dos, las que
+  contestan la pregunta; el resumen de texto que imprime el arnés son 400 tokens
+  y suele alcanzar.
+
 ## Lo básico
 
 - `npm test` antes de dar nada por bueno: pruebas de unidad más chequeos
   estáticos sobre el HTML.
 - `npm run mirar` abre la app en un Chromium headless y saca capturas. Hay
   varias partidas de prueba: `npm run mirar mate`, `npm run mirar ahogado`.
+  **En una sesión remota hay que correr `npm install` primero** —el repo se
+  clona limpio y Playwright no viene—; son 2 segundos, pero sin eso `mirar`
+  explota con `ERR_MODULE_NOT_FOUND` y se pierde una corrida en descubrirlo.
 - **Se pushea derecho a `main`, sin rama ni PR**, así que **cada push es un
   deploy en vivo**.
 - **La versión de `index.html` tiene que subir en cada push que lo toque**, y

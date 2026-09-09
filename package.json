@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
+    "test": "node --test --test-reporter=dot pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
     "mirar": "node pruebas/mirar.mjs",
     "mirar:mate": "node pruebas/mirar.mjs mate",
     "mirar:ahogado": "node pruebas/mirar.mjs ahogado"

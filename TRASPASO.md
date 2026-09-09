@@ -72,6 +72,17 @@ npm test
 Las pruebas viven en `pruebas/` y son archivos del repo desde la v18 (antes se
 armaban a mano en cada sesión).
 
+**El reporte es `dot` a propósito, y es una decisión medida.** El reporte TAP
+que trae node por defecto imprime cuatro renglones por prueba —`ok N`,
+`duration_ms`, `type` y el cierre—, o sea **44.338 bytes** con 243 pruebas. Con
+`--test-reporter=dot` la misma corrida son **731 bytes**: 60 veces menos. Un
+punto por prueba que anda, y **cuando una falla se imprime igual todo lo que
+sirve** —el `AssertionError`, el mensaje, `actual` y `expected`, y el archivo
+con la línea—; se calla solo la lista de las que anduvieron. Se verificó
+inventando una prueba que falla, no suponiéndolo. Importa porque esa salida la
+lee un agente con ventana de contexto finita, y 44 KB por corrida es un
+presupuesto que se paga en cada `npm test`.
+
 Hay **dos bloques extraíbles**, cada uno delimitado por dos marcadores. Ninguno
 toca el DOM ni el motor al cargarse, así que se sacan del HTML y corren en node:
 
