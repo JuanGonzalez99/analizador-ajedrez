@@ -119,9 +119,17 @@ npm run mirar
 De la v0.42 a la v0.57 esto se rearmaba a mano en cada sesión. Desde la v0.58
 vive en el repo, en `pruebas/mirar.mjs`, por el mismo camino que hicieron las
 pruebas en la v18. Levanta un servidor sobre el repo, abre `index.html` en un
-Chromium headless **en modo simple**, pega un PGN, la analiza y deja capturas en
+Chromium headless **en modo simple**, analiza una partida y deja capturas en
 `capturas/` (ignorado por git). **No toca `index.html`**: no viaja al sitio y no
 cambia nada de lo que se ve en el celular.
+
+**Entra por la lista del mes, no pegando el PGN, y eso es una regla que costó un
+bug.** Desde la v0.63.1 el arnés **falsea también la API de chess.com** —el
+listado de meses y el JSON del mes, armados a partir del propio PGN de prueba— y
+entra buscando el usuario, eligiendo la partida y tocando "Analizar", que es el
+camino que usa el usuario. Antes pegaba el PGN, que era el más fácil de
+programar y **el único donde el motivo del final no existe**: por ese atajo se
+publicó una versión donde el motivo no se veía nunca. Ver §4terdecies.
 
 **El motor va falseado, y es lo que lo hace usable.** El wasm real tarda minutos
 por partida —medido: profundidad 13 sobre 25 jugadas no terminó en 10 minutos en
@@ -152,6 +160,14 @@ por defecto), una que termina **en mate**, una que termina **ahogada** y
 porque *cómo termina la partida* es una pantalla propia y la larga no llega
 nunca a ninguna de ellas.
 
+**El motor falso TARDA a propósito en las jugadas probadas (v0.79).** Una
+posición que no está en su tabla es, por definición, una jugada inventada: ahí
+demora 400 ms —`MOTOR_LENTO` lo cambia— y en el resto contesta al toque. Sin esa
+demora no se puede mirar si el tablero dibuja **antes** de que vuelva el motor,
+que es lo único que la v0.79 cambió: contestando en el mismo tick, todo parece
+instantáneo y la pantalla pasa la prueba sin haberla dado. El análisis de la
+partida no paga nada, porque esas posiciones sí están en la tabla.
+
 **Un artefacto del motor falso, para no perseguirlo:** puede mostrar "MEJOR: la
 jugada" al lado de una pérdida grande, porque inventa la mejor y la evaluación
 por separado. El motor de verdad no puede decir las dos cosas a la vez.
@@ -170,6 +186,10 @@ lo que hay que mirar.
   error que la regla de §10: nunca afirmar de memoria una posición.
 - Redirigir la salida por un pipe la bufferiza, así que "no imprime nada" no es
   lo mismo que "está colgado". Se pierde media hora ahí.
+- **El worker falso se arma con una plantilla, así que una comilla invertida
+  adentro la corta al medio.** Pasó escribiendo un comentario en el código del
+  worker: el error que tira node es `SyntaxError` en una línea que se ve
+  perfecta, y no dice nada de comillas.
 
 ---
 
