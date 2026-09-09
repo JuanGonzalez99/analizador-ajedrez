@@ -3865,6 +3865,15 @@ es por decisión pendiente, no porque no esté desplegado.**
   "mostrar la mejor" (§4bis). Es además el lugar donde irían los juegos de
   piezas configurables, que están costurados pero sin hacer (§4bis).
 
+  **Las tres formas están dibujadas** (v0.91) en `pruebas/maqueta-ajustes.mjs`,
+  que las inyecta sobre la app de verdad al tamaño del celular y no toca
+  `index.html`: la **hoja desde abajo** —447 px de alto, deja el tablero a la
+  vista arriba mientras se toca el tema—, el **desplegable en línea** y la
+  **pantalla propia**. Están mandadas y esperan que el usuario elija. Medido en
+  la misma corrida: la fila de controles pasa de **156 px a 74 px** cuando los
+  cinco `<select>` se van y queda el botón. El script se borra cuando la forma
+  esté elegida.
+
   **Cada dial nuevo empuja este pendiente**: los temporales se van solos cuando
   el usuario elige, pero los que se quedan se acumulan en una fila que ya ocupa
   cuatro renglones al pie de la vista.
