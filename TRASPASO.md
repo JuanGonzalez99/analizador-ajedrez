@@ -83,6 +83,14 @@ inventando una prueba que falla, no suponiéndolo. Importa porque esa salida la
 lee un agente con ventana de contexto finita, y 44 KB por corrida es un
 presupuesto que se paga en cada `npm test`.
 
+**`.claude/settings.json` se versiona, y es el único de esa carpeta.** Tiene una
+sola cosa: denegar el servidor MCP de github, que este repo no usa porque pushea
+derecho a `main`. Va commiteado porque la guarda tenía que valer **en las
+sesiones nuevas**, y el contenedor clona limpio: un archivo ignorado no existiría
+ahí. El `.gitignore` pasó de `.claude/` a `.claude/*` más `!.claude/settings.json`,
+así que el resto de la carpeta —que es estado de la herramienta, no del
+proyecto— sigue afuera.
+
 Hay **dos bloques extraíbles**, cada uno delimitado por dos marcadores. Ninguno
 toca el DOM ni el motor al cargarse, así que se sacan del HTML y corren en node:
 

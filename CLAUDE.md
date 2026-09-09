@@ -47,6 +47,16 @@ Son los dos más grandes del repo y los dos se pagan en contexto:
   contestan la pregunta; el resumen de texto que imprime el arnés son 400 tokens
   y suele alcanzar.
 
+**El MCP de github está denegado** en `.claude/settings.json`, que por eso es el
+único archivo de `.claude/` que se versiona: si no se commitea, no existe en la
+sesión siguiente —el contenedor clona limpio— y la guarda no serviría para lo
+que se puso. Tenerlo prendido no cuesta nada (sus herramientas están diferidas,
+o sea que solo viajan los nombres), pero **usarlo sí**: cada esquema que se carga
+son de 200 a 1.400 tokens y se queda en la ventana toda la sesión. Este repo
+pushea derecho a `main`, sin PRs ni issues, así que no hay nada ahí que
+necesite. `git` no lo toca: sale por el proxy del entorno con su propia
+credencial. Si alguna vez hace falta un PR, se saca el `deny`.
+
 ## Lo básico
 
 - `npm test` antes de dar nada por bueno: pruebas de unidad más chequeos
