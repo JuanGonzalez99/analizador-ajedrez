@@ -16,11 +16,17 @@ describe. §10 tiene las reglas de trabajo.
   etiqueta, la forma de una marca, cuánto se llena una barra. Se dibuja con el
   arnés (`npm run mirar`), se mandan las alternativas y él elige mirando. Ya
   evitó dos cambios que no le gustaban y destapó uno que se había colado.
-- **EXCEPCIÓN, y es decisión suya (v0.85–v0.90): lo que se ve SOLO en PC no lo
-  revisa.** Sus palabras: *"no voy a revisar nada de lo que sea solo PC"*, y
-  *"no te frenes cuando termines cada punto"*. O sea que ahí se aplica y se
-  cuenta, en commits separados, y se le resume al final. **La regla de arriba
-  sigue entera para todo lo que se vea en el celular**, que es donde usa la app.
+- **PC lo resolvés vos; el celular se dibuja y se espera el ok.** Es decisión
+  suya y desde la v0.91 **ya no es la excepción de una tanda: vale para toda
+  feature que pida de acá en adelante**. Sus palabras: *"todas las features que
+  te vaya pidiendo, las adaptes al modo PC como vos creas conveniente"*, y antes
+  *"no voy a revisar nada de lo que sea solo PC"* y *"no te frenes cuando
+  termines cada punto"*. O sea que la parte de PC de cada cosa se decide, se
+  aplica y se cuenta —en commits separados—, y se le resume al final. **La regla
+  de arriba sigue entera para todo lo que se vea en el celular**, que es donde
+  usa la app, y él la nombró en la misma frase en que soltó lo de PC: *"lo que no
+  quiero perder es que me mandes captura de cómo se vería algo antes de
+  implementarlo"*.
   Lo que reemplaza a la mirada suya en lo de PC es **comparar byte a byte las 28
   capturas de celular contra la versión anterior**, en cada versión: es lo único
   que prueba que un cambio de PC no se filtró al celu. Sale así, y con las de la

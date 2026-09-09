@@ -4216,6 +4216,18 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
   segundos— y ya se ganó dos veces: las marcas de la curva (v0.59) y el nombre
   de las tablas (v0.62). Lo que se aplica y se cuenta es lo que no se ve:
   arreglos internos, pruebas, rendimiento.
+- **La regla de arriba es del CELULAR. Lo que se ve solo en una compu lo decide
+  quien programa** —decisión del usuario, v0.91—: *"todas las features que te
+  vaya pidiendo, las adaptes al modo PC como vos creas conveniente"*. Empezó
+  como la excepción de una tanda (v0.85–v0.90, §7) y ahora es la regla parada:
+  **cada feature nueva se piensa para las dos pantallas, la del celular se
+  dibuja y se espera el ok, y la adaptación a PC se aplica y se cuenta**, en
+  commits separados y resumida al final. Lo que reemplaza a la mirada del
+  usuario en lo de PC es la **comparación byte a byte de las capturas de
+  celular** contra la versión anterior, en cada versión: es lo único que prueba
+  que un cambio de PC no se filtró al celu. Y lo que NO se toca es la mitad de
+  arriba: él lo puso en la misma frase —*"lo que no quiero perder es que me
+  mandes captura de cómo se vería algo antes de implementarlo"*—.
 - **Un cambio invasivo por tanda.** Si además hay que refactorizar, va solo.
 - **`npm test` antes de dar nada por bueno**, y una prueba nueva por cada
   arreglo. Los errores que no agarran son siempre los del DOM y los de la
