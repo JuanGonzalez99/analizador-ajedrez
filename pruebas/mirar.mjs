@@ -555,6 +555,75 @@ console.log("cabecera:", JSON.stringify(await pg.locator("#revRival").textConten
 const cierreEl = pg.locator(".tira .cierre");
 console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl.textContent()).trim()) : "(no hay)");
 
+/* LA PASADA ANCHA (v0.80). Todo lo de arriba se dibuja a 412 x 760, que es el
+   celular del usuario y donde se toman las decisiones. Esto es lo otro: la app
+   en una compu, que hasta la v0.80 no existía —el archivo entero tenía UNA
+   media query y era la de claro contra oscuro— y por eso nadie había visto que
+   los combos salían blancos sobre blanco ni que la tira no se podía arrastrar.
+   Se dibuja a 1280 x 800, y además a 1050 y 1049, que son los dos lados del
+   corte: es donde se rompe si alguien toca los anchos. */
+console.log("");
+for (const [w, h, n] of [[1280, 800, "ancho"], [1050, 800, "ancho-justo"],
+                         [1049, 800, "ancho-angosto"]]) {
+  await pg.setViewportSize({ width: w, height: h });
+  await pg.waitForTimeout(300);
+  await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -10));
+  await foto(n);
+  console.log(n.padEnd(15), JSON.stringify(await pg.evaluate(() => {
+    const r = q => { const e = document.querySelector(q); if (!e) return null;
+      const b = e.getBoundingClientRect();
+      return { x: Math.round(b.x), ancho: Math.round(b.width) }; };
+    return { principal: r(".principal"), lista: r("#jugadas"),
+             desborde: document.documentElement.scrollWidth > window.innerWidth };
+  })));
+}
+/* Las dos formas de la lista, una captura cada una: son dos densidades y cuál
+   sirve se decide mirándolas. */
+await pg.setViewportSize({ width: 1280, height: 800 });
+for (const f of ["planilla", "renglon", "no"]) {
+  await pg.selectOption("#formaJugadas", f);
+  await pg.waitForTimeout(250);
+  await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -10));
+  await foto("ancho-" + f);
+}
+await pg.selectOption("#formaJugadas", "planilla");
+
+/* EL ARRASTRE Y LA RUEDA de la tira, con el mouse de verdad: con el dedo se
+   scrollea sola, pero con mouse arrastrar un overflow-x selecciona el texto y
+   la rueda vertical no la mueve. Se mide que se mueva, que NO seleccione, que
+   un clic siga navegando y que la rueda no se lleve la página puesta. */
+await pg.evaluate(() => document.getElementById("tira").scrollIntoView({ block: "center" }));
+await pg.waitForTimeout(200);
+const cajaTira = await pg.locator("#tiraSc").boundingBox();
+const yTira = cajaTira.y + cajaTira.height / 2;
+const izq = () => pg.evaluate(() => document.getElementById("tiraSc").scrollLeft);
+await pg.evaluate(() => { document.getElementById("tiraSc").scrollLeft = 200; });
+const antesArr = await izq();
+await pg.mouse.move(cajaTira.x + cajaTira.width - 40, yTira);
+await pg.mouse.down();
+for (let i = 1; i <= 6; i++) await pg.mouse.move(cajaTira.x + cajaTira.width - 40 - i * 20, yTira);
+const durante = await izq();
+const seleccion = await pg.evaluate(() => (window.getSelection().toString() || "").trim());
+await pg.mouse.up();
+console.log("arrastre:      ", JSON.stringify(
+  { scrollLeft: antesArr + " -> " + durante, seleccionoTexto: seleccion }));
+const selAntes = await pg.locator("#tiraSc .jg.sel .sa").textContent();
+await pg.locator("#tiraSc .jg:not(.sel)").nth(3).click();
+await pg.waitForTimeout(300);
+console.log("clic:          ", JSON.stringify(
+  { de: selAntes, a: await pg.locator("#tiraSc .jg.sel .sa").textContent() }));
+await pg.evaluate(() => { document.getElementById("tiraSc").scrollLeft = 100; });
+const pagAntes = await pg.evaluate(() => window.scrollY);
+const tiraAntes = await izq();
+await pg.mouse.move(cajaTira.x + cajaTira.width / 2, yTira);
+await pg.mouse.wheel(0, 200);
+await pg.waitForTimeout(250);
+console.log("rueda:         ", JSON.stringify(
+  { tira: tiraAntes + " -> " + await izq(),
+    pagina: pagAntes + " -> " + await pg.evaluate(() => window.scrollY) }));
+
 console.log("listo: capturas/");
 await b.close();
 srv.close();

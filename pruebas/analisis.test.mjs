@@ -2475,9 +2475,87 @@ test("la tira lleva la partida entera, no una ventana", () => {
     "o entera, o hasta donde se abrió la prueba");
   assert.ok(html.includes("$(\"tiraSc\").innerHTML = R.filas.slice(0, hasta).map((x, i) =>"),
     "se dibujan TODAS las filas hasta ahí");
-  assert.ok(!html.includes('id="jugadas"'), "la lista vertical se fue");
+  /* LA LISTA VERTICAL VOLVIÓ EN LA v0.80, pero no acá: vive en la columna de al
+     lado, que SOLO existe de 1000 px para arriba. Lo que la v0.74 decidió —en
+     el celular, la tira y nada más— sigue en pie, y es lo que esta prueba fija
+     ahora: que la lista esté en la lateral y que la lateral no se vea sin
+     pantalla ancha. Antes decía `!html.includes('id="jugadas"')`, que era la
+     misma idea escrita cuando la lista no existía en ningún lado. */
+  assert.ok(html.includes('<aside class="lateral" id="lateral">'),
+    "la lista vertical vive en la columna de al lado");
+  assert.ok(html.includes(".lateral, #formaJugadas { display: none; }"),
+    "y sin pantalla ancha no se ve: en el celular sigue estando solo la tira");
   assert.ok(html.includes("mask-image: linear-gradient(to right, transparent 0, #000 24px"),
     "y las puntas se desvanecen en vez de cortarse");
+});
+
+/* LO REPORTADO DESDE UNA COMPU (v0.80). Tres cosas distintas que salieron de la
+   misma causa: el archivo entero tenía UNA media query y era la de claro contra
+   oscuro, así que nadie había mirado la app en una pantalla ancha. */
+
+test("el menú de un select no queda blanco sobre blanco", () => {
+  /* Chrome en Windows dibuja el desplegable con el fondo del propio select, y
+     el nuestro es transparente: el menú salía blanco y el texto de las opciones
+     —heredado del papel oscuro— también. Se veía UNA sola opción, la resaltada.
+     Los colores tienen que ser de sistema y no fijos, o el arreglo rompe el
+     esquema contrario al que se probó. */
+  assert.ok(/option\s*{[^}]*background-color:\s*Canvas/.test(html),
+    "el option lleva fondo propio");
+  assert.ok(/option\s*{[^}]*color:\s*CanvasText/.test(html),
+    "y color propio, los dos de sistema para seguir claro/oscuro");
+});
+
+test("la tira se puede arrastrar y ruedear con el mouse", () => {
+  /* Con el dedo la tira se scrollea sola; con mouse, arrastrar un overflow-x
+     selecciona el texto y la rueda vertical no la mueve. */
+  assert.ok(html.includes('sc.addEventListener("pointerdown"'), "se arrastra");
+  assert.ok(html.includes('if (e.pointerType !== "mouse") return;'),
+    "y el dedo sigue por el camino de siempre, sin tocar");
+  assert.ok(html.includes("if (sc.scrollWidth <= sc.clientWidth) return;"),
+    "la rueda solo se roba el gesto cuando hay para dónde ir");
+  assert.ok(html.includes("if (!arrastro && Math.abs(d) < 4) return;"),
+    "y un clic sigue siendo un clic: el temblor de la mano no cuenta");
+});
+
+test("la lista lateral no le saca lugar al celular", () => {
+  /* La regla base tiene que ir ANTES de la media query: a igual especificidad
+     gana la última, y puesta después le ganaba al display de adentro y la lista
+     no se veía NUNCA. Se rompió así al escribirla. */
+  const base = html.indexOf(".lateral, #formaJugadas { display: none; }");
+  const ancha = html.indexOf("@media (min-width: 1050px)");
+  assert.ok(base > 0 && ancha > 0, "están las dos reglas");
+  assert.ok(base < ancha,
+    "la regla base va antes de la media query, o la lista no se ve nunca");
+  assert.ok(html.includes("grid-template-columns: 700px 300px"),
+    "la columna principal sigue midiendo 700: es la medida de todas las decisiones");
+  /* el corte es la SUMA de lo que tiene que entrar, no un número redondo: con
+     1000 la principal se achicaba a 650 y el tablero con ella. */
+  assert.ok(html.includes("@media (min-width: 1050px)"), "y el corte es 700 + 22 + 300 + 28");
+});
+
+test("en la compu el tablero crece, pero lo limita el alto", () => {
+  /* Si el tablero se lleva todo el ancho disponible, la tira y la curva —que
+     son la navegación— se van abajo del pliegue. Lo que manda es el alto. */
+  assert.ok(html.includes("max-width: clamp(360px, calc(100vh - 330px), 680px)"),
+    "el tablero se queda con lo que sobra de alto");
+  /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de
+     360 y el tablero quedaría más chico que en el celular. */
+  const regla = html.indexOf("max-width: clamp(360px");
+  const media = html.indexOf("@media (min-width: 1050px)");
+  assert.ok(media > 0 && regla > media,
+    "y la regla vive adentro de la media query: en el celular el tablero no cambia");
+  assert.ok(html.includes("svg.tab { width: 100%; max-width: 360px;"),
+    "la regla del celular sigue intacta");
+});
+
+test("el dial de las jugadas tiene las dos formas y el apagado", () => {
+  /* Es un dial temporal, como el de la v0.76: se va cuando el usuario elija. */
+  for (const k of ["planilla:", "renglon:", "no:"])
+    assert.ok(html.includes(k), `está la forma ${k}`);
+  assert.ok(html.includes('grid-template-columns: 28px 1fr 1fr'),
+    "la planilla es la lista de la v0.73 tal cual: nº | blancas | negras");
+  assert.ok(html.includes('#zonaRevision.solaTira { grid-template-columns: 700px; }'),
+    "sin lista, la columna no queda vacía");
 });
 
 /* EL DIAL DE LA v0.76 ES TEMPORAL y estas dos pruebas también: cuando el

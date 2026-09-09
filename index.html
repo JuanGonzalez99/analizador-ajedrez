@@ -51,6 +51,16 @@
   }
   input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--linea);
     border-radius: 6px; background: transparent; color: inherit; max-width: 100%; }
+  /* EL DESPLEGABLE DE UN SELECT NO HEREDA EL PAPEL (v0.80). Chrome en Windows
+     dibuja el menú con el fondo del propio select, y el nuestro es transparente:
+     el menú salía BLANCO y el texto de las opciones, que hereda el color del
+     papel oscuro, blanco también. Blanco sobre blanco, y se leía UNA sola: la
+     resaltada, que el sistema fuerza a contraste. Reportado con captura desde
+     una compu; en el celular nunca se vio porque ahí el menú lo dibuja Android
+     con sus propios colores.
+     Van colores de sistema y no fijos: `Canvas` y `CanvasText` siguen solos el
+     esquema claro/oscuro, que es lo que hace el resto de la pantalla. */
+  option { background-color: Canvas; color: CanvasText; }
   input#usuario { width: 145px; }
   textarea { width: 100%; height: 80px; font: 12px/1.4 ui-monospace, monospace; }
   .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -307,6 +317,11 @@
   .tiraSc { flex: 1; min-width: 0; display: flex; gap: 5px; align-items: baseline;
             overflow-x: auto; scrollbar-width: none; position: relative; }
   .tiraSc::-webkit-scrollbar { display: none; }
+  /* EN LA COMPU LA TIRA SE ARRASTRA (v0.80). Con el dedo se scrollea sola; con
+     mouse, arrastrar un `overflow-x` no la mueve: SELECCIONA EL TEXTO. La manito
+     avisa que se puede agarrar, y mientras se arrastra no se selecciona nada. */
+  .tiraSc { cursor: grab; }
+  .tiraSc.arrastrando { cursor: grabbing; user-select: none; }
   /* EL DESVANECIDO. Sin recuadro alrededor de cada jugada, las de las puntas se
      cortaban en seco; una máscara las disuelve contra el papel al acercarse al
      galón y eso dice "hay más para allá" sin dibujar nada. Es una MÁSCARA y no
@@ -349,6 +364,95 @@
   .tira .jg.inv.pend { color: var(--tenue); }
   .tira .corte { flex: 0 0 0; width: 0; height: 17px; align-self: center;
                  border-left: 2px dashed #6a1b9a; margin: 0 5px; }
+  /* LA LISTA LATERAL (v0.80). Es la lista vertical que vivió de la v28 a la
+     v0.73, traída de vuelta SOLO donde el ancho sobra: en el celular no hay
+     lugar para una segunda columna y la tira sigue siendo lo único que hay.
+     Dos formas, y la diferencia no es cosmética:
+     - PLANILLA es la de la v0.73 tal cual, `nº | blancas | negras`, como se
+       anota una partida en papel. Densa: la partida entera de un vistazo.
+     - UNA POR RENGLÓN gasta el doble de alto y a cambio entra algo que la
+       planilla no puede dar, porque ahí las dos columnas ya están ocupadas por
+       los dos colores: cuánto perdió cada jugada, en su propio renglón. */
+  .jugadas { border: 1px solid var(--linea); border-radius: 8px; font-size: 13.5px;
+             overflow-y: auto; position: relative; }
+  .jugadas > div { display: grid; gap: 4px; align-items: center; padding: 3px 7px;
+                   border-bottom: 1px solid var(--linea); }
+  .jugadas.planilla > div { grid-template-columns: 28px 1fr 1fr; }
+  .jugadas.renglon > div { grid-template-columns: 28px 1fr auto; }
+  .jugadas > div:last-child { border-bottom: 0; }
+  /* el renglón de la jugada elegida, tenue: la marca fuerte la lleva la jugada
+     misma —la misma que en la tira— y dos marcas fuertes en la misma fila se
+     pelean. Esta es para encontrar el renglón barriendo con el ojo. */
+  .jugadas > div.aca { background: color-mix(in srgb, currentColor 7%, transparent); }
+  .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
+                 padding: 4px 6px; border-radius: 5px; min-width: 0; }
+  /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra "??"):
+     sin esto las jugadas bailan de fila en fila */
+  .jugadas .jg .sm { font-size: 11px; font-weight: 700; min-width: 16px;
+                     text-align: center; flex-shrink: 0; }
+  .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
+  .jugadas .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
+                     font-weight: 700; }
+  .jugadas .pe { font-variant-numeric: tabular-nums; font-size: 11.5px;
+                 color: var(--tenue); padding-right: 3px; }
+  /* Cómo terminó la partida, cerrando la lista: es donde lo escribe una
+     planilla. No suma alto porque vive adentro, que ya scrollea. */
+  .jugadas .cierre { display: block; text-align: center; padding: 7px 10px;
+                     font-size: 12.5px; color: var(--tenue);
+                     border-top: 1px solid var(--linea); }
+  .jugadas .cierre b { font-weight: 700;
+                       color: color-mix(in srgb, currentColor 95%, transparent); }
+
+  /* Fuera de pantalla ancha no hay ni columna ni dial. VA ANTES de la media
+     query: a igual especificidad gana la última regla, y puesto después le
+     ganaba al `display` de adentro y la lista no se veía nunca. */
+  .lateral, #formaJugadas { display: none; }
+
+  /* EN PANTALLA ANCHA, DOS COLUMNAS (v0.80). Hasta acá el archivo entero tenía
+     UNA media query y era la de claro contra oscuro: la app era la misma
+     columna de 700 px en un celular y en un monitor, y en la compu sobraba
+     media pantalla mientras las jugadas seguían apretadas en la tira.
+     EL CORTE VA EN 1050 px, y es una suma, no un número redondo: 700 de la
+     columna principal —que NO se toca, porque es la medida en la que están
+     hechas todas las decisiones de la vista— más 22 de separación, más 300 de
+     la lista, que es lo que necesita un "Qxg5+" para no cortarse, más los 28
+     de los márgenes del papel. Da 1050 justo.
+     Estuvo en 1000 y estaba mal, y se vio midiendo: ahí no entraban los tres,
+     así que la columna principal se achicaba a 650 y el tablero con ella. El
+     corte tiene que ser el ancho en el que las dos columnas entran ENTERAS. */
+  @media (min-width: 1050px) {
+    body { max-width: 1050px; }
+    #zonaRevision { display: grid; grid-template-columns: 700px 300px;
+                    gap: 22px; align-items: start; }
+    /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
+    #zonaRevision.solaTira { grid-template-columns: 700px; }
+    #zonaRevision.solaTira .lateral { display: none; }
+    /* se queda a la vista mientras se recorre la partida, y nunca más alta que
+       la pantalla: si creciera con la partida, en una de 80 jugadas habría que
+       scrollear la página para ver el final de la lista. */
+    /* el margen la pone EN LÍNEA con "Revisión": sin él la lista arrancaba 24 px
+       más arriba que el título de al lado —el que trae el h2— y las dos
+       columnas empezaban a distinta altura. Se vio en la captura. */
+    .lateral { display: block; position: sticky; top: 14px; margin-top: 24px; }
+    .lateral .jugadas { max-height: calc(100vh - 28px); }
+    /* el dial de la lista no existe en el celular: elige entre cosas que ahí no
+       se ven, y esa fila de controles ya viene cargada. */
+    #formaJugadas { display: inline-block; }
+    /* EL TABLERO CRECE, PERO LO QUE MANDA ES EL ALTO Y NO EL ANCHO. En una
+       compu sobran 680 px de ancho, y si el tablero se los toma todos la TIRA y
+       la CURVA —que son la navegación— se van abajo del pliegue: en una pantalla
+       de 800 de alto no entrarían, y para pasar de jugada habría que scrollear.
+       El presupuesto está medido sobre la vista, no estimado: arriba del tablero
+       hay 185 px (título, cabecera y tarjeta) y abajo, hasta que termina la
+       curva, 110. Se descuentan 330 y no los 305 que da la suma: con los 305
+       justos la curva terminaba EXACTAMENTE en el borde de abajo, medido, y una
+       curva pegada al filo se lee como cortada. Los 25 de más son ese aire.
+       Va con `clamp` y no con un `min` por el PISO: en una ventana baja y ancha
+       la cuenta da menos de 360 y el tablero terminaría más chico que en el
+       celular, que es exactamente al revés de lo que se quiso. */
+    svg.tab { max-width: clamp(360px, calc(100vh - 330px), 680px); }
+  }
   .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
   .credito a { color: inherit; }
   .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: 13px;
@@ -395,7 +499,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.79 · 09-09";
+  window.VERSION = "v0.80 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -701,6 +805,10 @@
 </div>
 
 <div id="zonaRevision" class="oculto">
+  <!-- DOS COLUMNAS EN PANTALLA ANCHA (v0.80): la principal es la vista de
+       siempre, intacta y de 700 px, y al lado la lista de jugadas. En un
+       celular esto es un div de más y nada cambia: la lateral no se muestra. -->
+  <div class="principal">
   <button class="chico oculto" id="volverMes">&lsaquo; Volver al mes</button>
   <h2>Revisión</h2>
   <div class="revcab"><span id="revRival" class="rival"></span>
@@ -769,7 +877,13 @@
          nunca; las tres posiciones son las tres salidas que se dibujaron, y el
          usuario elige usando la app. SE VA cuando esté elegida: §4novodecies. -->
     <select id="largoExp" class="chico" aria-label="Cuánto habla la tarjeta"></select>
+    <!-- SOLO EN PANTALLA ANCHA (v0.80): elige qué muestra la columna de al
+         lado. En el celular no se dibuja, porque elige entre cosas que ahí no
+         existen y esa fila de controles ya viene cargada. -->
+    <select id="formaJugadas" class="chico" aria-label="Cómo se ven las jugadas en la columna de al lado"></select>
   </div>
+  </div>
+  <aside class="lateral" id="lateral"><div class="jugadas" id="jugadas"></div></aside>
 </div>
 
 <div id="zonaResumen" class="oculto">
@@ -3139,6 +3253,39 @@ function aplicarFormaPrueba(id) {
   });
 })();
 
+/* LAS FORMAS DE LA LISTA LATERAL (v0.80). Solo se ven en pantalla ancha; en el
+   celular la tira sigue siendo lo único y este dial ni se dibuja.
+   Las dos formas y el apagado:
+   - PLANILLA: `nº | blancas | negras`, la lista que vivió de la v28 a la v0.73
+     tal cual. Densa, la partida entera de un vistazo.
+   - UNA POR RENGLÓN: gasta el doble de alto y a cambio muestra cuánto perdió
+     cada jugada, que en la planilla no entra —las dos columnas ya están
+     ocupadas por los dos colores—.
+   - SIN LA LISTA: la vista de siempre, en una sola columna.
+   Va con dos puestas y no con una elegida de antemano por la misma razón que el
+   margen contra gris de la v0.48: son dos densidades distintas y cuál sirve se
+   sabe usándolas, no mirándolas. */
+const FORMAS_JUGADAS = {
+  planilla: { nombre: "Jugadas: planilla",        clase: "planilla" },
+  renglon:  { nombre: "Jugadas: una por renglón", clase: "renglon" },
+  no:       { nombre: "Jugadas: sin la lista",    clase: "" }
+};
+let FORMA_JUGADAS = "planilla";
+function formaJugadas() { return FORMAS_JUGADAS[FORMA_JUGADAS] || FORMAS_JUGADAS.planilla; }
+(function iniciarFormaJugadas() {
+  let guardado = "planilla";
+  try { guardado = localStorage.getItem("formaJugadas") || "planilla"; } catch (e) { /* incógnito */ }
+  FORMA_JUGADAS = FORMAS_JUGADAS[guardado] ? guardado : "planilla";
+  $("formaJugadas").innerHTML = Object.entries(FORMAS_JUGADAS)
+    .map(([k, f]) => `<option value="${k}">${f.nombre}</option>`).join("");
+  $("formaJugadas").value = FORMA_JUGADAS;
+  $("formaJugadas").onchange = seguro("forma de las jugadas", () => {
+    FORMA_JUGADAS = FORMAS_JUGADAS[$("formaJugadas").value] ? $("formaJugadas").value : "planilla";
+    try { localStorage.setItem("formaJugadas", FORMA_JUGADAS); } catch (e) { /* incógnito */ }
+    if (R) pintarRevision();
+  });
+})();
+
 /* EL INTERRUPTOR DE "DÓNDE VA LA EXPLICACIÓN" VIVIÓ DE LA v0.64 A LA v0.72 y
    cumplió su función, igual que el de margen contra gris de la v0.48: tenía las
    tres formas puestas, el usuario las miró en el celu y eligió. Lo elegido está
@@ -5405,6 +5552,63 @@ function pintarRevision() {
   medirTira();
   centrarTira();
 
+  /* LA LISTA LATERAL (v0.80), en la columna que solo existe en pantalla ancha.
+     `celda` es LA MISMA que pinta la tira: una jugada se ve igual en los dos
+     lados, y el símbolo y el color no viven en dos lugares que después se
+     despegan. `selTira` también es el mismo, así que probando una variante con
+     la forma "abajo" no queda una jugada marcada en la lista y otra en la tira.
+     La lista muestra SIEMPRE la partida de verdad, nunca la variante: al lado
+     del tablero es la referencia de lo que pasó, y la inventada ya se ve en la
+     tira y en el tablero. */
+  const fj = formaJugadas();
+  $("zonaRevision").classList.toggle("solaTira", !fj.clase);
+  if (fj.clase) {
+    const lista = $("jugadas");
+    lista.className = "jugadas " + fj.clase;
+    if (fj.clase === "planilla") {
+      /* se agrupa por número de jugada y NO de a dos por posición: si la
+         partida arranca con negras —un PGN desde una posición— el par queda
+         igual. Es la misma regla que tenía la lista de la v0.73. */
+      const pares = new Map();
+      R.filas.forEach((x, i) => {
+        if (!pares.has(x.n)) pares.set(x.n, {});
+        pares.get(x.n)[x.turno] = { x, i };
+      });
+      lista.innerHTML = [...pares.entries()].map(([num, par]) => {
+        const aca = (par.w && par.w.i === selTira) || (par.b && par.b.i === selTira);
+        return `<div class="${aca ? "aca" : ""}"><span class="np">${num}</span>` +
+          celda(par.w && par.w.x, par.w && par.w.i, selTira) +
+          celda(par.b && par.b.x, par.b && par.b.i, selTira) + `</div>`;
+      }).join("") + cierreDeLaTira(fin, R.filas);
+    } else {
+      /* el número acompaña a la de las BLANCAS, igual que en la tira y que como
+         se escribe una partida: repetirlo en las dos filas del par sería decir
+         dos veces lo mismo. */
+      lista.innerHTML = R.filas.map((x, i) =>
+        `<div class="${i === selTira ? "aca" : ""}">` +
+        `<span class="np">${x.turno === "w" ? x.n + "." : ""}</span>` +
+        celda(x, i, selTira) +
+        `<span class="pe"${(!lado || VER_AMBOS || x.turno === lado) ? "" : ` style="opacity:.55"`}>` +
+        `${typeof x.perdida === "number" ? x.perdida.toFixed(2) : ""}</span>` +
+        `</div>`).join("") + cierreDeLaTira(fin, R.filas);
+    }
+    lista.querySelectorAll("span[data-i]").forEach(sp => {
+      sp.onclick = () => irA(+sp.dataset.i);
+    });
+    /* que la elegida quede a la vista sin arrastrar la lista a mano. Y en la
+       ÚLTIMA la lista baja del todo, o el cierre no se ve nunca: el scroll de
+       arriba deja la jugada pegada al fondo del recuadro y el cierre queda
+       justo abajo, fuera de vista. Se descubrió mirándolo, en la v0.73. */
+    const sel = lista.querySelector(".sel");
+    if (sel) {
+      const fila = sel.parentElement;
+      if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
+      else if (fila.offsetTop + fila.offsetHeight > lista.scrollTop + lista.clientHeight)
+        lista.scrollTop = fila.offsetTop + fila.offsetHeight - lista.clientHeight;
+    }
+    if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
+  }
+
   /* LA LISTA DE SEÑALES SE FUE EN LA v0.73, y el motivo es de disposición: era
      un renglón que aparecía y desaparecía entre los cuadritos y la curva, así
      que la curva y la lista de jugadas SALTABAN unos píxeles al pasar de una
@@ -5547,6 +5751,50 @@ const adelante = () => PRUEBA ? verDeLaVariante(PRUEBA.ver + 1) : irA(IDX + 1);
 $("ant").onclick = seguro("anterior", atras);
 $("sig").onclick = seguro("siguiente", adelante);
 $("btnMejor").onclick = seguro("mejor", () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); });
+
+/* ARRASTRAR LA TIRA CON EL MOUSE (v0.80). Reportado desde una compu: en un
+   celular el dedo scrollea la tira sola, pero con mouse arrastrar un
+   `overflow-x` no la mueve, SELECCIONA EL TEXTO. Y la rueda vertical tampoco:
+   sobre un contenedor horizontal el navegador no hace nada y se va la página
+   para abajo. Se agregan las dos cosas, y ninguna toca lo que pasa con el dedo:
+   `pointerType` filtra el mouse, y el dedo sigue por el camino de siempre. */
+(function arrastrarLaTira() {
+  const sc = $("tiraSc");
+  let x0 = 0, s0 = 0, agarrada = false, arrastro = false;
+  sc.addEventListener("pointerdown", e => {
+    if (e.pointerType !== "mouse") return;
+    agarrada = true; arrastro = false; x0 = e.clientX; s0 = sc.scrollLeft;
+  });
+  sc.addEventListener("pointermove", e => {
+    if (!agarrada) return;
+    const d = e.clientX - x0;
+    /* UMBRAL DE 4 px para que un CLIC siga siendo un clic: sin esto, el temblor
+       de la mano al apretar contaba como arrastre y tocar una jugada dejaba de
+       llevarte a esa jugada. */
+    if (!arrastro && Math.abs(d) < 4) return;
+    arrastro = true;
+    sc.classList.add("arrastrando");
+    sc.scrollLeft = s0 - d;
+  });
+  /* el clic se cancela EN CAPTURA y solo si hubo arrastre: así soltar arriba de
+     una jugada después de arrastrar no navega, y soltar sin arrastrar sí. */
+  sc.addEventListener("click", e => {
+    if (arrastro) { e.stopPropagation(); e.preventDefault(); }
+  }, true);
+  const soltar = () => { agarrada = false; sc.classList.remove("arrastrando"); };
+  sc.addEventListener("pointerup", soltar);
+  sc.addEventListener("pointercancel", soltar);
+  sc.addEventListener("pointerleave", soltar);
+  /* la rueda solo se roba el gesto CUANDO HAY PARA DÓNDE IR: en una tira corta
+     —una partida de seis jugadas— la rueda tiene que seguir scrolleando la
+     página, que es lo que el usuario espera. */
+  sc.addEventListener("wheel", e => {
+    if (e.deltaX || !e.deltaY) return;
+    if (sc.scrollWidth <= sc.clientWidth) return;
+    e.preventDefault();
+    sc.scrollLeft += e.deltaY;
+  }, { passive: false });
+})();
 
 /* el vistazo del cuadrito. Si la preferencia ya está encendida no hay nada que
    mostrar, así que apagarlo desde acá sería confuso: no hace nada. */

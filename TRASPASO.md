@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.79**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.80**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -223,6 +223,11 @@ lo que hay que mirar.
 | análisis | `analizarPartida`, barrido, híbrido |
 | bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace` |
 | interfaz | tablero SVG, mes, banco de pruebas, revisión, resúmenes |
+
+Desde la v0.80 la vista Partida se parte en **dos columnas de 1050 px para
+arriba** (§4duovicies): `.principal` es la de siempre, de 700, y `.lateral` es
+la lista de jugadas, que en el celular no existe. Todo lo demás sigue siendo una
+sola columna en cualquier pantalla.
 
 **El registro está en un script clásico a propósito:** corre aunque el módulo
 falle, y por eso puede avisar que el módulo falló. Vive en `localStorage` y no
@@ -2450,6 +2455,133 @@ de la partida no paga nada.
 - **La tarjeta no es testigo del tablero.** La versión vieja también decía
   "Probando Xx" enseguida; lo que no hacía era mover el tablero. Medir la
   tarjeta habría dado "arreglado" sin arreglar nada.
+
+## 4duovicies. La app en una compu (v0.80)
+
+Hasta acá **el archivo entero tenía UNA media query y era la de claro contra
+oscuro**. La app era la misma columna de 700 px en un celular y en un monitor de
+27 pulgadas. Nadie la había mirado nunca en una compu, y eso no se notaba porque
+el usuario usa el celular: las tres fallas de esta versión las reportó un amigo
+suyo que la usa en PC, una de ellas con captura.
+
+Las tres salen de lo mismo, y por eso van juntas.
+
+**1. Los combos salían blancos sobre blanco.** Chrome en Windows dibuja el menú
+desplegable de un `<select>` con el **fondo del propio select**, y el nuestro es
+`background: transparent`. El menú salía blanco, y el texto de las opciones
+—que hereda el color del papel oscuro— también. Se leía **una sola opción**: la
+resaltada, que el sistema fuerza a contraste. En el celular nunca se vio porque
+ahí el menú lo dibuja Android con sus propios colores.
+
+El arreglo es un renglón, `option { background-color: Canvas; color: CanvasText; }`,
+y los colores tienen que ser **de sistema y no fijos**: así siguen solos el
+esquema claro/oscuro, que es lo que hace el resto de la pantalla. Poner un gris
+a mano habría arreglado el esquema que se probó y roto el otro.
+
+**Esto no se puede verificar con el arnés**, y conviene saberlo antes de
+intentarlo: los desplegables nativos los dibuja el sistema operativo y **no
+salen en las capturas de Chromium headless**. Lo que el arnés sí prueba es que
+el combo cerrado no cambió. Que el menú abierto se arregló lo confirma quien lo
+reportó.
+
+**2. La tira no se podía arrastrar con el mouse.** Con el dedo se scrollea sola;
+con mouse, arrastrar un `overflow-x` no la mueve, **selecciona el texto**. Y la
+rueda vertical tampoco: sobre un contenedor horizontal el navegador no hace
+nada y se va la página para abajo. Se agregaron las dos cosas, y ninguna toca lo
+que pasa con el dedo —`pointerType` filtra el mouse—.
+
+Dos detalles que no son opcionales:
+
+- **Umbral de 4 px antes de contar como arrastre.** Sin eso el temblor de la
+  mano al apretar contaba como arrastre, y tocar una jugada dejaba de llevarte a
+  esa jugada. El clic se cancela en captura y **solo si hubo arrastre**.
+- **La rueda solo se roba el gesto cuando hay para dónde ir.** En una partida de
+  seis jugadas la tira entra entera, y ahí la rueda tiene que seguir scrolleando
+  la página, que es lo que se espera de una rueda.
+
+**3. La lista de jugadas vuelve, en una segunda columna.** Es la lista vertical
+que vivió de la v28 a la v0.73 —y que ya era una planilla: `nº | blancas |
+negras`—, traída de vuelta **solo donde el ancho sobra**. Lo que la v0.74
+decidió sigue en pie: en el celular, la tira y nada más.
+
+El corte va en **1050 px**, y es una suma y no un número redondo:
+
+| | px |
+|---|---|
+| columna principal | 700 |
+| separación | 22 |
+| lista | 300 |
+| márgenes del papel | 28 |
+| **total** | **1050** |
+
+**Estuvo en 1000 y estaba mal.** Se vio midiendo: ahí los tres no entraban, así
+que la columna principal se achicaba a **650** y el tablero con ella. Los 700 no
+se tocan —es la medida en la que están hechas todas las decisiones de la vista—
+así que el corte tiene que ser el ancho donde las dos columnas entran **enteras**.
+Los 300 de la lista son lo que necesita un `Qxg5+` para no cortarse.
+
+El dial nuevo tiene dos formas y el apagado, y **la diferencia no es cosmética**:
+
+- **planilla**: `nº | blancas | negras`, la de la v0.73 tal cual. Densa, la
+  partida entera de un vistazo.
+- **una por renglón**: gasta el doble de alto y a cambio entra **cuánto perdió
+  cada jugada**, que en la planilla no cabe porque las dos columnas ya están
+  ocupadas por los dos colores.
+- **sin la lista**: una sola columna, como en el celular.
+
+Va con las dos puestas por la misma razón que el margen contra gris de la v0.48:
+son dos densidades y cuál sirve se sabe usándolas. **El dial se va cuando el
+usuario elija.**
+
+**Tres trampas de esta tanda**, anotadas porque las tres se rompieron al
+escribirlas y ninguna la habrían agarrado las pruebas de unidad:
+
+- **La regla base va ANTES de la media query.** `.lateral { display: none }`
+  puesta *después* le gana al `display: block` de adentro —misma especificidad,
+  gana la última— y la lista no se ve nunca. Lo agarró la medición, no la vista:
+  la columna existía con ancho 0. Hay una prueba que fija el orden.
+- **Devolverle el `display` a lo que se escondió.** Adentro de la media query
+  estaba el `position: sticky` de la lateral pero no su `display`, y sin eso la
+  regla base la seguía tapando.
+- **Las dos columnas tienen que empezar a la misma altura.** La lista arrancaba
+  24 px más arriba que el título "Revisión" de al lado, porque el `h2` trae su
+  margen y la lista no. Se vio en la captura, no en los números.
+
+**4. El tablero crece, y lo que manda es el alto.** Recién con las dos columnas
+puestas se vio que el tablero seguía midiendo los 360 px del celular, centrado
+en una columna de 700 y con aire a los dos lados. Crecerlo es fácil; lo que hay
+que entender es **contra qué**.
+
+No es contra el ancho. Si el tablero se lleva los 680 disponibles, **la tira y la
+curva se van abajo del pliegue**, y son la navegación: para pasar de jugada
+habría que scrollear. El presupuesto es vertical y está medido sobre la vista:
+
+| | px |
+|---|---|
+| arriba del tablero (título, cabecera, tarjeta) | 185 |
+| abajo, hasta que termina la curva | 110 |
+| aire para que la curva no quede pegada al filo | 25 |
+| **se descuenta del alto de la ventana** | **330** |
+
+De ahí sale `max-width: clamp(360px, calc(100vh - 330px), 680px)`. Medido en
+cuatro ventanas: a 800 de alto el tablero da 470, a 900 da 570, a 1080 llega al
+techo de 680 —ahí ya lo limita el ancho— y en las tres quedan 24 px de aire
+abajo de la curva.
+
+**El piso de 360 no es adorno.** Con un `min` en vez de un `clamp`, en una
+ventana baja y ancha —1280 × 600— la cuenta da menos de 360 y el tablero
+terminaría **más chico que en el celular**, que es exactamente al revés de lo que
+se quiso. Con el piso, a 600 de alto el tablero se queda en 360 y es la curva la
+que no entra: no hay forma de que entren las dos cosas, y entre achicar el
+tablero o scrollear un poco, se scrollea.
+
+**El arnés ahora tiene una pasada ancha** (`npm run mirar`, al final): dibuja a
+1280, y además a **1050 y 1049**, que son los dos lados del corte y donde se
+rompe si alguien toca los anchos. Además maneja el mouse de verdad y mide que la
+tira se arrastre, que **no** seleccione texto, que un clic siga navegando y que
+la rueda no se lleve la página puesta.
+
+---
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
