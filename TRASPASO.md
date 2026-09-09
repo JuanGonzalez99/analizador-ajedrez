@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.87**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.88**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -224,9 +224,11 @@ lo que hay que mirar.
 | bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace` |
 | interfaz | tablero SVG (geometría `TAB_S`/`sqX`, `dibujar`, `svgMarcas`), mes, banco de pruebas, revisión, resúmenes |
 
-Desde la v0.80 la vista Partida se parte en **dos columnas de 1050 px para
+Desde la v0.80 la vista Partida se parte en **dos columnas de 1110 px para
 arriba** (§4duovicies): `.principal` es la de siempre, de 700, y `.lateral` es
-la lista de jugadas, que en el celular no existe. Todo lo demás sigue siendo una
+la lista de jugadas, que en el celular no existe. Desde la v0.88 la principal
+está partida en dos, `.parriba` y `.pabajo`, con la curva en el medio cruzando
+las dos columnas (§4octovicies). Todo lo demás sigue siendo una
 sola columna en cualquier pantalla.
 
 **El registro está en un script clásico a propósito:** corre aunque el módulo
@@ -2900,6 +2902,52 @@ número corto y otra con el largo.
 
 ---
 
+## 4octovicies. La curva cruza las dos columnas (v0.88)
+
+**Es el único elemento que mejora siendo ancho**, y por eso es el único que se
+movió: es una serie de tiempo de 40 a 100 puntos, y a 700 px cada jugada tiene 7
+px contra 15 a 1082. El tablero es cuadrado y la tarjeta es texto: ninguno de los
+dos gana nada con más ancho.
+
+**EL PRECIO QUE PARECÍA TENER NO SE PAGÓ.** Estaba anotado que sacar la curva a
+una fila propia de la grilla la dejaría DEBAJO de los cuadritos y los botones, o
+sea cambiando el orden que se decidió mirando en la v0.74. No hizo falta: en vez
+de mover la curva al final, se **partió la columna principal en dos** —`.parriba`
+hasta la tira, `.pabajo` de los cuadritos para abajo— con la curva en el medio y
+como hija directa de la grilla. El orden vertical queda igual que antes, y en el
+celular, que es una sola columna, esto se apila exactamente como estaba: las 28
+capturas siguen idénticas byte a byte.
+
+**Las cuatro piezas van puestas a mano** (`grid-row`/`grid-column` explícitos) y
+no por acomodo automático: con la curva de hija directa, el automático la habría
+mandado a la columna de al lado de la primera mitad.
+
+**Y salieron dos cosas que sí había que pagar, las dos medidas:**
+
+- **La lista de al lado podía empujar la curva abajo del pliegue.** La curva
+  arranca debajo de la MÁS ALTA de las dos columnas, y la lista, suelta, llega al
+  tope de `100vh - 28` —una partida de 40 jugadas son 2000 px de renglones—.
+  Ahí ganaba la lista y la curva se iba de pantalla, que es exactamente lo que la
+  v0.80 no quería: la tira y la curva son la navegación. Ahora la lista **no
+  puede ser más alta que la columna de al lado**: el tope sale de MEDIR la
+  columna en `pintarRevision` y no de una cuenta, porque su alto depende del
+  tablero, que depende del alto de la ventana y de qué barra de evaluación esté
+  puesta. La lista ya scrolleaba sola: lo único que cambia es que empieza a
+  scrollear un poco antes.
+- **El hueco de 22 de la grilla se comía el aire de la curva.** Ese hueco es
+  entre las COLUMNAS, no entre estas filas, que son la misma vista partida al
+  medio. Sin corregirlo la curva bajaba 22 px y quedaba a 13 del filo, cuando la
+  v0.74 le había reservado 25 a propósito —descuenta 330 y no los 305 que da la
+  suma justamente para que no se lea como cortada—. Los márgenes de un hijo de
+  grilla no se colapsan con nada, así que el negativo es exacto: `-12` en la
+  curva (22 menos los 10 que ya traía) y `-22` en la mitad de abajo. **Medido a
+  1280 × 800: 25 px de aire, en las dos formas de la evaluación.**
+
+El arnés mide el ancho de la curva, el orden vertical leído de la pantalla —tira,
+curva, cuadritos— y el aire de abajo en las dos formas de la evaluación.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3426,7 +3474,7 @@ Quedó una tanda a medio hacer, y esto es la lista con la que se sigue. **El
 usuario de PC eligió las trece ideas que se le ofrecieron**, y una con nombre
 propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 
-**Hechas: 10 de 13** (v0.80 a v0.87, §4duovicies a §4septvicies)
+**Hechas: 11 de 13** (v0.80 a v0.88, §4duovicies a §4octovicies)
 
 | | |
 |---|---|
@@ -3440,20 +3488,15 @@ propio: *"ver cuánto tiempo pensaste cada jugada: fundamental"*, que ya está.
 | ✅ | Flechas y casillas con el botón derecho |
 | ✅ | La barra de evaluación vertical por defecto en PC |
 | ✅ | Las piezas comidas al costado del tablero |
+| ✅ | El gráfico de la partida a lo ancho de las dos columnas |
 
 **Lo que falta, en el orden en que conviene hacerlo:**
 
-1. **El gráfico de la partida a lo ancho de las dos columnas.** Es el único
-   elemento que mejora siendo ancho. **No es tan barata como suena**: la curva
-   vive adentro de `.principal`, y para cruzar las dos columnas hay que sacarla
-   a una fila propia de la grilla, lo que la deja DEBAJO de los cuadritos y los
-   botones. O sea que cambia el orden de la vista que se decidió en la v0.74.
-   Dibujarlo y que lo mire el usuario.
-2. **La segunda y tercera mejor del motor, al lado del tablero.** La más
+1. **La segunda y tercera mejor del motor, al lado del tablero.** La más
    ambiciosa y la que más convertiría esto en una app de análisis. El dato ya
    viaja: `evs[i].segunda` y la pasada MultiPV híbrida, que hoy solo se usan
    para decidir si la jugada "era la única".
-3. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
+2. **Tablero más grande corriendo la tarjeta al costado (tres columnas).** LA
    INVASIVA, va sola (§10). Compra ~90 px de tablero. La v0.74 puso la tarjeta
    arriba porque *"se lee primero"*, y en una pantalla ancha la izquierda
    también es primero, así que moverla no contradice esa razón — pero es

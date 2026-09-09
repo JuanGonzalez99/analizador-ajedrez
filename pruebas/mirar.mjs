@@ -604,7 +604,17 @@ for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
     /* el que importa es el SVG y no su caja: la caja se estira al ancho de la
        columna y el tablero lo limita el ALTO (el clamp de la media query). */
     const t = document.querySelector("svg.tab").getBoundingClientRect();
+    /* LA CURVA CRUZA LAS DOS COLUMNAS desde la v0.88, y lo que se mide es que
+       sea más ancha que la principal y que arranque donde arranca ella: si
+       quedara corrida, la jugada 20 de la curva no caería debajo de la 20 de
+       la tira. `orden` es el orden vertical de verdad, leído de la pantalla,
+       porque el precio que este cambio parecía tener era que la curva
+       terminara DEBAJO de los cuadritos. */
+    const y = q => Math.round(document.querySelector(q).getBoundingClientRect().y);
+    const orden = [["tira", "#tira"], ["curva", "#curva"], ["cuadritos", ".pabajo .metricas"]]
+      .sort((a, b) => y(a[1]) - y(b[1])).map(p => p[0]).join(" > ");
     return { principal: r(".principal"), lista: r("#jugadas"), tablero: Math.round(t.width),
+             curva: r("#curva"), orden,
              eval: document.getElementById("verEval").value,
              desborde: document.documentElement.scrollWidth > window.innerWidth };
   })));
@@ -740,6 +750,38 @@ console.log("arrastre pieza:", JSON.stringify(
     quedo: (await pg.locator("#pTit").textContent()).trim() }));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 await pg.selectOption("#formaJugadas", "planilla");
+
+/* LA CURVA ANCHA NO SE PUEDE IR ABAJO DEL PLIEGUE (v0.88). Se prueba con la
+   lista en su forma más alta —"una por renglón" gasta el doble— que es donde la
+   lista le ganaba a la columna y empujaba la curva para abajo. */
+await pg.setViewportSize({ width: 1280, height: 800 });
+await pg.selectOption("#formaJugadas", "renglon");
+await pg.waitForTimeout(350);
+await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+await pg.evaluate(() => window.scrollBy(0, -10));
+await pg.waitForTimeout(200);
+await foto("ancho-curva");
+/* SE MIDE EN LAS DOS FORMAS DE LA EVALUACIÓN: la vertical le da 26 px más al
+   tablero, así que es la que empuja la curva más abajo, y es la de fábrica. */
+const curvaEn = async forma => {
+  await pg.selectOption("#verEval", forma);
+  await pg.waitForTimeout(300);
+  await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
+  await pg.evaluate(() => window.scrollBy(0, -10));
+  await pg.waitForTimeout(150);
+  return pg.evaluate(() => {
+    const c = document.getElementById("curva").getBoundingClientRect();
+    const col = document.querySelector(".parriba").getBoundingClientRect();
+    const li = document.getElementById("lateral").getBoundingClientRect();
+    return { ancho: Math.round(c.width),
+             listaDesbordaLaColumna: Math.round(li.bottom - col.bottom) > 0,
+             aireAbajo: Math.round(window.innerHeight - c.bottom) };
+  });
+};
+console.log("curva ancha:   ", JSON.stringify(
+  { horizontal: await curvaEn("horizontal"), barra: await curvaEn("barra") }));
+await pg.selectOption("#formaJugadas", "planilla");
+await pg.waitForTimeout(300);
 
 /* LAS TRES FORMAS DE LA EVALUACIÓN Y CUÁNTO TABLERO CUESTA CADA UNA (v0.86).
    En una compu el tablero está limitado por el alto, así que la barra que se

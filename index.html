@@ -455,6 +455,29 @@
     body { max-width: 1110px; }
     #zonaRevision { display: grid; grid-template-columns: 700px 360px;
                     gap: 22px; align-items: start; }
+    /* LAS CUATRO PIEZAS VAN PUESTAS A MANO y no por acomodo automático: con la
+       curva de hija directa, el automático la mandaría a la columna de al lado
+       de la primera mitad. Tres renglones: arriba la vista y la lista, en el
+       medio la curva cruzando las dos columnas, abajo los cuadritos.
+       LA CURVA ES EL ÚNICO ELEMENTO QUE MEJORA SIENDO ANCHO: es una serie de
+       tiempo de 40 a 100 puntos, y a 700 px cada jugada tiene 7 px de ancho
+       contra 15 a 1082. Todo lo demás —el tablero es cuadrado, la tarjeta es
+       texto— o no gana nada o empeora. */
+    #zonaRevision > .parriba { grid-column: 1; grid-row: 1; }
+    #zonaRevision > .lateral { grid-column: 2; grid-row: 1; }
+    #zonaRevision > .curva   { grid-column: 1 / -1; grid-row: 2; }
+    #zonaRevision > .pabajo  { grid-column: 1; grid-row: 3; }
+    /* EL HUECO DE 22 ES ENTRE LAS COLUMNAS, no entre estas dos filas: son la
+       misma vista partida, no dos cosas separadas. Sin esto la curva bajaba 22
+       px y se comía el aire que la v0.74 le había reservado a propósito —el
+       presupuesto descuenta 330 y no los 305 que da la suma justamente para que
+       la curva no termine pegada al filo, que se lee como cortada—. Medido a
+       1280x800: 13 px de aire abajo de la curva, y con esto vuelven a ser 25.
+       Los márgenes de un hijo de grilla no se colapsan con nada, así que el
+       negativo es exacto: 22 de hueco menos 12 son los 10 que la curva ya
+       traía puestos. */
+    #zonaRevision > .curva  { margin-top: -12px; }
+    #zonaRevision > .pabajo { margin-top: -22px; }
     /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
     #zonaRevision.solaTira { grid-template-columns: 700px; }
     #zonaRevision.solaTira .lateral { display: none; }
@@ -465,7 +488,9 @@
        más arriba que el título de al lado —el que trae el h2— y las dos
        columnas empezaban a distinta altura. Se vio en la captura. */
     .lateral { display: block; position: sticky; top: 14px; margin-top: 24px; }
-    .lateral .jugadas { max-height: calc(100vh - 28px); }
+    /* el menor de los dos: la pantalla y la columna de al lado. El segundo lo
+       mide `pintarRevision`; el `100vh` de reserva es para el primer pintado. */
+    .lateral .jugadas { max-height: min(calc(100vh - 28px), calc(var(--altoCol, 100vh) - 24px)); }
     /* el dial de la lista no existe en el celular: elige entre cosas que ahí no
        se ven, y esa fila de controles ya viene cargada. */
     #formaJugadas { display: inline-block; }
@@ -587,7 +612,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.87 · 09-09";
+  window.VERSION = "v0.88 · 09-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -896,7 +921,14 @@
   <!-- DOS COLUMNAS EN PANTALLA ANCHA (v0.80): la principal es la vista de
        siempre, intacta y de 700 px, y al lado la lista de jugadas. En un
        celular esto es un div de más y nada cambia: la lateral no se muestra. -->
-  <div class="principal">
+  <!-- LA COLUMNA PRINCIPAL VA PARTIDA EN DOS desde la v0.88, con la curva en el
+       medio y como hija directa de la grilla: es la única forma de que cruce las
+       dos columnas, porque adentro de un hijo no puede. El orden del celular no
+       cambia —en una sola columna esto se apila igual que antes— y el de la
+       compu tampoco: partirla acá y no al final es lo que evita que la curva
+       termine DEBAJO de los cuadritos y los botones, que era el precio que
+       este cambio parecía tener. -->
+  <div class="principal parriba">
   <button class="chico oculto" id="volverMes">&lsaquo; Volver al mes</button>
   <h2>Revisión</h2>
   <div class="revcab"><span id="revRival" class="rival"></span>
@@ -939,8 +971,11 @@
     <div class="tiraSc" id="tiraSc"></div>
     <button id="sig" aria-label="Jugada siguiente"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M -3.5 -6 L 3.5 0 L -3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
+  </div>
+  <aside class="lateral" id="lateral"><div class="jugadas" id="jugadas"></div></aside>
   <div class="curva" id="curva" role="img"
        aria-label="Curva de quién va ganando a lo largo de la partida"></div>
+  <div class="principal pabajo">
   <div class="metricas">
     <div id="tileMejor" class="tocable" role="button" tabindex="0"
          aria-label="Ver la mejor jugada en el tablero"><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
@@ -972,7 +1007,6 @@
     <select id="formaJugadas" class="chico" aria-label="Cómo se ven las jugadas en la columna de al lado"></select>
   </div>
   </div>
-  <aside class="lateral" id="lateral"><div class="jugadas" id="jugadas"></div></aside>
 </div>
 
 <div id="zonaResumen" class="oculto">
@@ -5962,6 +5996,19 @@ function pintarRevision() {
         lista.scrollTop = fila.offsetTop + fila.offsetHeight - lista.clientHeight;
     }
     if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
+    /* LA LISTA NO PUEDE SER MÁS ALTA QUE LA COLUMNA DE AL LADO (v0.88), y esto
+       es lo que paga que la curva cruce las dos columnas. La curva pasó a ser
+       una fila propia de la grilla, así que ARRANCA DEBAJO DE LA MÁS ALTA de las
+       dos: con la lista libre —una partida de 40 jugadas son 2000 px de
+       renglones contra un tope de `100vh - 28`— la más alta era la lista, y la
+       curva se iba abajo del pliegue. Eso es exactamente lo que la v0.80 no
+       quería: la tira y la curva son la navegación.
+       El tope sale de MEDIR la columna y no de una cuenta, porque su alto
+       depende del tablero, que depende del alto de la ventana y de qué barra de
+       evaluación esté puesta. La lista ya scrolleaba sola, así que lo único que
+       cambia es que empieza a scrollear un poco antes. */
+    const col = document.querySelector(".parriba");
+    if (col) $("zonaRevision").style.setProperty("--altoCol", col.offsetHeight + "px");
   }
 
   /* LA LISTA DE SEÑALES SE FUE EN LA v0.73, y el motivo es de disposición: era
