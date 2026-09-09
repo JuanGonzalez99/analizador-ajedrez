@@ -3865,14 +3865,28 @@ es por decisión pendiente, no porque no esté desplegado.**
   "mostrar la mejor" (§4bis). Es además el lugar donde irían los juegos de
   piezas configurables, que están costurados pero sin hacer (§4bis).
 
-  **Las tres formas están dibujadas** (v0.91) en `pruebas/maqueta-ajustes.mjs`,
-  que las inyecta sobre la app de verdad al tamaño del celular y no toca
-  `index.html`: la **hoja desde abajo** —447 px de alto, deja el tablero a la
-  vista arriba mientras se toca el tema—, el **desplegable en línea** y la
-  **pantalla propia**. Están mandadas y esperan que el usuario elija. Medido en
-  la misma corrida: la fila de controles pasa de **156 px a 74 px** cuando los
-  cinco `<select>` se van y queda el botón. El script se borra cuando la forma
-  esté elegida.
+  **La forma ya la eligió el usuario mirando** (v0.91): la **hoja que sube desde
+  abajo** —447 px de alto, o sea que deja el tablero a la vista arriba mientras
+  se toca el tema; las otras dos dibujadas eran el desplegable en línea, que
+  empuja el tablero fuera de pantalla justo cuando estás cambiando cómo se ve el
+  tablero, y la pantalla propia, que lo tapa del todo y con cinco perillas queda
+  vacía—. Con la hoja eligió también los **nombres cortos** —adentro la etiqueta
+  está al lado, así que la opción dice "sin la lista" y no "Prueba: sin la
+  lista"— y los **tres títulos de grupo**: El tablero, Cómo se ve la partida, La
+  explicación.
+
+  **Lo que falta elegir es dónde vive la puerta.** Están dibujadas las seis en
+  `pruebas/maqueta-ajustes.mjs`, que las inyecta sobre la app de verdad a
+  412 × 760 sin tocar `index.html`. Lo medido, con los cinco `<select>` fuera en
+  todas: la fila de controles pasa de **156 px** a **74** con el botón en un
+  renglón propio (dice "⚙ Ajustes" o solo el engranaje: mismo alto, porque los
+  tres botones ya llenan el ancho), a **33** si los nombres de los botones se
+  acortan y el engranaje entra en el mismo renglón, y a **37** si el engranaje
+  se muda al encabezado de la vista, al lado del título "Revisión" —que gana lo
+  mismo sin tocar ninguna etiqueta—. La sexta es un botón flotante en la
+  esquina, que no cuesta alto pero **se le monta encima a lo que haya abajo a la
+  derecha**, y en el dibujo eso es el botón "Pintar las dos". El script se borra
+  cuando la puerta esté elegida.
 
   **Cada dial nuevo empuja este pendiente**: los temporales se van solos cuando
   el usuario elige, pero los que se quedan se acumulan en una fila que ya ocupa

@@ -280,14 +280,16 @@ const avanzar = async n => {
 
 
 /* ─────────────────────────────────────────────────────────────────────────
-   MAQUETA DEL MENÚ DE AJUSTES (v0.91). Dibuja las formas al tamaño del
-   celular para que el usuario elija mirando. No toca index.html: todo se
-   inyecta acá. Se borra cuando esté elegida.
+   MAQUETA DEL MENÚ DE AJUSTES (v0.91). La FORMA ya está elegida —la hoja que
+   sube desde abajo, con los nombres cortos y los tres títulos de grupo—; lo
+   que falta elegir es DÓNDE VIVE LA PUERTA, y eso es lo que dibuja esto.
+   Se inyecta todo sobre la app de verdad: `index.html` no se toca hasta que
+   el usuario elija mirando. Se borra cuando esté elegida.
    ───────────────────────────────────────────────────────────────────────── */
 
 const CSS = `
 .maq-oculto { display: none !important; }
-/* --- la hoja que sube desde abajo (A) --- */
+/* --- la hoja, ya elegida --- */
 .aj-fondo { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
 .aj-hoja { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
   background: Canvas; color: CanvasText; border-top: 1px solid var(--linea);
@@ -297,7 +299,6 @@ const CSS = `
   margin: 2px auto 8px; }
 .aj-cab { display: flex; align-items: center; justify-content: space-between; }
 .aj-cab h2 { font-size: 17px; margin: 0; }
-/* --- común a las tres --- */
 .aj-g { font-size: 12.5px; color: var(--tenue); margin: 14px 0 2px; }
 .aj-g:first-of-type { margin-top: 6px; }
 .aj-f { display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -305,39 +306,58 @@ const CSS = `
 .aj-f > span { font-size: 15px; }
 .aj-f select { min-width: 52%; }
 .aj-nota { font-size: 12.5px; color: var(--tenue); margin: 10px 0 0; }
-/* --- el desplegable en línea (B) --- */
-.aj-linea { border: 1px solid var(--linea); border-radius: 8px; padding: 2px 12px 12px;
-  margin-top: 8px; }
-.aj-linea > summary { font-size: 14px; padding: 8px 0; cursor: pointer; }
-/* --- la pantalla propia (C) --- */
-.aj-pant h1 { font-size: 20px; margin: 0 0 2px; }
+/* --- las puertas que se están probando --- */
+/* el engranaje solo: cuadrado, mismo alto que los botones chicos de al lado */
+.aj-eng { padding: 5px 10px; font-size: 14px; line-height: 1.5; }
+/* en el encabezado de la vista, alineado con el título */
+.aj-cabvista { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin: 24px 0 4px; }
+.aj-cabvista h2 { margin: 0; }
+/* flotante, pegado a la esquina de abajo a la derecha */
+.aj-flota { position: fixed; right: 14px; bottom: 14px; z-index: 30;
+  width: 46px; height: 46px; border-radius: 50%; font-size: 20px; line-height: 1;
+  background: Canvas; box-shadow: 0 2px 10px rgba(0,0,0,.28); padding: 0; }
 `;
 
-/* el tercer valor es el que está puesto hoy: la maqueta no puede sugerir que
-   los defaults cambiaron */
 const GRUPOS = [
-  ["El tablero", [
-    ["Tema", ["Madera", "Torneo", "Azul", "Nogal", "Gris"], "Madera"]
-  ]],
+  ["El tablero", [["Tema", ["Madera", "Torneo", "Azul", "Nogal", "Gris"], "Madera"]]],
   ["Cómo se ve la partida", [
     ["Evaluación", ["barra horizontal", "en la tarjeta", "barra vertical"], "barra horizontal"],
-    ["Marcas de la curva", ["punto", "punto chico", "raya"], "punto"]
-  ]],
+    ["Marcas de la curva", ["punto", "punto chico", "raya"], "punto"]]],
   ["La explicación", [
     ["Cuánto habla", ["corta", "media", "larga"], "media"],
-    ["Al probar una jugada", ["sin la lista", "la lista adentro", "la lista abajo", "las dos tarjetas"], "sin la lista"]
-  ]]
+    ["Al probar una jugada", ["sin la lista", "la lista adentro", "la lista abajo", "las dos tarjetas"], "sin la lista"]]]
 ];
 
 await pg.addStyleTag({ content: CSS });
-await pg.evaluate(g => { window.GRUPOS = g; window.filas = () => window.GRUPOS.map(([t, fs]) =>
-  `<p class="aj-g">${t}</p>` + fs.map(([et, ops, puesto]) =>
-    `<div class="aj-f"><span>${et}</span><select class="chico">` +
-    ops.map(o => `<option${o === puesto ? " selected" : ""}>${o}</option>`).join("") +
-    `</select></div>`).join("")).join("");
-}, GRUPOS);
+await pg.evaluate(g => {
+  window.GRUPOS = g;
+  window.filas = () => window.GRUPOS.map(([t, fs]) =>
+    `<p class="aj-g">${t}</p>` + fs.map(([et, ops, puesto]) =>
+      `<div class="aj-f"><span>${et}</span><select class="chico">` +
+      ops.map(o => `<option${o === puesto ? " selected" : ""}>${o}</option>`).join("") +
+      `</select></div>`).join("")).join("");
+  window.abrirHoja = () => {
+    const d = document.createElement("div"); d.className = "aj-fondo"; d.id = "majFondo";
+    const h = document.createElement("div"); h.className = "aj-hoja"; h.id = "majHoja";
+    h.innerHTML = `<div class="aj-tirador"></div>
+      <div class="aj-cab"><h2>Ajustes</h2><button class="chico">Listo</button></div>
+      ${window.filas()}
+      <p class="aj-nota">Se guardan solos y quedan puestos para la próxima vez.</p>`;
+    document.body.append(d, h);
+  };
+  window.cerrarHoja = () => { majFondo.remove(); majHoja.remove(); };
+  /* los cinco select se van en TODAS las variantes: eso ya está decidido */
+  window.fila = document.querySelector(".pabajo .fila");
+  window.fila.querySelectorAll("select").forEach(s => s.classList.add("maq-oculto"));
+  window.limpiar = () => document.querySelectorAll(".maq-puerta").forEach(e => e.remove());
+  window.puertaEnFila = txt => {
+    const b = document.createElement("button");
+    b.className = "chico maq-puerta" + (txt === "⚙" ? " aj-eng" : "");
+    b.textContent = txt; window.fila.appendChild(b); return b;
+  };
+});
 
-/* al pie de la vista Partida, que es donde vive hoy la fila de controles */
 const alPie = async () => {
   await pg.evaluate(() => {
     document.querySelector(".pabajo .fila").scrollIntoView({ block: "end" });
@@ -345,88 +365,81 @@ const alPie = async () => {
   });
   await pg.waitForTimeout(250);
 };
-const medir = async n => console.log(n.padEnd(16), JSON.stringify(await pg.evaluate(() => {
-  const f = document.querySelector(".pabajo .fila").getBoundingClientRect();
-  return { filaAlto: Math.round(f.height) };
-})));
+const arriba = async () => {
+  await pg.evaluate(() => {
+    document.getElementById("zonaRevision").scrollIntoView({ block: "start" });
+    window.scrollBy(0, -8);
+  });
+  await pg.waitForTimeout(250);
+};
+const medir = async n => console.log(n.padEnd(22), JSON.stringify(await pg.evaluate(() =>
+  ({ filaAlto: Math.round(document.querySelector(".pabajo .fila").getBoundingClientRect().height) }))));
 
-await alPie();
-await medir("hoy");
-await foto("aj-0-hoy");
+/* P1 — como se dibujó la primera vez: "⚙ Ajustes" en un renglón propio */
+await pg.evaluate(() => window.puertaEnFila("⚙ Ajustes"));
+await alPie(); await medir("P1 ⚙ Ajustes"); await foto("aj-p1-ajustes");
 
-/* la fila con el engranaje: los cinco selects se van y queda un renglón */
+/* P2 — el engranaje solo, sin texto: sigue cayendo a un renglón nuevo */
+await pg.evaluate(() => { window.limpiar(); window.puertaEnFila("⚙"); });
+await alPie(); await medir("P2 solo el engranaje"); await foto("aj-p2-engranaje");
+
+/* P3 — los tres botones con nombre corto y el engranaje: TODO en un renglón */
 await pg.evaluate(() => {
-  const fila = document.querySelector(".pabajo .fila");
-  fila.querySelectorAll("select").forEach(s => s.classList.add("maq-oculto"));
+  window.limpiar();
+  const cortos = { btnMejor: "La mejor", btnGirar: "Girar", btnAmbos: "Las dos" };
+  window.LARGOS = {};
+  for (const [id, t] of Object.entries(cortos)) {
+    window.LARGOS[id] = document.getElementById(id).textContent;
+    document.getElementById(id).textContent = t;
+  }
+  window.puertaEnFila("⚙");
+});
+await alPie(); await medir("P3 nombres cortos"); await foto("aj-p3-cortos");
+await pg.evaluate(() => {
+  for (const [id, t] of Object.entries(window.LARGOS)) document.getElementById(id).textContent = t;
+  window.limpiar();
+});
+
+/* P3b — se acortan SOLO dos: "Pintar las dos" se queda entero porque solo
+   ("Las dos") no dice qué hace */
+await pg.evaluate(() => {
+  window.limpiar();
+  const cortos = { btnMejor: "La mejor", btnGirar: "Girar" };
+  window.LARGOS = {};
+  for (const [id, t] of Object.entries(cortos)) {
+    window.LARGOS[id] = document.getElementById(id).textContent;
+    document.getElementById(id).textContent = t;
+  }
+  window.puertaEnFila("⚙");
+});
+await alPie(); await medir("P3b dos cortos"); await foto("aj-p3b-cortos");
+await pg.evaluate(() => {
+  for (const [id, t] of Object.entries(window.LARGOS)) document.getElementById(id).textContent = t;
+  window.limpiar();
+});
+
+/* P5 — flotante en la esquina de abajo a la derecha, siempre a mano */
+await pg.evaluate(() => {
   const b = document.createElement("button");
-  b.className = "chico"; b.id = "btnAjustes"; b.textContent = "⚙ Ajustes";
-  fila.appendChild(b);
+  b.className = "aj-flota maq-puerta"; b.textContent = "⚙";
+  b.setAttribute("aria-label", "Ajustes");
+  document.body.appendChild(b);
 });
-await alPie();
-await medir("con engranaje");
-await foto("aj-1-fila");
+await arriba(); await foto("aj-p5-flotante-arriba");
+await alPie(); await foto("aj-p5-flotante-pie");
+await pg.evaluate(() => window.limpiar());
 
-/* A — LA HOJA QUE SUBE DESDE ABAJO */
-const abrirHoja = () => pg.evaluate(() => {
-  const d = document.createElement("div"); d.className = "aj-fondo"; d.id = "majFondo";
-  const h = document.createElement("div"); h.className = "aj-hoja"; h.id = "majHoja";
-  h.innerHTML = `<div class="aj-tirador"></div>
-    <div class="aj-cab"><h2>Ajustes</h2><button class="chico">Listo</button></div>
-    ${window.filas()}
-    <p class="aj-nota">Se guardan solos y quedan puestos para la próxima vez.</p>`;
-  document.body.append(d, h);
-});
-await abrirHoja();
-await pg.waitForTimeout(300);
-await foto("aj-2-hoja");
-console.log("hoja alto       ", JSON.stringify(await pg.evaluate(() =>
-  Math.round(document.getElementById("majHoja").getBoundingClientRect().height))));
-await pg.evaluate(() => { majFondo.remove(); majHoja.remove(); });
-
-/* B — EL DESPLEGABLE EN LÍNEA */
+/* P4 — en el encabezado de la vista, al lado del título "Revisión" */
 await pg.evaluate(() => {
-  document.getElementById("btnAjustes").classList.add("maq-oculto");
-  const d = document.createElement("details");
-  d.className = "aj-linea"; d.id = "majDet"; d.open = true;
-  d.innerHTML = `<summary>⚙ Ajustes</summary>${window.filas()}
-    <p class="aj-nota">Se guardan solos y quedan puestos para la próxima vez.</p>`;
-  document.querySelector(".pabajo .fila").after(d);
-});
-await pg.evaluate(() => { majDet.scrollIntoView({ block: "end" }); window.scrollBy(0, 40); });
-await pg.waitForTimeout(300);
-await foto("aj-3-linea");
-await pg.evaluate(() => { majDet.remove(); document.getElementById("btnAjustes").classList.remove("maq-oculto"); });
-
-/* D — LA PUERTA ARRIBA, en el conmutador: se llega desde Partida y desde Mes */
-await pg.evaluate(() => {
-  const c = document.getElementById("conmutador");
+  const h = [...document.querySelectorAll("#zonaRevision h2")].find(e => e.textContent.trim() === "Revisión");
+  const caja = document.createElement("div");
+  caja.className = "aj-cabvista maq-puerta";
+  h.replaceWith(caja);
   const b = document.createElement("button");
-  b.id = "majEng"; b.textContent = "⚙"; b.setAttribute("aria-label", "Ajustes");
-  c.appendChild(b);
-  c.scrollIntoView({ block: "center" });
+  b.className = "chico aj-eng"; b.textContent = "⚙ Ajustes";
+  caja.append(h, b);
 });
-await pg.waitForTimeout(300);
-await foto("aj-5-puerta-arriba");
-await abrirHoja();
-await pg.waitForTimeout(300);
-await foto("aj-6-puerta-arriba-abierta");
-await pg.evaluate(() => { majFondo.remove(); majHoja.remove(); majEng.remove(); });
-
-/* C — LA PANTALLA PROPIA. Todo lo demás se esconde: hoy el buscador, el mes,
-   la lista y el bloque de análisis quedan SIEMPRE arriba, así que una pantalla
-   de ajustes de verdad tiene que taparlos. */
-await pg.evaluate(() => {
-  const s = document.createElement("div"); s.className = "aj-pant"; s.id = "majPant";
-  s.innerHTML = `<div class="aj-cab" style="margin:0 0 4px">
-      <h1>Ajustes</h1><button class="chico">‹ Volver a la partida</button></div>
-    ${window.filas()}
-    <p class="aj-nota">Se guardan solos y quedan puestos para la próxima vez.</p>`;
-  for (const e of [...document.body.children]) if (e.tagName !== "SCRIPT") e.classList.add("maq-oculto");
-  document.body.append(s);
-  window.scrollTo(0, 0);
-});
-await pg.waitForTimeout(300);
-await foto("aj-4-pantalla");
+await arriba(); await foto("aj-p4-encabezado");
 
 await b.close(); srv.close();
-console.log("\nlisto: capturas/aj-*.png");
+console.log("\nlisto: capturas/aj-p*.png");
