@@ -4292,6 +4292,55 @@ pensado:
 **No está empezado y no tiene diseño elegido.** Está acá para que la próxima
 sesión no lo redescubra.
 
+### Una cuarta falla, reportada y diagnosticada en la v0.95
+
+**La jugada que ERA la mejor del motor a veces sale marcada Imprecisión o
+Error.** Lo reportó el usuario desde el celular. **La causa está encontrada y es
+de una línea**, pero el arreglo cambia números y por eso no se aplicó todavía.
+
+`categorizar` pregunta por las categorías malas ANTES de preguntar si la jugada
+era la mejor:
+
+```
+if (d.esLibro) return "libro";
+if (d.oportunidad && ...) return "omision";
+if (x >= c.grave) return "grave";
+if (x >= c.error) return "error";
+if (x >= c.imprecision) return "imprecision";   ← acá se cuela
+...
+if (d.esMejor) return "mejor";                  ← nunca llega
+```
+
+**Por qué `x` puede pasar el corte con la mejor jugada.** La pérdida sale de
+restar dos evaluaciones que son **dos búsquedas independientes**: la de la
+posición de antes y la de la de después. La segunda está un ply más adentro del
+árbol, así que ve cosas que la primera no veía, y la diferencia entre las dos no
+es cero ni siquiera jugando lo que el motor eligió. El corte de Imprecisión en
+modo crítico son **0,5 peones**, que una búsqueda a profundidad 16 se corre sin
+esfuerzo en una posición filosa.
+
+**No es un caso raro de la evaluación: es una contradicción de la app con su
+propia definición.** "Mejor" quiere decir "jugaste la que el motor eligió", y
+"Error" quiere decir "perdiste más de un peón contra lo que el motor eligió".
+Las dos no pueden ser ciertas a la vez. La evaluación de ANTES ya tiene adentro
+que la posición estaba mal, así que no es que se pierda información: perder
+material a la fuerza ya está contado en el número de antes.
+
+**El arreglo** es mover el bloque de `esMejor` —con `brillante` y `genial`
+adentro, que ya viven ahí— arriba de los cortes, dejando `libro` primero. La
+rama de `omision` no se pierde: `oportunidad` **no puede existir junto con
+`esMejor`**, porque las dos formas de armarla lo excluyen (`tomoBuena` es
+`esMejor && capB`, y el mate soltado pide que el mate ya no esté).
+
+**Por qué no se aplicó todavía, y qué habría que medir antes.** Cambia la
+etiqueta de jugadas que hoy se cuentan como malas, o sea las tablas, los
+desgloses y las leyendas. **La precisión NO cambia** —sale de `caida` por
+`precisionJugada` y no mira la categoría— pero los conteos sí. Lo que hace falta
+es una cuenta que hoy no tenemos: **cuántas jugadas de un mes son la mejor del
+motor y caen igual en una categoría mala**. Sale de las filas ya guardadas sin
+volver a correr el motor —`f.mejor === f.uci` contra `f.cat`— así que es un
+volcado de DEV como el de Genial, no una tanda.
+
 > ⚠ **Las mediciones de esta sección se tomaron con las cadencias mezcladas y
 > sin márgenes.** Desde la v0.46 la vista Mes habla de una sola cadencia, y
 > desde la v0.50 toda tasa va con su margen. Las dos cosas cambian estos
@@ -4424,10 +4473,67 @@ es por decisión pendiente, no porque no esté desplegado.**
   partida en vivo. Lo que quedaba pide `restan`, que el bucle ya calcula y no
   emite (§7.8).
 
-- **Las animaciones son una rama sin empezar.** Apareció al ver que el
-  deslizamiento del tablero no resulta intuitivo: un galón estático avisa que
-  *se puede*, pero enseñar *cómo* es trabajo de una transición. Es lo que le
-  daría el salto de "se ve bien" a "se siente bien".
+- **Las animaciones son una rama sin empezar, y en la v0.95 se empezó a
+  planificarla** a pedido del usuario. Apareció al ver que el deslizamiento del
+  tablero no resulta intuitivo: un galón estático avisa que *se puede*, pero
+  enseñar *cómo* es trabajo de una transición. Es lo que le daría el salto de
+  "se ve bien" a "se siente bien".
+
+  **Lo que hay hoy son cinco transiciones y ninguna es de movimiento**: el
+  relleno de las barras (`.barra > i`, `.evalbar > i`, `.evalh > i`) y dos
+  rotaciones de galón. Todo lo demás aparece y desaparece de un cuadro al otro.
+
+  **El obstáculo técnico es uno solo y hay que resolverlo antes que nada: el
+  tablero se redibuja entero.** `pintarRevision` arma un `<svg>` como texto y lo
+  mete con `innerHTML`, así que entre dos jugadas no hay ninguna pieza que sea
+  "la misma": son elementos nuevos. Animar un movimiento pide identidad —esta
+  torre de a8 es la que estaba en a1—, o sea reusar los `<use>` en vez de
+  tirarlos. **Ya hay dos precedentes en el archivo de que se puede**: el
+  arrastre de la v0.84 mueve una pieza con `transform` sin repintar, y `data-pz`
+  existe justamente para poder agarrar una pieza por su casilla. Lo que falta es
+  un paso de reconciliación: dado el tablero de antes y el de después, decir qué
+  pieza fue de dónde a dónde. **Con una jugada sola es fácil** —hay una que se
+  movió, y a veces una torre de enroque y una capturada— y no hace falta un
+  algoritmo general: la app SIEMPRE sabe qué jugada se jugó, porque la tiene en
+  UCI. O sea que la reconciliación no se deduce del dibujo, se lee de `f.uci`.
+
+  **El orden propuesto, de lo que más enseña a lo que más adorna:**
+
+  1. **La pieza que se mueve al pasar de jugada.** Es la que convierte "otro
+     tablero" en "una partida". Toca el obstáculo de arriba, así que es también
+     la que abre las demás.
+  2. **El deslizamiento del tablero**, que es de donde salió todo el tema. Acá
+     lo que enseña no es la transición al final sino que **el tablero siga al
+     dedo mientras se desliza**: hoy no pasa nada hasta que uno suelta, y por
+     eso el gesto no se descubre. Es la única de la lista que cambia lo que la
+     app *hace* y no solo cómo se ve.
+  3. **La tira que se centra sola.** Hoy `centrarTira` salta con `scrollLeft`;
+     con `scroll-behavior: smooth` el movimiento dice "esto es una tira larga y
+     estás en el medio", que es lo que un salto no dice. Es de una línea, y por
+     eso vale probarla primero aunque esté tercera: sirve para calibrar cuánto
+     movimiento tolera la pantalla.
+  4. **La tarjeta que cambia de alto.** Se lleva bien con el arreglo de la
+     v0.96: reservado el alto, lo que queda es que el contenido entre y salga
+     sin parpadeo.
+  5. **La hoja de ajustes**, que hoy aparece de golpe aunque el nombre —"sube
+     desde abajo"— promete un movimiento.
+
+  **Tres reglas que hay que fijar antes de escribir la primera, y son decisión
+  del usuario:**
+  - **Cuánto dura.** Los tableros digitales andan entre 120 y 200 ms; más que
+    eso estorba al que pasa jugadas rápido, que es como se revisa una partida.
+  - **Qué pasa si se pasan jugadas más rápido que la animación.** La respuesta
+    corta es que la nueva corta a la anterior y salta al final, nunca encolar.
+  - **`prefers-reduced-motion`**, que hoy no está en ningún lado del archivo.
+    Con animaciones de movimiento pasa a ser obligatorio.
+
+  **Y hay un problema de método que conviene mirar de frente: una animación no
+  se puede mandar en una captura.** El arnés saca fotos, y una foto de un
+  movimiento es un cuadro borroso o nada. Las dos salidas son grabar el video
+  —Playwright lo hace— o **congelar la animación a la mitad y fotografiar ese
+  cuadro**, que es más barato y contesta lo que uno va a preguntar (¿la pieza
+  pasa por arriba o por abajo de las otras?, ¿tapa el galón?). Ninguna de las
+  dos está probada acá todavía.
 
 ### De fondo
 
