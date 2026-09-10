@@ -110,7 +110,7 @@ export async function abrirApp({ puerto = 8098, alto = 900, partida = null } = {
     }
     await pg.waitForTimeout(800);
   }
-  return { pg, salida: SALIDA, cerrar };
+  return { pg, salida: SALIDA, cerrar, navegador: b };
 }
 
 /* --- MEDIR, que sale más barato que mirar -------------------------------- */
@@ -159,8 +159,8 @@ export const alinear = (raiz, selTexto, selVecino) => raiz.evaluate(
    cambió. Son ~100 tokens contra los 417 de una pantalla a escala CSS.
    Solo mira elementos que se dibujan y que no son ancestros uno del otro: un
    hijo adentro de su padre se superpone siempre y eso no es una falla. */
-export const espacios = (raiz, selector, minimo = 8) => raiz.evaluate(
-  ([sel, min]) => {
+export const espacios = (raiz, selector, minimo = 8, topear = true) => raiz.evaluate(
+  ([sel, min, topear]) => {
     const cont = document.querySelector(sel);
     if (!cont) return { error: `no encontré ${sel}` };
     /* `data-tira` marca lo que agrega el andamio —los rótulos de cada variante
@@ -178,6 +178,12 @@ export const espacios = (raiz, selector, minimo = 8) => raiz.evaluate(
     const cajas = [...cont.querySelectorAll("*")]
       .filter(el => el.getClientRects().length && getComputedStyle(el).visibility !== "hidden")
       .filter(el => !el.closest("[data-tira]"))
+      /* NO SE ENTRA ADENTRO DE UN SVG. Un dibujo tiene sus partes pegadas por
+         definición: medir `.revtab` con el tablero adentro devolvió 183
+         elementos y una lista de las 64 casillas tocándose entre sí, que es
+         ruido puro y tapa el único renglón que importaba. El `<svg>` cuenta
+         como una caja y lo de adentro es su contenido, no la pantalla. */
+      .filter(el => !el.parentElement?.closest("svg"))
       .map(el => ({ el, r: el.getBoundingClientRect(), id: nombrar(el) }))
       .filter(c => c.r.width > 1 && c.r.height > 1);
     const encimados = [], pegados = [];
@@ -195,8 +201,11 @@ export const espacios = (raiz, selector, minimo = 8) => raiz.evaluate(
         if ((dx < 0 || dy < 0) && luz >= 0 && luz < min)
           pegados.push(`${a.id} ~ ${b.id}: ${luz.toFixed(1)}px`);
       }
-    return { encimados, pegados, mirados: cajas.length };
-  }, [selector, minimo]);
+    /* un tope, porque una lista de cien renglones no se lee y además cuesta
+       más que la captura que venía a reemplazar */
+    const tope = (a, n) => topear && a.length > n ? [...a.slice(0, n), `… y ${a.length - n} más`] : a;
+    return { encimados: tope(encimados, 8), pegados: tope(pegados, 8), mirados: cajas.length };
+  }, [selector, minimo, topear]);
 
 /* --- DIBUJAR LAS VARIANTES ----------------------------------------------- */
 
@@ -340,4 +349,129 @@ export async function tira(pg, { selector, variantes, aplicar, nombre, salida,
     document.getElementById("tira-css")?.remove();
   });
   return { ...rutas, ...medidas };
+}
+
+/* --- LA PANTALLA ENTERA, que es otro problema ----------------------------- */
+
+/* El estado de la pantalla en un momento: cuánto mide, dónde arranca el tablero
+   y qué toca qué. Se usa para la línea base y para cada variante, y la gracia
+   es restar una de otra. */
+async function medirPantalla(pg, medir) {
+  const caja = await pg.evaluate(() => {
+    const t = document.getElementById("tablero");
+    const r = t && t.getBoundingClientRect();
+    return { alto: document.documentElement.scrollHeight,
+             tableroArrancaEn: r ? Math.round(r.top + window.scrollY) : 0,
+             ladoDelTablero: r ? Math.round(r.width) : null };
+  });
+  const e = medir ? await espacios(pg, medir, 8, false) : { encimados: [], pegados: [] };
+  return { ...caja, ...e };
+}
+
+/* La hermana de `tira()` para cuando lo que se decide es la pantalla completa
+   —el orden de los bloques, dónde va algo nuevo— y no un renglón.
+
+   POR QUÉ NO SIRVE `tira()` ACÁ, que es lo que se probó primero: (1) no entra
+   —una pantalla son 760 px de alto y tres apiladas son 2.280, y la gracia de la
+   tira es comparar PEGADO—; (2) no se clona, se reordena: la variante no es una
+   copia con algo cambiado sino la misma pantalla en otra configuración; (3)
+   necesita datos, porque una pantalla con la tarjeta, la curva y el tablero
+   vacíos no deja decidir nada. De (3) salió el refactor de `falso.mjs`.
+
+   Así que esto aplica cada variante sobre la app DE VERDAD, fotografía, deshace
+   y sigue. Y compara LADO A LADO, que es como sí entran.
+
+   EL AHORRO ACÁ ES MUCHO MENOR QUE EN LA TIRA, y conviene no engañarse: una
+   pantalla a escala CSS son 417 tokens y tres, 1.250, se las junte o no
+   —juntarlas no ahorra nada, el ahorro siempre fue la escala—. La pantalla
+   completa hay que mirarla igual: el usuario porque es su decisión y quien
+   programa porque la regla de recorrer los espacios vive justamente ahí. Lo
+   que sí baja es el andamio, y lo que evita mirar de más es `espacios()`, que
+   viene medido por variante en el resultado.
+
+   SE COMPONE EN EL NAVEGADOR, sin librerías de imagen: el contenedor no tiene
+   ni PIL ni ImageMagick. Las capturas vuelven a entrar como <img> en una página
+   aparte y se fotografía esa página. */
+export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, salida,
+                                      medir = null, espera = 250, navegador = null,
+                                      scrollY = 0 }) {
+  const fs = await import("node:fs");
+  const sueltas = [], medidas = [];
+
+  /* LA LÍNEA BASE, y sin esto la medición no sirve para nada en una pantalla
+     entera: `.principal` tiene la tira de jugadas, donde los renglones pasan
+     POR DEBAJO de los chevrones a propósito, así que salían 12 "encimados" y
+     96 "pegados" que ya estaban antes de la variante y tapaban lo único que
+     importaba. Lo que se reporta es lo que la variante AGREGA. Y el alto de
+     acá es contra el que se compara cuánto empuja cada una. */
+  const foto0 = await medirPantalla(pg, medir);
+  for (const v of variantes) {
+    await pg.evaluate(({ fn, v }) => new Function("v", fn)(v),
+                      { fn: `(${aplicar})(v)`, v });
+    await pg.waitForTimeout(espera);
+    /* EL SCROLL SE FIJA ANTES DE CADA FOTO. Sin esto la comparación miente: la
+       pantalla queda donde la dejó la navegación, y una variante que pone algo
+       ARRIBA —en la cabecera, por ejemplo— sale sin nada a la vista, no porque
+       no se vea sino porque la foto empieza más abajo. Pasó con la primera
+       tanda del reloj. Y de paso es la pregunta de verdad: ¿se ve esto cuando
+       estás mirando el tablero?
+       Acepta un número o un SELECTOR, y casi siempre se quiere lo segundo: la
+       app es una sola página larga, así que scroll 0 es la pantalla de entrada
+       y no la vista que se está decidiendo. Con un selector, ese elemento queda
+       arriba de todo, que es como se ve la vista al llegar. */
+    await pg.evaluate(y => {
+      if (typeof y === "number") return window.scrollTo(0, y);
+      const el = document.querySelector(y);
+      if (el) window.scrollTo(0, el.getBoundingClientRect().top + window.scrollY - 8);
+    }, scrollY);
+    await pg.mouse.move(2, 2);
+    const base = `${salida}/${nombre}-${v.clave}`;
+    await pg.screenshot({ path: base + "-css.png", scale: "css" });
+    await pg.screenshot({ path: base + ".png" });
+    sueltas.push(base + "-css.png");
+    /* CUÁNTO EMPUJA, que en una pantalla de 760 px es la mitad de la decisión:
+       algo que se ve lindo pero baja el tablero 44 px puede dejar la navegación
+       fuera de la pantalla. Sale gratis y no está en ninguna captura. */
+    const m = await medirPantalla(pg, medir);
+    const nuevos = (a, b) => {
+      const antes = new Map();
+      for (const x of b) antes.set(x, (antes.get(x) || 0) + 1);
+      return a.filter(x => antes.get(x) ? (antes.set(x, antes.get(x) - 1), false) : true);
+    };
+    medidas.push({
+      clave: v.clave,
+      empujaElTablero: m.tableroArrancaEn - foto0.tableroArrancaEn,
+      alargaLaPagina: m.alto - foto0.alto,
+      ladoDelTablero: m.ladoDelTablero,
+      encimaNuevo: nuevos(m.encimados, foto0.encimados),
+      pegaNuevo: nuevos(m.pegados, foto0.pegados),
+    });
+    if (deshacer)
+      await pg.evaluate(({ fn, v }) => new Function("v", fn)(v),
+                        { fn: `(${deshacer})(v)`, v });
+    await pg.waitForTimeout(80);
+  }
+
+  /* la comparación lado a lado, armada con las capturas ya sacadas */
+  /* una página aparte para componer. `pg.context().newPage()` NO sirve: la
+     página de la app nace de `browser.newPage()`, que se queda con su contexto
+     en exclusiva y rechaza una segunda. Por eso `abrirApp` devuelve el
+     navegador y se lo pasa acá. */
+  const hoja = await (navegador || pg.context().browser()).newPage();
+  const imgs = sueltas.map((f, i) => ({
+    rot: variantes[i].nombre || variantes[i].clave,
+    b64: fs.readFileSync(f).toString("base64"),
+  }));
+  await hoja.setContent(`<body style="margin:0;background:#f6f6f6;
+    font:12px system-ui,sans-serif"><div style="display:flex;gap:10px;padding:10px">` +
+    imgs.map(x => `<div><div style="padding:4px 2px;color:#555">${x.rot}</div>` +
+      `<img src="data:image/png;base64,${x.b64}" style="width:412px;display:block;` +
+      `border:1px solid #ccc"></div>`).join("") + `</div></body>`);
+  await hoja.waitForTimeout(300);
+  const juntas = `${salida}/${nombre}-juntas`;
+  await hoja.screenshot({ path: juntas + "-css.png", fullPage: true, scale: "css" });
+  await hoja.screenshot({ path: juntas + ".png", fullPage: true });
+  await hoja.close();
+
+  return { sueltas, juntas: juntas + ".png", mirar: juntas + "-css.png", medidas };
 }
