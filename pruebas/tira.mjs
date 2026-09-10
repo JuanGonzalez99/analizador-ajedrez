@@ -40,7 +40,7 @@
    su viewport es de ~420 x 810. Se dibuja a 412 x 760, que es el caso apretado
    —con la barra de direcciones a la vista—, porque es el que decide si algo
    entra. */
-export async function abrirApp({ puerto = 8098, alto = 900 } = {}) {
+export async function abrirApp({ puerto = 8098, alto = 900, partida = null } = {}) {
   const [{ chromium }, http, fs, path, { fileURLToPath }] = await Promise.all([
     import("playwright"), import("node:http"), import("node:fs"),
     import("node:path"), import("node:url"),
@@ -52,6 +52,20 @@ export async function abrirApp({ puerto = 8098, alto = 900 } = {}) {
                   ".json": "application/json", ".wasm": "application/wasm" };
   const srv = http.createServer((req, res) => {
     const ruta = decodeURIComponent(req.url.split("?")[0]);
+    /* con `partida`, el servidor contesta además la API de chess.com y sirve un
+       motor de mentira en lugar del wasm. Sin ella no sirve ninguna de las dos
+       cosas y la app queda en la pantalla de entrada, que para decidir la forma
+       de un renglón alcanza y sobra. */
+    if (partida) {
+      if (partida.API[ruta]) {
+        res.writeHead(200, { "content-type": "application/json" });
+        return res.end(JSON.stringify(partida.API[ruta]));
+      }
+      if (ruta.endsWith("stockfish-18-lite-single.js")) {
+        res.writeHead(200, { "content-type": "text/javascript" });
+        return res.end(partida.FALSO);
+      }
+    }
     const f = path.join(RAIZ, ruta === "/" ? "/index.html" : ruta);
     if (!f.startsWith(RAIZ) || !fs.existsSync(f)) { res.writeHead(404); return res.end(); }
     res.writeHead(200, { "content-type": TIPOS[path.extname(f)] || "application/octet-stream" });
@@ -66,8 +80,37 @@ export async function abrirApp({ puerto = 8098, alto = 900 } = {}) {
   const b = await chromium.launch(CH ? { executablePath: CH } : {});
   const pg = await b.newPage({ viewport: { width: 412, height: alto }, deviceScaleFactor: 2 });
   pg.on("pageerror", e => console.log("PAGEERROR:", e.message));
+  const cerrar = async () => { await b.close(); srv.close(); };
+
+  /* SE ENTRA POR LA LISTA, que es como lo usa el usuario, y no pegando el PGN:
+     son dos caminos distintos y el del PGN no tiene el JSON del mes, o sea que
+     por ahí no aparece el motivo del final. Eso ya escondió un error (v0.63.1). */
+  if (partida) {
+    await pg.route("https://api.chess.com/**", r =>
+      r.fulfill({ status: 200, contentType: "application/json",
+                  body: JSON.stringify(partida.API["/api/archives"]) }));
+  }
   await pg.goto(`http://localhost:${puerto}/index.html`);
-  return { pg, salida: SALIDA, cerrar: async () => { await b.close(); srv.close(); } };
+  if (partida) {
+    await pg.fill("#usuario", partida.cabPgn("White", "Blancas"));
+    await pg.click("#buscar");
+    await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+    await pg.click("#partidas div[data-i]");
+    await pg.waitForSelector("#analizar", { state: "visible", timeout: 20000 });
+    await pg.click("#analizar");
+    try {
+      await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
+    } catch (e) {
+      /* si no llega, la foto de lo que quedó y el registro dicen por qué. Sin
+         esto lo único que se veía era "Timeout exceeded", que no dice nada. */
+      await pg.screenshot({ path: path.join(SALIDA, "atascado.png"), fullPage: true });
+      console.log("ATASCADO, mirá capturas/atascado.png. Registro:");
+      console.log(await pg.evaluate(() => (window.LOG && window.LOG.texto && window.LOG.texto()) || "sin registro"));
+      await cerrar(); process.exit(1);
+    }
+    await pg.waitForTimeout(800);
+  }
+  return { pg, salida: SALIDA, cerrar };
 }
 
 /* --- MEDIR, que sale más barato que mirar -------------------------------- */
