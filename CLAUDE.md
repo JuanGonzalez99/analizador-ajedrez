@@ -114,10 +114,21 @@ eso se puede bajar diez veces sin perder nada. En orden de cuánto rinde:
 5. **Menos variantes por tanda.** Con los números primero, varias se descartan
    solas y no llegan a ser imagen nunca.
 
-Una tanda de seis variantes pasa de ~10.000 tokens a ~700 con esto. Y el gasto
-que queda arriba es **escribir el script de la maqueta** (~5.000 de salida), que
-es la razón de la regla de §10 de reescribirlo en vez de parchearlo: un parche
-que lo rompe cuesta más que el archivo entero.
+Una tanda de seis variantes pasa de ~10.000 tokens a ~700 con esto. El gasto que
+quedaba arriba era **escribir el script de la maqueta** (~1.600 de salida), y
+por eso desde la v0.92 el andamio está escrito: se importa de `pruebas/tira.mjs`
+y la maqueta queda en ~35 líneas. Sigue valiendo la regla de §10 de reescribirla
+en vez de parcharla —un parche que la corta cuesta más que el archivo entero—,
+solo que ahora reescribir son 35 líneas y no 110.
+
+**Para decidir la pantalla ENTERA está `pantallas()`**, que es otro problema:
+no clona —aplica cada variante sobre la app de verdad, fotografía y deshace— y
+compara lado a lado, que es como entran. Ahí el ahorro es mucho menor y conviene
+saberlo: una pantalla a escala CSS son 417 tokens y tres, 1.250, se las junte o
+no. Lo que evita mirar de más es lo que mide sola: **cuánto empuja cada variante
+—el tablero y la página— y qué encima o pega que no estuviera antes**, medido
+contra una línea base porque si no el ruido preexistente de la app tapa la
+señal.
 
 **El MCP de github está denegado** en `.claude/settings.json`, que por eso es el
 único archivo de `.claude/` que se versiona: si no se commitea, no existe en la
@@ -135,6 +146,11 @@ credencial. Si alguna vez hace falta un PR, se saca el `deny`.
   estáticos sobre el HTML.
 - `npm run mirar` abre la app en un Chromium headless y saca capturas. Hay
   varias partidas de prueba: `npm run mirar mate`, `npm run mirar ahogado`.
+  **Desde la v0.92 el arranque vive en dos módulos** y `mirar.mjs` lo usa en
+  tres líneas: `pruebas/falso.mjs` arma la partida y el motor de mentira, y
+  `abrirApp({ partida })` de `tira.mjs` levanta servidor, navegador y el camino
+  de entrada. Una maqueta que necesite la app **con datos** —la pantalla entera,
+  no un renglón— pide eso y no reescribe nada.
   **En una sesión remota hay que correr `npm install` primero** —el repo se
   clona limpio y Playwright no viene—; son 2 segundos, pero sin eso `mirar`
   explota con `ERR_MODULE_NOT_FOUND` y se pierde una corrida en descubrirlo.

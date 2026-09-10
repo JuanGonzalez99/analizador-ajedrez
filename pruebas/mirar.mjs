@@ -32,7 +32,7 @@ import { abrirApp, alinear, espacios } from "./tira.mjs";
    el servidor, el navegador y el camino de entrada, en `tira.mjs::abrirApp`.
    No es prolijidad: sin eso, una maqueta que quiera mirar la pantalla ENTERA
    tiene que reescribirlas o quedarse sin datos, y una pantalla vacía no deja
-   decidir nada. Se verificó byte a byte: las 49 capturas quedaron idénticas.
+   decidir nada. Se verificó byte a byte: las 45 capturas quedaron idénticas.
 
    Qué partida se mira: `npm run mirar <nombre>` lee `partida-<nombre>.pgn`.
    Hay más de una porque CÓMO TERMINA LA PARTIDA es una pantalla propia y la

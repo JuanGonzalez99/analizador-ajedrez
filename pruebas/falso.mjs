@@ -6,7 +6,7 @@
    con la tarjeta, la curva y el tablero vacíos no deja decidir nada. Acá está
    ese arranque, y `tira.mjs::abrirApp({ partida })` lo enchufa.
 
-   EL REFACTOR SE VERIFICÓ BYTE A BYTE: las 49 capturas de `npm run mirar`
+   EL REFACTOR SE VERIFICÓ BYTE A BYTE: las 45 capturas de `npm run mirar`
    quedaron idénticas a las de antes. Es la única prueba que sirve para un
    cambio que no debe cambiar nada, y es la misma guarda que §10 pide para lo
    que se toca de PC. El código se movió TEXTUALMENTE, sin retipearlo: lo único

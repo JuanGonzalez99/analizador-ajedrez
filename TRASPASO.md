@@ -266,7 +266,7 @@ lo que hay que mirar.
 | motor | clase `Motor`, grupo de motores, `evaluarPosiciones` |
 | caché | IndexedDB |
 | análisis | `analizarPartida`, barrido, híbrido |
-| bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace` |
+| bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | interfaz | tablero SVG (geometría `TAB_S`/`sqX`, `dibujar`, `svgMarcas`), mes, banco de pruebas, revisión, resúmenes |
 
 El **menú de ajustes** (v0.91, §4untrigies) es la excepción a "todo cuelga de su
@@ -1042,10 +1042,15 @@ va en un arreglo paralelo a `porPartida`, igual que el resultado (§4septies).
 
 ### Lo que falta
 
-Las otras dos formas de §7.8: **el apuro** (cuánto quedaba en el reloj) y
-**cuánto pensaste**. El mismo bucle que calcula el gasto ya tiene `restan`; no
-se emite hasta que haya algo que lo use, porque cada campo pesa también en las
-filas flacas.
+**Cuánto pensaste ya está**, desde la v0.93 (§4duotrigies): el cuadrito "Pensó"
+de la fila de la jugada, que salió de `f.seg` sin plomería nueva.
+
+Falta la otra forma de §7.8: **el apuro** (cuánto quedaba en el reloj). El mismo
+bucle que calcula el gasto ya tiene `restan`; no se emite hasta que haya algo
+que lo use, porque cada campo pesa también en las filas flacas. En la v0.93 se
+dibujaron ocho maneras de mostrarlo alrededor del tablero y el usuario las
+rechazó todas: si se retoma, empezar por leer §4duotrigies antes de dibujar
+nada, que ahí está por qué.
 
 ## 4decies. Las leyendas se parten en dos (v0.44)
 
@@ -3380,6 +3385,20 @@ clase aparte ni el número escrito dos veces. **El mínimo tiene que ser un anch
 de verdad y no `0`**: con `minmax(0, 1fr)` auto-fit no puede contar cuántas
 entran. Medido en cinco anchos —360, 412, 700, 1280 y 1900—: **cuatro columnas
 en una sola fila en todos**, y 78,5 px cada una en el caso más angosto.
+
+### En la compu ya estaba, y por eso no se tocó
+
+La **lista de jugadas lateral** (§4duovicies) muestra los segundos de cada
+jugada desde la v0.90, con esta misma `tiempoCorto`. O sea que en una compu el
+dato ya se veía, y el cuadrito lo repite para la jugada parada.
+
+**Se decidió dejarlo igual en las dos pantallas**, que es la parte de PC de esta
+tanda: sacar la columna en pantalla ancha haría que la fila cambie de forma
+según el ancho, y la lista puede estar scrolleada lejos de la jugada actual. Se
+verificó mirando la vista ancha: los cuatro cuadritos entran, y el número del
+cuadrito coincide con el de la fila resaltada de la lista. De paso quedó a la
+vista que el `m:ss` funciona —`1:01`, `1:33`, `2:17` en la lista—, que en el
+celular no se ve nunca con una partida de 10+0.
 
 ### Lo que queda pendiente de esto
 
