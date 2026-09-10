@@ -4094,8 +4094,11 @@ sesión de la v0.84 (los números están en §8):
   contado en §4tretrigies.
 - **La tarjeta se achica al probar y el tablero salta 78 px**, justo mientras se
   intenta encadenar la jugada siguiente.
-- **La partida tarda en aparecer en el listado.** Falta que el usuario haga el
-  test de 30 segundos que decide si es el CDN de chess.com o nuestro.
+- ~~**La partida tarda en aparecer en el listado.**~~ **BORRADA por el usuario**
+  en la v0.95: *"este olvidate, borralo"*. Nunca llegó a hacerse el test de 30
+  segundos que decidía si era el CDN de chess.com o nuestro, y él prefirió sacar
+  el pendiente antes que arrastrarlo. En su lugar dejó otro, más ambicioso, que
+  está abajo en §8: **que la app sincronice y analice sola**.
 
 **Cómo se trabajó esta tanda, que conviene repetir:** cada cambio con su
 captura mirada de verdad, `npm run mirar` con la pasada ancha, y **la
@@ -4252,24 +4255,42 @@ justo mientras se intenta encadenar la jugada siguiente. La salida es reservarle
 el alto a la caja de la tarjeta mientras la prueba está abierta, para que no se
 achique.
 
-**3. La partida tarda en aparecer en el listado.**
+**3. La partida tarda en aparecer en el listado. BORRADA (v0.95).**
 
-**No se pudo medir desde el entorno remoto**: `api.chess.com` da 403 por la
-política de red. Lo que sí es nuestro, y son dos cosas:
+El usuario la sacó de la lista sin haberla resuelto: *"este olvidate, borralo"*.
+Nunca se hizo el test de 30 segundos que decidía de quién era la culpa, así que
+**el diagnóstico queda abierto y sin dueño**; si vuelve a aparecer, lo que se
+sabía es que el mes se pide con un `fetch(url)` pelado —o sea con la caché HTTP
+del navegador— y que no hay forma de recargar el mes sin apretar "Buscar" de
+nuevo, porque el combo reacciona a `onchange` y elegir el mes que ya estaba no
+dispara nada.
 
-- El mes se pide con un `fetch(url)` pelado, o sea con la **caché HTTP del
-  navegador por defecto**. Si el navegador la tiene guardada, devuelve el mes
-  viejo sin salir a la red.
-- **No hay forma de recargar el mes.** El combo reacciona a `onchange`, y elegir
-  el mes que ya estaba seleccionado no dispara nada. Hay que apretar "Buscar" de
-  nuevo, cosa que no está escrita en ningún lado.
+**Lo que puso en su lugar, y es de otro tamaño: que la app sincronice y analice
+sola.** Palabras suyas, con la advertencia adelante —*"quizás ambicioso"*—:
+*"que la app sincronice y analice automáticamente las partidas jugadas del
+usuario. Se me ocurre anotar mis partidas y las de mi amigo, para que no
+requiera login ni nada en la primera versión. Pero bueno lo vemos."*
 
-**El test que lo decide, y que el usuario todavía no hizo**: cuando una partida
-no aparezca, abrir en otra pestaña
-`https://api.chess.com/pub/player/USUARIO/games/AAAA/MM` y buscarla ahí. Si está
-y en la app no, es nuestro (caché). Si tampoco está, es el CDN de chess.com y
-del lado nuestro solo cabe un botón de recargar.
+O sea que la primera versión **no tiene cuentas ni login**: la lista de usuarios
+a seguir va escrita en el código, dos nombres, y con eso alcanza para probar si
+la idea sirve. Lo que hay que pensar antes de escribir una línea, y no está
+pensado:
 
+- **Dónde corre.** Hoy el análisis lo hace el navegador con Stockfish en un
+  worker, y §9 ya dice que la pestaña dormida frena todo. "Automáticamente"
+  quiere decir sin que nadie esté mirando, que es justo lo que hoy no se puede.
+  Las salidas son un proceso afuera (una acción de GitHub, algo que corra
+  aunque no haya nadie) o aceptar que sincroniza cuando abrís la app.
+- **Qué guarda y dónde.** Hoy la caché es IndexedDB, o sea del navegador de cada
+  uno. Un análisis hecho en otro lado tiene que llegar a la app de alguna forma.
+- **Cada cuánto pregunta.** La API pública de chess.com da los meses completos;
+  pedir el mes en curso cada tanto es barato, pero hay que decidir cuánto es
+  "cada tanto" y qué pasa con los meses viejos.
+- **Cuánto cuesta.** Un mes son ~15 partidas y cada una es un barrido entero. Si
+  corre solo, corre para los dos jugadores.
+
+**No está empezado y no tiene diseño elegido.** Está acá para que la próxima
+sesión no lo redescubra.
 
 > ⚠ **Las mediciones de esta sección se tomaron con las cadencias mezcladas y
 > sin márgenes.** Desde la v0.46 la vista Mes habla de una sola cadencia, y
@@ -4294,7 +4315,8 @@ no tener que leer la sección entera para saber qué hay.
 2. **Más conceptos**, empezando por **pieza atrapada**. La lista y los que se
    rechazaron, en §4octodecies.
 3. **Los tres cuadritos** (Mejor / Pérdida / Caída). Abajo, en "De interfaz".
-4. **Guardar la variante**: al salir se tira. Toca la caché. Abajo.
+4. ~~**Guardar la variante**~~: **BORRADA por el usuario** en la v0.95. Al
+   salir se tira, y así se queda.
 5. **La puerta "en vez de esta jugada" y el botón por veredicto**, que se
    fueron con la fila de botones. Abajo, en "De interfaz".
 6. **La estética de la navegación por las jugadas**, que el usuario dio por
@@ -4310,10 +4332,13 @@ no tener que leer la sección entera para saber qué hay.
    §4vicies. Y con ellas la tarjeta quedó 2,4 veces más rápida que antes,
    porque medir dónde estaba el costo mostró que no estaba en lo nuevo.
 
-**Del resto, lo que sigue vivo:** comparar dos jugadores y las dos estadísticas
-de reloj que faltan (§7), el listado de partidas sin rediseñar y la pantalla de
-configuración (abajo), la paleta despareja, las animaciones, y las mediciones de
+**Del resto, lo que sigue vivo:** comparar dos jugadores y la estadística de
+reloj que falta —el apuro— (§7), el listado de partidas sin rediseñar (abajo),
+las animaciones, que la app sincronice y analice sola (§8), y las mediciones de
 fondo que hay que rehacer por cadencia y con margen (el aviso de acá arriba).
+
+**Y lo que el usuario BORRÓ en la v0.95**, para que no vuelva por la ventana:
+guardar la variante, la paleta despareja y "la partida tarda en aparecer".
 
 **Estado del repo:** toda la tanda está en `main` y **en vivo**, hasta la
 **v0.79** inclusive. La nota vieja de acá decía que la v0.64 a la v0.75 vivía sin
@@ -4323,11 +4348,12 @@ es por decisión pendiente, no porque no esté desplegado.**
 
 ### De interfaz
 
-- **La paleta tiene luminosidades desparejas.** El ámbar de Imprecisión llama
-  más la atención que el verde de Bien sin que eso signifique nada. Los
-  símbolos de la v0.35 arreglaron la **legibilidad**, no el **volumen**. La
-  propuesta medida —seis colores a la misma luminosidad percibida— está en
-  §4quinquies con los ocho hex ya calculados, para no rehacer la cuenta.
+- ~~**La paleta tiene luminosidades desparejas.**~~ **BORRADA por el usuario**
+  en la v0.95. El ámbar de Imprecisión llama más la atención que el verde de
+  Bien, y él decidió que así está bien. La propuesta medida —seis colores a la
+  misma luminosidad percibida— sigue en §4quinquies con los ocho hex ya
+  calculados, por si alguna vez se retoma; no se borra la cuenta, se borra el
+  pendiente.
 
 - **El listado de partidas está sin rediseñar.** Tiene un `max-height: 34vh`
   puesto en la v33 para que el botón de analizar quede a la vista; es un parche,
@@ -4648,8 +4674,9 @@ decidir si "Genial" tiene sentido cuando la partida ya está resuelta.
   rival y se va y se vuelve por ella. Todo en §4sexdecies. La jugada probada se
   juzga con `derivarFilas`, o sea el mismo camino que las de la partida, y no
   toca ni `R.filas` ni la caché.
-  **Lo que falta es guardarla**: al salir se tira, así que una línea que
-  encontraste no se puede volver a mirar. Eso toca la caché y es otra tanda.
+  ~~**Lo que falta es guardarla**~~: **el usuario la borró de los pendientes en
+  la v0.95.** Al salir se tira y así queda: una línea que encontraste no se
+  puede volver a mirar, y está bien. Tocaba la caché y era otra tanda entera.
 
 - **La lista de cuentas de entrenador tiene un solo nombre.** Falta el resto.
   Tiene que ser coincidencia **exacta**, no por prefijo: los nombres de usuario
