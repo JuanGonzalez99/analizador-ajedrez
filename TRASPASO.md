@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.91.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.92**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -3149,6 +3149,48 @@ eligió el usuario**: las seis tenían la tuerca 8 px baja, y la elección de la
 forma no cambia por eso pero la captura mentía. La medición buena usa un `Range`
 sobre el texto, que devuelve la caja del renglón **ya ubicada**, sin suponer
 nada. Corregido, la tuerca queda a 0,2 px de la "R", con un `translateY(1px)`.
+
+### La tuerca estaba flaca, y era un glifo del sistema (v0.92)
+
+Lo reportó el usuario usando la app: *"se ve raro, muy flaco... me da la
+impresión que es por ser un ícono nativo o similar"*. Y era eso: el botón decía
+`&#9881;`, o sea el ⚙ de Unicode, **dibujado por la fuente del aparato**. Es el
+mismo problema que tenían las piezas hasta la v27 (§4bis) y tiene el mismo
+diagnóstico escrito ahí: un glifo depende del dispositivo, y donde sale es el
+set hueco pensado para texto corrido, con el trazo demasiado fino. Vale la pena
+anotarlo como patrón: **la app no puede pedirle un dibujo a la fuente**. Quedan
+todavía dos emoji por símbolos en las tablas (§4quinquies) y ese camino ya se
+eligió a propósito, pero cualquier ícono nuevo se dibuja.
+
+Se dibujaron cinco variantes en el renglón real de "Revisión", a tamaño real y
+ampliadas, y el usuario eligió la **C: engranaje lleno de seis dientes gordos**.
+Le gustó también la D —perillas acostadas, tres rieles con su perilla— y la
+dejó anotada para otra cosa más adelante, así que **no es una idea descartada
+sino una guardada**.
+
+| variante | qué era | qué pasó |
+|---|---|---|
+| A | el glifo de ahora | el punto de comparación |
+| B | engranaje lleno, 8 dientes | a 20 px los ocho dientes se empastan |
+| **C** | **engranaje lleno, 6 dientes gordos** | **elegida**: la que más cuerpo tiene sin que los dientes se junten |
+| D | perillas acostadas | gustó, pero cambia el significado del botón; guardada para otra cosa |
+| E | perillas paradas | la misma idea en vertical, y se lee peor |
+
+El engranaje **se genera por geometría** —cuerpo, seis dientes redondeados
+rotados de a 60°, y el agujero recortado con una `<mask>`— y no es un path
+copiado: así se puede mover un diente o el agujero cambiando un número. La
+máscara es lo que deja el resto en `currentColor`, o sea que **sigue el color
+del texto en los dos temas** sin una regla aparte. Pesa **900 bytes**, va
+adentro del HTML y no pide nada a la red.
+
+**El `translateY` pasó de +1 px a -0,5 px, y eso es una consecuencia, no un
+retoque.** El glifo vivía en una caja de texto que el `place-items: center` ya
+centraba; un SVG de 20×20 centrado por la grilla cae **1,5 px más arriba**. Se
+midió con el `Range` de acá arriba —la medición buena, la que no supone dónde
+arranca el renglón— antes de dibujar las variantes, así que **la captura que
+decidió no venía con el error adentro**, que es justo lo que había pasado en la
+v0.91. El `font-size: 17px` del botón se fue con el glifo: sin texto adentro no
+decía nada.
 
 ### El arnés tuvo que aprender a abrir el menú
 

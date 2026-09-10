@@ -100,11 +100,14 @@
      título y no contra la caja del renglón: la caja reserva lugar para colas y
      tildes que "Revisión" no tiene, así que centrar contra ella la deja arriba.
      El translateY es esa corrección, medida con las métricas de la fuente —es
-     la misma lección del chevron contra la N de la v0.74—. */
+     la misma lección del chevron contra la N de la v0.74—. CAMBIÓ DE +1 A -0,5
+     EN LA v0.92: el glifo vivía en una caja de texto, ya centrada adentro del
+     botón; un SVG de 20x20 centrado por la grilla cae 1,5 px más arriba, y esa
+     diferencia se midió, no se estimó. El `font-size` se fue con el glifo. */
   #btnAjustes { padding: 0; flex: none; display: grid; place-items: center;
-                width: 34px; height: 34px; font-size: 17px; line-height: 1;
+                width: 34px; height: 34px;
                 border: 1px solid var(--linea); border-radius: 50%;
-                transform: translateY(1px); }
+                transform: translateY(-0.5px); }
   #fondoAjustes { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
   /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
      monitor, se queda del ancho de la columna, como el resto de la app. */
@@ -716,7 +719,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.91.1 · 10-09";
+  window.VERSION = "v0.92 · 10-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1035,8 +1038,16 @@
   <div class="principal parriba">
   <button class="chico oculto" id="volverMes">&lsaquo; Volver al mes</button>
   <div class="cabvista"><h2>Revisión</h2>
+    <!-- LA TUERCA ESTÁ DIBUJADA, no es el glifo ⚙ del sistema (v0.92). Es la
+         misma lección de las piezas de la v27 (§4bis): un glifo depende de la
+         fuente del aparato y el que sale es el hueco pensado para texto
+         corrido, con el trazo demasiado fino para leerse a 20 px. Lo reportó el
+         usuario mirando la app —"se ve raro, muy flaco"—. Seis dientes y no
+         ocho: a este tamaño los ocho se empastan. Pesa 900 bytes y no pide
+         nada a la red. El agujero se recorta con una máscara, que es lo que
+         deja el resto en `currentColor` y lo hace andar en los dos temas. -->
     <button id="btnAjustes" aria-label="Ajustes" aria-expanded="false"
-            aria-controls="hojaAjustes">&#9881;</button></div>
+            aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuerca"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuerca)"/></svg></button></div>
   <div class="revcab"><span id="revRival" class="rival"></span>
     <span id="revFin" class="fin"></span></div>
   <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
