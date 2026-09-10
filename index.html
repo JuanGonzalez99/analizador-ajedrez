@@ -118,13 +118,16 @@
                background: var(--linea); margin: 2px auto 8px; }
   .ajCab { display: flex; align-items: center; justify-content: space-between; }
   .ajCab h2 { font-size: 17px; margin: 0; }
-  .ajGrupo { font-size: 12.5px; color: var(--tenue); margin: 14px 0 2px; }
+  /* LA LÍNEA VA POR GRUPO Y NO POR PERILLA (v0.91.1). Con una raya entre cada
+     dos perillas, las de un mismo grupo se leían tan separadas entre sí como de
+     las del grupo de al lado, y los tres bloques dejaban de existir. Ahora la
+     única raya es la que cierra el título del grupo, y adentro separa el aire. */
+  .ajGrupo { font-size: 12.5px; color: var(--tenue); margin: 14px 0 2px;
+             border-bottom: 1px solid var(--linea); padding-bottom: 4px; }
   .ajGrupo:first-of-type { margin-top: 6px; }
   .ajFila { display: flex; align-items: center; justify-content: space-between;
-            gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea);
-            font-size: 15px; }
+            gap: 10px; padding: 8px 0; font-size: 15px; }
   .ajFila select { min-width: 52%; }
-  .ajNota { font-size: 12.5px; color: var(--tenue); margin: 10px 0 0; }
   /* Las secciones plegables del mes: el título es la fila que se toca, y con
      todas cerradas se ve de un vistazo qué cortes hay. */
   .seccion { border-top: 1px solid var(--linea); }
@@ -713,7 +716,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.91 · 10-09";
+  window.VERSION = "v0.91.1 · 10-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1164,7 +1167,6 @@
        que ahí no existen. -->
   <label class="ajFila soloAncho"><span>Las jugadas de al lado</span>
     <select id="formaJugadas" class="chico"></select></label>
-  <p class="ajNota">Se guardan solos y quedan puestos para la próxima vez.</p>
 </div>
 
 <p class="credito"><span id="verPie"></span>Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"

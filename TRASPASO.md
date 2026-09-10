@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.91**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.91.1**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -3118,6 +3118,19 @@ tapa el 59% de la pantalla sin forma evidente de cerrarse es una trampa, y eso
 es lo que fija la prueba. El foco va a "Listo" al abrir y vuelve a la tuerca al
 cerrar; el anillo de foco **solo aparece con teclado** —medido con
 `:focus-visible`—, así que el dedo no lo ve nunca.
+
+### Las rayas y el renglón que sobraba (v0.91.1)
+
+La primera versión ponía una raya entre cada dos perillas. Adentro de un grupo
+eso separa lo que va junto: dos perillas del mismo grupo quedaban tan lejos una
+de otra como del grupo de al lado, y los tres bloques dejaban de leerse. Ahora
+**la única raya es la que cierra el título del grupo** y adentro separa el aire.
+La hoja pasó de 447 px a 457.
+
+Se fue también el renglón "Se guardan solos y quedan puestos para la próxima
+vez": lo pidió el usuario y tiene razón, es lo que cualquiera espera de una
+pantalla de ajustes, así que decirlo era ocupar un renglón para no informar
+nada.
 
 ### La alineación de la tuerca, y una medición que mentía
 
