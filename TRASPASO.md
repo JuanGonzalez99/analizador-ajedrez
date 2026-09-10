@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.93**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.94**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -3411,6 +3411,100 @@ mezclarlo con esta tanda**, así que queda para una propia.
 
 ---
 
+## 4tretrigies. Las dos flechas que mentían (v0.94)
+
+Dos de las tres fallas medidas en la v0.84 (§8) y una tercera que reportó el
+usuario en esta tanda. **Las tres son lo mismo: una flecha dibujada sobre una
+posición que no es la suya.** Ninguna era una decisión de diseño, así que no se
+dibujó nada: se midieron las flechas por color antes y después, que es como se
+habían medido en la v0.84.
+
+### 1. La flecha verde no seguía a la posición que se estaba viendo
+
+`pintarRevision` dibujaba `f.mejor` —la mejor de la jugada de la partida— y la
+apagaba adentro de la variante. Las dos mitades estaban mal, y tapaban dos cosas
+distintas:
+
+- **Adentro de la variante no aparecía nunca la mejor**, que es justo lo que uno
+  quiere ver ahí. Se apagaba a propósito y con un motivo bueno —dibujar la mejor
+  de la posición ORIGINAL sobre una posición inventada es mentira— pero **el
+  dato bueno ya lo teníamos**: cada jugada de la variante guarda su evaluación,
+  y ahí viene la mejor de esa posición nueva.
+- **Abriendo la prueba TOCANDO UNA PIEZA la verde se quedaba pegada.** La
+  variante arranca de la posición de DESPUÉS (`desde0` es `IDX + 1`) y la verde
+  seguía siendo la de `IDX`. Medido, con el tablero ya mostrando otra posición:
+
+```
+antes (v0.93)                        ahora (v0.94)
+fuera        VERDE 120,204→78,162    fuera        VERDE 120,204→78,162
+tocada       VERDE 120,204→78,162    tocada       VERDE  36,36 →78,36
+adentro      (ninguna verde)         adentro      VERDE + VIOLETA
+```
+
+El arreglo es una línea de concepto: **la verde es `posicionVista().ev.mejor`**,
+la mejor de la posición que se está viendo, y el azul es la jugada de la partida
+que sale de esa misma posición. Con eso los dos casos se caen solos y el código
+queda con UNA llamada a `dibujar` en vez de dos ramas.
+
+**El cuadrito "Mejor" se fue con ella**, y no es un extra: nombra lo que dibuja
+la flecha, así que si dijera la mejor de la partida mientras la verde muestra la
+de la variante serían dos jugadas distintas a un dedo de distancia en la misma
+pantalla. Traduce con `sanDeUci` sobre la posición de la que sale la jugada, que
+**fuera de la variante NO es la que se está dibujando**: el tablero muestra la de
+después y la mejor es de la de antes. Traducirla contra el FEN del tablero da
+`a2a3` crudo en lugar de `a3`, y eso apareció en la primera medición.
+
+**Y destapó un tercer caso, que existía desde siempre**: el motor contesta
+`bestmove (none)` cuando no hay jugada —mate o ahogado— y eso se guardaba como
+texto crudo, o sea que `(none)` viajaba como si fuera un UCI. Fuera de la
+variante no se notaba nunca, porque la posición de la que sale una jugada
+siempre tiene alguna; adentro, la variante sí puede terminar en mate, y ahí se
+habría dibujado una flecha de la casilla `(n` a la `on`. Ahora se guarda `null`.
+El cuadrito distingue los dos silencios: `…` mientras el motor piensa y `—`
+cuando no hay jugada.
+
+### 2. La flecha naranja del concepto se quedaba pegada
+
+Reportado por el usuario: tocás un concepto de la explicación, te movés de
+jugada o abrís una variante, y la flecha naranja sigue ahí señalando un tablero
+que ya no existe. `irA` apagaba `RESALTA` desde la v0.69, **pero era UNO de los
+caminos**: tocar una pieza abre la variante sin pasar por ahí.
+
+Se arregló igual que con las marcas del usuario (v0.85) y por el mismo motivo:
+**en vez de acordarse de apagarlo en cada camino, se guarda de qué jugada es y
+se tira en `pintarRevision`**, que es por donde pasan todos. Un señalado
+pertenece a la posición real de `IDX`; con una variante abierta el tablero
+muestra otra cosa, así que no sobrevive.
+
+Y con la forma "las dos tarjetas" del dial —la única que deja la tarjeta real a
+la vista mientras se prueba— **las frases dejan de tocarse**: si se pudieran
+tocar serían un botón que no hace nada, que es lo que el resto de la pantalla
+evita desde la v0.64.
+
+```
+                       antes (v0.93)          ahora (v0.94)
+concepto tocado        AZUL NARANJA           AZUL NARANJA
+abriendo la variante   AZUL NARANJA           AZUL VERDE
+```
+
+### El motor de mentira tuvo que aprender una jugada
+
+El falso contestaba `bestmove (none)` para **toda** posición inventada, a
+propósito: inventar un UCI podía dar una jugada ilegal (§`falso.mjs`). Con eso
+el arnés no podía dibujar nunca la flecha que esta versión vino a arreglar.
+
+La salida es no inventar nada: **se expande un ply desde cada posición de la
+partida** —que es exactamente donde cae la primera jugada de cualquier
+variante— y se guarda una jugada legal de verdad para cada una. Son 86 KB de
+tabla y un ply alcanza; dos serían decenas de miles de posiciones.
+
+**Va en una tabla APARTE de la de la partida**, y eso no es prolijidad: la tabla
+de la partida es también lo que decide si el motor demora, y la demora de la
+v0.79 es lo único con lo que se puede mirar el tablero dibujado antes de que
+conteste el motor.
+
+---
+
 ## 5. Reglas de método — valen para cualquier número que muestre la app
 
 Estas no son opiniones de estilo. Cada una viene de un error que ya se cometió.
@@ -3962,12 +4056,13 @@ celular**: eso se dibuja y se espera el ok, siempre. Lo que la reemplazó acá f
 la comparación byte a byte de las 28 capturas de celular en cada versión, que es
 lo que prueba que nada de PC se filtró.
 
-**Y las tres anotaciones del usuario que siguen sin hacer**, ya medidas y
-diagnosticadas en esta sesión (los números están en §8):
+**Y las tres anotaciones del usuario**, ya medidas y diagnosticadas en la
+sesión de la v0.84 (los números están en §8):
 
-- **En la variante no aparece la mejor jugada**, y de yapa la flecha verde que
+- ~~**En la variante no aparece la mejor jugada**, y de yapa la flecha verde que
   se dibuja al abrir la prueba tocando una pieza **es de la posición
-  equivocada**. Las dos las tapa el mismo arreglo.
+  equivocada**.~~ **HECHAS las dos en la v0.94**, con el mismo arreglo, y está
+  contado en §4tretrigies.
 - **La tarjeta se achica al probar y el tablero salta 78 px**, justo mientras se
   intenta encadenar la jugada siguiente.
 - **La partida tarda en aparecer en el listado.** Falta que el usuario haga el
@@ -4082,6 +4177,8 @@ Las midió la sesión de la v0.80–v0.84 y no llegó a arreglarlas. **Los núme
 están acá para no volver a medirlos.**
 
 **1. En la variante no aparece la mejor jugada — y hay un bug de yapa.**
+**HECHO en la v0.94** (§4tretrigies). Lo de abajo es el diagnóstico con el que
+se arregló, y se deja porque explica por qué estaba puesto a propósito.
 
 Contando las flechas del tablero por color (azul = la jugada de la partida,
 verde = la mejor, violeta = la inventada):

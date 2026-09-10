@@ -99,6 +99,39 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
     tabla[fen] = { cp, mejor, otras, segunda: cp - 60 - (i % 7) * 40 };
   });
 
+  /* UNA JUGADA LEGAL PARA CADA POSICIÓN A UN PLY DE LA PARTIDA (v0.94).
+
+     Desde la v0.94 la flecha verde es la mejor de LA POSICIÓN QUE SE ESTÁ
+     VIENDO, así que adentro de una variante el tablero pide una mejor que la
+     partida no tiene. El falso contestaba `bestmove (none)` para toda posición
+     inventada —a propósito: inventar un UCI podía dar una jugada ilegal— y con
+     eso el arnés no podía dibujar nunca la flecha que la v0.94 vino a arreglar.
+
+     La salida es no inventar nada: se expande UN PLY desde cada posición de la
+     partida, que es exactamente donde cae la primera jugada de cualquier
+     variante, y se guarda una jugada legal de verdad para cada una. Un ply y no
+     dos: el segundo serían decenas de miles de posiciones y la flecha ya se ve
+     con el primero.
+
+     VA EN UNA TABLA APARTE de `T` y no adentro, porque `T` es también lo que
+     decide si el motor DEMORA: una posición que está en `T` es de la partida y
+     contesta al toque. Metiéndolas ahí se perdería la demora de la v0.79, que
+     es lo único con lo que se puede mirar el tablero dibujado antes de que
+     conteste el motor. */
+  const sueltas = {};
+  for (const fen of fens) {
+    const c = new Chess(fen);
+    for (const m of c.moves({ verbose: true })) {
+      c.move(m.san);
+      const f2 = c.fen();
+      if (!tabla[f2] && sueltas[f2] === undefined) {
+        const sal = c.moves({ verbose: true })[0];
+        sueltas[f2] = sal ? sal.from + sal.to + (sal.promotion || "") : null;
+      }
+      c.undo();
+    }
+  }
+
   /* EL MOTOR FALSO TARDA A PROPÓSITO EN LAS POSICIONES PROBADAS (v0.79), y solo
      en esas: una posición que no está en la tabla es, por definición, una jugada
      inventada. Sin esta demora no se puede mirar lo único que la v0.79 cambió
@@ -109,6 +142,7 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
 
   const FALSO = `
   const T = ${JSON.stringify(tabla)};
+  const S = ${JSON.stringify(sueltas)};
   const LENTO = ${LENTO};
   let fen = null;
   /* CUÁNTAS LÍNEAS PIDIÓ, que hasta la v0.89 el falso ignoraba. Solo gatea la
@@ -129,13 +163,16 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
         /* Una posición que NO está en la tabla es, desde la v0.65, una jugada
            probada: por definición no estaba en la partida. Se contesta un número
            determinista sacado del FEN —la misma prueba da siempre lo mismo, así
-           que las capturas son repetibles— y SIN pv, porque derivarFilas usa la
-           mejor de la posición anterior, que sí está en la tabla, y nunca la de
-           esta. Antes contestaba cp 0 con "e2e4" de mejor, que además de mentir
-           podía ser ilegal en la posición probada. */
+           que las capturas son repetibles— y la mejor sale de S, que trae una
+           jugada LEGAL para cada posición a un ply de la partida (v0.94). Hasta
+           la v0.93 iba sin pv: derivarFilas usa la mejor de la posición
+           anterior, que sí está en la tabla, y nunca la de esta, así que no
+           hacía falta; la flecha verde de la v0.94 sí la necesita. Lo que no se
+           hace, y por eso está la tabla, es INVENTAR un UCI: el que se inventaba
+           antes ("e2e4" fijo) además de mentir podía ser ilegal. */
         var x = 0;
         for (var k = 0; k < fen.length; k++) x = (x * 31 + fen.charCodeAt(k)) | 0;
-        v = { cp: Math.abs(x % 601) - 300, mejor: null, segunda: null };
+        v = { cp: Math.abs(x % 601) - 300, mejor: S[fen] || null, segunda: null };
       }
       var tipo = v.mate === undefined ? "cp " + v.cp : "mate " + v.mate;
       var contestar = function () {

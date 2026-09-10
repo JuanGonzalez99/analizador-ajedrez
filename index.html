@@ -726,7 +726,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.93 · 10-09";
+  window.VERSION = "v0.94 · 10-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2891,11 +2891,18 @@ const ver = (id, si) => $(id).classList.toggle("oculto", !si);
 
 /* La explicación, escrita como frases que se tocan. La que tiene algo para
    señalar en el tablero se marca; la que no, va como texto y no se toca, o
-   sería un botón que no hace nada. */
-function pintarExplicacion(id, partes) {
+   sería un botón que no hace nada.
+
+   `tocable` en false las deja como texto, y es lo mismo de siempre: una frase
+   señala una casilla DE ESTA POSICIÓN, así que con una variante abierta el
+   tablero está mostrando otra cosa y no hay dónde señalar. Solo pasa con la
+   forma "las dos tarjetas" del dial, que es la única que deja la tarjeta real a
+   la vista mientras se prueba. */
+function pintarExplicacion(id, partes, tocable = true) {
   const el = $(id);
   el.innerHTML = partes.map((p, i) => {
-    const ref = p.sq ? ` data-sq="${[].concat(p.sq).join(",")}"`
+    const ref = !tocable ? ""
+              : p.sq ? ` data-sq="${[].concat(p.sq).join(",")}"`
               : p.uci ? ` data-uci="${p.uci}"` : "";
     /* Se marca EL CONCEPTO adentro de la frase, no la frase. Si la marca no
        aparece tal cual en el texto —un cambio de redacción que se olvidó de
@@ -2911,7 +2918,8 @@ function pintarExplicacion(id, partes) {
     sp.onclick = seguro("señalar", () => {
       const i = +sp.dataset.i;
       RESALTA = (RESALTA && RESALTA.i === i) ? null
-              : { i, sq: sp.dataset.sq ? sp.dataset.sq.split(",") : null,
+              : { i, de: IDX,
+                  sq: sp.dataset.sq ? sp.dataset.sq.split(",") : null,
                   uci: sp.dataset.uci || null };
       pintarRevision();
     });
@@ -3115,7 +3123,16 @@ class Motor {
           /* `tercera` es simétrica de `segunda` y viene en null salvo con MultiPV 3,
              que hoy pide una sola cosa: el panel de alternativas (v0.89). El
              barrido de la partida sigue corriendo en 1 o 2 y no paga nada. */
-          ok({ cp: uno.cp, mate: uno.mate, mejor: s.split(" ")[1] || uno.mov,
+          /* `bestmove (none)` es lo que contesta el motor cuando NO HAY jugada:
+             mate o ahogado. Se guarda como null y no como el texto crudo, o
+             "(none)" viaja como si fuera un UCI y termina dibujado como una
+             flecha de la casilla "(n" a la "on". Fuera de la variante no se
+             notaba —la posición de la que sale una jugada siempre tiene alguna—
+             y se destapó al hacer que la flecha verde siga a la posición vista
+             (v0.94), donde la partida sí puede terminar. */
+          const bm = s.split(" ")[1];
+          ok({ cp: uno.cp, mate: uno.mate,
+               mejor: (bm && bm !== "(none)" ? bm : null) || uno.mov,
                segunda: linea[2] || null, tercera: linea[3] || null });
         }
       };
@@ -4170,8 +4187,10 @@ function irA(i) {
   if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
   IDX = i;
   MEJOR_EN = null;
-  /* y el señalado se apaga solo, igual que el vistazo: señala una posición */
-  RESALTA = null;
+  /* el señalado NO se apaga acá: lo tira `pintarRevision`, que es por donde
+     pasan también los caminos que no llaman a `irA` —abrir la variante tocando
+     una pieza, sobre todo—. Dos mecanismos para lo mismo era justo lo que
+     dejaba la flecha naranja pegada. */
   /* Cambiar de jugada corta la prueba, por el mismo motivo que apaga el vistazo
      a la mejor: una prueba pertenece a UNA posición, y arrastrarla a la
      siguiente mostraría una jugada evaluada contra una posición que no es la
@@ -6018,6 +6037,15 @@ function pintarLista() {
 function pintarRevision() {
   const f = R.filas[IDX];
   const c = presentar(f);
+  /* EL SEÑALADO SE VA ACÁ, y por el mismo motivo que las marcas del usuario:
+     una frase señala una casilla DE ESTA POSICIÓN, así que en cuanto el tablero
+     muestra otra —otra jugada, o una variante— la flecha naranja estaría
+     señalando un tablero que ya no existe. `irA` lo apagaba desde la v0.69,
+     pero era UNO de los caminos: tocar una pieza abre la variante sin pasar por
+     ahí, y la flecha se quedaba pegada. Lo reportó el usuario. Como con las
+     marcas, en vez de acordarse de apagarlo en cada camino se guarda de qué
+     jugada es y se tira acá, que es por donde pasan todos. */
+  if (RESALTA && (PRUEBA || RESALTA.de !== IDX)) RESALTA = null;
   /* La explicación se ARMA acá y se deriva de la fila, no viene guardada: una
      partida que ya estaba en la caché la estrena sin volver a correr el motor.
      El SAN de la mejor va en null cuando la jugada ya era la mejor, porque ahí
@@ -6063,7 +6091,7 @@ function pintarRevision() {
   const hayExp = !!explicado;
   $("vSub").textContent = hayExp ? "" : c.desc;
   $("vSub").classList.toggle("oculto", hayExp);
-  if (hayExp) pintarExplicacion("vExp", partes); else $("vExp").innerHTML = "";
+  if (hayExp) pintarExplicacion("vExp", partes, !PRUEBA); else $("vExp").innerHTML = "";
   $("vExp").classList.toggle("oculto", !hayExp);
   /* si el número ya viaja en la barra, la tarjeta no lo repite */
   $("vEv").textContent = MODO_EVAL === "tarjeta" ? f.evalTexto : "";
@@ -6135,7 +6163,6 @@ function pintarRevision() {
 
   $("veredicto").classList.toggle("invertida", modo === "tarjeta");
 
-  $("mMejor").title = f.mejor || "";
   $("mPerdida").textContent = f.perdida.toFixed(2);
   /* UN DECIMAL, no cero. El cuadrito redondeaba —"21 pt"— mientras la tarjeta
      decía "20.9 puntos de victoria"; cuando los números se fueron de la tarjeta
@@ -6152,8 +6179,6 @@ function pintarRevision() {
   /* Cuando la jugada jugada YA era la mejor no hay nada distinto que mostrar.
      El cuadrito se grisa y deja de responder: sin eso parecia que tocarlo no
      hacia nada, o sea un bug. */
-  const yaEraLaMejor = f.mejor === f.uci;
-  const verMejor = (VER_MEJOR || MEJOR_EN === IDX) && !yaEraLaMejor;
   /* EN LA VARIANTE el tablero sigue a la variante, y fuera de ella es el de
      siempre. La flecha AZUL es la jugada de la partida que sale de la posición
      que se está viendo: existe parado en el arranque de la variante —ahí se
@@ -6161,6 +6186,37 @@ function pintarRevision() {
      partida ya no pasa por ahí. */
   const vista = PRUEBA && posicionVista();
   const real = jugadaReal();
+  /* LA FLECHA VERDE ES LA MEJOR DE LA POSICIÓN QUE SE ESTÁ VIENDO, no la de la
+     jugada de la partida (v0.94). Antes era `f.mejor` y se apagaba adentro de la
+     variante, y eso tapaba dos cosas que el usuario reportó:
+
+     - probando una jugada no aparecía nunca la mejor, que es justo lo que uno
+       quiere ver ahí. Se apagaba a propósito y con un motivo bueno —dibujar la
+       mejor de la posición ORIGINAL sobre una posición inventada es mentira—,
+       pero el dato bueno ya lo teníamos: cada jugada de la variante guarda su
+       evaluación, y ahí viene la mejor de esa posición nueva;
+     - abriendo la prueba TOCANDO UNA PIEZA la flecha verde se quedaba pegada a
+       la posición de antes: la variante arranca de la de después (`desde0` es
+       IDX + 1) y la verde seguía siendo la de IDX. Medido en la v0.84: mismas
+       coordenadas con el tablero ya mostrando otra posición.
+
+     `vista.ev` queda en null mientras el motor piensa la jugada recién probada,
+     y entonces no hay verde hasta que conteste, que es lo correcto: no la
+     sabemos todavía. */
+  const mejorVista = PRUEBA ? (vista.ev && vista.ev.mejor) || null : f.mejor;
+  /* DESDE QUÉ POSICIÓN SALE ESA MEJOR, que fuera de la variante NO es la que se
+     está dibujando: el tablero muestra la posición de DESPUÉS de la jugada y la
+     mejor es de la de ANTES. Traducirla a notación con el FEN del tablero da
+     `a2a3` crudo en vez de `a3`, porque la jugada no es legal ahí. Adentro de la
+     variante las dos son la misma, y por eso la distinción se ve una sola vez. */
+  const fenDeLaMejor = PRUEBA ? vista.fen : fenDeLaJugada(IDX);
+  /* La jugada de la partida que se dibuja en azul, si hay alguna. */
+  const uciAzul = PRUEBA ? (PRUEBA.ver === 0 && real ? real.uci : null) : f.uci;
+  /* Cuando la mejor ES la que se dibuja en azul no hay nada distinto que
+     mostrar, y ahí el cuadrito se grisa y deja de responder: sin eso parecía
+     que tocarlo no hacía nada, o sea un bug. */
+  const pideMejor = VER_MEJOR || MEJOR_EN === IDX;
+  const verMejor = pideMejor && !!mejorVista && mejorVista !== uciAzul;
   /* Los colores no se mezclan nunca: AZUL es una jugada de la partida y VIOLETA
      una inventada. Parado en el arranque de la variante hay azul —lo que se
      jugó de verdad desde ahí— y no hay violeta; una jugada adentro, al revés,
@@ -6182,18 +6238,31 @@ function pintarRevision() {
   /* UNA SOLA VARIABLE para la posición que se dibuja, así la tira de comidas no
      puede desincronizarse del tablero: las dos leen exactamente el mismo FEN. */
   const fenVisto = FEN_VISTO = PRUEBA ? vista.fen : f.fen;
-  $("tablero").innerHTML = PRUEBA
-    ? dibujar(fenVisto, PRUEBA.ver === 0 ? (real && real.uci) : null,
-              PRUEBA.ver === 0 && verMejor ? f.mejor : null, capa)
-    : dibujar(fenVisto, f.uci, verMejor ? f.mejor : null, capa);
+  $("tablero").innerHTML =
+    dibujar(fenVisto, uciAzul, verMejor ? mejorVista : null, capa);
   pintarComidas(fenVisto);
   pintarAlternativas();
   /* lo que había guardado la previa ya no existe: este es el tablero nuevo */
   TABLERO_PREVIO = null;
+  /* EL CUADRITO NOMBRA LO QUE DIBUJA LA FLECHA, así que sigue a la misma
+     posición que ella: si dijera la mejor de la partida mientras la verde
+     muestra la de la variante, serían dos jugadas distintas a un dedo de
+     distancia en la misma pantalla. `sanDeUci` traduce en CUALQUIER posición,
+     que es lo que `sanDeLaMejor` —atada a una fila de la partida— no puede.
+     Sin alternativa que ofrecer el cuadrito se grisa y deja de responder: sin
+     eso parecía que tocarlo no hacía nada, o sea un bug. */
+  const sinAlternativa = !mejorVista || mejorVista === uciAzul;
+  /* "Todavía no" y "no hay" no son lo mismo: el motor está pensando la jugada
+     que se acaba de probar, o la variante llegó a un mate y no hay jugada. */
+  const pensando = !!PRUEBA && !vista.ev;
+  $("mMejor").title = mejorVista || "";
   $("tileMejor").classList.toggle("activo", verMejor);
-  $("tileMejor").classList.toggle("inerte", yaEraLaMejor);
-  $("tileMejor").setAttribute("aria-disabled", yaEraLaMejor ? "true" : "false");
-  $("mMejor").textContent = yaEraLaMejor ? "la jugada" : sanDeLaMejor(IDX);
+  $("tileMejor").classList.toggle("inerte", sinAlternativa);
+  $("tileMejor").setAttribute("aria-disabled", sinAlternativa ? "true" : "false");
+  $("mMejor").textContent = pensando ? "\u2026"
+    : !mejorVista ? "\u2014"
+    : mejorVista === uciAzul ? "la jugada"
+    : (sanDeUci(fenDeLaMejor, mejorVista) || mejorVista);
 
   /* por defecto solo se pintan las jugadas propias: las del rival distraen de
      lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
