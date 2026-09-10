@@ -76,6 +76,43 @@ Son los dos más grandes del repo y los dos se pagan en contexto:
   contestan la pregunta; el resumen de texto que imprime el arnés son 400 tokens
   y suele alcanzar.
 
+## Mirar barato (medido en la v0.91)
+
+Mandarle capturas al usuario **no cuesta nada** —`SendUserFile` devuelve una
+lista de identificadores, no las imágenes—. Lo que se paga es **mirarlas uno**, y
+eso se puede bajar diez veces sin perder nada. En orden de cuánto rinde:
+
+1. **Medir en vez de mirar.** Lo que uno va a buscar en la captura es casi
+   siempre lo mismo —¿algo quedó pegado, tapado, cortado o desalineado?— y eso
+   son rectángulos. El arnés puede recorrer los vecinos y decir *"el flotante se
+   superpone con #btnAmbos"* o *"quedan 9 px hasta el rival"*: son ~100 tokens y
+   contestan lo que contestan 1.670. **Ojo con las alineaciones**: la cuenta que
+   deduce dónde cae el renglón a partir del relleno solo vale si el texto arranca
+   arriba de todo; adentro de algo centrado se equivoca en la mitad del sobrante
+   —8 px, pasó— y manda corregir lo que ya está bien. Un `Range` sobre el texto
+   devuelve la caja del renglón ya ubicada (§4untrigies).
+2. **Las capturas para uno van a escala CSS**, no a 2x: `scale: "css"` en
+   Playwright. La pantalla entera del celular pasa de **1.670 a 417 tokens** y
+   para revisar espacios alcanza y sobra. La de 2x se saca igual, pero **solo
+   para mandársela al usuario**, que es quien la tiene que leer.
+3. **Recortar** con `locator.screenshot()`: el renglón que se está decidiendo son
+   **~70 tokens** contra 1.670 de la pantalla entera. La pantalla completa se
+   mira una sola vez, la de la variante que se recomienda, que es donde vale la
+   regla de recorrer los espacios.
+4. **Una tira con todas las variantes juntas.** Se clona el renglón una vez por
+   opción, se le pone el envase de cada una y se fotografía todo junto: seis
+   opciones en una imagen, comparadas pegadas, que es como se decide. **A escala
+   CSS son 157 tokens las seis**, o sea 26 por variante. Ojo: **la misma tira a
+   2x sale 627**, más cara que seis recortes sueltos; el ahorro es la escala, no
+   la tira.
+5. **Menos variantes por tanda.** Con los números primero, varias se descartan
+   solas y no llegan a ser imagen nunca.
+
+Una tanda de seis variantes pasa de ~10.000 tokens a ~700 con esto. Y el gasto
+que queda arriba es **escribir el script de la maqueta** (~5.000 de salida), que
+es la razón de la regla de §10 de reescribirlo en vez de parchearlo: un parche
+que lo rompe cuesta más que el archivo entero.
+
 **El MCP de github está denegado** en `.claude/settings.json`, que por eso es el
 único archivo de `.claude/` que se versiona: si no se commitea, no existe en la
 sesión siguiente —el contenedor clona limpio— y la guarda no serviría para lo
