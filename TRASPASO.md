@@ -60,8 +60,48 @@ este proyecto (extensión `.mjs`, CDN del motor, rutas, un import mal escrito), 
 desde un celular no hay consola para diagnosticar. Un archivo elimina esa clase
 de fallo entera.
 
+### El balance de hoy (revisado en la v0.92)
+
+El usuario preguntó si esto no había quedado obsoleto, con el argumento de que
+el riesgo era de cuando **él subía los archivos a mano desde el celular** y hoy
+trabaja con un agente. Vale revisarlo, y la respuesta es que **la decisión sigue
+en pie pero por razones distintas de las de entonces**. Conviene tener los tres
+grupos separados, porque el que cambie de opinión en el futuro va a necesitar
+esto y no el párrafo de arriba solo:
+
+**Lo que ya no es un riesgo:**
+
+- **La subida manual.** Existió y desapareció. Pero mirando el párrafo de
+  arriba: **ninguna de las cuatro roturas fue eso.** Fueron extensión, CDN,
+  rutas y un import mal escrito. El recuerdo es real, el motivo escrito es otro.
+- **Un import roto llegando mudo al celular.** Esto sí se desactivó, y es el
+  cambio de fondo desde que se escribió la sección. El chequeo 6 de
+  `estaticos.mjs` verifica que el `<script type="module">` entero parsea
+  —existe exactamente por eso—, y desde la v0.58 `mirar.mjs` levanta la app en
+  un navegador de verdad antes de pushear. Un módulo que no carga ya no se
+  descubre en producción.
+
+**Lo que sigue vivo:**
+
+- **Desde el celular no hay consola.** Igual que el primer día. Si algo se rompe
+  en vivo, el usuario ve una pantalla en blanco y no puede decir qué pasó; el
+  diagnóstico depende de reproducirlo acá.
+- **GitHub Pages cachea cada archivo por separado**, y esto no estaba escrito.
+  Con varios archivos, un deploy puede quedarle a alguien con el `index.html`
+  nuevo y un módulo viejo: los dos se sirvieron bien, y aun así la app está
+  rota. Es la misma familia del bucle de redirección del §1, que pasó de verdad.
+  **Un archivo único elimina esa clase entera por construcción**, y es hoy el
+  argumento más fuerte a favor de no partirlo.
+
+**El argumento NUEVO a favor de partirlo**, que no existía cuando se escribió
+esto: el archivo son **368 KB, o sea unos 103.000 tokens**, y no se puede leer
+entero. Cada sesión lo paga en greps, y en mantener al día el mapa del §3 para
+no tener que leerlo. Partirlo abarataría todas las sesiones futuras. Esa es la
+razón de peso hoy, y no la que motivó la pregunta.
+
 **Partirlo es razonable**, pero conviene que sea el único cambio de esa tanda,
-para que si rompe se sepa qué fue. No mezclarlo con cambios de lógica.
+para que si rompe se sepa qué fue. No mezclarlo con cambios de lógica. Y está
+anotado como **candidato a la v1.0** (§10), que la decide el usuario.
 
 ### Cómo se prueba sin navegador
 
