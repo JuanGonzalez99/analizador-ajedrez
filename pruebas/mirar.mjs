@@ -27,6 +27,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Chess } from "../chess.js";
+import { alinear, espacios } from "./tira.mjs";
 
 const RAIZ = path.dirname(fileURLToPath(new URL("../index.html", import.meta.url)));
 const SALIDA = path.join(RAIZ, "capturas");
@@ -293,6 +294,18 @@ const elegir = async (sel, valor) => {
   await pg.evaluate(y => window.scrollTo(0, y), y);
   await pg.waitForTimeout(120);
 };
+
+/* MEDIR EN VEZ DE MIRAR (v0.92). Las dos preguntas que uno va a buscar a la
+   captura —¿quedó algo encimado o pegado?, ¿quedó algo corrido?— se contestan
+   con números, y son ~100 tokens contra los 1.670 de la pantalla a 2x. Van acá
+   arriba y en cada corrida a propósito: `tira.mjs` lo usan las maquetas, que
+   son desechables, así que sin un uso fijo el ayudante se rompería sin que se
+   entere nadie. La tuerca contra la "R" es justo la medición que en la v0.91
+   salió mal y mandó corregir 8 px que ya estaban bien. */
+console.log("cabecera de la vista:", JSON.stringify({
+  ...await espacios(pg, ".cabvista"),
+  tuercaContraLaR: (await alinear(pg, ".cabvista h2", "#btnAjustes")).desvio,
+}));
 
 await foto("revision-1");
 /* la vista desde su primer renglón: es donde se ve si la barra y la tarjeta

@@ -143,6 +143,11 @@ toca el DOM ni el motor al cargarse, así que se sacan del HTML y corren en node
 extractores detectan solos qué exportar, así que agregar una función no obliga
 a tocar nada.
 
+`pruebas/tira.mjs` es la cuarta pieza y no se corre sola: son funciones que
+usan las maquetas y `mirar.mjs` para comparar variantes de un pedazo de
+pantalla, medir alineaciones y detectar cosas pegadas o encimadas
+(§4untrigies).
+
 Lo que no se puede probar así es el motor y el DOM. Para eso está
 `pruebas/estaticos.mjs`, con ocho chequeos que ya agarraron errores reales:
 
@@ -3231,6 +3236,57 @@ arranca el renglón— antes de dibujar las variantes, así que **la captura que
 decidió no venía con el error adentro**, que es justo lo que había pasado en la
 v0.91. El `font-size: 17px` del botón se fue con el glifo: sin texto adentro no
 decía nada.
+
+### El andamio de las tiras salió a `pruebas/tira.mjs` (v0.92)
+
+**La regla de las maquetas no cambió: lo que se tira sigue siendo la decisión
+temporal.** Lo que se descubrió es que el andamio era siempre el mismo, y que
+ese andamio es el grueso del costo. Desglosado sobre la tanda de las tuercas:
+escribir la maqueta fueron **~1.600 tokens**, mirar las capturas ~2.080,
+aplicar el cambio y documentarlo ~1.500, y **el dibujo en sí ~100**. O sea que
+lo caro no era decidir el ícono: era volver a escribir el mismo clonador por
+tercera vez.
+
+`pruebas/tira.mjs` es ese andamio, y **no es una maqueta**: se commitea, porque
+sirve para todas las tandas y no para una. Tiene cuatro funciones:
+
+| función | qué hace |
+|---|---|
+| `abrirApp()` | servidor sobre el repo + Chromium a 412 de ancho, con la app cargada. NO analiza ninguna partida: una decisión de forma no la necesita, y el motor de mentira de `mirar.mjs` son 150 líneas |
+| `tira()` | clona un pedazo de la pantalla una vez por variante, le aplica el cambio a cada clon y fotografía todo junto, en las **dos escalas** |
+| `alinear()` | el centro de una mayúscula contra el centro del vecino, con `Range` y métricas de fuente |
+| `espacios()` | qué quedó encimado y qué quedó pegado adentro de un contenedor |
+
+Con eso, la maqueta de las cinco tuercas se rehizo en **37 líneas**, de las
+cuales 14 son el generador de engranajes —o sea contenido, no andamio—.
+
+**Las dos escalas están en el ayudante a propósito, y no es simetría:** la de
+escala CSS es para quien programa (26 tokens por variante) y la de 2x es para
+mandarle al usuario, que la lee en un teléfono. Mandar no cuesta nada; mirar,
+sí. Invertirlo sale caro: la misma tira a 2x son 627 tokens.
+
+**Dos fallas que aparecieron probándolo, y las dos valen como lección:**
+
+1. **El clon perdía el CSS de sus `id`.** Hay que sacarle el `id` —repetirlo
+   rompe todo lo que lo busque— y esta app estila mucho por id: `#btnAjustes`
+   trae el redondeado, el borde y el tamaño. La primera corrida mostró **el
+   botón cuadrado cuando en la app es un círculo**. No es un detalle del
+   andamio: es una decisión tomada mirando algo que no era la pantalla, que es
+   justo lo que las tiras existen para evitar. Ahora `tira()` copia las reglas
+   de `#x` a `.v-x` leyendo las hojas de estilo de verdad, entrando en los
+   `@media` para no perder cuál gana. En la v0.91 y la v0.92 eso se había
+   resuelto repitiendo el CSS a mano en la maqueta, o sea acordándose.
+2. **`espacios()` se medía sobre la vitrina.** Reportaba dos "pegados" que eran
+   los rótulos y las celdas de la tira contra sus clones. Se arregló midiendo
+   sobre la tira a tamaño real, antes de rearmar la ampliada, y marcando lo que
+   agrega el andamio con `data-tira`.
+
+**`mirar.mjs` usa `alinear` y `espacios` en cada corrida**, y eso es a propósito:
+las maquetas son desechables, así que sin un uso fijo el ayudante se rompería
+sin que se entere nadie. Imprime `cabecera de la vista`, con la tuerca contra la
+"R" —la medición que en la v0.91 salió mal y mandó corregir 8 px que ya estaban
+bien—. Hoy da **-0,25 px**. `tira()` no queda cubierto por eso: si se rompe, se
+rompe con una maqueta delante y se arregla ahí.
 
 ### El arnés tuvo que aprender a abrir el menú
 

@@ -38,6 +38,12 @@ describe. §10 tiene las reglas de trabajo.
   andamio de una decisión temporal: se corre, se mandan las capturas y se tira.
   `.gitignore` ya lo ataja (`pruebas/maqueta-*.mjs`). En el repo queda lo que se
   aprendió —los números y lo que eligió el usuario— en el traspaso, no el script.
+  **Pero el andamio sí se commitea, y vive en `pruebas/tira.mjs`** (v0.92):
+  `abrirApp()` levanta la app al ancho del celular, `tira()` clona un pedazo de
+  la pantalla una vez por variante y lo fotografía en las dos escalas, y
+  `alinear()` y `espacios()` contestan con números lo que uno iría a buscar a la
+  captura. **Importarlo, no reescribirlo**: con eso una maqueta son ~35 líneas
+  en vez de ~110, que es de dónde salía el grueso del costo de una tanda.
 - **Mirar la captura no es mirar lo que cambiaste: es mirar la pantalla.**
   Incluye los **espacios**: que nada quede pegado a nada. Ya pasó —una fila de
   botones mudada de lugar quedó pegada a la tarjeta de abajo, y lo vio el
