@@ -261,7 +261,16 @@ export async function tira(pg, { selector, variantes, aplicar, nombre, salida,
       return css;
     };
 
-    const modelo = document.querySelector(sel);
+    /* EL PRIMER MATCH NO SIRVE: hay selectores que aparecen más de una vez en
+       el documento porque la app tiene las dos vistas montadas a la vez y solo
+       muestra una. `.metricas` es el caso: la de la vista Mes está primera y
+       VACÍA, así que clonarla daba un elemento sin hijos y un error que no
+       decía nada ("no puedo leer cloneNode de undefined"). Mordió dos veces en
+       la misma tanda. Lo que se quiere maquetar es siempre lo que está EN
+       PANTALLA, así que se busca el primero visible y el primero a secas queda
+       de reserva por si ninguno lo está. */
+    const visibles = [...document.querySelectorAll(sel)];
+    const modelo = visibles.find(e => e.getClientRects().length) || visibles[0];
     if (!modelo) throw new Error("no encontré " + sel);
     const correr = new Function("clon", "v", fn);
     const ids = new Set();
@@ -271,7 +280,11 @@ export async function tira(pg, { selector, variantes, aplicar, nombre, salida,
       const rot = document.createElement("div");
       rot.textContent = v.nombre || v.clave;
       rot.dataset.tira = "rotulo";
-      rot.style.cssText = "font-size:12px;color:#777;margin:14px 0 -18px";
+      /* NADA DE MARGEN NEGATIVO: estaba en -18 para pegar el rótulo al clon
+         cuando el clon es un renglón alto, y con uno bajo —una fila de
+         cuadritos chatos— el rótulo le queda ENCIMA. La tira que decide no
+         puede tener texto pisado. */
+      rot.style.cssText = "font-size:12px;color:#777;margin:14px 0 3px";
       const clon = modelo.cloneNode(true);
       /* los id se duplicarían, y un id repetido rompe todo lo que los busque */
       if (clon.id) { clon.classList.add("v-" + clon.id); clon.removeAttribute("id"); }
@@ -317,7 +330,8 @@ export async function tira(pg, { selector, variantes, aplicar, nombre, salida,
       caja.style.display = "grid";
       caja.style.gridTemplateColumns = `repeat(${Math.min(vs.length, 3)}, 1fr)`;
       caja.style.alignContent = "start";
-      const modelo = document.querySelector(sel);
+      const todos = [...document.querySelectorAll(sel)];
+      const modelo = todos.find(e => e.getClientRects().length) || todos[0];
       const correr = new Function("clon", "v", fn);
       for (const v of vs) {
         const cel = document.createElement("div");
