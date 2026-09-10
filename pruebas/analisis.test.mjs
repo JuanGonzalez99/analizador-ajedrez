@@ -2484,9 +2484,13 @@ test("la tira lleva la partida entera, no una ventana", () => {
   assert.ok(html.includes('<aside class="lateral" id="lateral">'),
     "la lista vertical vive en la columna de al lado");
   /* Desde la v0.91 lo que se esconde no es el <select> suelto sino el RENGLÓN
-     entero del menú de ajustes, que es donde vive ahora: `.soloAncho`. */
-  assert.ok(html.includes(".lateral, .soloAncho { display: none; }"),
+     entero del menú de ajustes, que es donde vive ahora: `.soloAncho`. Y desde
+     la v0.95 lo que se esconde de la lista es su ENVASE y no la lista: el envase
+     es el hijo de la grilla y es lo que sujeta al `sticky` (§4octovicies). */
+  assert.ok(html.includes(".colLista, .soloAncho { display: none; }"),
     "y sin pantalla ancha no se ve: en el celular sigue estando solo la tira");
+  assert.ok(html.includes('<div class="colLista">'),
+    "la lista va adentro de su envase, o el sticky se mete abajo de la curva");
   assert.ok(html.includes("mask-image: linear-gradient(to right, transparent 0, #000 24px"),
     "y las puntas se desvanecen en vez de cortarse");
 });
@@ -2550,7 +2554,7 @@ test("la lista lateral no le saca lugar al celular", () => {
   /* La regla base tiene que ir ANTES de la media query: a igual especificidad
      gana la última, y puesta después le ganaba al display de adentro y la lista
      no se veía NUNCA. Se rompió así al escribirla. */
-  const base = html.indexOf(".lateral, .soloAncho { display: none; }");
+  const base = html.indexOf(".colLista, .soloAncho { display: none; }");
   const ancha = html.indexOf("@media (min-width: 1110px)");
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,

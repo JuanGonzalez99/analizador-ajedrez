@@ -494,7 +494,7 @@
   /* Fuera de pantalla ancha no hay ni columna ni dial. VA ANTES de la media
      query: a igual especificidad gana la última regla, y puesto después le
      ganaba al `display` de adentro y la lista no se veía nunca. */
-  .lateral, .soloAncho { display: none; }
+  .colLista, .soloAncho { display: none; }
 
   /* EN PANTALLA ANCHA, DOS COLUMNAS (v0.80). Hasta acá el archivo entero tenía
      UNA media query y era la de claro contra oscuro: la app era la misma
@@ -532,19 +532,20 @@
     #zonaRevision > .parriba  { grid-column: 1; grid-row: 1; }
     #zonaRevision > .tarjetas { grid-column: 1; grid-row: 2; }
     #zonaRevision > .pmedio   { grid-column: 1; grid-row: 3; }
-    #zonaRevision > .lateral  { grid-column: 2; grid-row: 1 / span 3; }
+    #zonaRevision > .colLista { grid-column: 2; grid-row: 1 / span 3; }
     #zonaRevision > .curva    { grid-column: 1 / -1; grid-row: 4; }
     #zonaRevision > .pabajo   { grid-column: 1; grid-row: 5; }
 
     /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
     #zonaRevision.solaTira { grid-template-columns: 700px; }
-    #zonaRevision.solaTira .lateral { display: none; }
+    #zonaRevision.solaTira .colLista { display: none; }
     /* se queda a la vista mientras se recorre la partida, y nunca más alta que
        la pantalla: si creciera con la partida, en una de 80 jugadas habría que
        scrollear la página para ver el final de la lista. */
     /* el margen la pone EN LÍNEA con "Revisión": sin él la lista arrancaba 24 px
        más arriba que el título de al lado —el que trae el h2— y las dos
        columnas empezaban a distinta altura. Se vio en la captura. */
+    .colLista { display: block; }
     .lateral { display: block; position: sticky; top: 14px; margin-top: 24px; }
     /* el menor de los dos: la pantalla y la columna de al lado. El segundo lo
        mide `pintarRevision`; el `100vh` de reserva es para el primer pintado. */
@@ -637,7 +638,7 @@
     #zonaRevision > .parriba  { grid-column: 2; grid-row: 1; }
     #zonaRevision > .tarjetas { grid-column: 1; grid-row: 1 / span 2; }
     #zonaRevision > .pmedio   { grid-column: 2; grid-row: 2; }
-    #zonaRevision > .lateral  { grid-column: 3; grid-row: 1 / span 2; }
+    #zonaRevision > .colLista { grid-column: 3; grid-row: 1 / span 2; }
     #zonaRevision > .curva    { grid-column: 1 / -1; grid-row: 3; }
     #zonaRevision > .pabajo   { grid-column: 2; grid-row: 4; }
     /* La tarjeta no gasta más alto arriba del tablero, así que el presupuesto
@@ -726,7 +727,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.94 · 10-09";
+  window.VERSION = "v0.95 · 10-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1104,6 +1105,13 @@
     <button id="sig" aria-label="Jugada siguiente"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M -3.5 -6 L 3.5 0 L -3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
   </div>
+  <!-- EL ENVASE DE LA LISTA (v0.95) no es un div de más: es lo que sujeta al
+       `sticky`. La lista se pega al techo mientras se scrollea, y Chrome no la
+       sujeta a su área de la grilla sino al fondo de #zonaRevision, así que le
+       sobraban 154 px de deslizamiento y se metía abajo de la curva. Con un
+       envase que ocupa exactamente las filas del tablero, el bloque contenedor
+       del `sticky` es ese y no le queda lugar para irse. -->
+  <div class="colLista">
   <aside class="lateral" id="lateral">
     <!-- LAS ALTERNATIVAS DEL MOTOR (v0.89). Solo en compu, arriba de la lista.
          No se calculan solas: son una corrida de motor por posición y correrla
@@ -1120,6 +1128,7 @@
     </div>
     <div class="jugadas" id="jugadas"></div>
   </aside>
+  </div>
   <div class="curva" id="curva" role="img"
        aria-label="Curva de quién va ganando a lo largo de la partida"></div>
   <div class="principal pabajo">
@@ -4275,6 +4284,7 @@ function abrirPrueba(desde0) {
 
 function salirDePrueba() { if (PRUEBA) { PRUEBA = null; pintarRevision(); } }
 
+
 /* Moverse por la variante. No llama al motor: las evaluaciones ya están. */
 function verDeLaVariante(k) {
   if (!PRUEBA || k < 0 || k > PRUEBA.linea.length) return;
@@ -6490,6 +6500,8 @@ function pintarRevision() {
   $("sig").disabled = PRUEBA ? PRUEBA.ver === PRUEBA.linea.length
                              : IDX === R.filas.length - 1;
 }
+
+
 /* Pasar jugadas es lo que más se repite en esta pantalla, así que además de
    los botones se puede deslizar sobre el tablero, como en cualquier tablero
    digital. Es un atajo, no el camino: los botones siguen ahí para el que no

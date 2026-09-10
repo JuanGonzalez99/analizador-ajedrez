@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.94**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -3002,6 +3002,35 @@ mandado a la columna de al lado de la primera mitad.
 
 El arnés mide el ancho de la curva, el orden vertical leído de la pantalla —tira,
 curva, cuadritos— y el aire de abajo en las dos formas de la evaluación.
+
+### La lista se metía abajo de la curva (v0.95)
+
+Reportado por el usuario: **en la compu la curva tapa la lista de jugadas.** Es
+verdad y se reproduce scrolleando; el arnés no lo veía porque medía parado
+arriba de todo, que es justo donde no pasa.
+
+La lista es `position: sticky` para quedarse a la vista mientras se scrollea, y
+**Chrome no la sujeta a su área de la grilla sino al fondo de `#zonaRevision`**.
+Medido a 1280 × 800: el área de la lista termina en 1249 —el piso de `.pmedio`—
+y la zona entera en 1403, así que le sobraban **154 px de deslizamiento libre**.
+Con eso se metía en la fila de la curva, y la curva le gana: va después en el
+DOM y es `position: relative`, o sea que la tapa. En la captura desaparecía la
+jugada 15 entera.
+
+**El arreglo es un envase**, `.colLista`, que ocupa exactamente las filas del
+tablero y lleva la lista adentro: el bloque contenedor del `sticky` pasa a ser
+ese y no le queda lugar para irse. Lo que se pierde es el deslizamiento, y no es
+una pérdida: la lista ya mide lo mismo que la columna —su tope sale de
+`--altoCol`— así que los 154 px que se movía eran exactamente los que no le
+correspondían.
+
+Lo que NO sirvió, para no volver a probarlo: darle a la lista `grid-row: 1 / -1`.
+Sujeta el `sticky`, pero un hijo de grilla que cruza todas las filas las estira
+con su alto y **la curva se iba 600 px para abajo**. Medido.
+
+Verificado además con la comparación byte a byte: **ninguna de las 28 capturas
+de celular cambia** con este arreglo, y las medidas de la vista ancha —columnas,
+lado del tablero, ancho de la curva, tres columnas— dan idénticas.
 
 ---
 
