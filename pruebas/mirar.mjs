@@ -278,6 +278,22 @@ const avanzar = async n => {
   }
 };
 
+/* LAS PERILLAS VIVEN ADENTRO DEL MENÚ DE AJUSTES desde la v0.91, así que para
+   tocarlas hay que abrirlo, que es además lo que hace el usuario: esto no es un
+   rodeo del arnés, es el camino de verdad. Se cierra siempre —si quedara
+   abierto, la captura siguiente saldría con la hoja tapando media pantalla— y
+   se devuelve el scroll a donde estaba, porque abrir el menú obliga a llevar la
+   tuerca a la vista y eso mueve la página. */
+const elegir = async (sel, valor) => {
+  const y = await pg.evaluate(() => window.scrollY);
+  await pg.click("#btnAjustes");
+  await pg.waitForSelector("#hojaAjustes:not(.oculto)");
+  await pg.selectOption(sel, valor);
+  await pg.click("#cerrarAjustes");
+  await pg.evaluate(y => window.scrollTo(0, y), y);
+  await pg.waitForTimeout(120);
+};
+
 await foto("revision-1");
 /* la vista desde su primer renglón: es donde se ve si la barra y la tarjeta
    quedaron pegadas, que es lo que pasó al reordenar en la v0.74 */
@@ -330,7 +346,7 @@ if (await senala.count()) {
    partida entera en cada una y se cuenta cuántas jugadas hablan y cuántas
    frases salen, que es el número que decide. */
 for (const largo of ["corta", "media", "larga"]) {
-  await pg.selectOption("#largoExp", largo);
+  await elegir("#largoExp", largo);
   await pg.waitForTimeout(150);
   await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -190));
@@ -342,7 +358,7 @@ for (const largo of ["corta", "media", "larga"]) {
              texto: (t.textContent || "").trim() };
   })));
 }
-await pg.selectOption("#largoExp", "media");
+await elegir("#largoExp", "media");
 
 /* La tarjeta como quedó: el título y UN renglón, que es la explicación o la
    frase fija de la categoría. Las tres ubicaciones que se comparaban acá se
@@ -400,7 +416,7 @@ else {
        usuario ve al mirar el celu. Esto se va junto con el dial, cuando el
        usuario elija una forma. */
     for (const forma of ["sinLista", "adentro", "abajo", "dos"]) {
-      await pg.selectOption("#formaPrueba", forma);
+      await elegir("#formaPrueba", forma);
       await pg.evaluate(() => {
         const p = document.getElementById("prueba");
         const arriba = p.classList.contains("oculto") ? document.getElementById("veredicto") : p;
@@ -419,7 +435,7 @@ else {
     /* queda en "adentro", que es la única forma donde la tira de la variante
        vive en la tarjeta: es lo que mira lo que sigue. El volcado en texto va
        acá por lo mismo —con la forma de por defecto, esa tira no existe—. */
-    await pg.selectOption("#formaPrueba", "adentro");
+    await elegir("#formaPrueba", "adentro");
     console.log("variante:", JSON.stringify(
       (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
 
@@ -445,7 +461,7 @@ else {
 
      Y en el medio se juega OTRA sin esperar a la primera, que es lo que antes
      no se podía: el toque volvía sin hacer nada mientras el motor pensaba. */
-  await pg.selectOption("#formaPrueba", "adentro");
+  await elegir("#formaPrueba", "adentro");
   /* AL FINAL DE LA LÍNEA PRIMERO: acá arriba el arnés volvió a la primera
      jugada de la variante para mirarla, así que la posición en pantalla no es
      la que `posPrueba` viene siguiendo. Sin esto, las jugadas de abajo son
@@ -520,7 +536,7 @@ await foto("revision-anteultima");
    por la raya del "estás acá", que es la única que nunca puede desaparecer.
    La jugada NO se elige a ojo: se lee la posición de una marca del HTML y se
    toca la curva ahí, que es lo mismo que haría el dedo. */
-await pg.selectOption("#marcasCurva", "punto");
+await elegir("#marcasCurva", "punto");
 await pg.waitForTimeout(200);
 const donde = await pg.evaluate(() => {
   const pt = document.querySelector("#curva .pt");
@@ -532,11 +548,11 @@ else {
   await pg.mouse.click(caja.x + caja.width * donde, caja.y + caja.height / 2);
   await pg.waitForTimeout(250);
   await fotoDe("#curva", "marcas-encima-punto");
-  await pg.selectOption("#marcasCurva", "raya");
+  await elegir("#marcasCurva", "raya");
   await pg.waitForTimeout(250);
   await fotoDe("#curva", "marcas-encima-raya");
 }
-await pg.selectOption("#marcasCurva", "punto");
+await elegir("#marcasCurva", "punto");
 
 /* lo que dice la cabecera y el cierre, en texto: una captura no deja copiar y
    pegar el resultado a una prueba, y esto sí */
@@ -568,7 +584,7 @@ console.log("tira:     ", await pg.evaluate(() => {
    (motor falseado), pero cuántas jugadas tienen algo que decir no depende de
    eso sino de la posición, que es de verdad. */
 for (const largo of ["corta", "media", "larga"]) {
-  await pg.selectOption("#largoExp", largo);
+  await elegir("#largoExp", largo);
   while (!(await pg.locator("#ant").isDisabled())) await pg.click("#ant");
   let hablan = 0, frases = 0, largos = 0;
   for (let i = 0; ; i++) {
@@ -584,7 +600,7 @@ for (const largo of ["corta", "media", "larga"]) {
   console.log(`habla ${largo.padEnd(6)}`, JSON.stringify(
     { jugadasQueHablan: hablan, frases, masLarga: largos }));
 }
-await pg.selectOption("#largoExp", "media");
+await elegir("#largoExp", "media");
 
 console.log("cabecera:", JSON.stringify(await pg.locator("#revRival").textContent()),
             JSON.stringify(await pg.locator("#revFin").textContent()));
@@ -647,13 +663,13 @@ for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
    sirve se decide mirándolas. */
 await pg.setViewportSize({ width: 1280, height: 800 });
 for (const f of ["planilla", "renglon", "no"]) {
-  await pg.selectOption("#formaJugadas", f);
+  await elegir("#formaJugadas", f);
   await pg.waitForTimeout(250);
   await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -10));
   await foto("ancho-" + f);
 }
-await pg.selectOption("#formaJugadas", "planilla");
+await elegir("#formaJugadas", "planilla");
 
 /* EL ARRASTRE Y LA RUEDA de la tira, con el mouse de verdad: con el dedo se
    scrollea sola, pero con mouse arrastrar un overflow-x selecciona el texto y
@@ -691,7 +707,7 @@ console.log("rueda:         ", JSON.stringify(
 
 /* LO QUE SOLO EXISTE CON MOUSE (v0.82), medido y no leído del código. */
 await pg.setViewportSize({ width: 1280, height: 860 });
-await pg.selectOption("#formaJugadas", "renglon");
+await elegir("#formaJugadas", "renglon");
 await pg.waitForTimeout(350);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.waitForTimeout(200);
@@ -773,13 +789,13 @@ console.log("arrastre pieza:", JSON.stringify(
   { jugada: mv.from + "->" + mv.to, enElAire,
     quedo: (await pg.locator("#pTit").textContent()).trim() }));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
-await pg.selectOption("#formaJugadas", "planilla");
+await elegir("#formaJugadas", "planilla");
 
 /* LA CURVA ANCHA NO SE PUEDE IR ABAJO DEL PLIEGUE (v0.88). Se prueba con la
    lista en su forma más alta —"una por renglón" gasta el doble— que es donde la
    lista le ganaba a la columna y empujaba la curva para abajo. */
 await pg.setViewportSize({ width: 1280, height: 800 });
-await pg.selectOption("#formaJugadas", "renglon");
+await elegir("#formaJugadas", "renglon");
 await pg.waitForTimeout(350);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -10));
@@ -788,7 +804,7 @@ await foto("ancho-curva");
 /* SE MIDE EN LAS DOS FORMAS DE LA EVALUACIÓN: la vertical le da 26 px más al
    tablero, así que es la que empuja la curva más abajo, y es la de fábrica. */
 const curvaEn = async forma => {
-  await pg.selectOption("#verEval", forma);
+  await elegir("#verEval", forma);
   await pg.waitForTimeout(300);
   await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -10));
@@ -819,9 +835,9 @@ tres.lado = await pg.evaluate(() =>
 await foto("tres-barra");
 console.log("tres columnas: ", JSON.stringify(tres));
 await pg.setViewportSize({ width: 1280, height: 800 });
-await pg.selectOption("#formaJugadas", "planilla");
+await elegir("#formaJugadas", "planilla");
 await pg.waitForTimeout(300);
-await pg.selectOption("#formaJugadas", "planilla");
+await elegir("#formaJugadas", "planilla");
 await pg.waitForTimeout(300);
 
 /* LAS TRES FORMAS DE LA EVALUACIÓN Y CUÁNTO TABLERO CUESTA CADA UNA (v0.86).
@@ -833,7 +849,7 @@ const lado = () => pg.evaluate(() =>
   Math.round(document.querySelector("svg.tab").getBoundingClientRect().width));
 const porForma = {};
 for (const f of ["horizontal", "barra", "tarjeta"]) {
-  await pg.selectOption("#verEval", f);
+  await elegir("#verEval", f);
   await pg.waitForTimeout(250);
   porForma[f] = await lado();
 }
@@ -841,7 +857,7 @@ console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)
 /* LA BARRA PEGADA AL TABLERO Y EL NÚMERO ENTERO ADENTRO. Las dos fallaron en la
    primera captura de la v0.86 y ninguna de las dos la agarraba una cuenta: la
    barra quedaba a 170 px del tablero y "+0.26" salía cortado. */
-await pg.selectOption("#verEval", "barra");
+await elegir("#verEval", "barra");
 await pg.waitForTimeout(250);
 /* SE MIDE EN DOS JUGADAS: una con el número corto y otra con el largo. "+0.26"
    entra en la barra y "+10.00" no entraba, y el recorte no avisa. */
@@ -859,7 +875,7 @@ const barraLarga = await barra();
 console.log("barra vertical: ", JSON.stringify({ corto: barraCorta, largo: barraLarga }));
 await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("ant").click(); });
 await pg.waitForTimeout(500);
-await pg.selectOption("#verEval", "barra");
+await elegir("#verEval", "barra");
 await pg.waitForTimeout(250);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -10));

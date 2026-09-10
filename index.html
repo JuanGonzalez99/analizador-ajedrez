@@ -77,6 +77,54 @@
   #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
   .barra { height: 4px; background: var(--linea); border-radius: 2px; overflow: hidden; margin-top: 6px; }
   .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width .15s; }
+
+  /* EL MENÚ DE AJUSTES (v0.91, §4untrigies). Las cuatro decisiones las tomó el
+     usuario mirando maquetas, y cada una tiene su porqué medido:
+     - LA HOJA QUE SUBE DESDE ABAJO y no un desplegable en línea ni una pantalla
+       propia: mide 447 px de los 760, o sea que el tablero SIGUE A LA VISTA
+       arriba mientras se toca el tema. El desplegable empujaba el tablero fuera
+       de pantalla justo cuando se está eligiendo cómo se ve el tablero, y la
+       pantalla propia lo tapaba del todo.
+     - LA PUERTA ARRIBA, en el renglón del título: la fila de controles del pie
+       pasa de 156 px a 37 —los cinco <select> se van— sin tocar el texto de
+       ningún botón, y la tuerca queda siempre en el mismo lugar en vez de al
+       final de todo lo que haya.
+     - LA TUERCA SOLA, sin la palabra "Ajustes": al lado del título eran dos
+       textos peleándose el renglón.
+     - EL CÍRCULO DE BORDE TENUE: dice "esto se toca" sin el peso del borde
+       lleno, que al lado de un título en negrita gana la pulseada. */
+  .cabvista { display: flex; align-items: center; justify-content: space-between;
+              gap: 10px; margin: 24px 0 4px; }
+  .cabvista h2 { margin: 0; }
+  /* 34x34 es el área que se toca. La tuerca va CENTRADA CONTRA LA MAYÚSCULA del
+     título y no contra la caja del renglón: la caja reserva lugar para colas y
+     tildes que "Revisión" no tiene, así que centrar contra ella la deja arriba.
+     El translateY es esa corrección, medida con las métricas de la fuente —es
+     la misma lección del chevron contra la N de la v0.74—. */
+  #btnAjustes { padding: 0; flex: none; display: grid; place-items: center;
+                width: 34px; height: 34px; font-size: 17px; line-height: 1;
+                border: 1px solid var(--linea); border-radius: 50%;
+                transform: translateY(1px); }
+  #fondoAjustes { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
+  /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
+     monitor, se queda del ancho de la columna, como el resto de la app. */
+  #hojaAjustes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+                 max-width: 700px; margin: 0 auto;
+                 background: Canvas; color: CanvasText;
+                 border-top: 1px solid var(--linea); border-radius: 14px 14px 0 0;
+                 padding: 8px 14px 16px; box-shadow: 0 -6px 24px rgba(0,0,0,.3);
+                 max-height: 80vh; overflow-y: auto; }
+  .ajTirador { width: 34px; height: 4px; border-radius: 2px;
+               background: var(--linea); margin: 2px auto 8px; }
+  .ajCab { display: flex; align-items: center; justify-content: space-between; }
+  .ajCab h2 { font-size: 17px; margin: 0; }
+  .ajGrupo { font-size: 12.5px; color: var(--tenue); margin: 14px 0 2px; }
+  .ajGrupo:first-of-type { margin-top: 6px; }
+  .ajFila { display: flex; align-items: center; justify-content: space-between;
+            gap: 10px; padding: 8px 0; border-top: 1px solid var(--linea);
+            font-size: 15px; }
+  .ajFila select { min-width: 52%; }
+  .ajNota { font-size: 12.5px; color: var(--tenue); margin: 10px 0 0; }
   /* Las secciones plegables del mes: el título es la fila que se toca, y con
      todas cerradas se ve de un vistazo qué cortes hay. */
   .seccion { border-top: 1px solid var(--linea); }
@@ -433,7 +481,7 @@
   /* Fuera de pantalla ancha no hay ni columna ni dial. VA ANTES de la media
      query: a igual especificidad gana la última regla, y puesto después le
      ganaba al `display` de adentro y la lista no se veía nunca. */
-  .lateral, #formaJugadas { display: none; }
+  .lateral, .soloAncho { display: none; }
 
   /* EN PANTALLA ANCHA, DOS COLUMNAS (v0.80). Hasta acá el archivo entero tenía
      UNA media query y era la de claro contra oscuro: la app era la misma
@@ -491,7 +539,7 @@
       calc(var(--altoCol, 100vh) - 24px - var(--altoAlts, 0px))); }
     /* el dial de la lista no existe en el celular: elige entre cosas que ahí no
        se ven, y esa fila de controles ya viene cargada. */
-    #formaJugadas { display: inline-block; }
+    .soloAncho { display: flex; }
     /* EL TABLERO CRECE, PERO LO QUE MANDA ES EL ALTO Y NO EL ANCHO. En una
        compu sobran 680 px de ancho, y si el tablero se los toma todos la TIRA y
        la CURVA —que son la navegación— se van abajo del pliegue: en una pantalla
@@ -665,7 +713,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.90 · 09-09";
+  window.VERSION = "v0.91 · 10-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -983,7 +1031,9 @@
        este cambio parecía tener. -->
   <div class="principal parriba">
   <button class="chico oculto" id="volverMes">&lsaquo; Volver al mes</button>
-  <h2>Revisión</h2>
+  <div class="cabvista"><h2>Revisión</h2>
+    <button id="btnAjustes" aria-label="Ajustes" aria-expanded="false"
+            aria-controls="hojaAjustes">&#9881;</button></div>
   <div class="revcab"><span id="revRival" class="rival"></span>
     <span id="revFin" class="fin"></span></div>
   <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
@@ -1063,24 +1113,6 @@
     <button class="chico" id="btnMejor">Mostrar la mejor</button>
     <button class="chico" id="btnGirar">Girar tablero</button>
     <button class="chico" id="btnAmbos">Pintar las dos</button>
-    <select id="tema" class="chico" aria-label="Tema del tablero"></select>
-    <select id="verEval" class="chico" aria-label="Dónde se ve la evaluación"></select>
-    <select id="marcasCurva" class="chico" aria-label="Cómo se marcan las categorías en la curva"></select>
-    <!-- DIAL TEMPORAL (v0.76): cómo se ve la pantalla mientras se prueba una
-         jugada. Son cuatro formas dibujadas que el usuario no pudo elegir
-         mirando capturas, así que se ponen las cuatro y se decide usando la
-         app, como el interruptor de margen contra gris de la v0.48. SE VA
-         cuando esté elegida: ver §4sexdecies. -->
-    <select id="formaPrueba" class="chico" aria-label="Cómo se ve la pantalla mientras se prueba una jugada"></select>
-    <!-- DIAL TEMPORAL (v0.77): cuánto habla la tarjeta. Con quince conceptos
-         compitiendo por una sola ranura, los de abajo del orden no salían
-         nunca; las tres posiciones son las tres salidas que se dibujaron, y el
-         usuario elige usando la app. SE VA cuando esté elegida: §4novodecies. -->
-    <select id="largoExp" class="chico" aria-label="Cuánto habla la tarjeta"></select>
-    <!-- SOLO EN PANTALLA ANCHA (v0.80): elige qué muestra la columna de al
-         lado. En el celular no se dibuja, porque elige entre cosas que ahí no
-         existen y esa fila de controles ya viene cargada. -->
-    <select id="formaJugadas" class="chico" aria-label="Cómo se ven las jugadas en la columna de al lado"></select>
   </div>
   </div>
 </div>
@@ -1090,6 +1122,49 @@
   <p class="cap" id="capResumen"></p>
   <div class="marcador" id="marcador"></div>
   <div class="tw"><table id="resumen"></table></div>
+</div>
+
+<!-- LA HOJA DE AJUSTES (v0.91). Vive al final del body y no adentro de la
+     vista Partida a propósito: es `position: fixed` y así no depende de en qué
+     columna de la grilla haya caído nada.
+     LOS <select> SON LOS MISMOS DE ANTES, mudados acá adentro: no hay estado
+     nuevo, ni una segunda fuente de verdad, y todo lo que ya escuchaba sus
+     onchange sigue igual. Lo único que cambió es el texto de las opciones, que
+     ahora no se autonombran —la etiqueta está al lado— y quedan cortas. -->
+<div id="fondoAjustes" class="oculto"></div>
+<div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
+     aria-labelledby="tituloAjustes">
+  <div class="ajTirador"></div>
+  <div class="ajCab"><h2 id="tituloAjustes">Ajustes</h2>
+    <button class="chico" id="cerrarAjustes">Listo</button></div>
+  <p class="ajGrupo">El tablero</p>
+  <label class="ajFila"><span>Tema</span>
+    <select id="tema" class="chico"></select></label>
+  <p class="ajGrupo">Cómo se ve la partida</p>
+  <label class="ajFila"><span>Evaluación</span>
+    <select id="verEval" class="chico"></select></label>
+  <label class="ajFila"><span>Marcas de la curva</span>
+    <select id="marcasCurva" class="chico"></select></label>
+  <p class="ajGrupo">La explicación</p>
+  <!-- DIAL TEMPORAL (v0.77): cuánto habla la tarjeta. Con quince conceptos
+       compitiendo por una sola ranura, los de abajo del orden no salían nunca;
+       las tres posiciones son las tres salidas que se dibujaron, y el usuario
+       elige usando la app. SE VA cuando esté elegida: §4novodecies. -->
+  <label class="ajFila"><span>Cuánto habla</span>
+    <select id="largoExp" class="chico"></select></label>
+  <!-- DIAL TEMPORAL (v0.76): cómo se ve la pantalla mientras se prueba una
+       jugada. Son cuatro formas dibujadas que el usuario no pudo elegir mirando
+       capturas, así que se ponen las cuatro y se decide usando la app, como el
+       interruptor de margen contra gris de la v0.48. SE VA cuando esté
+       elegida: ver §4sexdecies. -->
+  <label class="ajFila"><span>Al probar una jugada</span>
+    <select id="formaPrueba" class="chico"></select></label>
+  <!-- SOLO EN PANTALLA ANCHA (v0.80): elige qué muestra la columna de al lado.
+       En el celular el renglón entero no se dibuja, porque elige entre cosas
+       que ahí no existen. -->
+  <label class="ajFila soloAncho"><span>Las jugadas de al lado</span>
+    <select id="formaJugadas" class="chico"></select></label>
+  <p class="ajNota">Se guardan solos y quedan puestos para la próxima vez.</p>
 </div>
 
 <p class="credito"><span id="verPie"></span>Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
@@ -3277,9 +3352,9 @@ const PIEZAS = `<g id="cb-wk"><g fill="none" fill-rule="evenodd" stroke="#000" s
    esta jugada". Lo segundo es lo que la marca significa, y además deja la raya
    vertical para una sola cosa, el "estás acá". */
 const MARCAS_CURVA = {
-  punto:      "Marcas: punto",
-  puntoChico: "Marcas: punto chico",
-  raya:       "Marcas: raya"
+  punto:      "punto",
+  puntoChico: "punto chico",
+  raya:       "raya"
 };
 let MARCA_CURVA = "punto";
 function aplicarMarcaCurva(id) {
@@ -3383,9 +3458,9 @@ function aplicarTema(id) {
    Se elige y se guarda; el default es "horizontal", que deja el tablero mas
    grande de los tres y fue el elegido al probarlo en el celular. */
 const MODOS_EVAL = {
-  horizontal: "Eval horizontal",
-  tarjeta: "Eval en la tarjeta",
-  barra: "Eval en la barra"
+  horizontal: "barra horizontal",
+  tarjeta: "en la tarjeta",
+  barra: "barra vertical"
 };
 let MODO_EVAL = "horizontal";
 /* EL DEFAULT DEPENDE DEL ANCHO desde la v0.86, y es la única perilla donde pasa.
@@ -3437,9 +3512,9 @@ function aplicarModoEval(id, guardar = true) {
 
    POR DEFECTO VA "media". Se elige usando la app y después se queda una. */
 const LARGOS_EXP = {
-  corta: { nombre: "Explicación: corta", ranuras: 1 },
-  media: { nombre: "Explicación: media", ranuras: 2 },
-  larga: { nombre: "Explicación: larga", ranuras: 3 }
+  corta: { nombre: "corta", ranuras: 1 },
+  media: { nombre: "media", ranuras: 2 },
+  larga: { nombre: "larga", ranuras: 3 }
 };
 let LARGO_EXP = "media";
 const ranurasDeLaExplicacion = () =>
@@ -3483,10 +3558,10 @@ function aplicarLargoExp(id) {
    POR DEFECTO VA "sin la lista", que es la más limpia: pedido del usuario.
    Cuando esté elegida, se queda una y el dial se va. */
 const FORMAS_PRUEBA = {
-  sinLista: { nombre: "Prueba: sin la lista",     reemplaza: true,  lista: "no" },
-  adentro:  { nombre: "Prueba: la lista adentro", reemplaza: true,  lista: "adentro" },
-  abajo:    { nombre: "Prueba: la lista abajo",   reemplaza: true,  lista: "abajo" },
-  dos:      { nombre: "Prueba: las dos tarjetas", reemplaza: false, lista: "abajo" }
+  sinLista: { nombre: "sin la lista",     reemplaza: true,  lista: "no" },
+  adentro:  { nombre: "la lista adentro", reemplaza: true,  lista: "adentro" },
+  abajo:    { nombre: "la lista abajo",   reemplaza: true,  lista: "abajo" },
+  dos:      { nombre: "las dos tarjetas", reemplaza: false, lista: "abajo" }
 };
 let FORMA_PRUEBA = "sinLista";
 function formaPrueba() { return FORMAS_PRUEBA[FORMA_PRUEBA] || FORMAS_PRUEBA.sinLista; }
@@ -3520,9 +3595,9 @@ function aplicarFormaPrueba(id) {
    margen contra gris de la v0.48: son dos densidades distintas y cuál sirve se
    sabe usándolas, no mirándolas. */
 const FORMAS_JUGADAS = {
-  planilla: { nombre: "Jugadas: planilla",        clase: "planilla" },
-  renglon:  { nombre: "Jugadas: una por renglón", clase: "renglon" },
-  no:       { nombre: "Jugadas: sin la lista",    clase: "" }
+  planilla: { nombre: "planilla",        clase: "planilla" },
+  renglon:  { nombre: "una por renglón", clase: "renglon" },
+  no:       { nombre: "sin la lista",    clase: "" }
 };
 let FORMA_JUGADAS = "planilla";
 function formaJugadas() { return FORMAS_JUGADAS[FORMA_JUGADAS] || FORMAS_JUGADAS.planilla; }
@@ -3574,6 +3649,21 @@ if (!window.DEV) {
   $("optBarrido").checked = false;
   $("optBloques").checked = false;
 }
+/* ABRIR Y CERRAR LA HOJA (v0.91). Tres puertas de salida —el botón "Listo",
+   tocar afuera y la tecla Escape— porque una hoja que tapa media pantalla sin
+   forma evidente de cerrarse es una trampa. El foco va y vuelve: al abrir queda
+   en "Listo" y al cerrar vuelve a la tuerca, así no se pierde quien navega con
+   teclado. */
+const verAjustes = abrir => {
+  $("fondoAjustes").classList.toggle("oculto", !abrir);
+  $("hojaAjustes").classList.toggle("oculto", !abrir);
+  $("btnAjustes").setAttribute("aria-expanded", abrir ? "true" : "false");
+  (abrir ? $("cerrarAjustes") : $("btnAjustes")).focus();
+};
+$("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true));
+$("cerrarAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
+$("fondoAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
+
 $("salirDev").onclick = seguro("salir de dev", () => {
   try { localStorage.setItem("dev", "0"); } catch (e) { /* incógnito */ }
   location.search = "";
@@ -6498,6 +6588,12 @@ function saltarAMala(dir) {
 /* en la compu, las flechas. Se ignoran mientras se escribe en un campo. */
 document.addEventListener("keydown", seguro("teclas", ev => {
   const tecla = ev.key;
+  /* Escape cierra la hoja, y sale antes que todo lo demás: con los ajustes
+     abiertos, las flechas no tienen que estar navegando la partida de atrás. */
+  if (!$("hojaAjustes").classList.contains("oculto")) {
+    if (tecla === "Escape") { ev.preventDefault(); verAjustes(false); }
+    return;
+  }
   const nave = tecla === "ArrowLeft" || tecla === "ArrowRight";
   /* `n` y `p` de próximo y previo error. Sin Ctrl ni Alt: si no, se comen los
      atajos del navegador. */

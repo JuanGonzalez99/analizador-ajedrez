@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.90**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.91**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -223,6 +223,11 @@ lo que hay que mirar.
 | análisis | `analizarPartida`, barrido, híbrido |
 | bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace` |
 | interfaz | tablero SVG (geometría `TAB_S`/`sqX`, `dibujar`, `svgMarcas`), mes, banco de pruebas, revisión, resúmenes |
+
+El **menú de ajustes** (v0.91, §4untrigies) es la excepción a "todo cuelga de su
+vista": la hoja vive al final del `<body>`, después de la atribución de las
+piezas, porque es `position: fixed`. Ahí adentro están los seis `<select>` de
+preferencias, que antes vivían sueltos en la fila del pie.
 
 Desde la v0.80 la vista Partida se parte en **dos columnas de 1110 px para
 arriba** (§4duovicies): `.principal` es la de siempre, de 700, y `.lateral` es
@@ -3059,6 +3064,97 @@ El arnés dibuja 1500 y 1499, que son los dos lados del corte, mide que la tarje
 termine antes de donde empieza el tablero, el ancho de la curva y el aire de
 abajo en las dos formas de la evaluación.
 
+## 4untrigies. El menú de ajustes (v0.91)
+
+La fila de controles al pie de la vista Partida tenía **cinco `<select>`** y
+ocupaba **156 px de los 760** del celular: cuatro renglones. El pendiente de §8
+lo venía marcando desde la v0.76 —*"no hay pantalla de configuración, y ya va
+tocando"*, palabra del usuario— y cada dial nuevo lo empujaba. Ahora hay menú y
+la fila mide **33 px**: los tres botones, en un renglón.
+
+### Las cuatro decisiones, y qué las decidió
+
+Todas se dibujaron y las eligió el usuario mirando, que es la regla de §10. Lo
+que sigue es **por qué** ganó cada una, que es lo que no se puede recuperar de
+una captura:
+
+| decisión | por qué |
+|---|---|
+| **una hoja que sube desde abajo**, no un desplegable en línea ni una pantalla propia | la hoja mide 447 px de 760, o sea que **el tablero sigue a la vista arriba** mientras se toca el tema. El desplegable empujaba el tablero fuera de pantalla justo cuando se elige cómo se ve el tablero; la pantalla propia lo tapaba del todo y con cinco perillas quedaba medio vacía |
+| **la puerta arriba**, en el renglón del título "Revisión" | gana los mismos píxeles que acortar los nombres de los tres botones —la otra forma dibujada de meter la puerta en un renglón— pero **sin tocar ninguna etiqueta**, y la deja siempre en el mismo lugar en vez de al final de todo lo que haya. Un botón flotante en la esquina se le monta encima a lo que haya abajo a la derecha, que en el dibujo era "Pintar las dos" |
+| **la tuerca sola**, sin la palabra "Ajustes" | al lado del título eran dos textos peleándose el renglón |
+| **el círculo de borde tenue** | de seis envases dibujados. El borde lleno —que es la gramática de los botones de la app (§4quater)— al lado de un título en negrita gana la pulseada; los rellenos se leen como campos y no como acciones; los cuadrados repiten la forma de las tarjetas de abajo y se pierden |
+
+### Qué entró y qué no
+
+Entró **lo que cambia cómo se ven las cosas**, que es la regla que salió en §8:
+tema del tablero, dónde va la evaluación, marcas de la curva, los dos diales
+temporales —cuánto habla la explicación (§4novodecies) y la forma de la prueba
+(§4sexdecies)— y, **solo en pantalla ancha**, las jugadas de al lado.
+
+**No entró** lo que cambia *qué* datos se miran ni lo que actúa sobre la partida
+que se está mirando: "Mostrar la mejor", "Girar tablero" y "Pintar las dos" son
+acciones y se quedan en la fila; "Modo" (crítico/amigable) y "Mate a la vista"
+cambian lo que **significan** los números y se quedan en Análisis; la cadencia y
+"el mes / todo lo analizado" son alcance de los datos y se quedan en la vista.
+
+### Cómo está hecho
+
+**Los `<select>` son los mismos de antes, mudados adentro de la hoja.** No hay
+estado nuevo, ni una segunda fuente de verdad, y todo lo que ya escuchaba sus
+`onchange` sigue igual: el cambio es de dónde viven, no de qué hacen. Lo único
+que cambió de ellos es **el texto de las opciones**, que ya no se autonombran
+—la etiqueta está al lado— y quedaron cortas: "sin la lista" en vez de "Prueba:
+sin la lista". Una prueba fija que cada uno aparezca **una sola vez** en el
+archivo, porque duplicarlos dejaría a uno de los dos mudo.
+
+La hoja vive **al final del `<body>`** y no adentro de la vista: es
+`position: fixed` y así no depende de en qué columna de la grilla haya caído
+nada. En una compu no se estira: `max-width: 700px` y centrada, o sea del ancho
+de la columna, como el resto de la app.
+
+**Tres salidas**: el botón "Listo", tocar afuera y la tecla Escape. Una hoja que
+tapa el 59% de la pantalla sin forma evidente de cerrarse es una trampa, y eso
+es lo que fija la prueba. El foco va a "Listo" al abrir y vuelve a la tuerca al
+cerrar; el anillo de foco **solo aparece con teclado** —medido con
+`:focus-visible`—, así que el dedo no lo ve nunca.
+
+### La alineación de la tuerca, y una medición que mentía
+
+La tuerca va **centrada contra la mayúscula del título**, no contra la caja del
+renglón: la caja reserva lugar para colas y tildes que "Revisión" no tiene, y
+centrar contra ella la deja alta. Es la misma lección del chevron contra la "N"
+de la v0.74.
+
+Lo que hay que anotar es el error, porque va a volver: la primera versión de la
+medición **calculaba dónde caía el renglón a partir del relleno del elemento**, y
+eso solo vale cuando el texto arranca arriba de todo. Adentro de un botón con
+`place-items: center` el renglón ya está centrado, así que la cuenta se
+equivocaba en la mitad del sobrante —**8 px**— y mandaba corregir lo que ya
+estaba bien. **Con esa corrección de más se dibujó la tira de las seis formas que
+eligió el usuario**: las seis tenían la tuerca 8 px baja, y la elección de la
+forma no cambia por eso pero la captura mentía. La medición buena usa un `Range`
+sobre el texto, que devuelve la caja del renglón **ya ubicada**, sin suponer
+nada. Corregido, la tuerca queda a 0,2 px de la "R", con un `translateY(1px)`.
+
+### El arnés tuvo que aprender a abrir el menú
+
+`mirar.mjs` tocaba las perillas con `pg.selectOption("#largoExp", …)` en 21
+lugares, y adentro de la hoja escondida eso ya no es visible. Ahora hay un
+ayudante `elegir(sel, valor)` que **abre el menú, elige y cierra**, que es el
+camino de verdad: no es un rodeo del arnés, es lo que hace el usuario. Devuelve
+el scroll a donde estaba, porque abrir el menú obliga a llevar la tuerca a la
+vista y eso mueve la página, y cierra siempre: si quedara abierto, la captura
+siguiente saldría con la hoja tapando media pantalla.
+
+### Lo que queda para adentro del menú
+
+- **Los juegos de piezas** (§4bis). La costura está puesta desde la v27 y no se
+  hacía porque no existía dónde poner el selector. Ya existe.
+- **La preferencia de "mostrar la mejor"** (§4bis), que hoy es un botón de
+  acción y podría tener además su valor por defecto acá adentro.
+- **El selector de cadencia NO va acá** (§4undecies): es alcance de los datos.
+
 ---
 
 ## 5. Reglas de método — valen para cualquier número que muestre la app
@@ -3857,46 +3953,19 @@ es por decisión pendiente, no porque no esté desplegado.**
   puesto en la v33 para que el botón de analizar quede a la vista; es un parche,
   no un diseño. Falta decidir cuántas mostrar, cómo se ven y cómo se busca.
 
-- **No hay pantalla de configuración, y ya va tocando** —palabra del usuario, a
-  la v0.76—. Los `<select>` sueltos en la fila de controles de la vista Partida
-  ya son **cuatro**: tema del tablero, dónde va la evaluación, marcas de la
-  curva y la forma de la prueba; el último ni siquiera es una preferencia sino
-  un dial temporal. Ahí adentro también tendría que ir la preferencia de
-  "mostrar la mejor" (§4bis). Es además el lugar donde irían los juegos de
-  piezas configurables, que están costurados pero sin hacer (§4bis).
-
-  **La forma ya la eligió el usuario mirando** (v0.91): la **hoja que sube desde
-  abajo** —447 px de alto, o sea que deja el tablero a la vista arriba mientras
-  se toca el tema; las otras dos dibujadas eran el desplegable en línea, que
-  empuja el tablero fuera de pantalla justo cuando estás cambiando cómo se ve el
-  tablero, y la pantalla propia, que lo tapa del todo y con cinco perillas queda
-  vacía—. Con la hoja eligió también los **nombres cortos** —adentro la etiqueta
-  está al lado, así que la opción dice "sin la lista" y no "Prueba: sin la
-  lista"— y los **tres títulos de grupo**: El tablero, Cómo se ve la partida, La
-  explicación.
-
-  **Lo que falta elegir es dónde vive la puerta.** Se dibujaron las seis
-  inyectándolas sobre la app de verdad a 412 × 760, sin tocar `index.html`. El
-  script que las dibuja es **andamio y no se versiona** (ver §10), así que lo que
-  queda escrito acá son los números, que es lo que hay que poder volver a leer.
-  Con los cinco `<select>` fuera en todas: la fila de controles pasa de **156 px** a **74** con el botón en un
-  renglón propio (dice "⚙ Ajustes" o solo el engranaje: mismo alto, porque los
-  tres botones ya llenan el ancho), a **33** si los nombres de los botones se
-  acortan y el engranaje entra en el mismo renglón, y a **37** si el engranaje
-  se muda al encabezado de la vista, al lado del título "Revisión" —que gana lo
-  mismo sin tocar ninguna etiqueta—. La sexta es un botón flotante en la
-  esquina, que no cuesta alto pero **se le monta encima a lo que haya abajo a la
-  derecha**, y en el dibujo eso es el botón "Pintar las dos".
-
-  **Cada dial nuevo empuja este pendiente**: los temporales se van solos cuando
-  el usuario elige, pero los que se quedan se acumulan en una fila que ya ocupa
-  cuatro renglones al pie de la vista.
+- ~~**No hay pantalla de configuración**~~ **HECHA en la v0.91**, y está contada
+  entera en §4untrigies: la hoja que sube desde abajo, la tuerca en el renglón
+  del título, y los seis `<select>` adentro. La fila de controles del pie pasó de
+  **156 px a 33**. Lo que sigue abierto de este ítem son dos cosas que ahora
+  tienen dónde ir: los **juegos de piezas** (§4bis, costurados desde la v27) y la
+  **preferencia de "mostrar la mejor"** (§4bis).
 
   **El selector de cadencia (v0.46) NO es de este grupo y no se movió acá a
   propósito**: no es una preferencia sino el **alcance de los datos**, igual que
   "El mes seleccionado / Todo lo analizado", así que va al lado de ese y no en
-  una pantalla aparte. La regla que salió: lo que cambia *qué datos se miran*
-  va a la vista; lo que cambia *cómo se ven* va a configuración.
+  una pantalla aparte. La regla que salió, y que decidió qué entró al menú: lo
+  que cambia *qué datos se miran* va a la vista; lo que cambia *cómo se ven* va
+  a configuración.
 
 - **Los tres cuadritos (Mejor / Pérdida / Caída) están sin resolver.** Quedan
   sueltos abajo de la curva y son lo que más lugar ocupa por lo poco que dicen.
@@ -4305,6 +4374,12 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 - **Cuando dos formas se defienden solas, ponerlas las dos y decidir usando la
   app.** Se hizo con margen contra gris (§4terdecies): el interruptor duró dos
   versiones, cumplió su función y se fue.
+- **Las maquetas se reescriben, no se parchean.** Se rompieron dos veces en la
+  misma sesión (v0.91) por editarlas con reemplazos de texto: el script queda
+  cortado, node tira un error de sintaxis que no dice dónde, y se van más tokens
+  en entender el destrozo que en volver a escribirlo. Son cien líneas: se
+  rehacen de cero y listo. Para `index.html` el reemplazo sigue siendo lo
+  correcto —ahí no se puede reescribir— y por eso vale la regla de abajo.
 - **Verificar que cada parche se haya aplicado.** Un reemplazo de texto que no
   encuentra su objetivo falla en silencio y deja una leyenda vieja diciendo algo
   falso. Ya pasó. Los scripts de edición conviene que aborten si no encuentran

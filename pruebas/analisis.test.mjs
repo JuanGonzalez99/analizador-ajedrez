@@ -2483,7 +2483,9 @@ test("la tira lleva la partida entera, no una ventana", () => {
      misma idea escrita cuando la lista no existía en ningún lado. */
   assert.ok(html.includes('<aside class="lateral" id="lateral">'),
     "la lista vertical vive en la columna de al lado");
-  assert.ok(html.includes(".lateral, #formaJugadas { display: none; }"),
+  /* Desde la v0.91 lo que se esconde no es el <select> suelto sino el RENGLÓN
+     entero del menú de ajustes, que es donde vive ahora: `.soloAncho`. */
+  assert.ok(html.includes(".lateral, .soloAncho { display: none; }"),
     "y sin pantalla ancha no se ve: en el celular sigue estando solo la tira");
   assert.ok(html.includes("mask-image: linear-gradient(to right, transparent 0, #000 24px"),
     "y las puntas se desvanecen en vez de cortarse");
@@ -2517,11 +2519,38 @@ test("la tira se puede arrastrar y ruedear con el mouse", () => {
     "y un clic sigue siendo un clic: el temblor de la mano no cuenta");
 });
 
+test("el menú de ajustes se lleva los select y tiene por dónde salir", () => {
+  /* v0.91. Lo que fija esta prueba es lo que se decidió mirando, y sobre todo
+     lo que NO se puede romper sin que se note: que los <select> de preferencias
+     estén ADENTRO de la hoja y no sueltos en la fila del pie —si vuelven, la
+     fila crece de 37 px a 156 y el tablero deja de entrar—, y que la hoja tenga
+     las tres salidas. Una hoja que tapa media pantalla sin forma de cerrarse es
+     el peor modo de falla de este cambio. */
+  const hoja = html.slice(html.indexOf('<div id="hojaAjustes"'),
+                          html.indexOf('<p class="credito"'));
+  for (const id of ["tema", "verEval", "marcasCurva", "largoExp", "formaPrueba", "formaJugadas"])
+    assert.ok(hoja.includes(`<select id="${id}"`), `${id} vive adentro de la hoja`);
+  const pie = html.slice(html.indexOf('<div class="principal pabajo">'),
+                         html.indexOf('<div id="zonaResumen"'));
+  assert.ok(!pie.includes("<select"),
+    "y ninguno quedó suelto en la fila del pie, que es de lo que se trataba");
+  assert.ok(html.includes('<button id="btnAjustes"'), "la puerta es la tuerca del encabezado");
+  assert.ok(html.includes('$("cerrarAjustes").onclick') &&
+            html.includes('$("fondoAjustes").onclick') &&
+            html.includes('tecla === "Escape"'),
+    "tres salidas: el botón Listo, tocar afuera y Escape");
+  /* Los <select> son los MISMOS de antes: si alguien los duplicara, habría dos
+     fuentes de verdad y una de las dos quedaría muda. */
+  for (const id of ["tema", "verEval", "marcasCurva", "largoExp", "formaPrueba", "formaJugadas"])
+    assert.equal((html.match(new RegExp(`<select id="${id}"`, "g")) || []).length, 1,
+      `${id} está una sola vez en todo el archivo`);
+});
+
 test("la lista lateral no le saca lugar al celular", () => {
   /* La regla base tiene que ir ANTES de la media query: a igual especificidad
      gana la última, y puesta después le ganaba al display de adentro y la lista
      no se veía NUNCA. Se rompió así al escribirla. */
-  const base = html.indexOf(".lateral, #formaJugadas { display: none; }");
+  const base = html.indexOf(".lateral, .soloAncho { display: none; }");
   const ancha = html.indexOf("@media (min-width: 1110px)");
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,
