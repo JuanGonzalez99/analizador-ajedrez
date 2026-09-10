@@ -290,7 +290,14 @@
      parte sola: a ancho de celular "15 partidas del mes · 8 ganadas · 1
      empatada · 6 perdidas" ocupa dos renglones y corta por cualquier lado. */
   .marcadorMes .deQue { display: block; font-size: 12.5px; color: var(--tenue); }
-  .metricas { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* `auto-fit` y no `repeat(3, ...)`: esta misma clase la usan la fila de la
+     jugada, que desde la v0.93 tiene CUATRO cuadritos, y la cabecera del mes,
+     que tiene tres. Con auto-fit cada una arma tantas columnas como hijos
+     tenga, sin una clase aparte ni un número escrito dos veces. El mínimo tiene
+     que ser un ancho de verdad y no 0: con `minmax(0, 1fr)` auto-fit no puede
+     contar cuántas entran. Cuatro de 60 más los huecos son 258 px, y el celular
+     más angosto que importa deja 292. */
+  .metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
               gap: 6px; margin-top: 8px; }
   .metricas > div { border: 1px solid var(--linea); border-radius: 6px; padding: 6px 8px;
                     overflow: hidden; }
@@ -719,7 +726,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.92 · 10-09";
+  window.VERSION = "v0.93 · 10-09";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1121,6 +1128,14 @@
          aria-label="Ver la mejor jugada en el tablero"><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
     <div><div class="et">Pérdida</div><div class="va" id="mPerdida"></div></div>
     <div><div class="et">Caída</div><div class="va" id="mCaida"></div></div>
+    <!-- CUÁNTO PENSÓ ESTA JUGADA (v0.93). Va acá y no en el tablero, y esa fue
+         la decisión: el usuario rechazó ocho ubicaciones alrededor del tablero
+         —le sacaban alto, tapaban piezas o compartían renglón con texto
+         variable— y al plantearlo dijo que "en el fondo" lo que uno quiere ver
+         es cuánto se pensó. Siendo eso, es un dato DE LA JUGADA, igual que la
+         pérdida y la caída, y su lugar es esta fila: no cuesta un solo píxel,
+         no tapa nada, y el renglón ya existía. §4duotrigies. -->
+    <div><div class="et">Pensó</div><div class="va" id="mPenso"></div></div>
   </div>
   <div class="senales" id="senales"></div>
   <div class="fila" style="margin-top:6px">
@@ -5459,10 +5474,21 @@ function comoTermino(cab, meta) {
    sabe" —la partida no traía reloj— y se dice con una raya, no con un 0, que
    sería mentira. Abajo del minuto va en segundos secos porque es el rango donde
    está casi todo; arriba, en m:ss, que es como lo lee un ajedrecista. */
+/* LA DÉCIMA SOLO CUANDO EL DATO LA TRAE (v0.93). No es una precisión que la app
+   elija: `segundosPensados` RESTA dos relojes del PGN, así que la décima existe
+   si chess.com la escribió. Medido sobre `partida-reloj.pgn` (10+0): los 36
+   relojes vienen al segundo entero y los 36 gastos salen enteros. El código de
+   `normalizarPgn` documenta que también escribe `{[%clk 0:04:58.4]}` —blitz,
+   presumiblemente—, y eso NO está verificado contra un PGN del usuario. De ahí
+   la regla: mostrarla si está, y no escribir un ".0" que no informa nada.
+   El usuario lo eligió mirando las cuatro formas dibujadas.
+   De un minuto para arriba se redondea a entero y se pasa a m:ss, porque los
+   segundos sueltos ahí dejan de leerse rápido. */
 function tiempoCorto(seg) {
   if (seg == null) return "\u00b7";
+  if (seg < 60) return (Number.isInteger(seg) ? seg : seg.toFixed(1)) + "s";
   const s = Math.round(seg);
-  return s < 60 ? s + "s" : Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
+  return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0");
 }
 
 function cierreDeLaTira(fin, filas) {
@@ -6118,6 +6144,11 @@ function pintarRevision() {
      entero borra la diferencia entre una imprecisión y una jugada buena en el
      rango donde más se parecen. La pérdida, al lado, siempre tuvo dos. */
   $("mCaida").textContent = f.caida.toFixed(1) + " pt";
+  /* `f.seg` ya viajaba en la fila desde la v0.43 y no lo usaba nadie más que
+     las tablas. `tiempoCorto` pone el "·" cuando la partida no trae relojes
+     —correspondencia, o un PGN pegado a mano—, así que el cuadrito no cambia de
+     forma entre partidas. */
+  $("mPenso").textContent = tiempoCorto(f.seg);
   /* Cuando la jugada jugada YA era la mejor no hay nada distinto que mostrar.
      El cuadrito se grisa y deja de responder: sin eso parecia que tocarlo no
      hacia nada, o sea un bug. */

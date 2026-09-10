@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.92**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.93**.
 
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
@@ -3305,6 +3305,90 @@ siguiente saldría con la hoja tapando media pantalla.
 - **La preferencia de "mostrar la mejor"** (§4bis), que hoy es un botón de
   acción y podría tener además su valor por defecto acá adentro.
 - **El selector de cadencia NO va acá** (§4undecies): es alcance de los datos.
+
+---
+
+## 4duotrigies. Cuánto pensó la jugada (v0.93)
+
+Un cuarto cuadrito en la fila de la jugada: **Pensó**, al lado de Mejor,
+Pérdida y Caída. Es la segunda de las tres formas del tiempo de §7.8 —la
+primera fue la columna Seg. de la v0.43— y **no costó plomería nueva**: `f.seg`
+viaja en la fila desde entonces y no lo usaba nadie más que las tablas.
+
+### Empezó como "el reloj en el tablero" y terminó en otro lado
+
+Lo pidió así el usuario, y el recorrido vale más que el resultado porque explica
+por qué el cuadrito está donde está. **Se dibujaron ocho ubicaciones alrededor
+del tablero y las rechazó todas**, con un criterio consistente que recién al
+final quedó dicho:
+
+| tanda | qué se probó | por qué no |
+|---|---|---|
+| 1 | arriba y abajo del tablero; los dos juntos arriba; encima del tablero; en el renglón del rival | las dos primeras le sacan alto al tablero; la tercera tapa piezas —*"hacerlo menos opaco no lo resolvería"*—; la cuarta está lejos y comparte renglón con texto variable, que puede taparlo |
+| 2 | la misma de arriba pero flaca; parada al costado; en el renglón de "Revisión"; solo el que movió | la parada hay que leerla ladeando la cabeza y queda a 0,0 px del tablero; la del título sigue estando lejos |
+
+De ahí salió la restricción entera, que ninguna cumplía a la vez: **cerca del
+tablero, sin costar alto, sin tapar piezas y sin compartir renglón con texto
+variable.** Alrededor del tablero no sobra alto, y lo único que no cuesta alto o
+está encima del tablero o está lejos.
+
+**Lo destrabó el usuario replanteando el dato**, no el lugar: *"podríamos
+explorar la posibilidad de ver cuánto tiempo se pensó la jugada, que en el fondo
+es lo que uno quiere ver"*. Y si el dato es **cuánto pensó**, entonces es un
+dato **de la jugada**, igual que la pérdida y la caída, y su lugar es la fila
+donde ya viven los datos de la jugada. Ahí no pelea con ninguna de las cuatro
+objeciones: **cero px de empuje, cero superposición, y el renglón ya existía.**
+
+Es además el dato más honesto de los dos: el reloj dice *cuánto le quedaba*, que
+depende de toda la partida anterior; esto dice *qué pasó en esta jugada*, que es
+lo que se está mirando cuando uno está parado en ella.
+
+**El reloj de los dos jugadores queda pendiente, no descartado.** Si alguna vez
+se retoma, las dos formas que sobrevivieron son la flaca arriba y abajo del
+tablero (14 px de empuje, alineada al borde VISIBLE del tablero) y la del
+renglón de "Revisión" (cero px, pero lejos).
+
+### La alineación al borde visible, que no es el del contenedor
+
+Anotado porque va a volver: el `<div id="tablero">` mide **384** y el `<svg>` de
+adentro **360**, centrado. O sea que alinear algo "a la derecha del tablero" con
+el borde del contenedor lo deja **12 px afuera** del tablero que se ve. El
+usuario lo marcó mirando la captura —*"quizás mejor alineados"*— y la medición
+lo confirmó: el número caía en 398 y el tablero termina en 386.
+
+### El formato: la décima solo cuando el dato la trae
+
+Se dibujaron cuatro formas y el usuario eligió **`12.4s` cuando el reloj trae la
+décima y `12s` cuando no**, sin espacio antes de la `s`. Sin espacio porque
+`tiempoCorto()` ya existía y ya escribe así en la tira de jugadas: con espacio,
+el mismo dato se vería de dos maneras en la misma pantalla.
+
+**Por qué no siempre una décima**, que era lo que el usuario iba a elegir: la app
+no MIDE el tiempo pensado, lo **resta** de dos relojes del PGN, así que la
+décima existe solo si chess.com la escribió. Medido sobre `partida-reloj.pgn`
+(10+0): los 36 relojes vienen al segundo entero y los 36 gastos salen enteros,
+o sea que un formato con décima fija mostraría `12.0s` y `0.0s` siempre.
+`normalizarPgn` documenta que chess.com también escribe `{[%clk 0:04:58.4]}`
+—blitz, presumiblemente—, y **eso no está verificado contra un PGN del
+usuario**: queda como el único cabo suelto, y se cierra el día que mande una
+partida de blitz.
+
+**El grid pasó a `auto-fit`** en vez de `repeat(3, …)`. La clase `.metricas` la
+usan dos filas —la de la jugada, ahora de cuatro, y la cabecera del mes, de
+tres— y con `auto-fit` cada una arma tantas columnas como hijos tenga, sin una
+clase aparte ni el número escrito dos veces. **El mínimo tiene que ser un ancho
+de verdad y no `0`**: con `minmax(0, 1fr)` auto-fit no puede contar cuántas
+entran. Medido en cinco anchos —360, 412, 700, 1280 y 1900—: **cuatro columnas
+en una sola fila en todos**, y 78,5 px cada una en el caso más angosto.
+
+### Lo que queda pendiente de esto
+
+**El `0s` de la primera jugada de cada lado es un artefacto, no un dato.**
+chess.com escribe el reloj inicial intacto, así que la resta da cero aunque se
+haya pensado; está medido en §4nonies contra `%timestamp`, que coincidió en 60
+de 62 jugadas y falló justo en `1. e4` y `1... Nf6`. Lo honesto sería mostrar
+`·` ahí, igual que cuando no hay reloj. **Se le ofreció al usuario y prefirió no
+mezclarlo con esta tanda**, así que queda para una propia.
 
 ---
 

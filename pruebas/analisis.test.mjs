@@ -2990,3 +2990,21 @@ test("los enroques se leen del propio FEN", () => {
   assert.deepEqual(A.enroquesDe("4k3/8/8/8/8/8/8/4K3 w Kq - 0 1", "w"),
                    { corto: true, largo: false });
 });
+
+test("tiempoCorto muestra la décima solo cuando el dato la trae", () => {
+  /* La app no MIDE el tiempo pensado, lo RESTA de dos relojes del PGN, así que
+     la décima existe solo si chess.com la escribió. Escribir un ".0" sería
+     inventar una precisión que el dato no tiene, y ese fue el criterio que
+     eligió el usuario mirando las cuatro formas dibujadas (v0.93). */
+  assert.equal(T.tiempoCorto(12), "12s", "entero, sin decimal de relleno");
+  assert.equal(T.tiempoCorto(12.4), "12.4s", "con décima si la trae");
+  assert.equal(T.tiempoCorto(0), "0s");
+  assert.equal(T.tiempoCorto(0.4), "0.4s");
+  /* sin relojes —correspondencia, o un PGN pegado a mano— el cuadrito no
+     desaparece: pone el punto, así la fila no cambia de forma entre partidas */
+  assert.equal(T.tiempoCorto(null), "·");
+  /* de un minuto para arriba, m:ss: los segundos sueltos dejan de leerse */
+  assert.equal(T.tiempoCorto(60), "1:00");
+  assert.equal(T.tiempoCorto(80), "1:20");
+  assert.equal(T.tiempoCorto(605), "10:05", "los segundos van con cero adelante");
+});
