@@ -2,3 +2,4 @@ node_modules/
 .claude/*
 !.claude/settings.json
 capturas/
+pruebas/maqueta-*.mjs

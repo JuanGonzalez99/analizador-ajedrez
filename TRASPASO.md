@@ -3875,18 +3875,18 @@ es por decisión pendiente, no porque no esté desplegado.**
   lista"— y los **tres títulos de grupo**: El tablero, Cómo se ve la partida, La
   explicación.
 
-  **Lo que falta elegir es dónde vive la puerta.** Están dibujadas las seis en
-  `pruebas/maqueta-ajustes.mjs`, que las inyecta sobre la app de verdad a
-  412 × 760 sin tocar `index.html`. Lo medido, con los cinco `<select>` fuera en
-  todas: la fila de controles pasa de **156 px** a **74** con el botón en un
+  **Lo que falta elegir es dónde vive la puerta.** Se dibujaron las seis
+  inyectándolas sobre la app de verdad a 412 × 760, sin tocar `index.html`. El
+  script que las dibuja es **andamio y no se versiona** (ver §10), así que lo que
+  queda escrito acá son los números, que es lo que hay que poder volver a leer.
+  Con los cinco `<select>` fuera en todas: la fila de controles pasa de **156 px** a **74** con el botón en un
   renglón propio (dice "⚙ Ajustes" o solo el engranaje: mismo alto, porque los
   tres botones ya llenan el ancho), a **33** si los nombres de los botones se
   acortan y el engranaje entra en el mismo renglón, y a **37** si el engranaje
   se muda al encabezado de la vista, al lado del título "Revisión" —que gana lo
   mismo sin tocar ninguna etiqueta—. La sexta es un botón flotante en la
   esquina, que no cuesta alto pero **se le monta encima a lo que haya abajo a la
-  derecha**, y en el dibujo eso es el botón "Pintar las dos". El script se borra
-  cuando la puerta esté elegida.
+  derecha**, y en el dibujo eso es el botón "Pintar las dos".
 
   **Cada dial nuevo empuja este pendiente**: los temporales se van solos cuando
   el usuario elige, pero los que se quedan se acumulan en una fila que ya ocupa
@@ -3903,8 +3903,10 @@ es por decisión pendiente, no porque no esté desplegado.**
   Se dibujó la alternativa —meterlos en un renglón gris adentro de la tarjeta—
   y recuperaba unos 60 px, pero **"Mejor" deja de poder tocarse**, que hoy es el
   atajo para ver la mejor jugada en el tablero. El usuario los dejó como están y
-  pidió anotar que hay que revisar cómo dejarlos bien. Las dos formas están
-  dibujadas en el arnés (`dist-E` y `dist-E-compacta`).
+  pidió anotar que hay que revisar cómo dejarlos bien. Las dos formas se
+  dibujaron en su momento en el arnés (`dist-E` y `dist-E-compacta`); **ese
+  código ya no está** —se fue con la v0.74, como se van todas las maquetas— así
+  que para volver a verlas hay que redibujarlas.
 
   **La estética de la TIRA sí se resolvió** en la misma mirada: sin recuadro en
   cada jugada, galones sin botón, y la actual marcada con el 20% del color de su
@@ -4251,6 +4253,15 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
   que un cambio de PC no se filtró al celu. Y lo que NO se toca es la mitad de
   arriba: él lo puso en la misma frase —*"lo que no quiero perder es que me
   mandes captura de cómo se vería algo antes de implementarlo"*—.
+- **Las maquetas son andamio: no se commitean.** Decisión del usuario, v0.91,
+  y la razón es que **son una decisión temporal**: el script que dibuja las
+  alternativas vive lo que dura la elección y después estorba. `.gitignore` tiene
+  `pruebas/maqueta-*.mjs` para que no se cuele ni por el hook que avisa de
+  archivos sin commitear —que fue exactamente cómo se coló la primera vez—. Lo
+  que **sí** queda en el repo es lo que se aprendió mirando: los números medidos
+  y qué eligió el usuario, escritos en la sección que corresponda. Las maquetas
+  viejas se hacían adentro de `mirar.mjs` y se borraban al decidir (`dist-E`,
+  v0.74); en un archivo aparte es más cómodo, pero se borra igual.
 - **Un cambio invasivo por tanda.** Si además hay que refactorizar, va solo.
 - **`npm test` antes de dar nada por bueno**, y una prueba nueva por cada
   arreglo. Los errores que no agarran son siempre los del DOM y los de la

@@ -34,6 +34,10 @@ describe. §10 tiene las reglas de trabajo.
   `for f in viejas/*.png; do cmp -s "$f" "capturas/$(basename $f)" || echo "$f"; done`
   —salteando las que empiezan con `ancho`, `tres`, `marcas` y `previa`, que son
   las de PC y tienen que cambiar—.
+- **Las maquetas no se commitean.** El script que dibuja las alternativas es
+  andamio de una decisión temporal: se corre, se mandan las capturas y se tira.
+  `.gitignore` ya lo ataja (`pruebas/maqueta-*.mjs`). En el repo queda lo que se
+  aprendió —los números y lo que eligió el usuario— en el traspaso, no el script.
 - **Mirar la captura no es mirar lo que cambiaste: es mirar la pantalla.**
   Incluye los **espacios**: que nada quede pegado a nada. Ya pasó —una fila de
   botones mudada de lugar quedó pegada a la tarjeta de abajo, y lo vio el
