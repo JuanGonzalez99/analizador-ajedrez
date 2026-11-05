@@ -3012,3 +3012,16 @@ test("tiempoCorto muestra la décima solo cuando el dato la trae", () => {
   assert.equal(T.tiempoCorto(80), "1:20");
   assert.equal(T.tiempoCorto(605), "10:05", "los segundos van con cero adelante");
 });
+
+/* --- la cuarta falla, medida antes de arreglarla, v0.95.1 --- */
+
+test("la medición cuenta la mejor del motor marcada mala, en los dos modos", () => {
+  /* categorizar() pregunta por los cortes antes que por esMejor. Antes de
+     moverlo hay que saber cuántas jugadas cambian de etiqueta, y eso sale de
+     las filas del mes sin volver a correr el motor. */
+  const med = html.slice(html.indexOf("function medicionGenial()"),
+                         html.indexOf("function reDerivar"));
+  assert.ok(med.includes("LA MEJOR DEL MOTOR, MARCADA MALA"), "falta la sección de la cuarta falla");
+  assert.ok(med.includes("mejorMala.critico") && med.includes("mejorMala.amigable"),
+            "tiene que contar los dos modos");
+});

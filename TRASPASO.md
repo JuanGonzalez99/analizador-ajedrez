@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4354,6 +4354,16 @@ es una cuenta que hoy no tenemos: **cuántas jugadas de un mes son la mejor del
 motor y caen igual en una categoría mala**. Sale de las filas ya guardadas sin
 volver a correr el motor —`f.mejor === f.uci` contra `f.cat`— así que es un
 volcado de DEV como el de Genial, no una tanda.
+
+**El volcado ya existe (v0.95.1)** y no agregó ningún botón: es una sección más
+al final de "Copiar medición de Genial" (modo DEV, `?dev=1`), que ya recorría
+justo esas jugadas —las candidatas a Genial son las que jugaron la mejor—.
+Cuenta cuántas caen en Omisión, Grave, Error o Imprecisión **en los dos modos**
+(sale de `f.cats`, así que no depende del dial) y lista cada una con su
+`perdida`, su `caida` y las dos etiquetas. Como todo ese volcado, sale del mes
+analizado y no de "todo lo analizado": las filas flacas no llevan `mejor` ni
+`uci`. **Lo que falta es que el usuario lo corra sobre un mes suyo** y mande lo
+que copia; con eso se decide si el arreglo se aplica tal cual.
 
 > ⚠ **Las mediciones de esta sección se tomaron con las cadencias mezcladas y
 > sin márgenes.** Desde la v0.46 la vista Mes habla de una sola cadencia, y

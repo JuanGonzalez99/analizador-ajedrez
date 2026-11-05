@@ -727,7 +727,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.95 · 10-09";
+  window.VERSION = "v0.95.1 · 05-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5017,6 +5017,13 @@ function medicionGenial() {
   const nombreCubo = i => CUBOS[i + 1] === Infinity ? `${CUBOS[i]}+`
                                                     : `${CUBOS[i]}-${CUBOS[i + 1] - 1}`;
   const hist = new Map(), geniales = [], cerca = [];
+  /* LA CUARTA FALLA (v0.95): la mejor del motor marcada Imprecisión o peor.
+     categorizar() pregunta por los cortes antes que por esMejor, y la pérdida
+     sale de restar dos búsquedas independientes. Esto cuenta cuántas hay, en
+     los DOS modos, para saber cuánto mueven las tablas antes de arreglarlo. */
+  const MALAS = ["omision", "grave", "error", "imprecision"];
+  const mejorMala = { critico: 0, amigable: 0 }, mejorMalaLista = [];
+  const num = (v, d) => typeof v === "number" ? v.toFixed(d) : "-";
   let jugadas = 0, candidatas = 0, sinSegunda = 0, recapTapadas = 0;
 
   MES.resultados.forEach((r, p) => {
@@ -5026,6 +5033,13 @@ function medicionGenial() {
       const esMejor = f.mejor === f.uci;
       if (!esMejor) return;
       candidatas++;
+      const cs = f.cats || { critico: f.cat, amigable: f.cat };
+      const malaEn = ["critico", "amigable"].filter(m => MALAS.includes(cs[m]));
+      malaEn.forEach(m => mejorMala[m]++);
+      if (malaEn.length) mejorMalaLista.push(
+        `p${p + 1} ${f.n}${f.turno === "w" ? "." : "..."} ${f.san}` +
+        ` perdida=${num(f.perdida, 2)} caida=${num(f.caida, 1)}` +
+        ` critico=${cs.critico} amigable=${cs.amigable}`);
       if (f.huecoSegunda === null) { sinSegunda++; return; }
       const k = cubo(f.huecoSegunda) * 2 + (f.esRecaptura ? 1 : 0);
       hist.set(k, (hist.get(k) || 0) + 1);
@@ -5056,7 +5070,11 @@ function medicionGenial() {
       .map(([k, v]) => `  ${(nombreCubo(k >> 1) + (k & 1 ? " (recaptura)" : "")).padEnd(22)} ${v}`)
       .join("\n") +
     lista("GENIALES", geniales) +
-    lista("CERCA (no recaptura, hueco 40-149: las que rescataría un corte más bajo)", cerca);
+    lista("CERCA (no recaptura, hueco 40-149: las que rescataría un corte más bajo)", cerca) +
+    `\n\nLA MEJOR DEL MOTOR, MARCADA MALA (cuarta falla)\n` +
+    `  en modo crítico: ${mejorMala.critico} de ${candidatas}\n` +
+    `  en modo amigable: ${mejorMala.amigable} de ${candidatas}` +
+    lista("detalle", mejorMalaLista);
 }
 
 $("medir").onclick = seguro("medir", () => {
