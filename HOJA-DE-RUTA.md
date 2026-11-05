@@ -33,21 +33,26 @@ lo demás se dibuja contra ella.
       de M2 tiene el mismo tono que libro, imprecisión y error, y el botón
       principal quedaría del color de "error". El CSS de las dos está abajo,
       en "Las mezclas".
-- [ ] ⏸ espera a Juan: M1 o M2.
+- [x] **Juan eligió A · Noche, tal cual** (5-nov), no las mezclas. Pidió que
+      al hacerlo lo vea el revisor, que mencione lo que encuentre para
+      arreglar, y que quien programa **juzgue si cada cosa aplica o no**.
 - [ ] Escribir el sistema de diseño en `DISENO.md` §1 a partir de la elegida:
       color, tipografía, escala de espacios, formas, botones, movimiento.
-      **Con lo que el revisor pidió resolver ahí** (vale para las dos):
+      **Con lo que el revisor pidió resolver ahí.** Lo revisó sobre M1 y M2;
+      con A elegida, juzgar cada uno (los dos marcados *(M1)* no aplican a A
+      tal cual, porque A no tiene tablero de madera ni serif):
       - las piezas negras comidas no se ven sobre el fondo oscuro (1,2:1):
         pastilla del color claro del tablero o contorno claro;
       - la curva es un bloque crema que encandila: la parte "blancas" sale de
         un color del sistema, no del blanco;
       - grave `#c0392b` y omisión `#d0453b` no llegan a 3:1 en oscuro: pasar a
         `#e5534b` y `#ef6a5e`, y ver cómo se distinguen entre sí;
-      - "libro" `#b08d63` desaparece sobre la casilla oscura de madera: sobre
-        el tablero, contorno o ícono, no relleno;
+      - *(M1)* "libro" `#b08d63` desaparece sobre la casilla oscura de
+        madera: sobre el tablero, contorno o ícono, no relleno. Con el tablero
+        verdoso de A, medir de nuevo;
       - bordes de los campos a 3:1 (`#6b6f75`);
-      - serif solo en h1 y h2 de 15 px para arriba; Android no trae Georgia y
-        va a mostrar Noto Serif: validar con captura;
+      - *(M1)* serif solo en h1 y h2 de 15 px para arriba; Android no trae
+        Georgia: no aplica, A usa `system-ui`;
       - la jugada elegida en la tira, con subrayado de 2 px del acento.
       **Claro y oscuro:** la oscura es la principal. La app sigue lo que diga
       el teléfono, y la clara se arma del mismo sistema, para el amigo de la
@@ -60,6 +65,11 @@ lo demás se dibuja contra ella.
 - [ ] Repaso final del revisor sobre la app entera, celu y PC.
 
 ## Etapa 2 · Partir `index.html`
+
+El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
+Las dos formas ahorran lo mismo: en las dos las sesiones leen archivos chicos
+de `src/` y nunca el `index.html` armado. Lo que las separa es solo la caché del
+celu, y por eso la recomendación es juntarlos al pushear.
 
 Hoy cada sesión paga ~103.000 tokens en leerlo por partes, y cada módulo nuevo
 lo agranda. Va **sola en su tanda**, como pide el traspaso (§2).
@@ -134,7 +144,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- ¿M1 · Noche con libro o M2 · Noche cálida? (el revisor recomienda M1)
 
 ---
 

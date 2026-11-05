@@ -45,7 +45,8 @@ hay. Las primeras salen del historial del traspaso.
 - **Modo oscuro**: usa el celu así (5-nov-2026).
 - **La dirección A · Noche** (oscura, carbón frío, acento verde), y de la B ·
   Papel le quedó que *"tiene su encanto"*: títulos de libro y tablero de
-  madera. Pidió una mezcla de las dos (5-nov-2026).
+  madera. Se le dibujaron dos mezclas y **se quedó con A** (5-nov-2026): es la
+  base del sistema de diseño.
 - **Que el revisor vaya revisando todo** (5-nov-2026).
 - **Pantalla densa, todo lo de la jugada sin scrollear**, antes que tarjetas
   grandes. Lo eligió mirando tres propuestas a ancho de celu (§7 del
