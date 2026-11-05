@@ -1,5 +1,9 @@
 # Cómo trabajar en este repo
 
+**Hacia dónde va el proyecto está en `NORTE.md`**, y el orden en
+`HOJA-DE-RUTA.md`. El sistema de diseño y los gustos de Juan, en `DISENO.md`.
+Lo que hace cada noche la tarea programada, en `TAREA-NOCTURNA.md`.
+
 **El documento del proyecto es `TRASPASO.md`.** Ahí está todo: las decisiones
 medidas, el mapa del archivo, las reglas de método y los pendientes. Leerlo
 antes de tocar nada, y **actualizarlo en el mismo commit** que el cambio que
@@ -11,29 +15,31 @@ describe. §10 tiene las reglas de trabajo.
   celular del usuario **se tilda al responder**: queda colgada y hay que
   reescribir la respuesta. Las opciones se ofrecen **en texto**, numeradas o con
   viñetas, y él contesta escribiendo.
-- **Antes de cualquier decisión visual, mostrar cómo va a quedar y esperar el
-  ok.** Vale para todo lo que se ve, no solo para las tablas: el texto de una
-  etiqueta, la forma de una marca, cuánto se llena una barra. Se dibuja con el
-  arnés (`npm run mirar`), se mandan las alternativas y él elige mirando. Ya
-  evitó dos cambios que no le gustaban y destapó uno que se había colado.
-- **PC lo resolvés vos; el celular se dibuja y se espera el ok.** Es decisión
-  suya y desde la v0.91 **ya no es la excepción de una tanda: vale para toda
-  feature que pida de acá en adelante**. Sus palabras: *"todas las features que
-  te vaya pidiendo, las adaptes al modo PC como vos creas conveniente"*, y antes
-  *"no voy a revisar nada de lo que sea solo PC"* y *"no te frenes cuando
-  termines cada punto"*. O sea que la parte de PC de cada cosa se decide, se
-  aplica y se cuenta —en commits separados—, y se le resume al final. **La regla
-  de arriba sigue entera para todo lo que se vea en el celular**, que es donde
-  usa la app, y él la nombró en la misma frase en que soltó lo de PC: *"lo que no
-  quiero perder es que me mandes captura de cómo se vería algo antes de
-  implementarlo"*.
-  Lo que reemplaza a la mirada suya en lo de PC es **comparar byte a byte las 28
-  capturas de celular contra la versión anterior**, en cada versión: es lo único
-  que prueba que un cambio de PC no se filtró al celu. Sale así, y con las de la
-  tanda anterior guardadas en un directorio aparte:
-  `for f in viejas/*.png; do cmp -s "$f" "capturas/$(basename $f)" || echo "$f"; done`
-  —salteando las que empiezan con `ancho`, `tres`, `marcas` y `previa`, que son
-  las de PC y tienen que cambiar—.
+- **Las decisiones visuales ya no esperan el ok de Juan** (desde el 5-nov-2026,
+  `NORTE.md`, "Cómo trabajamos"). Reemplaza a la regla vieja de "dibujar y
+  esperar el ok" para todo lo del celu. Ahora:
+  - **Las chicas las toma el revisor de UX** (`.claude/agents/revisor-ux.md`)
+    contra el sistema de diseño y los gustos de `DISENO.md`: un espacio, un
+    tamaño, el texto de una etiqueta, la forma de una marca, una duración.
+  - **Las grandes** —cambiar el sistema de diseño, qué pregunta contesta una
+    tabla, una pantalla entera nueva, sacar algo que Juan usa— **tampoco
+    frenan**: se elige la recomendación, se sigue, y van al resumen como duda
+    ("no sé si esto te copa"), con captura. Darla vuelta cuesta poco.
+  - **El revisor es otro agente**, no el que programa, y mira capturas de celu
+    **y** de PC. Revisa después de cada cambio; si el consumo se come el tope
+    semanal, una vez al final (perilla en `HOJA-DE-RUTA.md`).
+  - **Lo que Juan diga "me copa / no me copa" se anota en `DISENO.md` con su
+    porqué**, en el mismo commit. Es lo que deja al revisor decidir como él.
+  - **Lo de PC sigue igual que desde la v0.91**: se decide, se aplica y se
+    cuenta. Y sigue la **comparación byte a byte de las capturas de celular**
+    contra la versión anterior, en cada versión: es lo que prueba que un
+    cambio de PC no se filtró al celu. Sale así, con las de la tanda anterior
+    guardadas en un directorio aparte:
+    `for f in viejas/*.png; do cmp -s "$f" "capturas/$(basename $f)" || echo "$f"; done`
+    —salteando las que empiezan con `ancho`, `tres`, `marcas` y `previa`, que
+    son las de PC y tienen que cambiar—.
+  - **Excepción**: lo que `HOJA-DE-RUTA.md` marque `⏸ espera a Juan` (por
+    ejemplo, elegir la dirección visual) sí espera.
 - **Las maquetas no se commitean.** El script que dibuja las alternativas es
   andamio de una decisión temporal: se corre, se mandan las capturas y se tira.
   `.gitignore` ya lo ataja (`pruebas/maqueta-*.mjs`). En el repo queda lo que se

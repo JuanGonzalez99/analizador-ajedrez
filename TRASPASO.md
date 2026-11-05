@@ -3,6 +3,11 @@
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
 commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95**.
 
+**Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
+con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
+`DISENO.md`, y el trabajo de cada noche en `TAREA-NOCTURNA.md`. Este documento
+sigue siendo el de **cómo está hecho** lo que hay.
+
 Contiene lo necesario para trabajar sobre el código sin repetir mediciones ya
 hechas. **No hace falta ningún otro documento del proyecto.** Las reglas de
 método que aparecen acá están reescritas para que se entiendan solas.
@@ -186,6 +191,12 @@ pruebas en la v18. Levanta un servidor sobre el repo, abre `index.html` en un
 Chromium headless **en modo simple**, analiza una partida y deja capturas en
 `capturas/` (ignorado por git). **No toca `index.html`**: no viaja al sitio y no
 cambia nada de lo que se ve en el celular.
+
+**El Chromium lo busca `abrirApp()` en `tira.mjs`, primero en
+`/opt/pw-browsers/chromium`** (5-nov-2026). Es un enlace que el contenedor
+mantiene apuntando a la versión que trae; las rutas con número
+(`chromium-1194`) envejecieron, y `mirar` explotaba pidiendo
+`playwright install`, que no hay que correr. Si vuelve a pasar, la ruta está ahí.
 
 **Entra por la lista del mes, no pegando el PGN, y eso es una regla que costó un
 bug.** Desde la v0.63.1 el arnés **falsea también la API de chess.com** —el
@@ -4173,6 +4184,9 @@ describe en §6.
 
 ### Estética
 
+**Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
+(identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
+
 El refactor de la interfaz arrancó en la v27. La decisión de fondo, tomada por
 el usuario: **la app va a tener dos vistas equivalentes, Partida y Mes**, en vez
 de subordinar una a la otra. La dirección visual elegida es densa —toda la
@@ -4811,30 +4825,25 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
 
 ## 10. Cómo trabajar
 
-- **Antes de cambiar una tabla, mostrar cómo va a quedar y esperar el ok.** Las
-  tablas son el producto: cada una codifica una pregunta, así que cambiarla es
-  cambiar la pregunta y esa decisión es del usuario.
-- **Y lo mismo vale para CUALQUIER decisión visual, no solo las tablas.** Esta
-  regla decía "para lo que no toca tablas, aplicar y contar", y por ese hueco se
-  coló el `½-½` de la v0.61: no era una tabla, así que se aplicó sin dibujarlo,
-  y el usuario lo rechazó al verlo. La forma de una marca, el texto de una
-  etiqueta, cuánto se llena una barra: se **dibuja al tamaño real**, se muestran
-  las alternativas y se espera el ok. Sale barato —el arnés (§2) lo hace en
-  segundos— y ya se ganó dos veces: las marcas de la curva (v0.59) y el nombre
-  de las tablas (v0.62). Lo que se aplica y se cuenta es lo que no se ve:
-  arreglos internos, pruebas, rendimiento.
-- **La regla de arriba es del CELULAR. Lo que se ve solo en una compu lo decide
-  quien programa** —decisión del usuario, v0.91—: *"todas las features que te
-  vaya pidiendo, las adaptes al modo PC como vos creas conveniente"*. Empezó
-  como la excepción de una tanda (v0.85–v0.90, §7) y ahora es la regla parada:
-  **cada feature nueva se piensa para las dos pantallas, la del celular se
-  dibuja y se espera el ok, y la adaptación a PC se aplica y se cuenta**, en
-  commits separados y resumida al final. Lo que reemplaza a la mirada del
-  usuario en lo de PC es la **comparación byte a byte de las capturas de
-  celular** contra la versión anterior, en cada versión: es lo único que prueba
-  que un cambio de PC no se filtró al celu. Y lo que NO se toca es la mitad de
-  arriba: él lo puso en la misma frase —*"lo que no quiero perder es que me
-  mandes captura de cómo se vería algo antes de implementarlo"*—.
+- **Las decisiones visuales ya no esperan el ok del usuario** (5-nov-2026,
+  `NORTE.md`, "Cómo trabajamos"). Hasta acá la regla era "dibujar al tamaño
+  real, mostrar las alternativas y esperar el ok" para todo lo que se viera en
+  el celular —tablas, etiquetas, marcas—, y se ganó varias veces: las marcas de
+  la curva (v0.59), el nombre de las tablas (v0.62), y el `½-½` de la v0.61, que
+  se coló sin dibujar y el usuario rechazó al verlo. **Lo que se aprendió ahí no
+  se tira: pasa a `DISENO.md` como gustos anotados**, que es lo que ahora usa
+  el revisor para decidir como él. La regla nueva:
+  - **Las chicas las decide el revisor de UX** (`.claude/agents/revisor-ux.md`),
+    un agente distinto del que programa, contra el sistema de diseño y los
+    gustos de `DISENO.md`. Mira capturas de celu y de PC, no solo el código.
+  - **Las grandes no frenan**: se elige la recomendación, se sigue, y van al
+    resumen de la mañana como duda, con captura.
+  - **Las tablas siguen siendo el producto** —cada una codifica una pregunta—,
+    así que cambiar qué pregunta contesta una tabla cuenta como grande.
+  - **Lo de PC se decide, se aplica y se cuenta**, igual que desde la v0.91, y
+    lo que lo controla sigue siendo la **comparación byte a byte de las
+    capturas de celular** contra la versión anterior.
+  - Lo que `HOJA-DE-RUTA.md` marque `⏸ espera a Juan` sí espera.
 - **Las maquetas son andamio: no se commitean.** Decisión del usuario, v0.91,
   y la razón es que **son una decisión temporal**: el script que dibuja las
   alternativas vive lo que dura la elección y después estorba. `.gitignore` tiene

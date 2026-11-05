@@ -73,9 +73,13 @@ export async function abrirApp({ puerto = 8098, alto = 900, partida = null } = {
   });
   await new Promise(r => srv.listen(puerto, r));
   /* el Chromium del entorno si lo hay: en los contenedores viene preinstalado y
-     bajarlo de nuevo no sirve. Misma lista que `mirar.mjs`. */
+     bajarlo de nuevo no sirve. El primero es un enlace que el entorno mantiene
+     apuntando a la versión que trae (en nov-2026, chromium-1243): las rutas con
+     número viejo dejaron de existir y `mirar` explotaba pidiendo
+     `playwright install`. Se dejan de respaldo por si el enlace no está. */
   const CH = process.env.CHROMIUM_PATH ||
-    ["/opt/pw-browsers/chromium-1194/chrome-linux/chrome", "/opt/pw-browsers/chromium/chrome-linux/chrome"]
+    ["/opt/pw-browsers/chromium", "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
+     "/opt/pw-browsers/chromium/chrome-linux/chrome"]
       .find(p => fs.existsSync(p));
   const b = await chromium.launch(CH ? { executablePath: CH } : {});
   const pg = await b.newPage({ viewport: { width: 412, height: alto }, deviceScaleFactor: 2 });
