@@ -12,26 +12,289 @@ traspaso.
 
 ## 1. El sistema de diseño
 
-**Todavía no existe.** Lo que hay hoy (v0.95) es lo que se fue acumulando:
-`system-ui` a 16 px, colores que salen de `currentColor` con `color-mix`,
-botones transparentes con borde, el esquema claro u oscuro que diga el
-teléfono, y los colores de categoría en `:root` de `index.html`. No hay escala
-de espacios ni de tipografía: cada tamaño se eligió en su momento.
+**Base: A · Noche, tal cual** (elegida por Juan el 5-nov-2026). Escrito antes
+de llevarlo al código: hasta que la etapa 1 lo aplique pantalla por pantalla,
+la app sigue viéndose como la v0.95 y **esto es el destino, no la foto**. Los
+valores de A salen de la maqueta (la tabla de "Las mezclas" en
+`HOJA-DE-RUTA.md`); lo que no estaba en la maqueta lo decidió quien programa,
+y va marcado *(elegido)* para que se pueda dar vuelta.
 
-Cuando Juan elija una de las direcciones de la etapa 1, acá van:
+Los contrastes son WCAG, medidos con la fórmula de luminancia, y los
+recalculó el revisor de UX el 5-nov. Lo mínimo es
+**4,5:1 para texto, 3:1 para íconos, bordes de campos y texto de 18 px o más**.
 
-- **Color:** fondo, superficies, texto, texto tenue, línea, acento, y los
-  colores de categoría (que ya existen y se respetan).
-- **Tipografía:** familia, escala (cuántos tamaños y cuáles), pesos.
-- **Espacios:** la escala (por ejemplo 4/8/12/16/24) y cuál va dónde.
-- **Formas:** radios, bordes, sombras.
-- **Botones y controles:** primario, secundario, chico, ícono; alto mínimo de
-  toque.
-- **Movimiento:** duraciones, curvas, qué pasa con `prefers-reduced-motion`.
+### 1.1 Color — oscuro, que es el principal
 
-Mientras no exista, el revisor decide contra Material Design y contra los
-gustos de abajo, y **no inventa identidad**: un cambio chico se parece a lo que
-ya hay.
+Tres alturas de superficie, de más hundida a más arriba. **En oscuro la altura
+se dice con la luz, no con sombras**: lo que está más arriba es más claro.
+
+| variable | valor | para qué | contraste |
+|---|---|---|---|
+| `--fondo` | `#1d1f22` | la página | — |
+| `--superficie` | `#272a2e` | tarjetas, tablas, la hoja de ajustes | — |
+| `--elevada` | `#2f3337` | botones secundarios, campos, lo que se toca | — |
+| `--linea` | `#3a3d42` | separadores y bordes que solo ordenan | 1,5 sobre fondo, a propósito: no es un borde que haya que ver |
+| `--borde-campo` | `#7a7e84` | el borde de un campo o un select | 4,1 / 3,5 / 3,1 sobre fondo / superficie / elevada *(elegido)* |
+| `--texto` | `#e9e7e3` | todo el texto | 13,4 sobre fondo |
+| `--tenue` | `#a4a19b` | lo secundario: leyendas, ejes, aclaraciones | 6,4 sobre fondo, 4,9 sobre elevada |
+| `--acento` | `#7cbf5a` | el botón principal, lo elegido, el foco | 7,4 sobre fondo, 6,5 sobre superficie |
+| `--sobre-acento` | `#13210c` | texto encima del acento | 7,6 |
+| `--casilla-clara` | `#e6e1d3` | tablero | — |
+| `--casilla-oscura` | `#7f9466` | tablero | — |
+| `--marca` | `#3f5163` | lo que se dibuja con el botón derecho | (ya existe) |
+
+**El borde de campo no es el que pidió el revisor.** Pidió `#6b6f75` "a 3:1",
+y lo da sobre el fondo (3,3) pero **no sobre la superficie (2,85)**, que es
+donde viven casi todos los campos: la hoja de ajustes es superficie. Con
+`#7a7e84` pasa 3:1 en las tres alturas.
+
+**El tablero de A reemplaza al de madera como tema por defecto.** Los temas
+elegibles (§4bis del traspaso) siguen estando; cambia cuál arranca.
+
+**Las variables que hoy se derivan de `currentColor`** (`--linea` y `--tenue`
+con `color-mix`) pasan a ser fijas. Se derivaban porque no había paleta y así
+seguían solas al esquema del teléfono; con dos paletas escritas ya no hace
+falta, y un tenue fijo se puede medir.
+
+### 1.2 Los colores de categoría
+
+**Existen desde antes y se respetan**: son lo que Juan ya aprendió a leer.
+Cambian dos, y solo de luz, no de tono.
+
+| categoría | hoy | queda | sobre fondo | sobre superficie |
+|---|---|---|---|---|
+| brillante | `#26a69a` | igual | 5,5 | 4,8 |
+| genial | `#5b8def` | igual | 5,1 | 4,5 |
+| mejor | `#4a9d4a` | igual | 4,9 | 4,3 |
+| excelente | `#6bb06b` | igual | 6,3 | 5,5 |
+| bien | `#86b886` | igual | 7,3 | 6,3 |
+| libro | `#b08d63` | igual | 5,4 | 4,7 |
+| imprecisión | `#d4a017` | igual | 7,0 | 6,1 |
+| error | `#e08030` | igual | 5,7 | 5,0 |
+| **omisión** | `#d0453b` | **`#ef6a5e`** | 3,6 → 5,4 | 3,2 → 4,7 |
+| **grave** | `#c0392b` | **`#e5534b`** | 3,0 → 4,46 | **2,65** → 3,9 |
+| forzada | `#8a8578` | igual | 4,49 | 3,9 |
+
+**Por qué se aplica lo del revisor:** grave sobre superficie daba 2,65, por
+debajo hasta del mínimo de un ícono. Es la categoría que más importa que se
+vea y era la que menos se veía.
+
+**Lo que preguntó el revisor —cómo se distinguen entre sí— tiene una respuesta
+incómoda:** grave y omisión nuevos quedan a 1,2:1 entre ellos, y **omisión y
+error a 1,06**: por luz son casi iguales y los separa solo el tono (rojo,
+salmón, naranja). No se arregla con color, y no hace falta: **la categoría
+nunca va solo con color**, siempre lleva su símbolo (§4quinquies del traspaso),
+y esa es la regla que se mantiene. Lo que sí queda prohibido es una marca de
+categoría sin símbolo, como un punto suelto.
+
+**No todas pasan 4,5.** Grave (4,46) y forzada (4,49) no llegan ni sobre el
+fondo, y mejor, genial, forzada y grave quedan entre 3,9 y 4,5 sobre la
+superficie: alcanzan para el símbolo y para
+texto en negrita de 14 px, no para texto corrido. **Regla:** el color de
+categoría se usa en el símbolo, el borde de la tarjeta y la palabra de la
+categoría en negrita; **el texto que explica va en `--texto`**, nunca teñido.
+
+**Sobre el tablero, la categoría va en la insignia, con aro.** Contra la
+casilla oscura de A todas dan entre 1,0 y 1,6: ninguna se ve como relleno. La
+insignia (el círculo con el símbolo en la esquina de la pieza) ya tiene fondo
+propio; lo que se agrega es **un aro de 1,5 px del color `--fondo`** que la
+separa de cualquier casilla. Esto resuelve también lo de "libro sobre la
+madera" que el revisor marcó para M1, que con A no aplica tal cual.
+
+### 1.3 Color — claro, para el amigo de la PC
+
+**La app sigue lo que diga el teléfono o la compu.** La clara se arma del mismo
+sistema, con los mismos nombres de variable *(elegido; va al resumen como
+recomendación)*.
+
+| variable | valor | contraste |
+|---|---|---|
+| `--fondo` | `#f4f2ee` | — |
+| `--superficie` | `#ffffff` | — |
+| `--elevada` | `#ebe8e2` | — |
+| `--linea` | `#dcd9d3` | — |
+| `--borde-campo` | `#8a877f` | 3,6 sobre superficie |
+| `--texto` | `#1d1f22` | 14,8 sobre fondo |
+| `--tenue` | `#5c5953` | 6,2 sobre fondo |
+| `--acento` | `#3d7a26` | 5,2 sobre blanco |
+| `--sobre-acento` | `#ffffff` | 5,2 |
+| tablero | igual que en oscuro | — |
+
+**Las categorías no sirven tal cual sobre blanco**: imprecisión da 2,4 y bien
+2,3. En claro, **el símbolo y la palabra** usan una versión oscurecida; el
+borde de la tarjeta y la insignia del tablero siguen con la original.
+**Y el texto de categoría en claro va solo sobre `--superficie`**: sobre
+`--fondo` cinco quedan debajo de 4,5 (mejor 4,05, error 4,30, forzada 4,36,
+grave 4,37, bien 4,44). En claro grave y omisión quedan a 1,03 entre sí y casi
+del mismo tono: ahí el símbolo es todavía más obligatorio.
+
+| categoría | en claro | sobre blanco |
+|---|---|---|
+| brillante | `#1c7c74` | 5,0 |
+| genial | `#446ab3` | 5,3 |
+| mejor | `#3f853f` | 4,5 |
+| excelente | `#467246` | 5,6 |
+| bien | `#577857` | 5,0 |
+| libro | `#846a4a` | 5,1 |
+| imprecisión | `#8a680f` | 5,2 |
+| error | `#a86024` | 4,8 |
+| omisión | `#b35046` | 5,1 |
+| grave | `#c34740` | 4,9 |
+| forzada | `#757166` | 4,9 |
+
+### 1.4 Tipografía
+
+**`system-ui` para todo**, como A. Nada de serif: Android no trae Georgia, y
+la de M1 era lo único que la pedía.
+
+Hoy hay **catorce tamaños** en el CSS, de 9,5 a 24 px, cada uno elegido en su
+momento. Quedan **seis**:
+
+| nombre | px | peso | para qué | lo que absorbe de hoy |
+|---|---|---|---|---|
+| título | 22 | 700 | h1, uno por pantalla | 20, 24 |
+| subtítulo | 18 | 700 | h2, cabeceras de sección | el 15 del h2, 17, 18 |
+| cuerpo | 16 | 400 | texto corrido, botones | 16 |
+| secundario | 14 | 400 / 600 | controles chicos, tablas, la tarjeta | 13,5, 14, el resto de los 15 |
+| leyenda | 12,5 | 400 | ejes, leyendas, aclaraciones | 12, 12,5, 13 |
+| mínimo | 11 | 600 | galones, coordenadas, marcas en la tira | 9,5, 10,5, 11, 11,5 |
+
+**Dónde va cada 15 de hoy**, que es el tamaño que cae entre dos: el `h2` sube a
+18 (está fuera de la vista de la jugada); el título de la tarjeta
+(`.veredicto .tit`) va a **16 en 700**, que es lo más importante de la tarjeta
+y sube un solo píxel; `.seccion > summary` y `.conmutador` bajan a 14 en 600.
+La tira (`.tira .jg`, hoy 13) va a 12,5. **En la vista de la jugada ningún
+cambio de tamaño puede hacer crecer la pantalla**: si lo hace, se mide antes
+de aplicarlo.
+
+**Tres pesos: 400, 600 y 700.** El 800 que hay en dos lugares pasa a 700.
+**Números alineados** (`font-variant-numeric: tabular-nums`) en tablas,
+relojes y evaluaciones, para que las columnas no bailen.
+
+**El de 11 no baja más.** El `½-½` a 9,5 px ya fue rechazado por apretado
+(§2, "No le copa"): nada de texto por debajo de 11.
+
+### 1.5 Espacios
+
+**Escala de 4: 4, 8, 12, 16, 24, 32.** Se suma **2** solo adentro de un
+componente denso (el relleno de una pastilla, la distancia entre símbolo y
+número).
+
+| | dónde |
+|---|---|
+| 4 | entre un número y su unidad, ícono y texto pegados |
+| 8 | entre elementos de una misma fila, el relleno de un control chico |
+| 12 | entre filas de una lista, el relleno de una tarjeta en el celu |
+| 16 | el margen de la página en el celu, el relleno de una tarjeta en PC |
+| 24 | entre secciones |
+| 32 | entre bloques grandes en PC |
+
+Hoy los más usados son 6 y 10, que no están en la escala. **No se corrigen de
+un saque**: se pasan a 4, 8 o 12 cuando se aplique cada pantalla, mirando la
+captura, porque la pantalla densa (§2) es un gusto de Juan y un 10 que pasa a
+12 en cada renglón puede empujar algo fuera de la vista.
+
+### 1.6 Formas
+
+- **Radios:** 10 para botones y campos, 12 para tarjetas y la hoja de ajustes,
+  6 para pastillas y galones, círculo para insignias. Las casillas y el tablero
+  no llevan radio.
+- **Bordes:** 1 px. `--linea` para separar, `--borde-campo` para lo que se
+  escribe o se elige, el color de la categoría (3 px, a la izquierda) para la
+  tarjeta, como hoy.
+- **Sombras:** ninguna en lo que está en la página. **Una sola** para lo que
+  flota encima —la hoja de ajustes, la previa al pasar el mouse—:
+  `0 8px 24px rgb(0 0 0 / .45)` *(elegido)*.
+- **Lo elegido en la tira:** subrayado de 2 px de `--acento` debajo de la
+  jugada (lo pidió el revisor, aplica igual a A).
+
+### 1.7 Botones y controles
+
+| | cómo es | alto |
+|---|---|---|
+| **principal** | relleno `--acento`, texto `--sobre-acento`, peso 600 | 44 (40 en la vista de la jugada) |
+| **secundario** | relleno `--elevada`, sin borde, texto `--texto` | 44 (40 en la vista de la jugada) |
+| **chico** | como el secundario, 14 px | 36 visibles |
+| **ícono** | sin relleno hasta que se toca, ícono de 20 a 24 | 44 |
+| **campo / select** | relleno `--elevada`, borde `--borde-campo` | 44 |
+
+- **Uno solo principal por pantalla.** Si hay dos candidatos, uno es
+  secundario.
+- **Área de toque de 48 en el celu**, aunque lo visible sea más chico: el chico
+  de 36 y los de 40 se agrandan con un margen invisible. **40 y no 44 en la
+  vista de la jugada** porque hoy los botones miden ~37 y el conmutador 42:
+  con 44 cada fila sumaba de 2 a 7 px, y con el poco aire que queda a 412×760
+  dos o tres filas empujaban algo fuera de la vista.
+- **Entre botones chicos, 12 de separación en el celu**: con 8, las áreas de
+  48 de dos vecinos se pisan. En la compu (`pointer: fine`) el
+  chico puede quedar en 32.
+- **Deshabilitado:** opacidad .4, sin cambio de color.
+- **Foco de teclado:** contorno de 2 px de `--acento` separado 2 px, solo con
+  `:focus-visible`, que el dedo no lo dispare.
+- **Se distinguen campo y botón** como hoy (el comentario de `select.chico` en el CSS): el campo tiene
+  borde visible y el botón secundario no.
+
+### 1.8 Movimiento
+
+Hoy hay cinco transiciones (barras y galones), entre 150 y 200 ms. El sistema
+fija tres duraciones y dos curvas *(elegido; las tres reglas del traspaso §8,
+"animaciones", eran de Juan y van al resumen como recomendación)*:
+
+| | ms | para qué |
+|---|---|---|
+| corta | 120 | hover, galones, un color que cambia |
+| media | 180 | la pieza que se mueve, las barras de evaluación, la tira que se centra |
+| larga | 250 | la hoja que sube, la tarjeta que cambia de alto |
+
+- **Curvas:** entrar con `cubic-bezier(.2, 0, 0, 1)` (arranca rápido, frena
+  suave); salir con `cubic-bezier(.3, 0, 1, 1)`. Lo que sale dura un tercio
+  menos que lo que entra.
+- **Si se pasa de jugada antes de que termine, la nueva corta a la anterior y
+  la pieza salta al final.** Nunca se encola: revisar una partida es pasar
+  jugadas rápido.
+- **`prefers-reduced-motion: reduce`:** todo movimiento pasa a 0 ms; quedan
+  solo los cambios de opacidad, de 100 ms como mucho. Es obligatorio desde la
+  primera animación de movimiento.
+- **Nada se mueve solo.** Se anima lo que responde a algo que hizo Juan; nada
+  que llame la atención por su cuenta.
+
+### 1.9 Lo que el revisor marcó, y qué se hizo con cada cosa
+
+Lo revisó sobre M1 y M2; con A elegida, cada punto se juzgó de nuevo:
+
+| lo que marcó | ¿aplica a A? | qué queda |
+|---|---|---|
+| piezas negras comidas, invisibles en el fondo (1,2:1) | **sí**: el negro de Cburnett da 1,3 sobre el fondo de A | van sobre una pastilla de `--casilla-clara` (16:1), radio 6, igual para las dos tandas para que no parezca que una está marcada |
+| la curva, bloque crema que encandila | **sí**: el lado blancas es `#f0ece2`, el mismo de la barra | blancas `#d9d5cc` y negras `#33373c`, en la curva y en las dos barras: 8,2 entre ellas, menos luz y se siguen leyendo |
+| grave y omisión, por debajo de 3:1 | **sí** | `#e5534b` y `#ef6a5e` (§1.2) |
+| cómo se distinguen grave y omisión | sí, y peor: omisión y error también | por el símbolo, que es obligatorio (§1.2) |
+| bordes de campo a 3:1 con `#6b6f75` | sí, pero el valor no alcanza sobre superficie | `#7a7e84` (§1.1) |
+| libro sobre la casilla de madera *(M1)* | no tal cual, pero **todas** las categorías desaparecen sobre la casilla oscura de A | aro de `--fondo` en la insignia (§1.2) |
+| serif solo en títulos grandes *(M1)* | no: A no usa serif | — |
+| la jugada elegida, subrayada de acento | sí | §1.6 |
+
+### 1.10 Lo que todavía no está, y se decide al aplicar cada pantalla
+
+El revisor lo marcó como lo que le falta para decidir cosas chicas solo:
+
+- **Colores del tablero:** última jugada, casilla elegida, jaque, flechas.
+  `--marca` da 2,46 sobre la casilla oscura de A, así que hay que revisarla.
+- **Estados:** hover, apretado, fila elegida en tablas, opción elegida del
+  conmutador.
+- **Aviso o error que no sea de categoría**, y el velo detrás de la hoja.
+- **Una tabla de componente → variable** para la vista de la jugada.
+
+Se escriben acá cuando se aplique la pantalla que los usa, no antes.
+
+### 1.11 Cómo se usa esto
+
+- **En el código son variables en `:root`**, una por fila de las tablas de
+  arriba, y la clara en `@media (prefers-color-scheme: light)`. Ningún color,
+  tamaño o radio escrito a mano fuera de ahí, salvo las piezas de Cburnett.
+- **El revisor decide contra esto.** Un cambio que usa un valor que no está acá
+  es un hallazgo, salvo que el commit diga por qué.
+- **Cambiar el sistema no se hace de noche** (`TAREA-NOCTURNA.md`): se propone
+  como duda.
 
 ---
 

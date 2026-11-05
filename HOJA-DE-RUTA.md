@@ -36,7 +36,7 @@ lo demás se dibuja contra ella.
 - [x] **Juan eligió A · Noche, tal cual** (5-nov), no las mezclas. Pidió que
       al hacerlo lo vea el revisor, que mencione lo que encuentre para
       arreglar, y que quien programa **juzgue si cada cosa aplica o no**.
-- [ ] Escribir el sistema de diseño en `DISENO.md` §1 a partir de la elegida:
+- [x] Escribir el sistema de diseño en `DISENO.md` §1 a partir de la elegida:
       color, tipografía, escala de espacios, formas, botones, movimiento.
       **Con lo que el revisor pidió resolver ahí.** Lo revisó sobre M1 y M2;
       con A elegida, juzgar cada uno (los dos marcados *(M1)* no aplican a A
@@ -57,6 +57,7 @@ lo demás se dibuja contra ella.
       **Claro y oscuro:** la oscura es la principal. La app sigue lo que diga
       el teléfono, y la clara se arma del mismo sistema, para el amigo de la
       PC (recomendación, va al resumen).
+      **Hecho el 5-nov**: cada punto del revisor está juzgado en §1.9.
 - [ ] Llevarlo al código como variables en `:root` de `index.html`, sin
       cambiar todavía nada que se vea (parche).
 - [ ] Aplicarlo pantalla por pantalla, una versión cada una, con revisor:
@@ -143,6 +144,10 @@ stack; la app nativa queda como proyecto aparte.
 Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Juan
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
+
+- **¿Oscuro siempre en el celu, o que siga al teléfono?** El sistema dice
+  "sigue al teléfono" (`DISENO.md` §1.3), pero si el Android está en claro
+  no se ve la Noche que eligió. Lo marcó el revisor (5-nov).
 
 
 ---
