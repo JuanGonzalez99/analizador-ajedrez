@@ -54,9 +54,8 @@ lo demás se dibuja contra ella.
       - *(M1)* serif solo en h1 y h2 de 15 px para arriba; Android no trae
         Georgia: no aplica, A usa `system-ui`;
       - la jugada elegida en la tira, con subrayado de 2 px del acento.
-      **Claro y oscuro:** la oscura es la principal. La app sigue lo que diga
-      el teléfono, y la clara se arma del mismo sistema, para el amigo de la
-      PC (recomendación, va al resumen).
+      **Claro y oscuro:** Juan decidió **siempre oscuro** por ahora (5-nov);
+      la clara queda escrita en `DISENO.md` §1.3 para sumarla después.
       **Hecho el 5-nov**: cada punto del revisor está juzgado en §1.9.
 - [ ] Llevarlo al código como variables en `:root` de `index.html`, sin
       cambiar todavía nada que se vea (parche).
@@ -145,9 +144,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **¿Oscuro siempre en el celu, o que siga al teléfono?** El sistema dice
-  "sigue al teléfono" (`DISENO.md` §1.3), pero si el Android está en claro
-  no se ve la Noche que eligió. Lo marcó el revisor (5-nov).
 
 
 ---

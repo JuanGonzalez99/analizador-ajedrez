@@ -101,11 +101,15 @@ propio; lo que se agrega es **un aro de 1,5 px del color `--fondo`** que la
 separa de cualquier casilla. Esto resuelve también lo de "libro sobre la
 madera" que el revisor marcó para M1, que con A no aplica tal cual.
 
-### 1.3 Color — claro, para el amigo de la PC
+### 1.3 Color — claro, guardado para más adelante
 
-**La app sigue lo que diga el teléfono o la compu.** La clara se arma del mismo
-sistema, con los mismos nombres de variable *(elegido; va al resumen como
-recomendación)*.
+**La app va siempre en oscuro**, diga lo que diga el teléfono o la compu.
+Decisión de Juan (5-nov-2026): *"en principio siempre en oscuro, después vemos
+si sumamos modo claro"*. En el código eso es `color-scheme: dark` y una sola
+paleta en `:root`, sin `@media (prefers-color-scheme: light)`.
+
+**Lo de abajo no se aplica todavía.** Queda escrito y medido para el día que se
+sume el claro, con los mismos nombres de variable.
 
 | variable | valor | contraste |
 |---|---|---|
@@ -289,7 +293,7 @@ Se escriben acá cuando se aplique la pantalla que los usa, no antes.
 ### 1.11 Cómo se usa esto
 
 - **En el código son variables en `:root`**, una por fila de las tablas de
-  arriba, y la clara en `@media (prefers-color-scheme: light)`. Ningún color,
+  arriba. Solo la oscura por ahora (§1.3). Ningún color,
   tamaño o radio escrito a mano fuera de ahí, salvo las piezas de Cburnett.
 - **El revisor decide contra esto.** Un cambio que usa un valor que no está acá
   es un hallazgo, salvo que el commit diga por qué.
@@ -306,6 +310,9 @@ hay. Las primeras salen del historial del traspaso.
 ### Le copa
 
 - **Modo oscuro**: usa el celu así (5-nov-2026).
+- **La app siempre en oscuro**, aunque el teléfono esté en claro: *"en
+  principio siempre en oscuro, después vemos si sumamos modo claro"*
+  (5-nov-2026).
 - **La dirección A · Noche** (oscura, carbón frío, acento verde), y de la B ·
   Papel le quedó que *"tiene su encanto"*: títulos de libro y tablero de
   madera. Se le dibujaron dos mezclas y **se quedó con A** (5-nov-2026): es la
