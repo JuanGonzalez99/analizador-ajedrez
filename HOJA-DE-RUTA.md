@@ -5,8 +5,8 @@ El norte está en `NORTE.md`; esto es el orden. **Se toma siempre el primer
 ítem sin tachar** que no esté marcado `⏸ espera a Juan`. Al terminar uno se
 tacha acá, en el mismo commit.
 
-**Estado: propuesta del 5-nov-2026, esperando el ok de Juan.** Hasta que diga
-que sí, la tarea nocturna no arranca nada de acá.
+**Estado: aprobada por Juan el 5-nov-2026.** La tarea nocturna puede tomar
+ítems; lo que esté marcado `⏸` sigue esperando.
 
 ## Perillas
 
@@ -25,9 +25,33 @@ lo demás se dibuja contra ella.
 
 - [x] Auditoría y tres direcciones dibujadas sobre la app de verdad: A Noche,
       B Papel, C Material (5-nov).
-- [ ] ⏸ espera a Juan: elegir una dirección (o una mezcla).
+- [x] Juan eligió: **oscuro** (usa el celu así), le copa **A**, y **B "tiene su
+      encanto"**: pidió una mezcla (5-nov).
+- [x] Dos mezclas oscuras revisadas por el revisor: **M1 · Noche con libro**
+      (la noche fría de A, títulos Georgia, tablero de madera) y **M2 · Noche
+      cálida** (marrón tinta, acento ámbar). El revisor recomienda M1: el ámbar
+      de M2 tiene el mismo tono que libro, imprecisión y error, y el botón
+      principal quedaría del color de "error". El CSS de las dos está abajo,
+      en "Las mezclas".
+- [ ] ⏸ espera a Juan: M1 o M2.
 - [ ] Escribir el sistema de diseño en `DISENO.md` §1 a partir de la elegida:
       color, tipografía, escala de espacios, formas, botones, movimiento.
+      **Con lo que el revisor pidió resolver ahí** (vale para las dos):
+      - las piezas negras comidas no se ven sobre el fondo oscuro (1,2:1):
+        pastilla del color claro del tablero o contorno claro;
+      - la curva es un bloque crema que encandila: la parte "blancas" sale de
+        un color del sistema, no del blanco;
+      - grave `#c0392b` y omisión `#d0453b` no llegan a 3:1 en oscuro: pasar a
+        `#e5534b` y `#ef6a5e`, y ver cómo se distinguen entre sí;
+      - "libro" `#b08d63` desaparece sobre la casilla oscura de madera: sobre
+        el tablero, contorno o ícono, no relleno;
+      - bordes de los campos a 3:1 (`#6b6f75`);
+      - serif solo en h1 y h2 de 15 px para arriba; Android no trae Georgia y
+        va a mostrar Noto Serif: validar con captura;
+      - la jugada elegida en la tira, con subrayado de 2 px del acento.
+      **Claro y oscuro:** la oscura es la principal. La app sigue lo que diga
+      el teléfono, y la clara se arma del mismo sistema, para el amigo de la
+      PC (recomendación, va al resumen).
 - [ ] Llevarlo al código como variables en `:root` de `index.html`, sin
       cambiar todavía nada que se vea (parche).
 - [ ] Aplicarlo pantalla por pantalla, una versión cada una, con revisor:
@@ -110,6 +134,20 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- ¿Cuál de las tres direcciones (A Noche, B Papel, C Material)?
-- ¿Usás el teléfono en modo claro u oscuro? Hoy la app sigue lo que diga el
-  teléfono.
+- ¿M1 · Noche con libro o M2 · Noche cálida? (el revisor recomienda M1)
+
+---
+
+## Las mezclas (5-nov-2026)
+
+Para no depender de la maqueta, que no se commitea. Todas oscuras, radio de
+campos 10 y de tarjetas 12, cuerpo `system-ui`.
+
+| | fondo | superficie | texto | tenue | línea | acento | sobre acento | títulos | botón | tablero claro/oscuro |
+|---|---|---|---|---|---|---|---|---|---|---|
+| A · Noche | `#1d1f22` | `#272a2e` | `#e9e7e3` | `#a4a19b` | `#3a3d42` | `#7cbf5a` | `#13210c` | system-ui 22 | radio 10, `#2f3337` | `#e6e1d3` / `#7f9466` |
+| M1 · Noche con libro | igual que A | | | | | | | Georgia 25 | igual que A | `#ead9bb` / `#a9825a` |
+| M2 · Noche cálida | `#1f1b17` | `#2a251f` | `#efe7da` | `#ab9f8e` | `#3d362e` | `#e0a24a` | `#2a1c08` | Georgia 25 | radio 8, `#322c25` | `#ead9bb` / `#a9825a` |
+
+Contrastes medidos por el revisor: texto/fondo 13,4 (A, M1) y 13,9 (M2);
+tenue/superficie 5,6 y 5,8; texto sobre acento 7,6 y 7,4.
