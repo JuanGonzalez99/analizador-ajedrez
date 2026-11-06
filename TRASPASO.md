@@ -4298,7 +4298,11 @@ termina sin raya y con 16 de aire, y la primera y la última columna van sin
 relleno afuera (y el título de la sección sin sus 2 px), así la tabla, el
 título y la leyenda arrancan en la misma vertical. **Lección para mostrar
 tablas**: se muestran las de abajo del mes, que son las que comparten forma;
-la del resumen tiene símbolos y es la excepción.
+la del resumen tiene símbolos y es la excepción. Juan las aprobó así, igual
+que el verde. **Las marcas del botón derecho siguen en `--marca`**: era una
+duda de PC y desde el 6-nov las de PC las cierra el revisor (`DISENO.md` §2),
+que ya las había medido legibles; el naranja de chess.com no sirve acá porque
+el ámbar ya es `--senal`.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

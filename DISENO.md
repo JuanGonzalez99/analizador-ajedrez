@@ -343,6 +343,13 @@ hay. Las primeras salen del historial del traspaso.
   madera. Se le dibujaron dos mezclas y **se quedó con A** (5-nov-2026): es la
   base del sistema de diseño.
 - **Que el revisor vaya revisando todo** (5-nov-2026).
+- **Lo de PC lo elige el revisor**: Juan no usa la app en la compu. Si le
+  mandan capturas elige, pero *"no sé si vale la pena"*. **Excepción: una
+  dicotomía**, algo que bifurque la identidad visual; eso sí va a Juan, con
+  capturas (6-nov-2026).
+- **Las tablas del mes sueltas, con una sola raya entre secciones**, y **la
+  flecha de la mejor en `#3a8f44`**: *"la tabla se siente bien"*, *"lo de la
+  flecha quedó bien"* (6-nov-2026, v0.102).
 - **Las flechas como las de chess.com**: anchas, punta triangular y
   semitransparentes, que se vea la pieza a través. Mandó capturas de chess.com
   para comparar (6-nov-2026, v0.100). La de la mejor, verde y que se lea, pero

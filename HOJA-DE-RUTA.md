@@ -168,10 +168,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   pegar un PGN" (chico) quedan algo desparejos; se resuelve al hacer la
   pasada de botones.
 - Pendientes de su pantalla (del revisor): hoja de ajustes sobre `--superficie`.
-- **No sé si esto te copa (v0.101):** las flechas que dibujás con el botón
-  derecho (`--marca`, pizarra) y la azul de lo jugado son de la misma familia;
-  las separa solo lo viva que es una. Opciones: (1) dejarlo; (2) llevar las
-  tuyas a otro tono, por ejemplo naranja como chess.com.
 - Del revisor, para toda la app: los "?" de ayuda de cada sección se tocan en
   21 px, lejos de los 48 de §1.7.
 - **Tablero de fábrica:** pasó a "Noche" (el verde de A). Si tenías madera
