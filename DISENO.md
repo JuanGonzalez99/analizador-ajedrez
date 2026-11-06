@@ -302,8 +302,10 @@ Se escriben acá cuando se aplique la pantalla que los usa, no antes.
 **Flechas, medidas sobre las casillas de A y todavía sin tocar:** la azul de
 lo jugado (`#1565c0`) da 4,4 sobre la clara y **1,7 sobre la oscura**; la verde
 de la mejor (`#2e7d32`), 3,9 y **1,55**. Sobre la casilla oscura las dos quedan
-por debajo de 3:1. Van con opacidad ,8 y con punta redonda, y se siguen
-viendo, pero es lo que falta decidir de esta lista.
+por debajo de 3:1. **Decidido por Juan (6-nov, v0.99): aro de `--fondo` de
+1,5 abajo de cada flecha de la app**, igual que la insignia (§1.2), sin
+cambiar los colores. Las marcas del botón derecho (`--marca`) no lo llevan
+todavía.
 
 ### 1.11 Cómo se usa esto
 
@@ -333,6 +335,9 @@ hay. Las primeras salen del historial del traspaso.
   madera. Se le dibujaron dos mezclas y **se quedó con A** (5-nov-2026): es la
   base del sistema de diseño.
 - **Que el revisor vaya revisando todo** (5-nov-2026).
+- **Las flechas del tablero con un aro oscuro fino**, antes que cambiarles el
+  color: la verde de la mejor se perdía sobre las casillas verdes de A y el
+  verde ya quiere decir "lo del motor" (6-nov-2026, v0.99).
 - **Pantalla densa, todo lo de la jugada sin scrollear**, antes que tarjetas
   grandes. Lo eligió mirando tres propuestas a ancho de celu (§7 del
   traspaso, "Estética").
@@ -366,3 +371,7 @@ hay. Las primeras salen del historial del traspaso.
 - **Glifos chicos que hay que descifrar** (el `½-½` de la v0.61).
 - **Que el tablero salte** mientras uno está por jugar la siguiente (falla
   anotada en la v0.84, §8).
+- **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
+  *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
+  (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
+  veredicto, los cuadritos, la lista.

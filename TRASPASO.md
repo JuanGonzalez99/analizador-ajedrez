@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.98**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.99**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4263,6 +4263,14 @@ mes con la partida de prueba. Del revisor: las celdas de las tablas se
 alinean **por la base** (con el rango abajo del porcentaje, los demás números
 caían 7 px), los selects del mes a 36 de alto y 12 de separación, y el
 marcador del resumen con radio 12 y relleno 8/12.
+
+**v0.99, lo que contestó Juan.** Las **tablas vuelven a ir sueltas**, sin
+tarjeta: le *"quedaron raras"* (`DISENO.md` §2). Se quedan la letra de 14, la
+alineación por la base y los subtítulos de 11; se van el fondo, el borde, el
+radio y el aire de 12 en las puntas. Y **las cuatro flechas de la app llevan un
+aro de `--fondo`** (1,5 de cada lado, en un `<g>` con la opacidad ,8 para que
+línea y bolita no se sumen donde se pisan): la verde de la mejor se perdía
+sobre la casilla oscura de A. Lo eligió él entre aro y cambiar el color.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
