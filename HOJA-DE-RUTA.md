@@ -80,12 +80,12 @@ lo demás se dibuja contra ella.
         en toda la app.
   - [x] **Hoja de ajustes** (v0.103, 6-nov).
 - [x] Repaso final del revisor sobre la app entera, celu y PC (v0.104, 6-nov).
-- [x] Lo que dejó el repaso (v0.105, 7-nov): **[PC]** el número de la barra vertical
+- [x] Lo que dejó el repaso (v0.105, 6-nov): **[PC]** el número de la barra vertical
       (`.evalbar .num`) está a 9,5 y el mínimo es 11; a 11 "+10.00" no entra
       en la barra, así que va con un solo decimal de 10 para arriba ("+10.0").
       Y **mirar el Mes** con los campos nuevos de 44: ninguna partida de prueba
       lo muestra, hace falta una con mes.
-- [ ] **Lavado de cara de la fila de abajo de la vista de la jugada**: los
+- [x] **Lavado de cara de la fila de abajo de la vista de la jugada** (v0.106, 6-nov: la D, misma grilla de cuatro): los
       cuatro cuadritos (Mejor / Pérdida / Caída / Pensó) y los tres botones
       (Mostrar la mejor / Girar tablero / Pintar las dos). Juan, 6-nov: *"medio
       raros… no siento que sea cuestión de agrandar o ajustar algo"*. Son dos
@@ -111,6 +111,11 @@ lo demás se dibuja contra ella.
       es la pantalla principal y cómo se va de una a otra en el celu sin
       scrollear por las demás? Es grande: va con variantes y a la mañana como
       duda.
+- [ ] **Lavado de cara: dónde viven las preferencias del tablero** (revisor,
+      v0.106). "Siempre la mejor", "Girar" y "Rival" son ajustes de cómo se ve
+      el tablero que siguen entre jugadas, y están metidos entre los datos de
+      la jugada; además ya hay hoja de ajustes. ¿Van pegados al tablero
+      (íconos en su borde, como chess.com), en la hoja o en esta fila?
 
 ## Etapa 2 · Partir `index.html`
 
@@ -193,6 +198,11 @@ contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
 
+- **No sé si esto te copa (v0.106):** los botones de abajo ya no cambian la
+  palabra al prenderse ("Ocultar la mejor", "Pintar solo las mías"): se
+  encienden de verde como el cuadrito. "Mostrar la mejor" pasó a "Siempre la
+  mejor" y "Pintar las dos" a "Rival". La otra: volver a cambiar la palabra,
+  pero entonces no entran en la grilla de cuatro.
 - **No sé si esto te copa:** la barra verde a la izquierda de la partida elegida
   en la lista (alternativa: fondo `--elevada` sin barra).
 - **No sé si esto te copa:** en la fila del usuario, "Buscar" (alto normal) y "o

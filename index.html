@@ -411,6 +411,23 @@
   .metricas .tocable.inerte { cursor: default; opacity: .5; }
   .metricas .tocable.activo { border-color: var(--acento);
                               background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  /* LOS BOTONES VAN EN LA MISMA GRILLA QUE LOS CUADRITOS (v0.106). Eran una
+     fila de tres anchos distintos (134, 108, 115) que no compartía columnas
+     con los cuatro cuadritos de arriba, y a Juan le parecían "medio raros".
+     Se dibujaron cuatro variantes y el revisor eligió esta: cuatro columnas
+     iguales con el mismo 8, "Siempre la mejor" en dos (abajo de Mejor y
+     Pérdida), "Girar" y "Rival" en una cada uno. Con columnas de ~90 la
+     palabra ya no puede cambiar al prenderse ("Pintar solo las mías" no
+     entra), así que EL ESTADO VA POR COLOR, igual que el cuadrito encendido.
+     "Girar" no se prende: es una acción y el tablero ya muestra el estado.
+     "Siempre" separa el botón —una preferencia que sigue en todas las
+     jugadas— del cuadrito, que la muestra solo en esta. */
+  .acciones { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e-2);
+              margin-top: var(--e-2); }
+  .acciones > button { width: 100%; margin: 0; padding-left: 4px; padding-right: 4px; }
+  .acciones > #btnMejor { grid-column: span 2; }
+  .acciones > button.prendido { border-color: var(--acento);
+                                background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
   /* el margen de arriba lo trae la tarjeta y no el bloque de arriba: desde la
      v0.74 arriba hay una barra de evaluación, que no tenía margen abajo, y las
      dos quedaban pegadas. Mover un elemento le cambia los márgenes a sus DOS
@@ -845,7 +862,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.105 · 06-11";
+  window.VERSION = "v0.106 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1265,10 +1282,13 @@
     <div><div class="et">Pensó</div><div class="va" id="mPenso"></div></div>
   </div>
   <div class="senales" id="senales"></div>
-  <div class="fila" style="margin-top:6px">
-    <button class="chico" id="btnMejor">Mostrar la mejor</button>
-    <button class="chico" id="btnGirar">Girar tablero</button>
-    <button class="chico" id="btnAmbos">Pintar las dos</button>
+  <div class="acciones">
+    <button class="chico" id="btnMejor" aria-pressed="false"
+            title="Mostrar la mejor en todas las jugadas">Siempre la mejor</button>
+    <button class="chico" id="btnGirar">Girar</button>
+    <button class="chico" id="btnAmbos" aria-pressed="false"
+            title="Pintar también las jugadas del rival"
+            aria-label="Pintar también las jugadas del rival">Rival</button>
   </div>
   </div>
 </div>
@@ -6454,7 +6474,7 @@ function pintarRevision() {
     : (sanDeUci(fenDeLaMejor, mejorVista) || mejorVista);
 
   /* por defecto solo se pintan las jugadas propias: las del rival distraen de
-     lo que el usuario vino a mirar. Con "Pintar las dos" se ven todas. */
+     lo que el usuario vino a mirar. Con "Rival" prendido se ven todas. */
   const lado = ladoDelUsuario(R);
   const celda = (x, i, sel) => {
     if (!x) return "";
@@ -6667,8 +6687,12 @@ function pintarRevision() {
      jugada mala, probar otra. El botón deja de ser una opción escondida y pasa
      a ser lo que la app te propone hacer, que es justo lo que le faltaba: la
      jugada mala es la que da ganas de probar otra cosa. */
-  $("btnMejor").textContent = VER_MEJOR ? "Ocultar la mejor" : "Mostrar la mejor";
-  $("btnAmbos").textContent = VER_AMBOS ? "Pintar solo las mías" : "Pintar las dos";
+  /* prendido por color y no por palabra desde la v0.106: en la grilla de
+     cuatro "Pintar solo las mías" no entra */
+  $("btnMejor").classList.toggle("prendido", VER_MEJOR);
+  $("btnMejor").setAttribute("aria-pressed", VER_MEJOR ? "true" : "false");
+  $("btnAmbos").classList.toggle("prendido", VER_AMBOS);
+  $("btnAmbos").setAttribute("aria-pressed", VER_AMBOS ? "true" : "false");
   $("btnAmbos").disabled = !ladoDelUsuario(R);
   /* Adentro de la variante, "anterior" y "siguiente" se mueven POR LA
      VARIANTE. Es la misma promesa de siempre —la posición anterior y la

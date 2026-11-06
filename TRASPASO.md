@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.105**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.106**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4364,6 +4364,33 @@ maqueta descartable— y por eso los campos de 44 de la v0.104 llegaron ahí sin
 que nadie los viera. Analiza el mes de la API falsa (una partida, ya en la
 caché) y va al final, antes de las recargas: las capturas de antes quedan
 iguales al byte. Medido: los dos selects a 44, en la misma fila.
+
+**v0.106, la fila de abajo de la vista de la jugada** (lavado de cara, la
+primera vez con variantes). Juan: los cuadritos y los botones *"medio raros…
+no siento que sea cuestión de agrandar o ajustar"*. Eran dos filas sin
+columnas en común: cuatro cuadritos de 90 y tres botones de 134, 108 y 115. Se
+dibujaron cuatro con `tira()`: A tres columnas iguales, B barra segmentada, C
+ícono y palabra corta, D la misma grilla de cuatro. **Eligió el revisor la D,
+con ajustes**: `.acciones` es `repeat(4, 1fr)` con el mismo 8, "Siempre la
+mejor" ocupa dos columnas (abajo de Mejor y Pérdida) y "Girar" y "Rival" una
+cada uno; medido, los bordes caen al píxel sobre los de los cuadritos. Lo que
+arrastró la forma:
+- **El estado va por color, no por palabra**: "Pintar solo las mías" (~135)
+  no entra en una columna de 90. Prendido es `.prendido` —borde de acento y
+  fondo al 14%, lo mismo que el cuadrito encendido— más `aria-pressed`.
+  "Girar" no se prende: es una acción y el tablero ya muestra cómo está.
+- **"Mostrar la mejor" pasó a "Siempre la mejor"**: el revisor marcó que el
+  cuadrito Mejor (vistazo de esta jugada, `verDeUnaVez`) y el botón
+  (`VER_MEJOR`, sigue en todas) no hacen lo mismo, y con el botón justo abajo
+  la palabra tiene que decir la diferencia.
+- **"Pintar las dos" pasó a "Rival"**, con el texto entero en `title` y
+  `aria-label`: "Las del rival" mide 79 y no entra; "Las dos" no dice las dos
+  qué.
+- **Sin íconos**: el botón chico de §1.7 es texto.
+- La fila pasa a 8 de los cuadritos (eran 6, fuera de la escala): a 412×760
+  termina en 735 y no en 733.
+B se descartó además porque un control segmentado dice "elegí uno de tres" y
+son tres interruptores sueltos.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
