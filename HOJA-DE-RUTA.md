@@ -80,7 +80,7 @@ lo demás se dibuja contra ella.
         en toda la app.
   - [x] **Hoja de ajustes** (v0.103, 6-nov).
 - [x] Repaso final del revisor sobre la app entera, celu y PC (v0.104, 6-nov).
-- [ ] Lo que dejó el repaso: **[PC]** el número de la barra vertical
+- [x] Lo que dejó el repaso (v0.105, 7-nov): **[PC]** el número de la barra vertical
       (`.evalbar .num`) está a 9,5 y el mínimo es 11; a 11 "+10.00" no entra
       en la barra, así que va con un solo decimal de 10 para arriba ("+10.0").
       Y **mirar el Mes** con los campos nuevos de 44: ninguna partida de prueba
@@ -92,6 +92,25 @@ lo demás se dibuja contra ella.
       filas que no comparten columnas y tres botones de anchos distintos. Va
       con variantes (`TAREA-NOCTURNA.md`, paso 3); la pantalla no puede crecer
       (la fila termina en 733 de 760).
+- [ ] **[PC] La barra vertical lejos del tablero a 1000×700** (revisor,
+      v0.105; no lo causó esa versión): la barra queda en x 164–204 y el
+      tablero de 360 arranca en 344, a 140 px. A 1280 y 1500 está a 8. Es el
+      mismo error que la v0.86 arregló a 1280, en un ancho intermedio que
+      `mirar` no mide: pegar barra y tablero como un bloque, a 8, en cualquier
+      ancho, y sumarle a la línea "barra vertical:" de `mirar` el caso 1000×700.
+- [ ] **Lavado de cara de la cabecera del Mes** (revisor, v0.105): dice
+      "Estadísticas" y "El mes seleccionado", pero no **qué mes**: ese está en
+      `#meses`, arriba en la entrada, que con el scroll ya no se ve; y la línea
+      de resumen repite la cadencia del select de al lado. Pregunta a
+      contestar: ¿qué tiene que decir la cabecera para saber, sin subir, de qué
+      mes, de qué cadencia y de cuántas partidas son los números? Con variantes.
+- [ ] **Lavado de cara de la estructura: cuáles son las pantallas y cómo se
+      pasa de una a otra** (revisor, v0.105). Hoy es una sola página larga con
+      zonas apiladas (entrada, Mes, Partidas, Revisión, Resumen) y al Mes se
+      llega scrolleando. Con práctica y lecciones en camino (`NORTE.md`), ¿qué
+      es la pantalla principal y cómo se va de una a otra en el celu sin
+      scrollear por las demás? Es grande: va con variantes y a la mañana como
+      duda.
 
 ## Etapa 2 · Partir `index.html`
 
