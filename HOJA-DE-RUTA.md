@@ -57,11 +57,22 @@ lo demás se dibuja contra ella.
       **Claro y oscuro:** Juan decidió **siempre oscuro** por ahora (5-nov);
       la clara queda escrita en `DISENO.md` §1.3 para sumarla después.
       **Hecho el 5-nov**: cada punto del revisor está juzgado en §1.9.
-- [ ] Llevarlo al código como variables en `:root` de `index.html`, sin
-      cambiar todavía nada que se vea (parche).
-- [ ] Aplicarlo pantalla por pantalla, una versión cada una, con revisor:
-      entrada y listado, revisión (tarjeta, tablero, tira, curva, cuadritos),
-      vista del mes y sus tablas, hoja de ajustes.
+- [x] Llevarlo al código como variables en `:root` de `index.html`, sin
+      cambiar todavía nada que se vea (v0.95.2, 6-nov). Ojo: `--linea`,
+      `--tenue`, `--c-grave` y `--c-omision` NO se cambiaron, porque son
+      globales; van en la primera pantalla (el comentario en `:root` lo dice).
+- [ ] Aplicarlo pantalla por pantalla, una versión cada una, con revisor.
+      **Esto es lo de la tarea nocturna** (lo pidió Juan el 6-nov): si una
+      pantalla sale bien y queda noche, sigue con la siguiente. En orden:
+  - [ ] **Entrada y listado.** Es la primera, así que trae lo global: pasar
+        a `color-scheme: dark` siempre (decisión de Juan, `DISENO.md` §1.3),
+        el fondo de la página, y `--linea`, `--tenue`, `--c-grave` y
+        `--c-omision` a sus valores nuevos. Eso se ve en toda la app: el
+        revisor mira todas las pantallas, no solo esta.
+  - [ ] **Revisión**: tarjeta, tablero (casillas de A como tema por
+        defecto), tira, curva y barras, cuadritos, piezas comidas.
+  - [ ] **Vista del mes y sus tablas.**
+  - [ ] **Hoja de ajustes.**
 - [ ] Repaso final del revisor sobre la app entera, celu y PC.
 
 ## Etapa 2 · Partir `index.html`

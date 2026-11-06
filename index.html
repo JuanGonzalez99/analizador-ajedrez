@@ -17,6 +17,32 @@
     /* lo que dibuja el usuario con el botón derecho (v0.85). Un color solo y
        acá, así se cambia en un lugar y vale para los cinco tableros. */
     --marca: #3f5163;
+
+    /* EL SISTEMA DE DISEÑO, A · Noche (DISENO.md §1). Cargado en la v0.95.2 y
+       TODAVÍA SIN USAR: se van enchufando pantalla por pantalla, cada una en
+       su versión y con el revisor. Hasta entonces nada de esto se ve.
+       Tres que no están acá a propósito, porque ya existen y cambiarlas ahora
+       se vería en toda la app de golpe: `--linea` y `--tenue` (pasan a
+       #3a3d42 y #a4a19b), y `--c-grave` / `--c-omision` (pasan a #e5534b y
+       #ef6a5e). Se cambian en la pasada de la primera pantalla que se aplique,
+       que es donde el revisor mira la app entera. */
+    --fondo: #1d1f22; --superficie: #272a2e; --elevada: #2f3337;
+    --borde-campo: #7a7e84;
+    --texto: #e9e7e3;
+    --acento: #7cbf5a; --sobre-acento: #13210c;
+    --casilla-clara: #e6e1d3; --casilla-oscura: #7f9466;
+    --eval-blancas: #d9d5cc; --eval-negras: #33373c;
+    /* letra: seis tamaños (§1.4) */
+    --t-titulo: 22px; --t-subtitulo: 18px; --t-cuerpo: 16px;
+    --t-secundario: 14px; --t-leyenda: 12.5px; --t-minimo: 11px;
+    /* espacios: escala de 4 (§1.5); el 2 solo adentro de algo denso */
+    --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-6: 24px; --e-8: 32px;
+    /* formas (§1.6) */
+    --r-control: 10px; --r-tarjeta: 12px; --r-chico: 6px;
+    --sombra-flota: 0 8px 24px rgb(0 0 0 / .45);
+    /* movimiento (§1.8) */
+    --m-corta: 120ms; --m-media: 180ms; --m-larga: 250ms;
+    --m-entra: cubic-bezier(.2, 0, 0, 1); --m-sale: cubic-bezier(.3, 0, 1, 1);
   }
   * { box-sizing: border-box; }
   /* overflow-anchor: none porque la app intercambia zonas enteras —Partida y
@@ -727,7 +753,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.95.1 · 05-11";
+  window.VERSION = "v0.95.2 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

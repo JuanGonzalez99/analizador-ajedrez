@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4183,6 +4183,14 @@ describe en §6.
    nunca un número solo.
 
 ### Estética
+
+**Desde el 5-nov la estética la manda `DISENO.md` §1** (el sistema de diseño,
+A · Noche) y el orden lo da `HOJA-DE-RUTA.md`, etapa 1. En la **v0.95.2** las
+variables del sistema se cargaron en `:root` de `index.html` sin usar
+(`--fondo`, `--superficie`, `--acento`, `--t-*`, `--e-*`, `--r-*`, `--m-*`…):
+no cambia nada de lo que se ve, y se enchufan pantalla por pantalla. Las que ya
+existían y son globales (`--linea`, `--tenue`, `--c-grave`, `--c-omision`) no se
+tocaron: cambian en la primera pantalla que se aplique.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
