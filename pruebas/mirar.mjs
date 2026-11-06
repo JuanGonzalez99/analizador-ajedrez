@@ -683,13 +683,14 @@ console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)
 await elegir("#verEval", "barra");
 await pg.waitForTimeout(250);
 /* SE MIDE EN DOS JUGADAS: una con el número corto y otra con el largo. "+0.26"
-   entra en la barra y "+10.00" no entraba, y el recorte no avisa. */
+   entra en la barra y "+10.00" no entraba, y el recorte no avisa. Desde la
+   v0.105 el largo sale "+10.0", con la letra en 11 igual que el corto. */
 const barra = () => pg.evaluate(() => {
   const b = document.getElementById("evalbar").getBoundingClientRect();
   const t = document.querySelector("svg.tab").getBoundingClientRect();
   const n = document.getElementById("evalnum");
   return { texto: n.textContent, hastaElTablero: Math.round(t.left - b.right),
-           entero: n.scrollWidth <= Math.ceil(b.width) };
+           entero: n.scrollWidth <= Math.ceil(b.width), letra: getComputedStyle(n).fontSize };
 });
 const barraCorta = await barra();
 await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("sig").click(); });

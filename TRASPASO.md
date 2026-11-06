@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.104**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.105**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4337,6 +4337,25 @@ desparejo entre pantallas:
   relleno") porque ese círculo lo eligió Juan en la v0.91; ni pasar el violeta
   de la flecha de la prueba a `:root`, porque la prueba de la v0.97 prohíbe
   `#6a1b9a` en el CSS a propósito, para que nadie lo use como texto.
+
+**v0.105 [PC], el número de la barra vertical** (lo dejó el repaso). Estaba
+a 9,5 y el mínimo del sistema es 11 (§1.4); los números largos bajaban a 8.
+Ahora va siempre a `--t-minimo`, y lo que no entra se **acorta en vez de
+achicarse**: `textoBarra()`, al lado de `textoEval()`, deja un decimal de 10
+para arriba ("+10.0") y ninguno de 100 para arriba ("-100"). Medido en
+Chromium a 11 negrita: "+9.99" y "+10.0" ocupan 31,4 de los 36 de la barra,
+"+10.00" 38,5 —no entra—, "-M12" 31,6 y "Tablas" 35,4. La horizontal y la
+tarjeta siguen con dos decimales: tienen lugar. `mirar` informa la letra de
+la barra (`letra: "11px"` en los dos casos). Las capturas del celu, idénticas
+al byte; cambian `ancho-alternativas`, `ancho-comidas`, `ancho-eval-barra` y
+`tres-barra`, que son las de la barra vertical.
+**Y la barra ancha pasa de 36 a 40**: lo encontró el revisor. Tiene 1 de borde
+por lado, así que adentro quedan 34, no 36, y "Tablas" (la partida que termina
+en tablas) se cortaba 0,7 de cada lado sin avisar. Con 40 quedan 38 y "Tablas"
+tiene el mismo aire que "+10.0". En compu el tablero no cambia (lo limita el
+alto: 360, 496 y 569 a 1000, 1280 y 1500, igual con 36 que con 40); en el celu
+solo si se elige la barra, y le saca 4 (340 → 336). Además `#capMes` pasa a 4
+de "Cómo se leen estos números" (eran 2, fuera de la escala).
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

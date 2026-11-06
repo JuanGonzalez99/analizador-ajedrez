@@ -1593,6 +1593,18 @@ test("la barra dice 'mate' y no 'M0' cuando la partida terminó", () => {
   assert.equal(A.textoEval({ cp: -50, mate: null }, "w"), "-0.50");
 });
 
+test("la barra vertical acorta el número largo en vez de achicar la letra (v0.105)", () => {
+  /* a 11 px "+10.00" no entra en los 36 de la barra, y la barra recorta sin avisar */
+  assert.equal(A.textoBarra("+0.26"), "+0.26");
+  assert.equal(A.textoBarra("-9.99"), "-9.99");
+  assert.equal(A.textoBarra("+10.00"), "+10.0");
+  assert.equal(A.textoBarra("-35.47"), "-35.5");
+  assert.equal(A.textoBarra("-100.00"), "-100");
+  assert.equal(A.textoBarra("+153.60"), "+154");
+  /* lo que no es un número se queda como está */
+  for (const t of ["M3", "-M12", "mate", "1-0", "Tablas"]) assert.equal(A.textoBarra(t), t);
+});
+
 /* --- cómo termina la partida, v0.61 --- */
 
 test("el remate se lee del tablero, no del encabezado del PGN", () => {
@@ -2720,8 +2732,9 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
   assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab); }"),
     "la caja del tablero mide lo que mide el tablero");
   /* Y EL NÚMERO TIENE QUE ENTRAR: con 30 px, "+0.26" salía cortado por el
-     `overflow: hidden` de las esquinas redondeadas. */
-  assert.ok(html.includes(".evalbar.ancha { width: 36px; }"),
+     `overflow: hidden` de las esquinas redondeadas. Y con 36, a 11, "Tablas"
+     (35,4) no entraba en los 34 que quedan adentro del borde (v0.105). */
+  assert.ok(html.includes(".evalbar.ancha { width: 40px; }"),
     "la barra ancha da para el número entero");
   /* TRES COLUMNAS DE 1500 PARA ARRIBA (v0.90): la tarjeta se va al costado y
      deja de gastar alto arriba del tablero. Los dos presupuestos siguen

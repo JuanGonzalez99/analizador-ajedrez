@@ -218,6 +218,9 @@
   .seccion > .tw { margin-bottom: var(--e-4); }
 
   /* la leyenda larga, plegada: lo indispensable queda arriba y esto se abre */
+  /* la línea de origen del mes y su "Cómo se leen" iban a 2, fuera de la
+     escala (v0.105, el revisor) */
+  #capMes { margin-bottom: var(--e-1); }
   .quemide > summary { cursor: pointer; font-size: 12.5px; color: var(--tenue);
                        margin: 0 0 8px; list-style: none; }
   .quemide > summary::-webkit-details-marker { display: none; }
@@ -320,15 +323,20 @@
      `overflow: hidden` por las esquinas redondeadas del relleno, así que lo que
      no entra no se ve—. Se vio recién cuando la vertical pasó a ser el default en
      compu, o sea que el error tenía tres versiones. Los 6 px no le cuestan
-     tablero: en una compu el tablero lo limita el ALTO, no el ancho. */
-  .evalbar.ancha { width: 36px; }
+     tablero: en una compu el tablero lo limita el ALTO, no el ancho.
+     Y SON 40 desde la v0.105, con el número a 11: la barra tiene 1 de borde
+     por lado, así que adentro quedan 4 menos, y "Tablas" (35,4) no entraba en
+     los 34 de adentro. Medido por el revisor: en compu el tablero no cambia
+     (1000, 1280 y 1500 de ancho); en el celu, solo si se elige la barra, le
+     saca 4. */
+  .evalbar.ancha { width: 40px; }
   .evalbar { position: relative; }
-  .evalbar .num, .evalh .num { position: absolute; font-size: 9.5px; font-weight: 700;
+  .evalbar .num, .evalh .num { position: absolute; font-size: var(--t-minimo); font-weight: 700;
                                font-variant-numeric: tabular-nums; pointer-events: none; }
   .evalbar .num { left: 0; right: 0; text-align: center; }
-  /* la horizontal tiene 16 de alto y el número entra en el mínimo del sistema
-     (§1.4); la vertical sigue en 9,5, que es lo que entra en 36 de ancho */
-  .evalh .num { font-size: var(--t-minimo); }
+  /* las dos en el mínimo del sistema (§1.4). La vertical estuvo en 9,5 hasta la
+     v0.105: a 11 "+10.00" no entra en la barra, así que de 10 para arriba
+     pierde un decimal (`textoBarra()`) en vez de achicar la letra */
 
   /* la horizontal se suma al alto en vez de compartirlo con el tablero: por eso
      es la más cara de las tres, aunque deja el tablero grande */
@@ -837,7 +845,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.104 · 06-11";
+  window.VERSION = "v0.105 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1649,6 +1657,23 @@ function textoEval(ev, turno) {
   }
   const cp = turno === "b" ? -(ev.cp || 0) : (ev.cp || 0);
   return (cp >= 0 ? "+" : "") + (cp / 100).toFixed(2);
+}
+
+/* El mismo número, acortado para la barra VERTICAL (v0.105). La barra mide 40
+   de ancho, 38 adentro del borde, y el número va en el mínimo del sistema, 11
+   (§1.4): medido en Chromium, "+9.99" y "+10.0" ocupan 31 px y "+10.00", 38,5,
+   o sea que no entra.
+   Así que de 10 para arriba va con un decimal, y de 100 para arriba sin
+   ninguno. Antes se resolvía achicando la letra a 8 —debajo del mínimo— y el
+   número largo se leía peor justo cuando la partida está más definida. La
+   barra horizontal y la tarjeta tienen lugar y siguen con los dos decimales. */
+function textoBarra(t) {
+  const m = /^([+-])(\d+\.\d\d)$/.exec(t);
+  if (!m) return t;
+  const v = Number(m[2]);
+  if (v >= 100) return m[1] + Math.round(v);
+  if (v >= 10) return m[1] + v.toFixed(1);
+  return t;
 }
 
 /* La partida terminada EN EL TABLERO, o null si la posición sigue viva.
@@ -6306,14 +6331,11 @@ function pintarRevision() {
   /* claro sobre el relleno, oscuro sobre el fondo: el número siempre contrasta */
   const tinta = gananBlancas ? "var(--fondo)" : "var(--texto)";
   const nv = $("evalnum"), nh = $("evalnumh");
-  nv.textContent = modo === "barra" ? f.evalTexto : "";
-  /* EL NÚMERO SE ACHICA CUANDO ES LARGO. "+0.26" entra en los 36 px de la barra
-     a 9,5; "+10.00" no, y la barra recorta lo que sobra SIN AVISAR, porque tiene
-     `overflow: hidden` por las esquinas del relleno. Es la segunda vez que ese
-     recorte silencioso esconde un número en dos versiones seguidas: se arregla
-     midiendo el largo, que es lo único que cambia entre un caso y el otro.
-     Ensanchar la barra otra vez no alcanzaba: "-100.00" son siete caracteres. */
-  nv.style.fontSize = f.evalTexto.length > 5 ? "8px" : "9.5px";
+  nv.textContent = modo === "barra" ? textoBarra(f.evalTexto) : "";
+  /* EL NÚMERO LARGO SE ACORTA, NO SE ACHICA (v0.105). La barra recorta lo que
+     sobra SIN AVISAR, porque tiene `overflow: hidden` por las esquinas del
+     relleno: "+10.00" a 11 no entra. Hasta la v0.104 se achicaba la letra a 8;
+     ahora `textoBarra()` le saca un decimal y la letra queda en el mínimo. */
   nv.style.color = tinta;
   /* con el tablero girado las blancas quedan arriba, así que su punta también */
   const blancasArriba = GIRADO;
