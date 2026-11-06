@@ -168,6 +168,11 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   pegar un PGN" (chico) quedan algo desparejos; se resuelve al hacer la
   pasada de botones.
 - Pendientes de su pantalla (del revisor): hoja de ajustes sobre `--superficie`.
+- **Flechas (v0.100), tres dudas del revisor:** (a) la verde de la mejor sobre
+  casilla verde es la más floja (1,37:1): dejarla o pasarla a un verde más
+  claro; (b) la del caballo va recta y puede pisar una pieza vecina: recta o en
+  L como chess.com; (c) las que dibuja Juan con el botón derecho siguen con la
+  forma vieja: dejarlas distintas o darles el mismo polígono.
 - Del revisor, para toda la app: los "?" de ayuda de cada sección se tocan en
   21 px, lejos de los 48 de §1.7.
 - **Tablero de fábrica:** pasó a "Noche" (el verde de A). Si tenías madera
