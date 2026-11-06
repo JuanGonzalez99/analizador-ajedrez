@@ -807,6 +807,34 @@ marcado.menuCancelado = await pg.evaluate(() => {
 console.log("marcas:        ", JSON.stringify(marcado));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 
+/* LA VISTA DEL MES, en el celu (v0.105). Hasta acá ninguna captura la
+   mostraba: la v0.98 la miró con una maqueta descartable, y en la v0.104 los
+   campos pasaron a 44 sin que nadie viera cómo quedaban los dos selects de
+   arriba. Se analiza el mes de la API falsa —una sola partida, que ya está en
+   la caché, así que es instantáneo— y se fotografía la cabecera y la primera
+   sección abierta. Va al final porque cambia de vista y deja el mes analizado:
+   las capturas de antes quedan iguales al byte. */
+{
+  await pg.setViewportSize({ width: 412, height: 760 });
+  await pg.evaluate(() => document.getElementById("analizarMes").click());
+  await pg.waitForSelector("#zonaMes:not(.oculto)", { timeout: 30000 });
+  await pg.waitForTimeout(400);
+  await pg.evaluate(() => {
+    const z = document.getElementById("zonaMes");
+    window.scrollTo(0, z.getBoundingClientRect().top + window.scrollY - 8);
+  });
+  const sel = await pg.evaluate(() => ["fuente", "cadencia"].map(id => {
+    const r = document.getElementById(id).getBoundingClientRect();
+    return { id, alto: Math.round(r.height), ancho: Math.round(r.width), x: Math.round(r.left), y: Math.round(r.top) };
+  }));
+  console.log("mes:           ", JSON.stringify({ selects: sel, ...await espacios(pg, "#zonaMes") }));
+  await foto("mes");
+  await pg.evaluate(() => { const d = document.querySelector("#zonaMes details.seccion"); d.open = true; });
+  await pg.waitForTimeout(200);
+  await pg.evaluate(() => document.querySelector("#zonaMes details.seccion").scrollIntoView());
+  await foto("mes-seccion");
+}
+
 /* EL DEFAULT DE LA EVALUACIÓN SALE DEL ANCHO (v0.86), y se mide con dos cargas
    limpias porque el valor se decide UNA vez, al arrancar. Va al final de todo:
    recarga la página y se lleva puesto el análisis. */

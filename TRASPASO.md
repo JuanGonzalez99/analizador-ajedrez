@@ -4357,6 +4357,14 @@ alto: 360, 496 y 569 a 1000, 1280 y 1500, igual con 36 que con 40); en el celu
 solo si se elige la barra, y le saca 4 (340 → 336). Además `#capMes` pasa a 4
 de "Cómo se leen estos números" (eran 2, fuera de la escala).
 
+**`mirar` saca ahora el Mes** (`mes.png`, la cabecera, y `mes-seccion.png`,
+la primera sección abierta), en el celu, e imprime alto y posición de sus dos
+selects. Hasta acá ninguna captura lo mostraba —la v0.98 lo miró con una
+maqueta descartable— y por eso los campos de 44 de la v0.104 llegaron ahí sin
+que nadie los viera. Analiza el mes de la API falsa (una partida, ya en la
+caché) y va al final, antes de las recargas: las capturas de antes quedan
+iguales al byte. Medido: los dos selects a 44, en la misma fila.
+
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
 
