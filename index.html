@@ -5,27 +5,23 @@
 <title>Analizador de partidas</title>
 <style>
   :root {
-    color-scheme: light dark;
-    --linea: color-mix(in srgb, currentColor 20%, transparent);
-    --tenue: color-mix(in srgb, currentColor 62%, transparent);
+    color-scheme: dark;
+    --linea: #3a3d42;
+    --tenue: #a4a19b;
     --claro: #ded3bd; --oscuro: #9a7f5c;
     --c-brillante: #26a69a; --c-genial: #5b8def; --c-mejor: #4a9d4a;
     --c-excelente: #6bb06b; --c-bien: #86b886; --c-libro: #b08d63;
     --c-imprecision: #d4a017; --c-error: #e08030;
-    --c-omision: #d0453b; --c-grave: #c0392b;
+    --c-omision: #ef6a5e; --c-grave: #e5534b;
     --c-forzada: #8a8578;
     /* lo que dibuja el usuario con el botón derecho (v0.85). Un color solo y
        acá, así se cambia en un lugar y vale para los cinco tableros. */
     --marca: #3f5163;
 
-    /* EL SISTEMA DE DISEÑO, A · Noche (DISENO.md §1). Cargado en la v0.95.2 y
-       TODAVÍA SIN USAR: se van enchufando pantalla por pantalla, cada una en
-       su versión y con el revisor. Hasta entonces nada de esto se ve.
-       Tres que no están acá a propósito, porque ya existen y cambiarlas ahora
-       se vería en toda la app de golpe: `--linea` y `--tenue` (pasan a
-       #3a3d42 y #a4a19b), y `--c-grave` / `--c-omision` (pasan a #e5534b y
-       #ef6a5e). Se cambian en la pasada de la primera pantalla que se aplique,
-       que es donde el revisor mira la app entera. */
+    /* EL SISTEMA DE DISEÑO, A · Noche (DISENO.md §1). Desde la v0.96 la app va
+       SIEMPRE en oscuro (`color-scheme: dark`, decisión de Juan) y `--linea`,
+       `--tenue`, `--c-grave` y `--c-omision` ya tienen sus valores nuevos. El
+       resto se enchufa pantalla por pantalla, cada una en su versión. */
     --fondo: #1d1f22; --superficie: #272a2e; --elevada: #2f3337;
     --borde-campo: #7a7e84;
     --texto: #e9e7e3;
@@ -57,15 +53,20 @@
      de 700 pasaba lo mismo, solo que la lista al costado lo dejó a la vista.
      En un celular no cambia NADA —sin ancho de sobra, `auto` es cero— y por eso
      las capturas del celu siguen siendo las mismas al byte. */
-  body { font: 16px/1.5 system-ui, sans-serif; margin: 0 auto; padding: 16px 14px 60px;
+  body { font: 16px/1.5 system-ui, sans-serif; background: var(--fondo); color: var(--texto);
+         margin: 0 auto; padding: 16px 14px 60px;
          max-width: 700px; overflow-anchor: none; }
-  h1 { font-size: 20px; margin: 0 0 2px; }
+  h1 { font-size: var(--t-titulo); margin: 0 0 2px; }
   h2 { font-size: 15px; margin: 24px 0 4px; }
   p.n { margin: 0 0 12px; color: var(--tenue); font-size: 14px; }
   p.cap { margin: 8px 0 2px; font-size: 12.5px; color: var(--tenue); }
-  button { font: inherit; padding: 9px 15px; border: 1px solid currentColor; background: transparent;
-           color: inherit; border-radius: 6px; cursor: pointer; }
-  button:disabled { opacity: .35; cursor: default; }
+  button { font: inherit; padding: 9px 15px; border: 1px solid transparent; background: var(--elevada);
+           color: inherit; border-radius: var(--r-control); cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px; }
+  /* El principal de la pantalla: uno solo (§1.7). En la entrada es analizar. */
+  #analizar { background: var(--acento); color: var(--sobre-acento); font-weight: 600; }
   button.chico, select.chico { padding: 5px 10px; font-size: 14px; }
   /* Mismo alto y misma familia que los botones, pero NO iguales: un select con
      borde lleno se lee como un botón y se toca esperando otra cosa. La
@@ -73,20 +74,16 @@
      borde más tenue. La flechita se dibuja acá para que no dependa del
      navegador. Provisorio: cuando exista el menú de configuración, estos
      controles se van adentro y esto se replantea. */
-  select.chico { border-color: var(--linea);
-                 background-color: color-mix(in srgb, currentColor 9%, transparent);
+  select.chico { border-color: var(--borde-campo); background-color: var(--elevada);
                  appearance: none;
                  padding-right: 26px; background-repeat: no-repeat;
                  background-position: right 9px center; background-size: 9px;
                  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23e7e0d4' stroke-width='1.5'/></svg>"); }
   /* currentColor NO sirve acá: dentro de un data: URI el SVG se carga como una
-     imagen aparte y no hereda nada del documento, así que caía a negro y sobre
-     el fondo oscuro no se veía. Van dos colores explícitos, uno por esquema. */
-  @media (prefers-color-scheme: light) {
-    select.chico { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23444444' stroke-width='1.5'/></svg>"); }
-  }
-  input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--linea);
-    border-radius: 6px; background: transparent; color: inherit; max-width: 100%; }
+     imagen aparte y no hereda nada del documento. Como la app es siempre
+     oscura (v0.96) alcanza con un solo color. */
+  input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--borde-campo);
+    border-radius: var(--r-control); background: var(--elevada); color: inherit; max-width: 100%; }
   /* EL DESPLEGABLE DE UN SELECT NO HEREDA EL PAPEL (v0.80). Chrome en Windows
      dibuja el menú con el fondo del propio select, y el nuestro es transparente:
      el menú salía BLANCO y el texto de las opciones, que hereda el color del
@@ -96,7 +93,7 @@
      con sus propios colores.
      Van colores de sistema y no fijos: `Canvas` y `CanvasText` siguen solos el
      esquema claro/oscuro, que es lo que hace el resto de la pantalla. */
-  option { background-color: Canvas; color: CanvasText; }
+  option { background-color: var(--elevada); color: var(--texto); }
   input#usuario { width: 145px; }
   textarea { width: 100%; height: 80px; font: 12px/1.4 ui-monospace, monospace; }
   .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -208,11 +205,11 @@
   /* Con scroll para que el botón de analizar quede a la vista sin bajar por
      cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
      solo para que deje de estorbar. */
-  .lista { border: 1px solid var(--linea); border-radius: 8px; margin-top: 8px;
+  .lista { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--r-tarjeta); margin-top: 8px;
            max-height: 34vh; overflow-y: auto; }
-  .lista > div { padding: 9px 11px; border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
+  .lista > div { padding: var(--e-3) var(--e-3); border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
   .lista > div:last-child { border-bottom: 0; }
-  .lista > div.sel { font-weight: 700; }
+  .lista > div.sel { font-weight: 700; border-left: 3px solid var(--acento); padding-left: 9px; }
   /* !important a propósito: es una utilidad de un solo uso, y sin eso cualquier
      regla posterior que fije display —.evalbar { display: flex } lo hizo— gana
      por venir después con la misma especificidad, y el elemento no se esconde.
@@ -753,7 +750,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.95.2 · 06-11";
+  window.VERSION = "v0.96 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

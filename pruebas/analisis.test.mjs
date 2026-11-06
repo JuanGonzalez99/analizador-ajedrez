@@ -2503,12 +2503,13 @@ test("el menú de un select no queda blanco sobre blanco", () => {
   /* Chrome en Windows dibuja el desplegable con el fondo del propio select, y
      el nuestro es transparente: el menú salía blanco y el texto de las opciones
      —heredado del papel oscuro— también. Se veía UNA sola opción, la resaltada.
-     Los colores tienen que ser de sistema y no fijos, o el arreglo rompe el
-     esquema contrario al que se probó. */
-  assert.ok(/option\s*{[^}]*background-color:\s*Canvas/.test(html),
+     Desde la v0.96 la app es siempre oscura: los colores son los de la paleta
+     (--elevada y --texto), no los de sistema, que ya no hace falta que sigan
+     ningún esquema. */
+  assert.ok(/option\s*{[^}]*background-color:\s*var\(--elevada\)/.test(html),
     "el option lleva fondo propio");
-  assert.ok(/option\s*{[^}]*color:\s*CanvasText/.test(html),
-    "y color propio, los dos de sistema para seguir claro/oscuro");
+  assert.ok(/option\s*{[^}]*color:\s*var\(--texto\)/.test(html),
+    "y color propio, los dos de la paleta");
 });
 
 test("la tira se puede arrastrar y ruedear con el mouse", () => {

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.95.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.96**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4186,11 +4186,17 @@ describe en §6.
 
 **Desde el 5-nov la estética la manda `DISENO.md` §1** (el sistema de diseño,
 A · Noche) y el orden lo da `HOJA-DE-RUTA.md`, etapa 1. En la **v0.95.2** las
-variables del sistema se cargaron en `:root` de `index.html` sin usar
-(`--fondo`, `--superficie`, `--acento`, `--t-*`, `--e-*`, `--r-*`, `--m-*`…):
-no cambia nada de lo que se ve, y se enchufan pantalla por pantalla. Las que ya
-existían y son globales (`--linea`, `--tenue`, `--c-grave`, `--c-omision`) no se
-tocaron: cambian en la primera pantalla que se aplique.
+variables del sistema se cargaron en `:root` sin usar; la **v0.96** aplica la
+primera pantalla, **entrada y listado**, y con ella lo global: la app va
+**siempre en oscuro** (`color-scheme: dark`, se sacó la media query de claro),
+la página lleva `--fondo`/`--texto`, y `--linea`, `--tenue`, `--c-grave` y
+`--c-omision` pasaron a sus valores nuevos (se ve en toda la app). El `button`
+global pasó a relleno `--elevada` sin borde y radio 10; `#analizar` es el único
+principal (acento); campos y selects, `--elevada` con `--borde-campo`; foco con
+contorno de acento; la lista, sobre `--superficie` con la fila elegida marcada
+con una barra de acento. Revisión, mes y ajustes siguen pendientes de su
+pantalla (etapa 1 de la hoja de ruta). La prueba del `option` ahora pide los
+colores de la paleta y no los de sistema.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

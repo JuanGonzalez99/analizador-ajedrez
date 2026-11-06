@@ -64,7 +64,7 @@ lo demás se dibuja contra ella.
 - [ ] Aplicarlo pantalla por pantalla, una versión cada una, con revisor.
       **Esto es lo de la tarea nocturna** (lo pidió Juan el 6-nov): si una
       pantalla sale bien y queda noche, sigue con la siguiente. En orden:
-  - [ ] **Entrada y listado.** Es la primera, así que trae lo global: pasar
+  - [x] **Entrada y listado** (v0.96, 6-nov). Es la primera, así que trae lo global: pasar
         a `color-scheme: dark` siempre (decisión de Juan, `DISENO.md` §1.3),
         el fondo de la página, y `--linea`, `--tenue`, `--c-grave` y
         `--c-omision` a sus valores nuevos. Eso se ve en toda la app: el
@@ -156,6 +156,14 @@ contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
 
+- **No sé si esto te copa:** la barra verde a la izquierda de la partida elegida
+  en la lista (alternativa: fondo `--elevada` sin barra).
+- **No sé si esto te copa:** en la fila del usuario, "Buscar" (alto normal) y "o
+  pegar un PGN" (chico) quedan algo desparejos; se resuelve al hacer la
+  pasada de botones.
+- Pendientes de su pantalla (del revisor): hoja de ajustes sobre `--superficie`,
+  tablas del mes y tarjetas de la revisión sobre `--superficie`, lado oscuro de
+  la curva fuera de la paleta, el select sin `.chico` en el mes.
 
 ---
 
