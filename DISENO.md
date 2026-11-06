@@ -384,6 +384,15 @@ hay. Las primeras salen del historial del traspaso.
   (§4octodecies).
 - **"Tablas" escrito y no `½-½`**: el glifo `½` a 9,5 px se lee apretado.
   Rompe la simetría con `1-0` y `0-1` a propósito (v0.62).
+- **Que el revisor detecte solo lo que pide un lavado de cara**, y no tener
+  que decirlo él: *"si no depende de mi ojo en todos lados"*. Prefiere **reglas
+  generales** a una regla por cada cosa: *"no quiero andar pensando todo.
+  Quiero revisar lo que se hizo"*. Para lo que pide forma nueva, **varias
+  variantes y que el revisor elija, con derecho a decir "ninguna"** o "esta
+  con tal ajuste": si no, *"es una de las cuatro sí o sí y capaz que las
+  cuatro están mal"*. Y **ver lo que no se aplicó por respetar algo que eligió
+  él**, con captura: *"capaz veía la sugerencia y digo, ah, queda bien y la
+  acepto"* (6-nov-2026).
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.

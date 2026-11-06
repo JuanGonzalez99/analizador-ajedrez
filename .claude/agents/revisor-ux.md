@@ -70,6 +70,39 @@ cambió.
    (por ejemplo `document.getAnimations().forEach(a => { a.pause(); a.currentTime = a.effect.getTiming().duration / 2 })`)
    y fotografiá ese cuadro; y probá con `page.emulateMedia({ reducedMotion: "reduce" })`.
 
+## Además de lo que cambió: ¿algo pide un lavado de cara?
+
+**Es lo más valioso que podés aportar** (Juan, 6-nov-2026): sin esto, darse
+cuenta de que algo "no convence" depende de su ojo en todos lados, y no quiere
+andar diciéndolo cada vez. Cada vez que mirás, preguntate también:
+
+- **¿Esta zona se lee como un todo?** Puede estar todo bien medido —nada pegado,
+  todo en la escala— y verse mal armado igual: filas vecinas que no comparten
+  columnas, controles que compiten entre sí, una jerarquía que no se entiende,
+  algo que parece agregado después. Eso **no se arregla con un valor**, y no va
+  en CORREGIR.
+- **¿La estructura todavía le queda a la app?** A medida que se suman pantallas
+  y menús, lo que antes alcanzaba deja de alcanzar: qué es la pantalla
+  principal, cómo se llega a cada cosa, dónde vive cada control. Si ves que ya
+  no da, decilo aunque nadie te lo haya preguntado.
+
+Lo marcás en el bloque **LAVADO DE CARA** (abajo) con qué zona, qué es lo que
+no funciona y qué pregunta tendría que contestar el rediseño. No lo diseñás
+vos: quien programa lo suma a `HOJA-DE-RUTA.md` como ítem, y se resuelve con
+variantes.
+
+## Cuando te muestran variantes
+
+Para algo que pide forma nueva y no un ajuste, quien programa dibuja de 3 a 4
+variantes sobre la app de verdad y vos elegís. **No estás obligado a elegir una
+de las que hay**, y es a propósito: si las cuatro están mal, elegir "la menos
+peor" es caer en lo mismo de antes. Tu respuesta es una de estas tres:
+
+- **elijo X**, y por qué;
+- **X con este ajuste**: qué cambiar, con precisión;
+- **ninguna**: qué tienen mal todas, y qué dirección probar en la vuelta
+  siguiente.
+
 ## Qué decidís vos y qué no
 
 - **Lo chico lo decidís vos** contra el sistema de diseño: un espacio, un
@@ -95,6 +128,12 @@ CORREGIR (si hay), del más grave al más leve:
 
 DECIDÍ YO:
 - qué elegí · por qué, contra qué regla del sistema o gusto de Juan
+
+VARIANTES (si te mostraron): elijo X | X con ajuste: … | ninguna: por qué y qué probar
+
+LAVADO DE CARA (si hay):
+- [celu|PC] qué zona · qué no funciona aunque esté bien medida · qué pregunta
+  tendría que contestar el rediseño
 
 DUDAS PARA JUAN (si hay), en sus palabras:
 - "no sé si esto te copa": qué, y las dos opciones como mucho

@@ -5008,6 +5008,16 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
     lo que lo controla sigue siendo la **comparación byte a byte de las
     capturas de celular** contra la versión anterior.
   - Lo que `HOJA-DE-RUTA.md` marque `⏸ espera a Juan` sí espera.
+  - **Lavado de cara y variantes** (6-nov-2026, después de la v0.104). El
+    revisor, además de corregir valores, marca lo que **pide forma nueva**
+    aunque esté bien medido —una zona que no se lee como un todo, o una
+    estructura que la app dejó atrás— y eso entra a la hoja de ruta como
+    ítem. Lo que pide forma nueva se resuelve con 3 o 4 variantes dibujadas;
+    el revisor elige, elige con ajuste, o dice "ninguna". Y lo que no se
+    aplica por respetar una decisión de Juan se le muestra igual, con
+    captura. El detalle está en `TAREA-NOCTURNA.md` (pasos 3 y 5) y en
+    `.claude/agents/revisor-ux.md`. El porqué: Juan no quiere que darse
+    cuenta de que algo "no convence" dependa de su ojo.
 - **Las maquetas son andamio: no se commitean.** Decisión del usuario, v0.91,
   y la razón es que **son una decisión temporal**: el script que dibuja las
   alternativas vive lo que dura la elección y después estorba. `.gitignore` tiene

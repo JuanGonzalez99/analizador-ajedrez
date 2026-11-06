@@ -39,6 +39,20 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
 3. **Decisiones.** Las que serían de Juan: elegí tu recomendación, seguí, y
    anotala para el resumen. Las visuales chicas las toma el revisor contra
    `DISENO.md`. Las que el ítem marca `⏸` no se toman nunca de noche.
+   **Variantes, cuando el ítem pide forma nueva** (un lavado de cara, una
+   pantalla, una disposición) y no un ajuste de valores: dibujá de 3 a 4
+   sobre la app de verdad con `pruebas/tira.mjs` (`tira()` para un pedazo,
+   `pantallas()` para la pantalla entera), con al menos una que cambie la
+   estructura y no solo tamaños. El revisor elige una, la elige con un
+   ajuste, o dice **ninguna** y qué probar: en ese caso, otra tanda con esa
+   dirección. Como mucho dos tandas; si sigue en "ninguna", no se aplica nada
+   y va al resumen como duda, con las tiras. Lo que se aplica va igual al
+   resumen **con la tira de todas y cuál ganó**, para que Juan pueda elegir
+   otra.
+   **Lo que no se aplica por respetar una decisión anterior de Juan** (el
+   revisor propone algo que contradice algo que él eligió) va al resumen
+   igual, **con una captura de cómo quedaba**: se le muestra para que decida,
+   no se le aplica sin él.
 4. **Construir.** Con las reglas de siempre: un cambio invasivo por tanda,
    `npm test` verde, versión de `index.html` que sube, traspaso actualizado en
    el mismo commit, PC en commits separados, y la comparación byte a byte de
@@ -50,7 +64,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
      va al resumen como duda).
    - *una vez al final*: una sola pasada sobre todo lo de la noche, antes del
      último push.
-   Lo que el revisor deja en "dudas para Juan" va al resumen.
+   Lo que el revisor deja en "dudas para Juan" va al resumen. **Lo que deja en
+   "lavado de cara" va a `HOJA-DE-RUTA.md`** como ítem nuevo sin tachar, al
+   final de la etapa que se está haciendo, con lo que dijo el revisor; y al
+   resumen, en una línea. No se hace esa misma noche salvo que entre en la
+   cuenta de "Por noche".
 6. **Pushear a `main`.** Cada push es un deploy en vivo, así que solo con todo
    verde. Si el push falla, no insistas más de cuatro veces y ponelo primero en
    el resumen.
@@ -70,6 +88,10 @@ castellano rioplatense, sin jerga de código, en este orden:
 
 **Qué elegí por vos**
 - qué decidí y por qué, en una línea; "si no te copa, se da vuelta"
+- si hubo variantes: la tira, y cuál eligió el revisor
+- lo que no apliqué por respetar algo que elegiste vos, con captura
+
+**Lavados de cara que vio el revisor** (si hay): qué zona, en una línea
 
 **Dudas** (lo que quiero que mires)
 - "no sé si esto te copa": qué, y como mucho dos opciones

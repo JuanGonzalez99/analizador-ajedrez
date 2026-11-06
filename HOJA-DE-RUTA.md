@@ -85,6 +85,13 @@ lo demás se dibuja contra ella.
       en la barra, así que va con un solo decimal de 10 para arriba ("+10.0").
       Y **mirar el Mes** con los campos nuevos de 44: ninguna partida de prueba
       lo muestra, hace falta una con mes.
+- [ ] **Lavado de cara de la fila de abajo de la vista de la jugada**: los
+      cuatro cuadritos (Mejor / Pérdida / Caída / Pensó) y los tres botones
+      (Mostrar la mejor / Girar tablero / Pintar las dos). Juan, 6-nov: *"medio
+      raros… no siento que sea cuestión de agrandar o ajustar algo"*. Son dos
+      filas que no comparten columnas y tres botones de anchos distintos. Va
+      con variantes (`TAREA-NOCTURNA.md`, paso 3); la pantalla no puede crecer
+      (la fila termina en 733 de 760).
 
 ## Etapa 2 · Partir `index.html`
 
