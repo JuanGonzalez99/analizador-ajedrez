@@ -375,8 +375,9 @@ hay. Las primeras salen del historial del traspaso.
 - **Glifos chicos que hay que descifrar** (el `½-½` de la v0.61).
 - **Que el tablero salte** mientras uno está por jugar la siguiente (falla
   anotada en la v0.84, §8).
-- **Que la punta de la flecha tape la pieza**: el aro con bolita de la v0.99,
-  *"no me copa"* (6-nov-2026).
+- **Que la punta de la flecha tape la pieza con algo opaco**: el aro con bolita
+  de la v0.99, *"no me copa"* (6-nov-2026). Semitransparente encima de la
+  pieza, como chess.com, sí.
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
