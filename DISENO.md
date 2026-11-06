@@ -377,6 +377,11 @@ hay. Las primeras salen del historial del traspaso.
   vista mientras se cambia cómo se ve (§4untrigies).
 - **La tuerca de engranaje lleno, seis dientes gordos.** Le gustó también el
   ícono de perillas acostadas y lo dejó guardado para otra cosa (§4untrigies).
+  **Y el círculo con relleno y borde alrededor**, aunque §1.7 diga "ícono sin
+  relleno": se le mostraron la tuerca sola y la de solo borde, en la pantalla
+  entera, y se quedó con la suya: *"por ahora la mía me convence"*, sin
+  descartar cambiarla más adelante (6-nov-2026, v0.104). Es la excepción a
+  §1.7; el revisor no la vuelve a marcar.
 - **El borde de la tarjeta con el color de la categoría**: dice más que un
   color fijo (v0.71, §4sexdecies).
 - **La jerga en los textos**: *"me gusta la jerga. Quizás podamos apuntar
