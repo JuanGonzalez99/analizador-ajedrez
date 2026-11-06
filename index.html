@@ -65,7 +65,8 @@
          margin: 0 auto; padding: 16px 14px 60px;
          max-width: 700px; overflow-anchor: none; }
   h1 { font-size: var(--t-titulo); margin: 0 0 2px; }
-  h2 { font-size: 15px; margin: 24px 0 4px; }
+  /* subtítulo del sistema (§1.4), en toda la app desde la v0.98 */
+  h2 { font-size: var(--t-subtitulo); margin: 24px 0 4px; }
   p.n { margin: 0 0 12px; color: var(--tenue); font-size: 14px; }
   p.cap { margin: 8px 0 2px; font-size: 12.5px; color: var(--tenue); }
   button { font: inherit; padding: 9px 15px; border: 1px solid transparent; background: var(--elevada);
@@ -126,7 +127,9 @@
        lleno, que al lado de un título en negrita gana la pulseada. */
   .cabvista { display: flex; align-items: center; justify-content: space-between;
               gap: 10px; margin: 24px 0 4px; }
-  .cabvista h2 { margin: 0; }
+  /* interlineado 1,25: a 18 px el renglón mide los mismos 22,5 que medía a 15,
+     así el título no empuja la vista de la jugada (§1.4) */
+  .cabvista h2 { margin: 0; line-height: 1.25; }
   /* 34x34 es el área que se toca. La tuerca va CENTRADA CONTRA LA MAYÚSCULA del
      título y no contra la caja del renglón: la caja reserva lugar para colas y
      tildes que "Revisión" no tiene, así que centrar contra ella la deja arriba.
@@ -134,11 +137,13 @@
      la misma lección del chevron contra la N de la v0.74—. CAMBIÓ DE +1 A -0,5
      EN LA v0.92: el glifo vivía en una caja de texto, ya centrada adentro del
      botón; un SVG de 20x20 centrado por la grilla cae 1,5 px más arriba, y esa
-     diferencia se midió, no se estimó. El `font-size` se fue con el glifo. */
+     diferencia se midió, no se estimó. El `font-size` se fue con el glifo.
+     Y DE -0,5 A -2,25 EN LA v0.98: el título pasó de 15 a 18 (§1.4) y su
+     mayúscula, con el interlineado de 1,25, quedó más arriba; lo midió `mirar`. */
   #btnAjustes { padding: 0; flex: none; display: grid; place-items: center;
                 width: 34px; height: 34px;
                 border: 1px solid var(--linea); border-radius: 50%;
-                transform: translateY(-0.5px); }
+                transform: translateY(-2.25px); }
   #fondoAjustes { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
   /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
      monitor, se queda del ancho de la columna, como el resto de la app. */
@@ -169,13 +174,13 @@
      con el chip de cadencia eran cuatro elementos repartiéndose el ancho, y el
      ? de cada sección caía en una columna distinta. El `gap` lo despega del
      chevron, que si no quedan pegados y se tocan por error. */
-  .seccion > summary { cursor: pointer; padding: 11px 2px; font-size: 15px;
-                       font-weight: 700; list-style: none; display: flex;
+  .seccion > summary { cursor: pointer; padding: 11px 2px; font-size: var(--t-secundario);
+                       font-weight: 600; list-style: none; display: flex;
                        align-items: center; gap: 14px; }
   .seccion > summary > .tit { flex: 1; min-width: 0; }
   .seccion > summary::-webkit-details-marker { display: none; }
   .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
-                              opacity: .5; font-size: 18px; transition: transform .15s; }
+                              color: var(--tenue); font-size: 18px; transition: transform .15s; }
   .seccion[open] > summary::after { transform: rotate(-90deg); }
   .seccion > .cap { margin-top: 0; }
   .seccion > .tw { margin-bottom: 12px; }
@@ -189,19 +194,20 @@
   .quemide[open] > summary::before { transform: rotate(90deg); }
 
   /* precisión y mediana de los dos jugadores, enfrentadas */
-  .marcador { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0 12px; }
-  .marcador > div { border: 1px solid var(--linea); border-radius: 6px; padding: 8px 10px;
+  .marcador { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-2); margin: 8px 0 12px; }
+  .marcador > div { background: var(--superficie); border: 1px solid var(--linea);
+                    border-radius: var(--r-tarjeta); padding: 8px 12px;
                     overflow: hidden; }
-  .marcador .et { font-size: 12px; color: var(--tenue); white-space: nowrap;
+  .marcador .et { font-size: var(--t-leyenda); color: var(--tenue); white-space: nowrap;
                   overflow: hidden; text-overflow: ellipsis; }
-  .marcador .gr { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums;
+  .marcador .gr { font-size: var(--t-titulo); font-weight: 700; font-variant-numeric: tabular-nums;
                   line-height: 1.2; }
-  .marcador .pe { font-size: 11.5px; color: var(--tenue);
+  .marcador .pe { font-size: var(--t-minimo); color: var(--tenue);
                   font-variant-numeric: tabular-nums; }
 
   /* los números de todas las tablas, tabulares: sin esto las columnas bailan
      de fila en fila y cuesta compararlas de un vistazo */
-  table { border-collapse: collapse; width: 100%; font-size: 13.5px;
+  table { border-collapse: collapse; width: 100%; font-size: var(--t-secundario);
           font-variant-numeric: tabular-nums; }
   th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
   /* La etiqueta es lo único que puede cortar en varias líneas: si no, empuja la
@@ -209,7 +215,21 @@
   th:first-child, td:first-child { text-align: left; white-space: normal; }
   /* red de seguridad: si aun así no entra, la tabla scrollea sola y no se
      recorta ningún número */
-  .tw { overflow-x: auto; }
+  /* LAS TABLAS VAN EN TARJETA (v0.98, DISENO §1.1): sobre `--superficie`, radio
+     12. Las puntas de cada fila llevan 12 de aire para que el texto no toque el
+     borde, y la última fila no lleva raya, que la pone la tarjeta. */
+  .tw { overflow-x: auto; background: var(--superficie); border: 1px solid var(--linea);
+        border-radius: var(--r-tarjeta); }
+  .tw th:first-child, .tw td:first-child { padding-left: var(--e-3); }
+  .tw th:last-child, .tw td:last-child { padding-right: var(--e-3); }
+  .tw tr:last-child > td { border-bottom: 0; }
+  /* por la base y no al medio: con el rango abajo del porcentaje la fila tiene
+     dos renglones, y centrados los demás números caían 7 px más abajo */
+  .tw td { vertical-align: baseline; }
+  /* los selects del mes: 36 visibles y 12 entre ellos (§1.7), sin tocar el
+     `.chico` del resto de la app */
+  #zonaMes select.chico { min-height: 36px; }
+  #zonaMes .fila { gap: var(--e-3); }
   /* Con scroll para que el botón de analizar quede a la vista sin bajar por
      cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
      solo para que deje de estorbar. */
@@ -301,7 +321,7 @@
   .ayuda[aria-expanded="true"] { background: var(--linea); color: inherit; }
   .ayudaPanel { display: block; border-left: 2px solid var(--linea);
                 padding-left: 10px; margin-top: 6px; }
-  th .sub { display: block; font-weight: 400; font-size: 10.5px; color: var(--tenue); }
+  th .sub { display: block; font-weight: 400; font-size: var(--t-minimo); color: var(--tenue); }
 
   /* El paréntesis del margen: más chico y tenue que el porcentaje, porque es su
      contexto y no otro número. Y el gris para la otra forma de marcarlo.
@@ -317,7 +337,7 @@
   .rango { display: block; line-height: 1.1; font-size: 11px;
            color: var(--tenue); white-space: nowrap; }
 
-  .marcadorMes { font-size: 14px; margin: 8px 0 0; font-variant-numeric: tabular-nums; }
+  .marcadorMes { font-size: 14px; margin: 8px 0; font-variant-numeric: tabular-nums; }
   /* La cantidad de partidas es el DENOMINADOR, no el resultado: va en su propio
      renglón y en el gris de los datos de apoyo, para que el ojo caiga primero
      en las ganadas y perdidas. En un renglón aparte, además, la frase no se
@@ -774,7 +794,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.97.1 · 06-11";
+  window.VERSION = "v0.98 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1028,11 +1048,11 @@
 <div id="zonaMes" class="oculto">
   <h2>Estadísticas</h2>
   <div class="fila">
-    <select id="fuente">
+    <select id="fuente" class="chico">
       <option value="mes">El mes seleccionado</option>
       <option value="todo">Todo lo analizado</option>
     </select>
-    <select id="cadencia" aria-label="Cadencia"></select>
+    <select id="cadencia" class="chico" aria-label="Cadencia"></select>
   </div>
   <p class="cap" id="capMes"></p>
   <details class="quemide"><summary>Cómo se leen estos números</summary>

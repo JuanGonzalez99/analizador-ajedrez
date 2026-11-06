@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.97.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.98**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4241,6 +4241,28 @@ pastilla mide lo que las piezas y no el renglón de cinco. **El hover de los
 botones** ahora aclara sobre `--elevada`: el de antes los rellenaba de
 transparente y desde la v0.96 eso los oscurecía. Las capturas del celu quedaron
 idénticas al byte contra la v0.97.
+
+**v0.98, la vista del mes y sus tablas.** Todas las tablas (`.tw`, también la
+del resumen de la partida y la del banco) van en tarjeta: `--superficie`, borde
+`--linea`, radio 12, 12 de aire en las puntas de cada fila y sin raya en la
+última. La letra de las tablas pasa de 13,5 a 14 y los subtítulos de columna a
+11; con eso "Dejé comible la pieza que moví" corta en dos renglones, y ninguna
+tabla desborda a 412 (lo midió la maqueta: `scrollWidth` contra `clientWidth`).
+Los títulos de sección plegable bajan a 14/600 con el chevron en `--tenue`; el
+marcador de precisión y mediana del resumen va como los cuadritos (superficie,
+radio 10, número a 22). Los dos `select` del mes pasan a `.chico`, que era lo
+que el revisor había marcado.
+
+**Los `h2` pasan a 18 en toda la app** (§1.4), no solo en el mes: la entrada y
+el resumen también. El de "Revisión" va con interlineado 1,25 para que su
+renglón siga midiendo 22,5 y la vista de la jugada no baje, y **la tuerca pasó
+de `translateY(-0.5px)` a `-2.25px`**: con el título más grande la mayúscula
+quedó más arriba, y `mirar` (`tuercaContraLaR`) volvió a dar 0. **El mes no
+tiene capturas en `mirar`**: se miró con una maqueta descartable que abre el
+mes con la partida de prueba. Del revisor: las celdas de las tablas se
+alinean **por la base** (con el rango abajo del porcentaje, los demás números
+caían 7 px), los selects del mes a 36 de alto y 12 de separación, y el
+marcador del resumen con radio 12 y relleno 8/12.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
