@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.100**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.101**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4279,7 +4279,15 @@ cómo dibuja chess.com. Ahora `poligonoFlecha()` (al lado de `svgMarcas`) dibuja
 triangular de 2,2 veces la cola y 15 de largo que termina en el centro del
 destino, cola que arranca a un cuarto de casilla del origen. Un solo polígono y
 no línea más triángulo porque con transparencia lo que se pisa se suma y queda
-una franja más oscura. Las marcas del botón derecho no se tocaron.
+una franja más oscura.
+
+**v0.101, las tres respuestas de Juan.** La flecha de la mejor pasa a
+`#43c94a` (variable `--f-mejor`, junto a `--f-jugada`): se eligió mirando
+cuatro verdes sobre la flecha corta a8-b8, que es la que cae entera sobre
+casillas oscuras. La del caballo queda recta. **Las marcas del botón derecho
+usan `poligonoFlecha`** con `--marca` y la misma opacidad: hasta acá eran
+línea más triángulo y su forma era lo que las distinguía (§4quinvicies); ahora
+las distingue el color, como en chess.com.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

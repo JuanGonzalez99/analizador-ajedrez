@@ -307,8 +307,13 @@ de la punta tapaba la pieza de destino. **Desde la v0.100 van como las de
 chess.com** (pedido de Juan con capturas): un solo polígono semitransparente
 (opacidad ,7), cola de 9 unidades (≈ un quinto de casilla), punta triangular de
 ~20 de ancho y 15 de largo que termina en el centro de la casilla, la cola
-arranca a un cuarto de casilla del centro de origen. Los colores no cambiaron.
-Las marcas del botón derecho siguen con su forma (§4quinvicies del traspaso).
+arranca a un cuarto de casilla del centro de origen.
+**v0.101, lo que eligió Juan:** la de la mejor pasa a `--f-mejor` `#43c94a`, un
+verde más claro y vivo (la de lo jugado queda en `--f-jugada` `#1565c0`). Por
+luz ningún verde se despega de las dos casillas a la vez (aclarar lo pierde en
+la clara); lo que la separa de la oscura de A, oliva apagado, es la
+saturación. La del caballo sigue **recta**, no en L. Y **las marcas del botón
+derecho usan el mismo polígono**, en `--marca`: las distingue el color.
 
 ### 1.11 Cómo se usa esto
 
@@ -340,8 +345,9 @@ hay. Las primeras salen del historial del traspaso.
 - **Que el revisor vaya revisando todo** (5-nov-2026).
 - **Las flechas como las de chess.com**: anchas, punta triangular y
   semitransparentes, que se vea la pieza a través. Mandó capturas de chess.com
-  para comparar (6-nov-2026, v0.100). Antes eligió no cambiarles el color
-  (el verde ya quiere decir "lo del motor").
+  para comparar (6-nov-2026, v0.100). La de la mejor, en un **verde más claro
+  y vivo**, que siga siendo verde; la del caballo, **recta**; y las suyas del
+  botón derecho, **con la misma forma** (6-nov-2026, v0.101).
 - **Pantalla densa, todo lo de la jugada sin scrollear**, antes que tarjetas
   grandes. Lo eligió mirando tres propuestas a ancho de celu (§7 del
   traspaso, "Estética").

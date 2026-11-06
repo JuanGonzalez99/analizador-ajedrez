@@ -23,6 +23,11 @@
        el corte va este, 6,1 sobre el fondo. La flecha sigue con el suyo, que
        sobre el tablero sí se ve (v0.97). */
     --inventada: #b48ce0;
+    /* LAS FLECHAS DE LA APP (v0.101). La mejor dejó el #2e7d32: sobre la casilla
+       oscura de A, verde oliva, se perdía; Juan pidió un verde más claro y vivo.
+       Lo que la separa no es la luz —ningún verde la gana en las dos casillas—
+       sino la saturación: la casilla es apagada y esta no. */
+    --f-jugada: #1565c0; --f-mejor: #43c94a;
     /* el ámbar de lo que señala la frase: casilla, flecha y frase encendida */
     --senal: #e8a33d;
 
@@ -790,7 +795,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.100 · 06-11";
+  window.VERSION = "v0.101 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4052,21 +4057,11 @@ function svgMarcas(capa) {
         fill="var(--marca)" opacity=".42"/>`;
     }
     if (capa === "alto" && !casilla) {
-      const x1 = sqCx(m.a), y1 = sqCy(m.a), x2 = sqCx(m.z), y2 = sqCy(m.z);
-      const largo = Math.hypot(x2 - x1, y2 - y1) || 1;
-      const ux = (x2 - x1) / largo, uy = (y2 - y1) / largo;
-      /* la cola arranca a 13 del centro de la casilla de origen y la punta
-         termina a 5 del centro de la de destino: la flecha no tapa ni la pieza
-         que sale ni la que llega, que son justo las dos que se están mirando */
-      const ax = x1 + ux * 13, ay = y1 + uy * 13;
-      const zx = x2 - ux * 5, zy = y2 - uy * 5;
-      /* la base de la punta, y los dos costados perpendiculares al tiro */
-      const bx = zx - ux * 13, by = zy - uy * 13, w = 6.5;
-      const n = v => v.toFixed(1);
-      s += `<line x1="${n(ax)}" y1="${n(ay)}" x2="${n(bx)}" y2="${n(by)}"
-        stroke="var(--marca)" stroke-width="5.5" stroke-linecap="round" opacity=".78"/>
-        <path d="M ${n(zx)} ${n(zy)} L ${n(bx - uy * w)} ${n(by + ux * w)}
-          L ${n(bx + uy * w)} ${n(by - ux * w)} Z" fill="var(--marca)" opacity=".78"/>`;
+      /* LA MISMA FORMA QUE LAS DE LA APP desde la v0.101 (lo eligió Juan, como
+         en chess.com): las distingue el color, `--marca`. Hasta la v0.100 eran
+         una línea con cabo redondo más un triángulo. */
+      s += poligonoFlecha(sqCx(m.a), sqCy(m.a), sqCx(m.z), sqCy(m.z), 9,
+                          "var(--marca)", FLECHA_OPACIDAD);
     }
   }
   return s;
@@ -4131,8 +4126,8 @@ function dibujar(fen, jugada, mejor, prueba) {
     return poligonoFlecha(cx(a), cy(a), cx(z), cy(z), ancho, color, FLECHA_OPACIDAD);
   };
 
-  s += flecha(jugada, "#1565c0", 9);
-  if (mejor) s += flecha(mejor, "#2e7d32", 9);
+  s += flecha(jugada, "var(--f-jugada)", 9);
+  if (mejor) s += flecha(mejor, "var(--f-mejor)", 9);
   /* La jugada probada va en VIOLETA, que es el único color que no está usado:
      azul es lo que se jugó y verde lo que decía el motor. Con tres flechas a la
      vez el color es lo único que las distingue. */
