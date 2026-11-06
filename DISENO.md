@@ -302,10 +302,13 @@ Se escriben acá cuando se aplique la pantalla que los usa, no antes.
 **Flechas, medidas sobre las casillas de A y todavía sin tocar:** la azul de
 lo jugado (`#1565c0`) da 4,4 sobre la clara y **1,7 sobre la oscura**; la verde
 de la mejor (`#2e7d32`), 3,9 y **1,55**. Sobre la casilla oscura las dos quedan
-por debajo de 3:1. **Decidido por Juan (6-nov, v0.99): aro de `--fondo` de
-1,5 abajo de cada flecha de la app**, igual que la insignia (§1.2), sin
-cambiar los colores. Las marcas del botón derecho (`--marca`) no lo llevan
-todavía.
+por debajo de 3:1. En la v0.99 se les puso un aro de `--fondo`, y la bolita
+de la punta tapaba la pieza de destino. **Desde la v0.100 van como las de
+chess.com** (pedido de Juan con capturas): un solo polígono semitransparente
+(opacidad ,7), cola de 9 unidades (≈ un quinto de casilla), punta triangular de
+~20 de ancho y 15 de largo que termina en el centro de la casilla, la cola
+arranca a un cuarto de casilla del centro de origen. Los colores no cambiaron.
+Las marcas del botón derecho siguen con su forma (§4quinvicies del traspaso).
 
 ### 1.11 Cómo se usa esto
 
@@ -335,9 +338,10 @@ hay. Las primeras salen del historial del traspaso.
   madera. Se le dibujaron dos mezclas y **se quedó con A** (5-nov-2026): es la
   base del sistema de diseño.
 - **Que el revisor vaya revisando todo** (5-nov-2026).
-- **Las flechas del tablero con un aro oscuro fino**, antes que cambiarles el
-  color: la verde de la mejor se perdía sobre las casillas verdes de A y el
-  verde ya quiere decir "lo del motor" (6-nov-2026, v0.99).
+- **Las flechas como las de chess.com**: anchas, punta triangular y
+  semitransparentes, que se vea la pieza a través. Mandó capturas de chess.com
+  para comparar (6-nov-2026, v0.100). Antes eligió no cambiarles el color
+  (el verde ya quiere decir "lo del motor").
 - **Pantalla densa, todo lo de la jugada sin scrollear**, antes que tarjetas
   grandes. Lo eligió mirando tres propuestas a ancho de celu (§7 del
   traspaso, "Estética").
@@ -371,6 +375,8 @@ hay. Las primeras salen del historial del traspaso.
 - **Glifos chicos que hay que descifrar** (el `½-½` de la v0.61).
 - **Que el tablero salte** mientras uno está por jugar la siguiente (falla
   anotada en la v0.84, §8).
+- **Que la punta de la flecha tape la pieza**: el aro con bolita de la v0.99,
+  *"no me copa"* (6-nov-2026).
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
