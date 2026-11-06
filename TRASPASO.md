@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.97**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.97.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4228,8 +4228,19 @@ colores de la paleta y no los de sistema.
 - **Medido** a 412×760, contra las capturas de la v0.96: la curva y los
   cuadritos quedan en el mismo renglón, la tira se corre un píxel; la pantalla
   no creció.
-- **No se tocó**: las flechas del tablero (§1.10 de `DISENO.md`, pendiente), lo
-  de la compu (lista lateral, piezas comidas, hover), que va en su commit.
+- **Coordenadas del tablero** en `--tenue` y a 11,2 unidades, que a 360 CSS
+  son los 11 px del mínimo (lo pidió el revisor).
+- **No se tocó**: las flechas del tablero (§1.10 de `DISENO.md`, pendiente).
+
+**v0.97.1, lo mismo en la compu**, en su commit: lista lateral y panel de
+alternativas sobre `--superficie` con radio 12 y la letra en la escala (14 la
+lista, 12,5 lo tenue, 11 pérdida y reloj); la jugada elegida en la lista con
+el mismo subrayado de acento. **Las piezas comidas van sobre una pastilla de
+`--casilla-clara`** (§1.9): el negro de Cburnett daba 1,3:1 sobre el fondo; la
+pastilla mide lo que las piezas y no el renglón de cinco. **El hover de los
+botones** ahora aclara sobre `--elevada`: el de antes los rellenaba de
+transparente y desde la v0.96 eso los oscurecía. Las capturas del celu quedaron
+idénticas al byte contra la v0.97.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

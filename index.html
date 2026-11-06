@@ -490,7 +490,8 @@
      - UNA POR RENGLÓN gasta el doble de alto y a cambio entra algo que la
        planilla no puede dar, porque ahí las dos columnas ya están ocupadas por
        los dos colores: cuánto perdió cada jugada, en su propio renglón. */
-  .jugadas { border: 1px solid var(--linea); border-radius: 8px; font-size: 13.5px;
+  .jugadas { background: var(--superficie); border: 1px solid var(--linea);
+             border-radius: var(--r-tarjeta); font-size: var(--t-secundario);
              overflow-y: auto; position: relative; }
   .jugadas > div { display: grid; gap: 4px; align-items: center; padding: 3px 7px;
                    border-bottom: 1px solid var(--linea); }
@@ -505,17 +506,17 @@
      misma —la misma que en la tira— y dos marcas fuertes en la misma fila se
      pelean. Esta es para encontrar el renglón barriendo con el ojo. */
   .jugadas > div.aca { background: color-mix(in srgb, currentColor 7%, transparent); }
-  .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: 12px; }
+  .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: var(--t-leyenda); }
   .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
-                 padding: 4px 6px; border-radius: 5px; min-width: 0; }
+                 padding: 4px 6px; border-radius: var(--r-chico); min-width: 0; }
   /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra "??"):
      sin esto las jugadas bailan de fila en fila */
   .jugadas .jg .sm { font-size: 11px; font-weight: 700; min-width: 16px;
                      text-align: center; flex-shrink: 0; }
   .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
   .jugadas .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
-                     font-weight: 700; }
-  .jugadas .pe, .jugadas .se { font-variant-numeric: tabular-nums; font-size: 11.5px;
+                     box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
+  .jugadas .pe, .jugadas .se { font-variant-numeric: tabular-nums; font-size: var(--t-minimo);
                  color: var(--tenue); padding-right: 3px; }
   /* EL TIEMPO PENSADO (v0.82). Pedido explícito y con la palabra "fundamental":
      ver que un error grave salió en dos segundos explica el error mejor que su
@@ -528,8 +529,7 @@
   .jugadas .cierre { display: block; text-align: center; padding: 7px 10px;
                      font-size: 12.5px; color: var(--tenue);
                      border-top: 1px solid var(--linea); }
-  .jugadas .cierre b { font-weight: 700;
-                       color: color-mix(in srgb, currentColor 95%, transparent); }
+  .jugadas .cierre b { font-weight: 700; color: var(--texto); }
 
   /* Fuera de pantalla ancha no hay ni columna ni dial. VA ANTES de la media
      query: a igual especificidad gana la última regla, y puesto después le
@@ -636,17 +636,18 @@
                flex: 0 0 132px; padding: 2px 0 22px; }
     /* EL PANEL DE ALTERNATIVAS EXISTE SOLO ACÁ, como todo lo de esta tanda. Va
        arriba de la lista y no abajo: abajo se iría del pliegue. */
-    .alts { display: block; border: 1px solid var(--linea); border-radius: 8px;
+    .alts { display: block; background: var(--superficie); border: 1px solid var(--linea);
+            border-radius: var(--r-tarjeta);
             padding: 8px 10px; margin-bottom: 10px; }
     .altCab { display: flex; align-items: center; justify-content: space-between;
-              gap: 10px; font-size: 13px; color: var(--tenue); }
+              gap: 10px; font-size: var(--t-leyenda); color: var(--tenue); }
     .altLista { margin-top: 6px; }
     .altLista:empty { margin-top: 0; }
     .alt { display: grid; grid-template-columns: 16px 1fr auto; gap: 8px;
-           align-items: baseline; padding: 3px 4px; border-radius: 5px; }
-    .alt .an { color: var(--tenue); font-size: 12px; }
+           align-items: baseline; padding: 3px 4px; border-radius: var(--r-chico); }
+    .alt .an { color: var(--tenue); font-size: var(--t-leyenda); }
     .alt .as { font-weight: 600; cursor: pointer; }
-    .alt .ae { font-variant-numeric: tabular-nums; color: var(--tenue); font-size: 13px; }
+    .alt .ae { font-variant-numeric: tabular-nums; color: var(--tenue); font-size: var(--t-leyenda); }
     /* la primera ES la mejor jugada, la misma que ya pinta el cuadrito "Mejor":
        se marca con el verde de siempre y no con uno nuevo */
     .alt.primera .as { color: var(--c-mejor); }
@@ -655,7 +656,11 @@
        un margen propio de 15 unidades para las coordenadas, y sin esto el grupo
        de abajo quedaba a la altura de las letras en vez de la fila 1 */
     .cGrupo { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; min-height: 20px; }
-    .cDif { font-size: 12.5px; font-weight: 700; color: var(--tenue);
+    /* LAS PIEZAS COMIDAS VAN SOBRE UNA PASTILLA de la casilla clara (v0.97.1,
+       DISENO §1.9): el negro de Cburnett sobre el fondo da 1,3:1 y no se veían.
+       Las dos tandas igual, para que ninguna parezca marcada. */
+    .cGrupo svg { background: var(--casilla-clara); border-radius: var(--r-chico); padding: 2px; }
+    .cDif { font-size: var(--t-leyenda); font-weight: 700; color: var(--tenue);
             font-variant-numeric: tabular-nums; }
   }
   /* TRES COLUMNAS, Y LA TARJETA AL COSTADO (v0.90). Es el cambio invasivo de la
@@ -704,7 +709,9 @@
      estuviera elegida. Serían dos "estás acá" al mismo tiempo. Con la consulta
      puesta, el celular no ve una sola de estas reglas. */
   @media (hover: hover) {
-    button:not(:disabled):hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+    /* sobre `--elevada` y no sobre transparente: desde la v0.96 los botones
+       tienen relleno, y el hover de antes se lo sacaba y los OSCURECÍA */
+    button:not(:disabled):hover { background: color-mix(in srgb, var(--texto) 8%, var(--elevada)); }
     select:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
     /* LAS JUGADAS: EL MOUSE SUBRAYA, NO RELLENA. Primero se probó rellenando más
        suave que la elegida —10% contra 20%— y en la captura las dos se veían
@@ -767,7 +774,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.97 · 06-11";
+  window.VERSION = "v0.97.1 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3955,7 +3962,9 @@ function svgComidas(color, faltan) {
   if (!lista.length) return "";
   const filas = Math.ceil(lista.length / POR_FILA_COMIDAS);
   const esc = (LADO_COMIDA / LADO_PIEZA).toFixed(4);
-  const an = POR_FILA_COMIDAS * LADO_COMIDA, al = filas * LADO_COMIDA;
+  /* el ancho es el de las piezas que hay, no el del renglón entero: con la
+     pastilla de fondo (v0.97.1), un peón solo dejaba una franja vacía */
+  const an = Math.min(lista.length, POR_FILA_COMIDAS) * LADO_COMIDA, al = filas * LADO_COMIDA;
   /* el `use` apunta a los símbolos que viven en el `<defs>` del tablero: son el
      mismo documento, así que la referencia vale aunque sean dos SVG distintos */
   return `<svg width="${an}" height="${al}" viewBox="0 0 ${an} ${al}">` +
