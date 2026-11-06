@@ -1452,8 +1452,25 @@ test("el 'estás acá' no usa ninguno de los colores de las categorías", () => 
                        html.indexOf("/* Temas de tablero"));
   const aca = f.slice(f.indexOf("const aca ="), f.indexOf("if (modo === \"raya\")"));
   assert.ok(!aca.includes("var(--c-"), "el marcador no toma un color de categoría");
-  assert.ok(aca.includes('stroke="#2b2b2b"') && aca.includes('stroke="#f0ece2"'),
+  assert.ok(aca.includes('stroke="var(--eval-negras)"') && aca.includes('stroke="var(--eval-blancas)"'),
             "la funda oscura y la línea clara son los dos tonos de la barra");
+});
+
+test("el tablero de fábrica es el de A, y la madera guardada sola no se hereda (v0.97)", () => {
+  /* Hasta la v0.96 el tema se guardaba SIEMPRE al cargar: todos los teléfonos
+     tienen "madera" escrito aunque nadie la haya elegido. */
+  const t = html.slice(html.indexOf("const TEMAS = {"), html.indexOf("function aplicarTema"));
+  assert.ok(/noche:\s*\{[^}]*claro: "#e6e1d3", oscuro: "#7f9466"/.test(t), "Noche con las casillas de A");
+  const ini = html.slice(html.indexOf("(function iniciarTema"), html.indexOf("let GIRADO"));
+  assert.ok(ini.includes('viejo !== "madera"'), "la madera vieja no se hereda");
+  assert.ok(ini.includes('getItem("tablero")'), "la clave nueva manda");
+  assert.ok(/--claro: #e6e1d3; --oscuro: #7f9466;/.test(html), "y el :root arranca igual, sin parpadeo");
+});
+
+test("el violeta de lo inventado, como texto, es el que se lee sobre el fondo (v0.97)", () => {
+  const css = html.slice(html.indexOf("<style>"), html.indexOf("</style>"));
+  assert.ok(!css.includes("#6a1b9a"), "el #6a1b9a da 1,8:1 sobre el fondo: solo para la flecha");
+  assert.ok(css.includes(".tira .jg.inv { color: var(--inventada); }"));
 });
 
 test("las marcas se dibujan DESPUÉS del 'estás acá', en las tres formas", () => {

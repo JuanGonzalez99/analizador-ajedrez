@@ -290,6 +290,21 @@ El revisor lo marcó como lo que le falta para decidir cosas chicas solo:
 
 Se escriben acá cuando se aplique la pantalla que los usa, no antes.
 
+**Lo que decidió la pantalla de Revisión (v0.97):**
+
+| | valor | por qué |
+|---|---|---|
+| `--inventada` | `#b48ce0` | lo inventado (la prueba) como texto o borde: 6,1 sobre fondo. El violeta de la flecha, `#6a1b9a`, da 1,8 y queda solo en el tablero, donde sobre la casilla clara da 7,2 |
+| `--senal` | `#e8a33d` | lo que señala la frase: casilla, flecha y frase encendida (con texto `--fondo` encima). Mismo valor de antes, ahora con nombre |
+| lo elegido | subrayado de 2 px de `--acento` | en la tira, la variante y el conmutador. En la tira se suma al fondo de la categoría: uno dice qué fue, el otro dónde estás |
+| cuadrito encendido | borde `--acento`, fondo acento al 14% sobre superficie | |
+
+**Flechas, medidas sobre las casillas de A y todavía sin tocar:** la azul de
+lo jugado (`#1565c0`) da 4,4 sobre la clara y **1,7 sobre la oscura**; la verde
+de la mejor (`#2e7d32`), 3,9 y **1,55**. Sobre la casilla oscura las dos quedan
+por debajo de 3:1. Van con opacidad ,8 y con punta redonda, y se siguen
+viendo, pero es lo que falta decidir de esta lista.
+
 ### 1.11 Cómo se usa esto
 
 - **En el código son variables en `:root`**, una por fila de las tablas de

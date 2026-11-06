@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.96**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.97**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4197,6 +4197,39 @@ contorno de acento; la lista, sobre `--superficie` con la fila elegida marcada
 con una barra de acento. Revisión, mes y ajustes siguen pendientes de su
 pantalla (etapa 1 de la hoja de ruta). La prueba del `option` ahora pide los
 colores de la paleta y no los de sistema.
+
+**v0.97, la vista de la jugada (Revisión), en el celu.** Lo que cambió y por qué:
+
+- **El tablero de fábrica es "Noche"** (las casillas de A) y no madera, que
+  sigue elegible. **La clave de `localStorage` pasó de `tema` a `tablero`**:
+  hasta la v0.96 `aplicarTema` guardaba el tema en cada carga, elegido o no,
+  así que todos los teléfonos tienen `madera` escrito y no se puede saber quién
+  la eligió. Se hereda lo viejo solo si no era madera. El `:root` arranca con
+  las casillas de A para que no haya parpadeo antes del JS.
+- **Barra horizontal y curva** en `--eval-blancas` / `--eval-negras` (§1.9 de
+  `DISENO.md`): se fueron `#f0ece2` y `#2b2b2b`, también del "estás acá", del
+  halo de la raya y del aro del punto. El número de la barra horizontal sube a
+  11 (el mínimo); el de la vertical, que es de la compu, sigue en 9,5/8 porque
+  es lo que entra en 36 px (§4sexvicies).
+- **La tarjeta** va sobre `--superficie`, radio 12, borde de categoría de 3 px
+  (era 5), título 16 con interlineado 1,4 para que su renglón mida lo mismo.
+- **Violeta de lo inventado: dos.** `#6a1b9a` sobre el fondo da 1,8:1 y en la
+  tira no se leía; como texto y borde va `--inventada` `#b48ce0` (6,1). La
+  flecha del tablero sigue con el viejo, que sobre las casillas se ve. El
+  chequeo nuevo prohíbe `#6a1b9a` en el CSS. El ámbar de "señala" pasó a
+  `--senal`, mismo valor.
+- **Tira y variante** a 12,5 (leyenda), y la elegida suma el subrayado de 2 px
+  de acento de §1.6 encima del fondo de su categoría: el fondo dice qué fue, el
+  subrayado dice dónde estás. `medirTira()` reacomoda solo (lo midió `mirar`:
+  el chevron sigue al centro de la N).
+- **Cuadritos** sobre `--superficie`, radio 10, etiqueta 11/600; el encendido
+  usa el acento. **Conmutador** Partida/Mes a 40 de alto, 14/600, el elegido
+  subrayado de acento.
+- **Medido** a 412×760, contra las capturas de la v0.96: la curva y los
+  cuadritos quedan en el mismo renglón, la tira se corre un píxel; la pantalla
+  no creció.
+- **No se tocó**: las flechas del tablero (§1.10 de `DISENO.md`, pendiente), lo
+  de la compu (lista lateral, piezas comidas, hover), que va en su commit.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.
