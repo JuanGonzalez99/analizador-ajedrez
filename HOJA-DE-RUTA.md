@@ -80,6 +80,11 @@ lo demás se dibuja contra ella.
         en toda la app.
   - [x] **Hoja de ajustes** (v0.103, 6-nov).
 - [x] Repaso final del revisor sobre la app entera, celu y PC (v0.104, 6-nov).
+- [ ] Lo que dejó el repaso: **[PC]** el número de la barra vertical
+      (`.evalbar .num`) está a 9,5 y el mínimo es 11; a 11 "+10.00" no entra
+      en la barra, así que va con un solo decimal de 10 para arriba ("+10.0").
+      Y **mirar el Mes** con los campos nuevos de 44: ninguna partida de prueba
+      lo muestra, hace falta una con mes.
 
 ## Etapa 2 · Partir `index.html`
 
