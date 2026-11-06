@@ -21,7 +21,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
 ## Qué hacer cada noche
 
 1. **Arrancar.** El hook deja el checkout en `main`; confirmalo con
-   `git status` (si no, `git checkout -B main origin/main`). `npm install`.
+   `git status` (si no, `git checkout -B main origin/main`). **Y confirmá que
+   estás en la punta de verdad**: `git fetch origin main` y que `git log -1`
+   coincida con `origin/main`. El contenedor puede venir de un clon viejo, y
+   una vez arrancó dos versiones atrás y quiso rehacer lo ya hecho.
+   `npm install`.
    Leé `CLAUDE.md` y `HOJA-DE-RUTA.md` enteros, `NORTE.md` y `DISENO.md` por
    encima, y del traspaso **solo** §10 y las secciones que toque el ítem.
 2. **Elegir el trabajo.** El primer ítem sin tachar de `HOJA-DE-RUTA.md` que

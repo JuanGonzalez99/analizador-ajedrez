@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "git diff --quiet && git diff --cached --quiet && git checkout -B main origin/main || echo 'la rama quedó como estaba: el árbol no estaba limpio'",
+            "command": "git fetch -q origin main; git diff --quiet && git diff --cached --quiet && git checkout -B main origin/main || echo 'la rama quedó como estaba: el árbol no estaba limpio'",
             "statusMessage": "Parándose en main…"
           }
         ]
