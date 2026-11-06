@@ -76,7 +76,8 @@ lo demás se dibuja contra ella.
   - [x] **Revisión** (v0.97 celu, v0.97.1 compu, 6-nov): tarjeta, tablero
         (casillas de A como tema por defecto), tira, curva y barras,
         cuadritos, piezas comidas. Quedan las flechas del tablero (duda abajo).
-  - [ ] **Vista del mes y sus tablas.**
+  - [x] **Vista del mes y sus tablas** (v0.98, 6-nov). Los `h2` pasaron a 18
+        en toda la app.
   - [ ] **Hoja de ajustes.**
 - [ ] Repaso final del revisor sobre la app entera, celu y PC.
 
@@ -166,8 +167,13 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
 - **No sé si esto te copa:** en la fila del usuario, "Buscar" (alto normal) y "o
   pegar un PGN" (chico) quedan algo desparejos; se resuelve al hacer la
   pasada de botones.
-- Pendientes de su pantalla (del revisor): hoja de ajustes sobre `--superficie`,
-  tablas del mes sobre `--superficie`, el select sin `.chico` en el mes.
+- Pendientes de su pantalla (del revisor): hoja de ajustes sobre `--superficie`.
+- **No sé si esto te copa:** las tablas (mes y resumen) ahora van en tarjeta,
+  sobre una superficie un poco más clara y con borde redondeado, en vez de
+  renglones sueltos sobre el fondo. Opciones: (1) dejarlas así, que recomienda
+  el revisor; (2) sin tarjeta, solo las rayas entre filas, más liviano.
+- Del revisor, para toda la app: los "?" de ayuda de cada sección se tocan en
+  21 px, lejos de los 48 de §1.7.
 - **No sé si esto te copa:** la flecha verde de "la mejor" sobre las casillas
   verdes nuevas casi se pierde en la oscura (1,55:1, y del mismo tono); la azul
   da 1,7. Opciones: (1) dejar los colores y darles a todas las flechas un aro
