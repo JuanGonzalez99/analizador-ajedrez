@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.101**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.102**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4288,6 +4288,17 @@ casillas oscuras. La del caballo queda recta. **Las marcas del botón derecho
 usan `poligonoFlecha`** con `--marca` y la misma opacidad: hasta acá eran
 línea más triángulo y su forma era lo que las distinguía (§4quinvicies); ahora
 las distingue el color, como en chess.com.
+
+**v0.102.** El verde de la v0.101 le resultó **chillón**: queda `#3a8f44`,
+elegido entre cinco dibujados sobre la misma jugada (los claros no chillones
+se funden con el oliva de A; se leen los oscuros). Y **la separación entre
+tablas del mes**, que *"se sentía rara"*: eran dos rayas paralelas a 12 px, la
+de la última fila y la de la sección siguiente. Ahora la tabla de una sección
+termina sin raya y con 16 de aire, y la primera y la última columna van sin
+relleno afuera (y el título de la sección sin sus 2 px), así la tabla, el
+título y la leyenda arrancan en la misma vertical. **Lección para mostrar
+tablas**: se muestran las de abajo del mes, que son las que comparten forma;
+la del resumen tiene símbolos y es la excepción.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

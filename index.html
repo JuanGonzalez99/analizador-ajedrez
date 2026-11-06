@@ -23,11 +23,12 @@
        el corte va este, 6,1 sobre el fondo. La flecha sigue con el suyo, que
        sobre el tablero sí se ve (v0.97). */
     --inventada: #b48ce0;
-    /* LAS FLECHAS DE LA APP (v0.101). La mejor dejó el #2e7d32: sobre la casilla
-       oscura de A, verde oliva, se perdía; Juan pidió un verde más claro y vivo.
-       Lo que la separa no es la luz —ningún verde la gana en las dos casillas—
-       sino la saturación: la casilla es apagada y esta no. */
-    --f-jugada: #1565c0; --f-mejor: #43c94a;
+    /* LAS FLECHAS DE LA APP. La mejor: #2e7d32 hasta la v0.100, #43c94a en la
+       v0.101 ("muy chillón", Juan) y #3a8f44 desde la v0.102. Se miraron cinco
+       sobre la misma jugada: los verdes claros que no gritan se funden con el
+       oliva de la casilla oscura de A; los que se leen sin gritar son los
+       oscuros, y este es apenas más vivo que el original. */
+    --f-jugada: #1565c0; --f-mejor: #3a8f44;
     /* el ámbar de lo que señala la frase: casilla, flecha y frase encendida */
     --senal: #e8a33d;
 
@@ -179,7 +180,7 @@
      con el chip de cadencia eran cuatro elementos repartiéndose el ancho, y el
      ? de cada sección caía en una columna distinta. El `gap` lo despega del
      chevron, que si no quedan pegados y se tocan por error. */
-  .seccion > summary { cursor: pointer; padding: 11px 2px; font-size: var(--t-secundario);
+  .seccion > summary { cursor: pointer; padding: 11px 0; font-size: var(--t-secundario);
                        font-weight: 600; list-style: none; display: flex;
                        align-items: center; gap: 14px; }
   .seccion > summary > .tit { flex: 1; min-width: 0; }
@@ -188,7 +189,7 @@
                               color: var(--tenue); font-size: 18px; transition: transform .15s; }
   .seccion[open] > summary::after { transform: rotate(-90deg); }
   .seccion > .cap { margin-top: 0; }
-  .seccion > .tw { margin-bottom: 12px; }
+  .seccion > .tw { margin-bottom: var(--e-4); }
 
   /* la leyenda larga, plegada: lo indispensable queda arriba y esto se abre */
   .quemide > summary { cursor: pointer; font-size: 12.5px; color: var(--tenue);
@@ -224,6 +225,17 @@
      v0.98 fueron en tarjeta (superficie, borde, radio 12) y a Juan le
      "quedaron raras" (DISENO §2); se sacó en la v0.99. */
   .tw { overflow-x: auto; }
+  /* LAS PUNTAS AL RAS (v0.102): la primera y la última columna sin relleno
+     afuera, así el texto de la tabla arranca donde arrancan el título y la
+     leyenda de su sección. Con los 6 de antes la tabla se veía corrida. */
+  .tw th:first-child, .tw td:first-child { padding-left: 0; }
+  .tw th:last-child, .tw td:last-child { padding-right: 0; }
+  /* UNA SOLA RAYA ENTRE SECCIONES (v0.102). La última fila cerraba con su raya
+     y 12 más abajo venía la de la sección siguiente: dos líneas paralelas casi
+     pegadas, que es lo que a Juan "se sentía raro" entre una tabla y otra. La
+     raya de la sección es la que separa; la tabla termina sin raya y con 16 de
+     aire. */
+  .seccion .tw tr:last-child > td { border-bottom: 0; }
   /* por la base y no al medio: con el rango abajo del porcentaje la fila tiene
      dos renglones, y centrados los demás números caían 7 px más abajo */
   .tw td { vertical-align: baseline; }
@@ -795,7 +807,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.101 · 06-11";
+  window.VERSION = "v0.102 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

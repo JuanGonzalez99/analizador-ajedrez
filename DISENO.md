@@ -308,8 +308,8 @@ chess.com** (pedido de Juan con capturas): un solo polígono semitransparente
 (opacidad ,7), cola de 9 unidades (≈ un quinto de casilla), punta triangular de
 ~20 de ancho y 15 de largo que termina en el centro de la casilla, la cola
 arranca a un cuarto de casilla del centro de origen.
-**v0.101, lo que eligió Juan:** la de la mejor pasa a `--f-mejor` `#43c94a`, un
-verde más claro y vivo (la de lo jugado queda en `--f-jugada` `#1565c0`). Por
+**v0.101, lo que eligió Juan:** la de la mejor pasó a `--f-mejor` `#43c94a`, un
+verde más claro y vivo (**v0.102: "muy chillón"; queda `#3a8f44`**, ver §2) (la de lo jugado queda en `--f-jugada` `#1565c0`). Por
 luz ningún verde se despega de las dos casillas a la vez (aclarar lo pierde en
 la clara); lo que la separa de la oscura de A, oliva apagado, es la
 saturación. La del caballo sigue **recta**, no en L. Y **las marcas del botón
@@ -345,8 +345,10 @@ hay. Las primeras salen del historial del traspaso.
 - **Que el revisor vaya revisando todo** (5-nov-2026).
 - **Las flechas como las de chess.com**: anchas, punta triangular y
   semitransparentes, que se vea la pieza a través. Mandó capturas de chess.com
-  para comparar (6-nov-2026, v0.100). La de la mejor, en un **verde más claro
-  y vivo**, que siga siendo verde; la del caballo, **recta**; y las suyas del
+  para comparar (6-nov-2026, v0.100). La de la mejor, verde y que se lea, pero
+  **no chillona**: el `#43c94a` de la v0.101 *"destaca demasiado"*, y hacer
+  chillona la azul para emparejar *"pone todo fluorescente"*. Quedó `#3a8f44`,
+  un oscuro apenas más vivo que el original (v0.102); la del caballo, **recta**; y las suyas del
   botón derecho, **con la misma forma** (6-nov-2026, v0.101).
 - **Pantalla densa, todo lo de la jugada sin scrollear**, antes que tarjetas
   grandes. Lo eligió mirando tres propuestas a ancho de celu (§7 del
@@ -384,6 +386,9 @@ hay. Las primeras salen del historial del traspaso.
 - **Que la punta de la flecha tape la pieza con algo opaco**: el aro con bolita
   de la v0.99, *"no me copa"* (6-nov-2026). Semitransparente encima de la
   pieza, como chess.com, sí.
+- **Dos rayas paralelas casi pegadas** entre una tabla y la sección siguiente:
+  *"hay algo ahí que se ve raro"*. Una sola raya entre secciones, y la tabla al
+  ras del título y la leyenda (v0.102).
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
