@@ -420,6 +420,23 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
    los combos salían blancos sobre blanco ni que la tira no se podía arrastrar.
    Se dibuja a 1280 x 800, y además a 1050 y 1049, que son los dos lados del
    corte: es donde se rompe si alguien toca los anchos. */
+/* LA HOJA DE AJUSTES ABIERTA (v0.103), en el celu: hasta acá ninguna captura
+   la mostraba, y es una pantalla de la etapa 1. Se abre y se cierra con el
+   mismo camino que `elegir` y se devuelve el scroll, así las capturas que
+   siguen no cambian. */
+{
+  const y = await pg.evaluate(() => window.scrollY);
+  await pg.click("#btnAjustes");
+  await pg.waitForSelector("#hojaAjustes:not(.oculto)");
+  console.log("hoja de ajustes:", JSON.stringify({
+    ...await espacios(pg, "#hojaAjustes"),
+    alto: await pg.evaluate(() => Math.round(document.getElementById("hojaAjustes").getBoundingClientRect().height)),
+  }));
+  await foto("ajustes");
+  await pg.click("#cerrarAjustes");
+  await pg.evaluate(y => window.scrollTo(0, y), y);
+  await pg.waitForTimeout(120);
+}
 console.log("");
 /* DE ACÁ PARA ABAJO SE DIBUJA UNA COMPU, así que hay que deshacer el `hasTouch`
    de arriba: si no, las reglas de `@media (hover: hover)` no existirían y la

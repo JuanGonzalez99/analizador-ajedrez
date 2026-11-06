@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.102**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.103**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4303,6 +4303,18 @@ que el verde. **Las marcas del botón derecho siguen en `--marca`**: era una
 duda de PC y desde el 6-nov las de PC las cierra el revisor (`DISENO.md` §2),
 que ya las había medido legibles; el naranja de chess.com no sirve acá porque
 el ámbar ya es `--senal`.
+
+**v0.103, la hoja de ajustes** (la última pantalla de la etapa 1). Pasa de
+`Canvas` —el color de sistema, casi igual al fondo— a `--superficie` con
+`--texto`, radio 12 arriba, `--sombra-flota` y 16 a los costados. El velo de
+atrás es la variable nueva `--velo` (negro al 55%, era 45). El tirador va en
+`--borde-campo`, porque `--linea` sobre la superficie no se veía. Título al
+`h2` de 18, grupos en leyenda con 16 de aire entre uno y otro, filas a 14, y
+**los selects a 44** (son campos, §1.7; lo pidió el revisor), con 12 de select
+a select. "Listo" es chico, 36. La hoja pasó de 456 a 476 px de 760. **`mirar`
+saca ahora `ajustes.png`**, la hoja abierta en el celu, y mide sus espacios; las
+otras 44 del celu quedaron idénticas al byte. Lo decidido está en `DISENO.md`
+§1.10.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

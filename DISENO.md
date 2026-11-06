@@ -315,6 +315,15 @@ la clara); lo que la separa de la oscura de A, oliva apagado, es la
 saturación. La del caballo sigue **recta**, no en L. Y **las marcas del botón
 derecho usan el mismo polígono**, en `--marca`: las distingue el color.
 
+**Lo que decidió la hoja de ajustes (v0.103):**
+
+| | valor | por qué |
+|---|---|---|
+| `--velo` | `rgb(0 0 0 / .55)` | lo que va detrás de lo que flota. Con el ,45 de antes la página de atrás no se apagaba y la hoja, en `--superficie`, no se despegaba |
+| la hoja | `--superficie`, radio 12 arriba, `--sombra-flota`, 16 a los costados | la sombra cae hacia abajo y casi no se ve: en oscuro la despega la luz, no la sombra (§1.1), y no se inventa una segunda |
+| el tirador | 36×4 en `--borde-campo` | 3,5:1 sobre superficie; con `--linea` daba 1,2 y no se veía |
+| los selects | 44 de alto, 12 entre uno y otro | son campos (§1.7); "Listo" es chico y queda en 36 |
+
 ### 1.11 Cómo se usa esto
 
 - **En el código son variables en `:root`**, una por fila de las tablas de

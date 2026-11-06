@@ -78,7 +78,7 @@ lo demás se dibuja contra ella.
         cuadritos, piezas comidas. Flechas con aro oscuro (v0.99, Juan).
   - [x] **Vista del mes y sus tablas** (v0.98, 6-nov). Los `h2` pasaron a 18
         en toda la app.
-  - [ ] **Hoja de ajustes.**
+  - [x] **Hoja de ajustes** (v0.103, 6-nov).
 - [ ] Repaso final del revisor sobre la app entera, celu y PC.
 
 ## Etapa 2 · Partir `index.html`
@@ -167,7 +167,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
 - **No sé si esto te copa:** en la fila del usuario, "Buscar" (alto normal) y "o
   pegar un PGN" (chico) quedan algo desparejos; se resuelve al hacer la
   pasada de botones.
-- Pendientes de su pantalla (del revisor): hoja de ajustes sobre `--superficie`.
 - Del revisor, para toda la app: los "?" de ayuda de cada sección se tocan en
   21 px, lejos de los 48 de §1.7.
 - **Tablero de fábrica:** pasó a "Noche" (el verde de A). Si tenías madera

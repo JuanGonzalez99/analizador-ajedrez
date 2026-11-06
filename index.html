@@ -50,6 +50,8 @@
     /* formas (§1.6) */
     --r-control: 10px; --r-tarjeta: 12px; --r-chico: 6px;
     --sombra-flota: 0 8px 24px rgb(0 0 0 / .45);
+    /* lo que va detrás de lo que flota (la hoja de ajustes, v0.103) */
+    --velo: rgb(0 0 0 / .55);
     /* movimiento (§1.8) */
     --m-corta: 120ms; --m-media: 180ms; --m-larga: 250ms;
     --m-entra: cubic-bezier(.2, 0, 0, 1); --m-sale: cubic-bezier(.3, 0, 1, 1);
@@ -150,28 +152,43 @@
                 width: 34px; height: 34px;
                 border: 1px solid var(--linea); border-radius: 50%;
                 transform: translateY(-2.25px); }
-  #fondoAjustes { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 40; }
+  /* EL VELO (v0.103, §1.10 de DISENO): negro al 55% y no al 45. Sobre la
+     página oscura el de antes apenas la apagaba y la hoja —que ahora es
+     `--superficie`, un escalón arriba del fondo— no se despegaba de lo de atrás. */
+  #fondoAjustes { position: fixed; inset: 0; background: var(--velo); z-index: 40; }
   /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
      monitor, se queda del ancho de la columna, como el resto de la app. */
+  /* EL SISTEMA EN LA HOJA (v0.103, DISENO §1): `--superficie` y no `Canvas`
+     —el color de sistema era casi el mismo del fondo y la hoja no se leía como
+     algo que flota—, radio 12 de tarjeta, la única sombra de lo que flota
+     (§1.6) y 16 de margen a los costados, el del celu (§1.5). */
   #hojaAjustes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
                  max-width: 700px; margin: 0 auto;
-                 background: Canvas; color: CanvasText;
-                 border-top: 1px solid var(--linea); border-radius: 14px 14px 0 0;
-                 padding: 8px 14px 16px; box-shadow: 0 -6px 24px rgba(0,0,0,.3);
+                 background: var(--superficie); color: var(--texto);
+                 border-top: 1px solid var(--linea);
+                 border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0;
+                 padding: var(--e-2) var(--e-4) var(--e-4); box-shadow: var(--sombra-flota);
                  max-height: 80vh; overflow-y: auto; }
-  .ajTirador { width: 34px; height: 4px; border-radius: 2px;
-               background: var(--linea); margin: 2px auto 8px; }
+  /* `--borde-campo` y no `--linea`: sobre la superficie la línea da 1,2:1 y el
+     tirador, que es lo que dice "esto se baja", no se veía */
+  .ajTirador { width: 36px; height: 4px; border-radius: 2px;
+               background: var(--borde-campo); margin: 0 auto var(--e-2); }
   .ajCab { display: flex; align-items: center; justify-content: space-between; }
-  .ajCab h2 { font-size: 17px; margin: 0; }
+  .ajCab h2 { margin: 0; }
+  /* "Listo" es botón chico, 36 (§1.7); los selects son CAMPOS y van a 44, que
+     son lo que más se toca acá y la hoja tiene lugar de sobra (lo pidió el
+     revisor). Con 6 de relleno entre fila y fila quedan 12 de select a select. */
+  .ajCab .chico { min-height: 36px; }
+  .ajFila select { min-height: 44px; }
   /* LA LÍNEA VA POR GRUPO Y NO POR PERILLA (v0.91.1). Con una raya entre cada
      dos perillas, las de un mismo grupo se leían tan separadas entre sí como de
      las del grupo de al lado, y los tres bloques dejaban de existir. Ahora la
      única raya es la que cierra el título del grupo, y adentro separa el aire. */
-  .ajGrupo { font-size: 12.5px; color: var(--tenue); margin: 14px 0 2px;
-             border-bottom: 1px solid var(--linea); padding-bottom: 4px; }
-  .ajGrupo:first-of-type { margin-top: 6px; }
+  .ajGrupo { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-4) 0 var(--e-1);
+             border-bottom: 1px solid var(--linea); padding-bottom: var(--e-1); }
+  .ajGrupo:first-of-type { margin-top: var(--e-2); }
   .ajFila { display: flex; align-items: center; justify-content: space-between;
-            gap: 10px; padding: 8px 0; font-size: 15px; }
+            gap: var(--e-3); padding: 6px 0; font-size: var(--t-secundario); }
   .ajFila select { min-width: 52%; }
   /* Las secciones plegables del mes: el título es la fila que se toca, y con
      todas cerradas se ve de un vistazo qué cortes hay. */
@@ -807,7 +824,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.102 · 06-11";
+  window.VERSION = "v0.103 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
