@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.103**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.104**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4315,6 +4315,28 @@ a select. "Listo" es chico, 36. La hoja pasó de 456 a 476 px de 760. **`mirar`
 saca ahora `ajustes.png`**, la hoja abierta en el celu, y mide sus espacios; las
 otras 44 del celu quedaron idénticas al byte. Lo decidido está en `DISENO.md`
 §1.10.
+
+**v0.104, el repaso final del revisor** (cierra la etapa 1). Lo que quedaba
+desparejo entre pantallas:
+- **Todos los campos a 44** (`input` que no sea casilla y `select`), con la
+  misma flecha dibujada: había 33, 40, 42 y 44 según la pantalla y `#meses`
+  traía la del navegador. `.chico` en un select ya solo pone la letra en 14.
+  La entrada crece unos píxeles; la vista de la jugada no tiene campos.
+- **El botón chico a 36** (medía 33). Los 3 px los pagan los seis márgenes de
+  10 de la vista de la jugada, que pasan a 8 (`.revcab`, `.evalh`,
+  `.veredicto`, `svg.tab`, `.tira`, `.curva`): medido a 412×760, la fila
+  Mejor/Girar/Pintar termina en 733 y antes en 739. La prueba de "la barra y
+  la tarjeta no quedan pegadas" acepta `var(--e-2)`.
+- **Letra**: `.revcab` y el pie a 12,5, el ícono de la tarjeta a 18 con
+  interlineado 1.
+- **Movimiento**: las cinco transiciones usan las duraciones y la curva del
+  sistema, y hay `prefers-reduced-motion` que las pone en 0 (§1.8).
+- **La raya y la línea de la curva** en `--tenue` y no `#8a8578` escrito en el
+  JS.
+- **No se aplicó**: sacarle el círculo a la tuerca (§1.7 dice "ícono sin
+  relleno") porque ese círculo lo eligió Juan en la v0.91; ni pasar el violeta
+  de la flecha de la prueba a `:root`, porque la prueba de la v0.97 prohíbe
+  `#6a1b9a` en el CSS a propósito, para que nadie lo use como texto.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

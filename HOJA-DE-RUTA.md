@@ -79,7 +79,7 @@ lo demás se dibuja contra ella.
   - [x] **Vista del mes y sus tablas** (v0.98, 6-nov). Los `h2` pasaron a 18
         en toda la app.
   - [x] **Hoja de ajustes** (v0.103, 6-nov).
-- [ ] Repaso final del revisor sobre la app entera, celu y PC.
+- [x] Repaso final del revisor sobre la app entera, celu y PC (v0.104, 6-nov).
 
 ## Etapa 2 · Partir `index.html`
 

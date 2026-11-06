@@ -2477,7 +2477,7 @@ test("la barra y la tarjeta no quedan pegadas", () => {
   /* Pasó al reordenar: la barra no tiene margen abajo y la tarjeta no tenía
      arriba, y hasta la v0.73 no hacía falta porque entre las dos estaba el
      tablero. Mover un elemento le cambia los márgenes a sus DOS vecinos. */
-  assert.ok(/\.veredicto \{[^}]*margin-top: 10px/.test(html));
+  assert.ok(/\.veredicto \{[^}]*margin-top: (10px|var\(--e-2\))/.test(html));
 });
 
 test("la tira lleva la partida entera, no una ventana", () => {

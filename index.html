@@ -84,23 +84,33 @@
     outline: 2px solid var(--acento); outline-offset: 2px; }
   /* El principal de la pantalla: uno solo (§1.7). En la entrada es analizar. */
   #analizar { background: var(--acento); color: var(--sobre-acento); font-weight: 600; }
+  /* el chico, 36 a la vista (§1.7; medía 33). Los 3 px los pagan los márgenes
+     de 10 → 8 de la vista de la jugada (v0.104) */
   button.chico, select.chico { padding: 5px 10px; font-size: 14px; }
+  button.chico { padding: 6px 12px; min-height: 36px; }
   /* Mismo alto y misma familia que los botones, pero NO iguales: un select con
      borde lleno se lee como un botón y se toca esperando otra cosa. La
      diferencia la hace el relleno —un campo tiene fondo, un botón no— más un
      borde más tenue. La flechita se dibuja acá para que no dependa del
      navegador. Provisorio: cuando exista el menú de configuración, estos
      controles se van adentro y esto se replantea. */
-  select.chico { border-color: var(--borde-campo); background-color: var(--elevada);
-                 appearance: none;
-                 padding-right: 26px; background-repeat: no-repeat;
-                 background-position: right 9px center; background-size: 9px;
-                 background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23e7e0d4' stroke-width='1.5'/></svg>"); }
+  select.chico { padding-right: 26px; }
   /* currentColor NO sirve acá: dentro de un data: URI el SVG se carga como una
      imagen aparte y no hereda nada del documento. Como la app es siempre
      oscura (v0.96) alcanza con un solo color. */
   input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--borde-campo);
     border-radius: var(--r-control); background: var(--elevada); color: inherit; max-width: 100%; }
+  /* TODOS LOS CAMPOS A 44 Y CON LA MISMA FLECHA (v0.104, repaso final de la
+     etapa 1). Había cuatro altos —33, 40, 42 y 44— según la pantalla, y `#meses`
+     traía la flecha del navegador. `.chico` en un select ya no cambia el alto:
+     solo pone la letra en 14 (§1.7, campo = 44). Va DESPUÉS de la regla de
+     arriba porque su `background` abreviado borraría la flecha. La flecha va en
+     el color de `--texto` (#e9e7e3) escrito a mano: dentro de un data: URI no
+     hay variables. */
+  input:not([type=checkbox]):not([type=radio]), select { min-height: 44px; }
+  select { appearance: none; padding-right: 26px; background-repeat: no-repeat;
+           background-position: right 9px center; background-size: 9px;
+           background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23e9e7e3' stroke-width='1.5'/></svg>"); }
   /* EL DESPLEGABLE DE UN SELECT NO HEREDA EL PAPEL (v0.80). Chrome en Windows
      dibuja el menú con el fondo del propio select, y el nuestro es transparente:
      el menú salía BLANCO y el texto de las opciones, que hereda el color del
@@ -116,7 +126,7 @@
   .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
   .barra { height: 4px; background: var(--linea); border-radius: 2px; overflow: hidden; margin-top: 6px; }
-  .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width .15s; }
+  .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width var(--m-media) var(--m-entra); }
 
   /* EL MENÚ DE AJUSTES (v0.91, §4untrigies). Las cuatro decisiones las tomó el
      usuario mirando maquetas, y cada una tiene su porqué medido:
@@ -179,7 +189,6 @@
      son lo que más se toca acá y la hoja tiene lugar de sobra (lo pidió el
      revisor). Con 6 de relleno entre fila y fila quedan 12 de select a select. */
   .ajCab .chico { min-height: 36px; }
-  .ajFila select { min-height: 44px; }
   /* LA LÍNEA VA POR GRUPO Y NO POR PERILLA (v0.91.1). Con una raya entre cada
      dos perillas, las de un mismo grupo se leían tan separadas entre sí como de
      las del grupo de al lado, y los tres bloques dejaban de existir. Ahora la
@@ -203,7 +212,7 @@
   .seccion > summary > .tit { flex: 1; min-width: 0; }
   .seccion > summary::-webkit-details-marker { display: none; }
   .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
-                              color: var(--tenue); font-size: 18px; transition: transform .15s; }
+                              color: var(--tenue); font-size: 18px; transition: transform var(--m-corta) var(--m-entra); }
   .seccion[open] > summary::after { transform: rotate(-90deg); }
   .seccion > .cap { margin-top: 0; }
   .seccion > .tw { margin-bottom: var(--e-4); }
@@ -213,7 +222,7 @@
                        margin: 0 0 8px; list-style: none; }
   .quemide > summary::-webkit-details-marker { display: none; }
   .quemide > summary::before { content: "\203a"; display: inline-block;
-                               margin-right: 6px; transition: transform .15s; }
+                               margin-right: 6px; transition: transform var(--m-corta) var(--m-entra); }
   .quemide[open] > summary::before { transform: rotate(90deg); }
 
   /* precisión y mediana de los dos jugadores, enfrentadas */
@@ -258,7 +267,6 @@
   .tw td { vertical-align: baseline; }
   /* los selects del mes: 36 visibles y 12 entre ellos (§1.7), sin tocar el
      `.chico` del resto de la app */
-  #zonaMes select.chico { min-height: 36px; }
   #zonaMes .fila { gap: var(--e-3); }
   /* Con scroll para que el botón de analizar quede a la vista sin bajar por
      cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
@@ -306,7 +314,7 @@
              background: var(--eval-negras); border: 1px solid var(--linea);
              display: flex; flex-direction: column; justify-content: flex-end; }
   .evalbar.girada { justify-content: flex-start; }
-  .evalbar > i { display: block; width: 100%; background: var(--eval-blancas); transition: height .2s; }
+  .evalbar > i { display: block; width: 100%; background: var(--eval-blancas); transition: height var(--m-media) var(--m-entra); }
   /* con el número adentro la barra tiene que ser ancha: "+1.03" no entra en 10 px.
      SON 36 Y NO 30 desde la v0.86: con 30, "+0.26" salía CORTADO —la barra tiene
      `overflow: hidden` por las esquinas redondeadas del relleno, así que lo que
@@ -324,9 +332,9 @@
 
   /* la horizontal se suma al alto en vez de compartirlo con el tablero: por eso
      es la más cara de las tres, aunque deja el tablero grande */
-  .evalh { height: 16px; border-radius: 8px; background: var(--eval-negras); margin-top: 10px;
+  .evalh { height: 16px; border-radius: 8px; background: var(--eval-negras); margin-top: var(--e-2);
            border: 1px solid var(--linea); overflow: hidden; position: relative; }
-  .evalh > i { display: block; height: 100%; background: var(--eval-blancas); transition: width .2s; }
+  .evalh > i { display: block; height: 100%; background: var(--eval-blancas); transition: width var(--m-media) var(--m-entra); }
 
   /* con el número en la barra, la tarjeta no lo repite; sin barra que lo lleve,
      el número se corre al lado de la barra para que no queden en dos puntas */
@@ -403,10 +411,10 @@
      El título sube de 15 a 16 con interlineado 1,4, así que su renglón mide lo
      mismo que antes: la vista de la jugada no puede crecer (§1.4). El relleno
      va a 8, que es la escala. */
-  .veredicto { display: flex; align-items: center; gap: var(--e-3); padding: 8px 12px; margin-top: 10px;
+  .veredicto { display: flex; align-items: center; gap: var(--e-3); padding: 8px 12px; margin-top: var(--e-2);
                background: var(--superficie);
                border: 1px solid var(--linea); border-left-width: 3px; border-radius: var(--r-tarjeta); }
-  .veredicto .ico { font-weight: 700; font-size: 17px; min-width: 26px; text-align: center; }
+  .veredicto .ico { font-weight: 700; font-size: var(--t-subtitulo); line-height: 1; min-width: 26px; text-align: center; }
   .veredicto .txt { flex: 1; min-width: 0; }
   .veredicto .tit { font-weight: 700; font-size: var(--t-cuerpo); line-height: 1.4; }
   .veredicto .sub { font-size: 12.5px; color: var(--tenue); }
@@ -448,13 +456,13 @@
                     box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
   .vlinea .vj .sm { font-weight: 700; margin-right: 3px; }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
-  svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: 10px auto 0; }
+  svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: var(--e-2) auto 0; }
   /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
      horizontal, porque son lo mismo contado de dos maneras. Va pegada arriba de
      la tira de jugadas y no arriba del tablero: las dos recorren la partida
      entera, mientras que todo lo de arriba habla de UNA jugada. Juntas quedan
      las dos formas de moverse por la partida, una al lado de la otra. */
-  .curva { height: 46px; margin-top: 10px; border-radius: var(--r-control); overflow: hidden;
+  .curva { height: 46px; margin-top: var(--e-2); border-radius: var(--r-control); overflow: hidden;
            background: var(--eval-negras); border: 1px solid var(--linea); cursor: pointer;
            position: relative; }
   .curva svg { display: block; width: 100%; height: 100%; }
@@ -472,7 +480,7 @@
      la v28 "mostraba tres jugadas por vez y obligaba a scrollear a ciegas", y
      eso está resuelto por dos cosas que aquella no tenía: los galones, que dan
      el paso fino sin arrastrar, y el centrado automático. */
-  .tira { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+  .tira { display: flex; align-items: center; gap: 6px; margin-top: var(--e-2); }
   /* alineada POR LA BASE y no por el centro: el número va en 12 px y la jugada
      en 13, así que centrando las cajas las bases quedan a distinta altura, que
      es lo que el ojo lee como corrido. Los galones no tienen base —son un
@@ -778,10 +786,10 @@
     .curva:hover, .evalh:hover { border-color: color-mix(in srgb, currentColor 40%, transparent); }
     .seccion > summary:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
   }
-  .credito { font-size: 11.5px; color: var(--tenue); margin: 28px 0 0; }
+  .credito { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-6) 0 0; }
   .credito a { color: inherit; }
-  .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: 13px;
-            color: var(--tenue); margin-top: 10px; align-items: center; }
+  .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-leyenda);
+            color: var(--tenue); margin-top: var(--e-2); align-items: center; }
   /* El nombre CEDE y se recorta; el resultado nunca. El nombre de chess.com
      puede tener hasta 25 caracteres, así que sin esto un rival de nombre largo
      parte el renglón en dos y empuja el tablero hacia abajo. Medido: con el
@@ -802,6 +810,11 @@
   #panelLog { border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px; margin: 0 0 12px; }
   #logTexto { font: 11px/1.35 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
               max-height: 260px; overflow-y: auto; margin: 8px 0 0; color: var(--tenue); }
+  /* SIN MOVIMIENTO SI EL TELÉFONO LO PIDE (§1.8, v0.104): obligatorio desde la
+     primera animación, y ya había cinco transiciones */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
+  }
 </style>
 
 <h1>Analizador de partidas</h1>
@@ -824,7 +837,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.103 · 06-11";
+  window.VERSION = "v0.104 · 06-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3531,9 +3544,9 @@ function dibujarCurva(filas, idx, lado, verAmbos, forma) {
   const linea = puntos.map((p, i) => (i ? "L " : "M ") + xy(p)).join(" ");
   let s = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">`;
   s += `<path d="${linea} L 100 100 L 0 100 Z" fill="var(--eval-blancas)"/>`;
-  s += `<line x1="0" y1="50" x2="100" y2="50" stroke="#8a8578" stroke-width="1"
+  s += `<line x1="0" y1="50" x2="100" y2="50" stroke="var(--tenue)" stroke-width="1"
          vector-effect="non-scaling-stroke" opacity=".55"/>`;
-  s += `<path d="${linea}" fill="none" stroke="#8a8578" stroke-width="1.2"
+  s += `<path d="${linea}" fill="none" stroke="var(--tenue)" stroke-width="1.2"
          vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
   /* El "estás acá" NO lleva color: los diez colores ya significan categorías, y
      uno nuevo al lado de ellos se lee como una categoría más. Va una línea clara
