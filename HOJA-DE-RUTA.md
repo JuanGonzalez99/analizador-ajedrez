@@ -13,8 +13,12 @@ tacha acá, en el mismo commit.
 - **Revisor:** después de cada cambio.
   *(La otra opción es "una vez al final de la noche". Se pasa a esa si el
   consumo se come el tope semanal; lo dice Juan o lo propone la mañana.)*
-- **Por noche:** un ítem. Dos si el primero salió chico. Nunca se deja nada a
-  medio hacer sin commitear: mejor uno más chico y entero.
+- **Por noche: hasta dos ítems** (decisión de Juan, 6-nov). Pasa al segundo
+  solo si el primero terminó **aprobado por el revisor**, con o sin
+  correcciones en el medio. Si después de las dos vueltas de corrección el
+  revisor sigue sin aprobar, para ahí y lo deja como duda en el resumen. Cada
+  pantalla de la etapa 1 cuenta como un ítem. Nunca se deja nada a medio hacer
+  sin commitear: mejor uno solo y entero que dos a medias.
 
 ---
 
@@ -62,8 +66,8 @@ lo demás se dibuja contra ella.
       `--tenue`, `--c-grave` y `--c-omision` NO se cambiaron, porque son
       globales; van en la primera pantalla (el comentario en `:root` lo dice).
 - [ ] Aplicarlo pantalla por pantalla, una versión cada una, con revisor.
-      **Esto es lo de la tarea nocturna** (lo pidió Juan el 6-nov): si una
-      pantalla sale bien y queda noche, sigue con la siguiente. En orden:
+      **Esto es lo de la tarea nocturna** (lo pidió Juan el 6-nov), cada
+      pantalla es un ítem y vale la regla de "Por noche", arriba. En orden:
   - [x] **Entrada y listado** (v0.96, 6-nov). Es la primera, así que trae lo global: pasar
         a `color-scheme: dark` siempre (decisión de Juan, `DISENO.md` §1.3),
         el fondo de la página, y `--linea`, `--tenue`, `--c-grave` y

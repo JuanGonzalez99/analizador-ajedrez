@@ -28,6 +28,10 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    no esté marcado `⏸ espera a Juan`. Si la hoja de ruta dice "esperando el ok
    de Juan", o todo lo que queda espera a Juan, **no hagas nada**: el resumen
    de la mañana dice eso y nada más.
+   **Cuántos:** hasta dos ítems por noche, con la regla de la perilla "Por
+   noche" de `HOJA-DE-RUTA.md`: el segundo solo si el primero quedó aprobado
+   por el revisor. No hay otra regla de cuándo parar; si algo en otro archivo
+   parece decir otra cosa, vale esta.
 3. **Decisiones.** Las que serían de Juan: elegí tu recomendación, seguí, y
    anotala para el resumen. Las visuales chicas las toma el revisor contra
    `DISENO.md`. Las que el ítem marca `⏸` no se toman nunca de noche.
