@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.106**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.107**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2915,6 +2915,19 @@ cuenta:
   vio nadie porque nadie usaba la vertical: se destapó al volverla el default.
   Son 36 px ahora, y no le cuestan tablero porque lo que manda es el alto.
 
+**Y EL MISMO ERROR SEGUÍA EN LOS ANCHOS DEL MEDIO, hasta la v0.107.** El arreglo
+de arriba vivía adentro del `@media (min-width: 1110px)`, así que de 413 a 1109 de
+ancho —una ventana de compu chica, una tablet— la caja volvía a ser `flex: 1`: el
+tablero ahí mide 360 y la columna hasta 700, y con la barra vertical elegida
+quedaban **140 px** entre las dos (medido a 1000 × 700; lo vio el revisor en la
+v0.105). Ahora la regla es global —`flex: 0 1 var(--ladoTab, 360px)` y la fila
+centrada— y el `@media` solo pone `--ladoTab`. En el celular la columna es más
+angosta que barra + hueco + 360 (384 contra 408 a 412 de ancho), así que la caja
+se achica igual que antes: las capturas del celu quedaron idénticas byte a byte
+(la única distinta, `mes-seccion`, es el número de versión, que se ve en ella:
+con la versión vieja da idéntica). La línea "barra vertical:" del arnés mide
+también `a1000x700`.
+
 El arnés mide las tres formas y lo que cuesta cada una, que la barra quede pegada
 y que el número entre entero. El default por ancho se mide aparte, con dos cargas
 limpias: el valor se decide una sola vez, al arrancar, así que hay que recargar.
@@ -4391,6 +4404,10 @@ arrastró la forma:
   termina en 735 y no en 733.
 B se descartó además porque un control segmentado dice "elegí uno de tres" y
 son tres interruptores sueltos.
+
+**v0.107, [PC] la barra vertical pegada al tablero en los anchos del medio**
+(revisor, v0.105): de 413 a 1109 quedaba a 140 px porque el arreglo de la v0.86
+vivía solo en el `@media` de 1110. Detalle en §4sexvicies.
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

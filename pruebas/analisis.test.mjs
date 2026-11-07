@@ -2728,9 +2728,15 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
     "y alguien prende la clase según la forma que esté puesta");
   /* LA BARRA TIENE QUE QUEDAR PEGADA AL TABLERO. Con `flex: 1` la caja se
      estiraba a los 700 de la columna, el SVG se centraba adentro y la barra
-     quedaba contra el borde, a 170 px de lo que mide. */
-  assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab); }"),
+     quedaba contra el borde, a 170 px de lo que mide. Y TIENE QUE SER AFUERA
+     DEL `@media` (v0.107): de 413 a 1109 el tablero mide 360 y la columna más,
+     y ahí la barra quedaba a 140 px. */
+  assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }"),
     "la caja del tablero mide lo que mide el tablero");
+  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 1110px)"));
+  assert.ok(antesDelMedia.includes("var(--ladoTab, 360px)") &&
+            /\.revtab \{[^}]*justify-content: center/.test(antesDelMedia),
+    "en cualquier ancho, no solo en la compu");
   /* Y EL NÚMERO TIENE QUE ENTRAR: con 30 px, "+0.26" salía cortado por el
      `overflow: hidden` de las esquinas redondeadas. Y con 36, a 11, "Tablas"
      (35,4) no entraba en los 34 que quedan adentro del borde (v0.105). */

@@ -307,9 +307,19 @@
      están las blancas; si el tablero se gira, desde arriba. */
   /* el margen de abajo separa el bloque del tablero de la tarjeta del veredicto:
      sin él la barra de evaluación termina pegada al borde de la tarjeta */
-  .revtab { display: flex; gap: 8px; align-items: stretch; margin: 10px 0; }
+  /* LA BARRA VERTICAL VA PEGADA AL TABLERO EN CUALQUIER ANCHO, y por eso esto
+     vive acá y no en el `@media` de la compu. La caja del tablero mide lo que
+     mide el tablero —360, o `--ladoTab` desde 1110— y la fila se centra entera,
+     barra y tablero como un bloque. Con `flex: 1` la caja se estiraba a la
+     columna, el SVG se centraba adentro y la barra quedaba sola contra el borde:
+     la v0.86 lo arregló a 1280, pero de 413 a 1109 de ancho seguía (v0.107,
+     medido: 140 px entre la barra y el tablero a 1000 × 700). En el celular la
+     columna es más angosta que barra + hueco + 360, así que la caja se achica
+     igual que antes y nada se mueve. */
+  .revtab { display: flex; gap: 8px; align-items: stretch; margin: 10px 0;
+            justify-content: center; }
   .comidas, .alts { display: none; }
-  .revtab > #tablero { flex: 1; min-width: 0; }
+  .revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }
   /* el tablero trae margen propio para cuando va suelto; al lado de la barra
      sobra, y desalinea las dos por 10 px */
   .revtab svg.tab { margin: 0 auto; }
@@ -701,15 +711,8 @@
     #zonaRevision { --ladoTab: clamp(360px, calc(100vh - 330px), 680px); }
     #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 304px), 680px); }
     svg.tab { max-width: var(--ladoTab); }
-    /* LA BARRA VERTICAL TIENE QUE QUEDAR PEGADA AL TABLERO. En el celular la
-       columna mide lo mismo que el tablero y el problema no existe; en una compu
-       la columna son 700 y el tablero 496, así que con `flex: 1` la caja del
-       tablero se estiraba a los 700, el SVG se centraba adentro y la barra
-       quedaba sola contra el borde izquierdo, a 170 px de lo que mide. Se vio en
-       la captura y no en ninguna cuenta. La caja pasa a medir lo que mide el
-       tablero y la fila se centra entera, las dos juntas. */
-    .revtab { justify-content: center; }
-    .revtab > #tablero { flex: 0 1 var(--ladoTab); }
+    /* La barra pegada al tablero ya no necesita regla acá: la de afuera usa
+       `--ladoTab`, que en este ancho vale lo de arriba (v0.107). */
     /* LA TIRA DE COMIDAS EXISTE SOLO ACÁ. En el celular no hay ancho de sobra;
        es `display: none` afuera y por eso las capturas del celu no se mueven. */
     /* 132 y no 108: son los 100 de las cinco piezas del renglón, el hueco de 6 y
@@ -862,7 +865,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.106 · 06-11";
+  window.VERSION = "v0.107 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

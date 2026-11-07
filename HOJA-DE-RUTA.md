@@ -92,7 +92,7 @@ lo demás se dibuja contra ella.
       filas que no comparten columnas y tres botones de anchos distintos. Va
       con variantes (`TAREA-NOCTURNA.md`, paso 3); la pantalla no puede crecer
       (la fila termina en 733 de 760).
-- [ ] **[PC] La barra vertical lejos del tablero a 1000×700** (revisor,
+- [x] **[PC] La barra vertical lejos del tablero a 1000×700** (v0.107, 7-nov: pegada a 8 de 413 a 1109; revisor,
       v0.105; no lo causó esa versión): la barra queda en x 164–204 y el
       tablero de 360 arranca en 344, a 140 px. A 1280 y 1500 está a 8. Es el
       mismo error que la v0.86 arregló a 1280, en un ancho intermedio que
@@ -120,6 +120,12 @@ lo demás se dibuja contra ella.
       todo en la de rotar"* (`DISENO.md` §2). Que haya variantes con ícono y
       texto; el revisor juzga si suman. Juan eligió esperar a este ítem y no
       ponerle el ícono a "Girar" antes.
+- [ ] **[PC] Lavado de cara: los anchos del medio, de 700 a 1109** (revisor,
+      v0.107). Todo bien medido, pero no aprovecha la pantalla: el tablero queda
+      fijo en 360 en una columna de 672, con ~160 px vacíos de cada lado, y recién
+      en 1110 salta al diseño de compu. A 1000×900 podría andar por 570. Pregunta:
+      ¿ese rango es "un celu grande" o "una compu chica"? ¿El tablero crece con el
+      alto, como desde 1110, o el corte se corre más abajo? Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 

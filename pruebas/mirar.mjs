@@ -696,7 +696,16 @@ const barraCorta = await barra();
 await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("sig").click(); });
 await pg.waitForTimeout(500);
 const barraLarga = await barra();
-console.log("barra vertical: ", JSON.stringify({ corto: barraCorta, largo: barraLarga }));
+/* Y EN UN ANCHO INTERMEDIO (v0.107): de 413 a 1109 el tablero no crece —son
+   360— pero la columna sí, y la barra quedaba a 140 px. El arreglo de la v0.86
+   vivía solo en el `@media` de 1110 y este ancho no lo medía nadie. */
+await pg.setViewportSize({ width: 1000, height: 700 });
+await pg.waitForTimeout(250);
+const barraMedia = await barra();
+await pg.setViewportSize({ width: 1280, height: 800 });
+await pg.waitForTimeout(250);
+console.log("barra vertical: ", JSON.stringify({ corto: barraCorta, largo: barraLarga,
+  a1000x700: barraMedia.hastaElTablero }));
 await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("ant").click(); });
 await pg.waitForTimeout(500);
 await elegir("#verEval", "barra");
