@@ -124,7 +124,7 @@ lo demás se dibuja contra ella.
       todo en la de rotar"* (`DISENO.md` §2). Que haya variantes con ícono y
       texto; el revisor juzga si suman. Juan eligió esperar a este ítem y no
       ponerle el ícono a "Girar" antes.
-- [ ] **"Siempre la mejor" se lleva mucho protagonismo** (Juan, v0.114). Sola
+- [x] **"Siempre la mejor" se lleva mucho protagonismo** (v0.117, 7-nov: la C, el cuadrito Mejor es el interruptor y la fila se fue; Juan, v0.114). Sola
       en la fila de abajo es el botón más grande de la pantalla para algo que es
       una preferencia. ¿Más chico, otro lugar (pegado al cuadrito Mejor, que
       hace lo mismo para una jugada), o que el cuadrito mismo sea el
@@ -282,8 +282,11 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
   la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
   revisor recomienda la 1.
-- **No sé si esto te copa:** la flechita de "Siempre la mejor" va verde, como
-  la flecha que pinta en el tablero; la otra es del color del texto.
+- **No sé si esto te copa (v0.117):** el cuadrito Mejor ahora prende la flecha
+  en todas las jugadas hasta que lo volvés a tocar; ya no existe el vistazo de
+  una sola jugada (la mejor igual está escrita en el cuadrito y en el
+  veredicto), y "Siempre la mejor" se fue de abajo. Si extrañás el vistazo, la
+  otra es la D: el cuadrito vuelve a ser vistazo y "siempre" pasa a la tuerca.
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el

@@ -473,9 +473,30 @@
   /* el cuadrito de la mejor jugada se toca para verla en el tablero, y se nota
      que está encendido: si no, la flecha aparece sin que se sepa de dónde */
   .metricas .tocable { cursor: pointer; user-select: none; }
-  .metricas .tocable.inerte { cursor: default; opacity: .5; }
+  /* Grisado (la jugada ya era la mejor) solo el VALOR: el cuadrito sigue
+     respondiendo desde la v0.117, así que el borde, el rótulo y el estado
+     prendido se tienen que seguir leyendo (revisor, v0.117). */
+  .metricas .tocable.inerte .va { opacity: .5; }
   .metricas .tocable.activo { border-color: var(--acento);
                               background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  /* EL CUADRITO MEJOR ES EL INTERRUPTOR (v0.117). Hasta la v0.116 había dos
+     controles para la misma pregunta: el cuadrito era un vistazo de una sola
+     jugada y "Siempre la mejor", un botón solo en su fila —el más grande de la
+     pantalla para una preferencia (Juan, v0.114)—. Se dibujaron cuatro: el
+     botón chico bajo Mejor, una chinche en el cuadrito, el cuadrito como
+     interruptor y la preferencia a la hoja; el revisor eligió esta. Tocarlo
+     prende la flecha en todas las jugadas hasta volver a tocarlo. La flechita
+     al lado de "MEJOR" dice que se toca; el estado va por color: rótulo en el
+     acento y flechita verde prendido, las dos tenues apagado. El rótulo va en
+     el acento y no en el verde de la flecha porque a 11 px el verde no llega
+     a 4,5:1. El toque ya pasa los 48 de alto: el cuadrito mide 51,5. */
+  /* Los márgenes negativos dejan la flechita sin agrandar el renglón (con ella
+     los cuadritos medían 51,5 y no 48): queda apoyada 1 px bajo la línea de
+     base, que la centra en la mayúscula de 11 px. */
+  .metricas .tocable .flechaMejor { width: 10px; height: 10px; margin: -10px 0 -1px 4px;
+                                    vertical-align: baseline; fill: currentColor; stroke: currentColor; }
+  .metricas .tocable.activo .et { color: var(--acento); }
+  .metricas .tocable.activo .flechaMejor { color: var(--f-mejor); }
   /* LOS BOTONES VAN EN LA MISMA GRILLA QUE LOS CUADRITOS (v0.106). Eran una
      fila de tres anchos distintos (134, 108, 115) que no compartía columnas
      con los cuatro cuadritos de arriba, y a Juan le parecían "medio raros".
@@ -490,11 +511,14 @@
   .acciones { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e-2);
               margin-top: var(--e-2); }
   .acciones > button { width: 100%; margin: 0; padding-left: 4px; padding-right: 4px; }
-  .acciones > #btnMejor { grid-column: span 2; }
   /* v0.114: en el celu la fila queda con "Siempre la mejor" sola (Girar va al
      costado del tablero y Rival a la hoja). En la compu, al lado del tablero
      están las piezas comidas, así que Girar sigue en la fila. */
   .acciones > #btnGirar { display: none; }
+  /* v0.117: "Siempre la mejor" se fue de la fila (el cuadrito Mejor es el
+     interruptor), así que en el celu la fila queda vacía y no se dibuja; vuelve
+     solo cuando Girar baja a ella (canal angosto, o la compu). */
+  .acciones { display: none; }
   .revtab { position: relative; }
   /* Al costado de la fila 1, entre el borde de las casillas y el de la
      pantalla (~40 px en el celu, donde a media altura vive el chevrón ›). La
@@ -514,10 +538,12 @@
      `ubicarGirar()` lo dice con esta clase y Girar vuelve a la fila, al lado
      de "Siempre la mejor". Medido en la v0.116, entra desde 360 de ancho. */
   body.girarEnFila .acciones > #btnGirar { display: flex; }
+  body.girarEnFila .acciones { display: grid; }
   /* el corte de la compu, escrito así para que no se confunda con el bloque
      grande de 1110 (las pruebas buscan el primero) */
   @media (width >= 1110px) {
     .acciones > #btnGirar { display: flex; }
+    .acciones { display: grid; }
     #btnGirarTab { display: none !important; }
   }
   /* CON ÍCONO Y TEXTO (v0.113). El lavado de "dónde viven las preferencias
@@ -963,7 +989,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.116 · 07-11";
+  window.VERSION = "v0.117 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1383,8 +1409,8 @@
        aria-label="Curva de quién va ganando a lo largo de la partida"></div>
   <div class="principal pabajo">
   <div class="metricas">
-    <div id="tileMejor" class="tocable" role="button" tabindex="0"
-         aria-label="Ver la mejor jugada en el tablero"><div class="et">Mejor</div><div class="va" id="mMejor"></div></div>
+    <div id="tileMejor" class="tocable" role="button" tabindex="0" aria-pressed="false"
+         aria-label="Mostrar la mejor en todas las jugadas"><div class="et">Mejor<svg class="flechaMejor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 L15.5 8.5 L12.5 5.5 L19.5 4.5 L18.5 11.5 L15.5 8.5" stroke-width="2.4" stroke-linejoin="round"/></svg></div><div class="va" id="mMejor"></div></div>
     <div><div class="et">Pérdida</div><div class="va" id="mPerdida"></div></div>
     <div><div class="et">Caída</div><div class="va" id="mCaida"></div></div>
     <!-- CUÁNTO PENSÓ ESTA JUGADA (v0.93). Va acá y no en el tablero, y esa fue
@@ -1398,8 +1424,6 @@
   </div>
   <div class="senales" id="senales"></div>
   <div class="acciones">
-    <button class="chico" id="btnMejor" aria-pressed="false"
-            title="Mostrar la mejor en todas las jugadas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 L15.5 8.5 L12.5 5.5 L19.5 4.5 L18.5 11.5 L15.5 8.5" fill="var(--f-mejor)" stroke="var(--f-mejor)" stroke-width="2.4" stroke-linejoin="round"/></svg><span>Siempre la mejor</span></button>
     <button class="chico" id="btnGirar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9"/><path d="M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3v4.3h-4.3"/><path d="M5.4 21v-4.3h4.3"/></svg><span>Girar</span></button>
   </div>
   </div>
@@ -4450,14 +4474,10 @@ let ELEGIDA_META = null;
 let CADENCIA = null;
 
 
-/* Dos formas distintas de ver la mejor jugada, a propósito:
-   - VER_MEJOR es la preferencia, la enciende el botón de abajo y queda puesta.
-   - MEJOR_EN es un vistazo puntual: guarda EN QUÉ jugada se tocó el cuadrito
-     "Mejor", así al cambiar de jugada se apaga solo.
-   Todo lo que mueve de jugada pasa por irA(), que es el único lugar donde se
-   apaga el vistazo: si alguien agrega otra forma de navegar y no la usa, el
-   vistazo quedaría pegado de una jugada a la otra. */
-let MEJOR_EN = null;
+/* Hasta la v0.116 había dos formas de ver la mejor: VER_MEJOR, la preferencia
+   del botón "Siempre la mejor", y MEJOR_EN, un vistazo de una sola jugada desde
+   el cuadrito. Desde la v0.117 queda una: el cuadrito prende y apaga VER_MEJOR
+   (declarada arriba), y el vistazo se fue con el botón. */
 /* LA TIPOGRAFÍA SE MIDE, NO SE ESTIMA (v0.74).
 
    Tres veces seguidas la tira se vio corrida mientras las cuentas decían que
@@ -4531,7 +4551,6 @@ function centrarTira() {
 function irA(i) {
   if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
   IDX = i;
-  MEJOR_EN = null;
   /* el señalado NO se apaga acá: lo tira `pintarRevision`, que es por donde
      pasan también los caminos que no llaman a `irA` —abrir la variante tocando
      una pieza, sobre todo—. Dos mecanismos para lo mismo era justo lo que
@@ -5105,7 +5124,7 @@ $("analizar").onclick = seguro("analizar", async () => {
        el motivo salía ahí y no acá. */
     R.meta = ELEGIDA_META;
     progreso(1);
-    IDX = 0; MEJOR_EN = null;
+    IDX = 0;
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
@@ -5554,7 +5573,7 @@ $("mateVista").onchange = seguro("mate a la vista", async () => {
   if (MES || (FUENTE === "todo" && TODO)) pintarMes(MES ? MES.prof : TODO.prof);
   if (R) {
     reDerivar(R);
-    IDX = Math.min(IDX, R.filas.length - 1); MEJOR_EN = null;
+    IDX = Math.min(IDX, R.filas.length - 1);
     pintarResumen(R.profBase || +$("prof").value);
     pintarRevision();
   }
@@ -5566,7 +5585,7 @@ $("modo").onchange = seguro("modo", () => {
   /* TODO no se rehace: cada fila flaca lleva las dos etiquetas. */
   if (R) {
     reDerivar(R);
-    IDX = Math.min(IDX, R.filas.length - 1); MEJOR_EN = null;
+    IDX = Math.min(IDX, R.filas.length - 1);
     pintarResumen(R.profBase || +$("prof").value);
     pintarRevision();
   }
@@ -6438,7 +6457,7 @@ function pintarLista() {
   $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
       R = MES.resultados[+d.dataset.i];
-      IDX = 0; MEJOR_EN = null;
+      IDX = 0;
       GIRADO = (R.cab.Black || "").toLowerCase() === USUARIO;
       pintarResumen(MES.prof);
       pintarRevision();
@@ -6663,8 +6682,7 @@ function pintarRevision() {
   /* Cuando la mejor ES la que se dibuja en azul no hay nada distinto que
      mostrar, y ahí el cuadrito se grisa y deja de responder: sin eso parecía
      que tocarlo no hacía nada, o sea un bug. */
-  const pideMejor = VER_MEJOR || MEJOR_EN === IDX;
-  const verMejor = pideMejor && !!mejorVista && mejorVista !== uciAzul;
+  const verMejor = VER_MEJOR && !!mejorVista && mejorVista !== uciAzul;
   /* Los colores no se mezclan nunca: AZUL es una jugada de la partida y VIOLETA
      una inventada. Parado en el arranque de la variante hay azul —lo que se
      jugó de verdad desde ahí— y no hay violeta; una jugada adentro, al revés,
@@ -6704,9 +6722,12 @@ function pintarRevision() {
      que se acaba de probar, o la variante llegó a un mate y no hay jugada. */
   const pensando = !!PRUEBA && !vista.ev;
   $("mMejor").title = mejorVista || "";
-  $("tileMejor").classList.toggle("activo", verMejor);
+  /* prendido según la PREFERENCIA y no según si hay flecha: en una jugada que
+     ya era la mejor no hay flecha que dibujar, pero el interruptor sigue
+     puesto y tiene que verse. */
+  $("tileMejor").classList.toggle("activo", VER_MEJOR);
+  $("tileMejor").setAttribute("aria-pressed", VER_MEJOR ? "true" : "false");
   $("tileMejor").classList.toggle("inerte", sinAlternativa);
-  $("tileMejor").setAttribute("aria-disabled", sinAlternativa ? "true" : "false");
   $("mMejor").textContent = pensando ? "\u2026"
     : !mejorVista ? "\u2014"
     : mejorVista === uciAzul ? "la jugada"
@@ -6926,10 +6947,6 @@ function pintarRevision() {
      jugada mala, probar otra. El botón deja de ser una opción escondida y pasa
      a ser lo que la app te propone hacer, que es justo lo que le faltaba: la
      jugada mala es la que da ganas de probar otra cosa. */
-  /* prendido por color y no por palabra desde la v0.106: en la grilla de
-     cuatro "Pintar solo las mías" no entra */
-  $("btnMejor").classList.toggle("prendido", VER_MEJOR);
-  $("btnMejor").setAttribute("aria-pressed", VER_MEJOR ? "true" : "false");
   ubicarGirar(f);
   /* Adentro de la variante, "anterior" y "siguiente" se mueven POR LA
      VARIANTE. Es la misma promesa de siempre —la posición anterior y la
@@ -7180,11 +7197,6 @@ const atras = () => PRUEBA ? verDeLaVariante(PRUEBA.ver - 1) : irA(IDX - 1);
 const adelante = () => PRUEBA ? verDeLaVariante(PRUEBA.ver + 1) : irA(IDX + 1);
 $("ant").onclick = seguro("anterior", atras);
 $("sig").onclick = seguro("siguiente", adelante);
-$("btnMejor").onclick = seguro("mejor", () => {
-  VER_MEJOR = !VER_MEJOR;
-  try { localStorage.setItem("siempreMejor", VER_MEJOR ? "si" : "no"); } catch (e) { /* incógnito */ }
-  pintarRevision();
-});
 try { VER_MEJOR = localStorage.getItem("siempreMejor") === "si"; } catch (e) { /* incógnito */ }
 
 /* ARRASTRAR LA TIRA CON EL MOUSE (v0.80). Reportado desde una compu: en un
@@ -7231,16 +7243,17 @@ try { VER_MEJOR = localStorage.getItem("siempreMejor") === "si"; } catch (e) { /
   }, { passive: false });
 })();
 
-/* el vistazo del cuadrito. Si la preferencia ya está encendida no hay nada que
-   mostrar, así que apagarlo desde acá sería confuso: no hace nada. */
-const verDeUnaVez = seguro("vistazo a la mejor", () => {
-  if (VER_MEJOR || $("tileMejor").classList.contains("inerte")) return;
-  MEJOR_EN = MEJOR_EN === IDX ? null : IDX;
+/* EL CUADRITO ES EL INTERRUPTOR (v0.117): prende y apaga la preferencia, la
+   misma que se guarda. Responde aunque esté grisado (una jugada que ya era la
+   mejor): si no, con la preferencia puesta no se la podía apagar ahí. */
+const alternarMejor = seguro("mejor", () => {
+  VER_MEJOR = !VER_MEJOR;
+  try { localStorage.setItem("siempreMejor", VER_MEJOR ? "si" : "no"); } catch (e) { /* incógnito */ }
   pintarRevision();
 });
-$("tileMejor").onclick = verDeUnaVez;
+$("tileMejor").onclick = alternarMejor;
 $("tileMejor").onkeydown = ev => {
-  if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); verDeUnaVez(ev); }
+  if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); alternarMejor(ev); }
 };
 /* La ÚNICA puerta de entrada a la variante es tocar una pieza (v0.74). El botón
    que abría una "en vez de esta jugada" se fue con la fila de botones grandes:

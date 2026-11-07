@@ -2129,7 +2129,16 @@ test("cambiar de jugada corta la prueba", () => {
   const cuerpo = html.slice(html.indexOf("function irA(i) {"),
                             html.indexOf("let VER_AMBOS"));
   assert.ok(cuerpo.includes("PRUEBA = null;"), "irA la corta");
-  assert.ok(cuerpo.includes("MEJOR_EN = null;"), "y sigue apagando el vistazo");
+});
+
+test("el cuadrito Mejor es el interruptor de la preferencia (v0.117)", () => {
+  /* Había dos controles para la misma pregunta; quedó uno. Si vuelve el botón
+     o el vistazo de una jugada, son dos otra vez. */
+  assert.ok(!html.includes('id="btnMejor"'), "el botón Siempre la mejor se fue");
+  assert.ok(!/let MEJOR_EN|MEJOR_EN =/.test(html), "y el vistazo de una sola jugada");
+  assert.ok(html.includes('$("tileMejor").onclick = alternarMejor;'), "el cuadrito alterna");
+  const f = html.slice(html.indexOf("const alternarMejor"), html.indexOf('$("tileMejor").onclick'));
+  assert.ok(f.includes('localStorage.setItem("siempreMejor"'), "y la preferencia se guarda");
 });
 
 test("las zonas de toque de los galones se fueron, y los galones se quedaron", () => {

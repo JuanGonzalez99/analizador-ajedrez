@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.116**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.117**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -491,6 +491,10 @@ galones `‹ ›` muy tenues en los bordes del tablero, no un texto explicativo.
 ### Ver la mejor jugada: dos maneras, a propósito (v30)
 
 Son dos cosas distintas y por eso están separadas:
+
+**Desde la v0.117 queda una sola** (ver §7, "v0.117"): el cuadrito Mejor
+prende y apaga `VER_MEJOR`, y el botón y el vistazo de abajo se fueron. Lo que
+sigue es la historia de cómo era.
 
 - **`VER_MEJOR`** es la **preferencia**. La enciende el botón "Mostrar la mejor"
   y queda puesta de una jugada a la otra. Va a mudarse a un menú de ajustes
@@ -4626,6 +4630,37 @@ por lo mismo: lo quiere a mano al arrancar). Quedó la idea de Juan:
 - **"Siempre la mejor" queda sola, en dos columnas** (abajo de Mejor y
   Pérdida). A todo el ancho se llevaba demasiado protagonismo (Juan); revisarla
   quedó en la hoja de ruta.
+
+**v0.117, el cuadrito Mejor es el interruptor** (lavado de cara, con
+variantes; Juan, v0.114: "Siempre la mejor" sola en su fila era el botón más
+grande de la pantalla para una preferencia). Se dibujaron cuatro sobre la app:
+A, el botón a una columna bajo Mejor con "Siempre" (no ahorra la fila); B, una
+chinche de 16 en la esquina del cuadrito (glifo a descifrar, y su toque de 48
+pisa el del cuadrito); C, el cuadrito mismo como interruptor; D, la preferencia
+a la hoja (dos toques para algo que Juan "va cambiando"). **El revisor eligió
+la C**: eran dos controles para una sola pregunta, y el cuadrito encendido que
+no respondía era un botón muerto que parecía vivo. Lo que quedó:
+- `#btnMejor` y `MEJOR_EN` (el vistazo de una jugada, `verDeUnaVez`) se
+  fueron. Tocar el cuadrito (`alternarMejor`) prende y apaga `VER_MEJOR`, que se
+  sigue guardando en `siempreMejor`. **Se perdió el vistazo de una sola
+  jugada**: la mejor igual está escrita en el cuadrito y en el veredicto. Va a
+  Juan como duda; la vuelta atrás sería la D.
+- `.activo` sigue a la **preferencia**, no a si hay flecha: en una jugada que ya
+  era la mejor no hay flecha, pero el interruptor está puesto y se tiene que
+  ver. Con `aria-pressed`. Y el cuadrito grisado (`.inerte`) **responde igual**:
+  si no, con la preferencia puesta no se podía apagar parado ahí. Por eso el
+  grisado va **solo en el valor** (`.inerte .va`, 50 %) y no en el cuadrito
+  entero, con cursor de mano: un control que se ve apagado y responde miente
+  (revisor, v0.117).
+- Una flechita de 10 al lado de "MEJOR" dice que se toca; prendido, rótulo en
+  `--acento` y flechita en `--f-mejor`; apagado, las dos tenues. El rótulo no
+  va en el verde de la flecha porque a 11 px no llega a 4,5:1. Márgenes
+  negativos para no agrandar el renglón; centrada en la mayúscula a 0,5 px
+  (medido con `Range` y canvas). Entra a 386 y a 412.
+- El cuadrito mide 51,5 de alto: el toque de 48 ya estaba.
+- `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
+  `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
+  columna, bajo Mejor. La página del celu se acorta 44.
 
 **v0.107, [PC] la barra vertical pegada al tablero en los anchos del medio**
 (revisor, v0.105): de 413 a 1109 quedaba a 140 px porque el arreglo de la v0.86
