@@ -5166,5 +5166,11 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
   El chequeo estático 8 compara la versión contra la del último commit y falla
   si `index.html` cambió y la versión no subió. Si `index.html` no cambió no
   pide nada: el archivo servido es idéntico y no hay reporte que ubicar.
+- **Un push a `main` no garantiza una publicación.** Pasó con la v0.106 (7-nov):
+  el push entró (`45352df`), pero GitHub Pages no corrió "pages build and
+  deployment" para ese commit, y la página siguió en la v0.105. Desde la
+  sesión no se ve la página (`github.io` está fuera de la red permitida), así
+  que lo detecta Juan, en la pestaña Actions: la última corrida tiene que ser
+  la del último commit. Si falta, se destraba con otro commit de verdad.
 - **Este documento se actualiza en el mismo commit que el cambio que describe.**
   Vive en el repo justamente para eso.
