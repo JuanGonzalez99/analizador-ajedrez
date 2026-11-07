@@ -156,6 +156,14 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
 
 ## Etapa 3 · Que se sienta bien
 
+- [ ] **Elegir "Todo", otro mes o mover el dial de mate MIENTRAS se analiza el
+      mes** (revisor, v0.109; leído en el código, no probado): `juntarTodo`
+      hace su propio `ocupado(true/false)`, así que esconde "Detener", prende
+      los botones y la barra parpadea; y otro mes en el selector lanzaría un
+      segundo análisis encima del primero. O se apagan `#fuente` y `#mateVista`
+      mientras se trabaja, o `juntarTodo` no toca `ocupado` si ya había algo
+      corriendo.
+
 - [ ] La pieza que se mueve al pasar de jugada (abre las demás animaciones).
 - [ ] El tablero sigue al dedo al deslizar.
 - [ ] La tira se centra con movimiento; la tarjeta cambia de alto sin
@@ -226,11 +234,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   21 px, lejos de los 48 de §1.7.
 - **Tablero de fábrica:** pasó a "Noche" (el verde de A). Si tenías madera
   porque era la de fábrica, ahora ves Noche; si la querés, está en ajustes.
-- **No sé si esto te copa** (v0.108): el título del Mes ahora es el selector
-  del mes ("Octubre 2026 ▾"), se fue el "Estadísticas" visible, y elegir otro
-  mes ahí lo carga y lo analiza. Si no: (1) volver a un rótulo chico arriba, o
-  (2) la A, sin tocar la estructura: el select chico dice "Octubre 2026" y solo
-  elige entre ese mes y todo.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
   área de toque invisible de 48 de `DISENO.md` §1.7.
 

@@ -407,6 +407,12 @@ hay. Las primeras salen del historial del traspaso.
   lo que pide es que, cuando se rediseñen esos botones (el lavado de "dónde
   viven las preferencias del tablero"), **haya variantes con ícono y texto**
   y el revisor juzgue con criterio de diseño dónde suman y dónde no.
+- **El Mes con el mes como título y un rótulo chico arriba** (7-nov-2026,
+  v0.109): el selector «Octubre 2026 ▾» hace de título y arriba va
+  «ESTADÍSTICAS» en la letra de los cuadritos, tenue. Dudaba entre rótulo o no;
+  mirando tres (ese, uno chico en minúsculas, el h2 de 18 de antes) eligió
+  este. Él no dijo por qué; la recomendación que tenía era esta o ninguna,
+  porque el h2 grande ponía dos títulos seguidos compitiendo con el mes.
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.

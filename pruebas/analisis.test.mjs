@@ -331,7 +331,10 @@ test("la cabecera del mes dice qué mes (v0.108)", () => {
   /* Decía "Estadísticas" y "El mes seleccionado", y el mes estaba en #meses,
      arriba, fuera de la pantalla. Ahora el selector de arriba ES el mes. */
   assert.ok(!html.includes("El mes seleccionado</option>"), "volvió el select que no dice cuál");
-  assert.ok(html.includes('<h2 class="soloLector">Estadísticas</h2>'), "la sección sin nombre");
+  /* v0.109: "Estadísticas" vuelve como rótulo chico arriba del mes (Juan, la 1 de tres) */
+  assert.ok(html.includes('<h2 class="rotulo">Estadísticas</h2>'), "la sección sin nombre");
+  assert.ok(/#zonaMes > h2\.rotulo \{[^}]*text-transform: uppercase[^}]*color: var\(--tenue\)/.test(html),
+    "el rótulo es chico y tenue: el título es el mes");
   assert.ok(html.includes('aria-label="Mes de las estadísticas"'));
   const f = html.slice(html.indexOf("function pintarFuente"), html.indexOf('$("fuente").onchange'));
   assert.ok(f.indexOf('"todo"') < f.indexOf("optgroup"), "Todo lo analizado va primero");

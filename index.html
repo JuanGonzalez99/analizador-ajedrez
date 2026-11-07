@@ -275,11 +275,12 @@
      cualquier campo (44, §1.7), y un ancho fijo que entra "Septiembre 2026",
      el mes más largo, para que el de la cadencia no salte al cambiar de mes. */
   #fuente { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
-  /* el margen de arriba era del h2 (24, el de todo h2): sin él la fila quedaba
-     pegada a la zona de Análisis, a 0 px */
-  #zonaMes > .soloLector + .fila { margin-top: 24px; }
-  .soloLector { position: absolute; width: 1px; height: 1px; overflow: hidden;
-                clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; padding: 0; }
+  /* EL RÓTULO CHICO ARRIBA DEL MES (v0.109, lo eligió Juan entre tres): la
+     letra de los títulos de los cuadritos (`.metricas .et`), en tenue, así
+     nombra la sección sin competir con el mes, que es el título de verdad. El
+     24 de arriba es el de todo h2: separa de la zona de Análisis. */
+  #zonaMes > h2.rotulo { margin: var(--e-6) 0 var(--e-2); font-size: var(--t-minimo); font-weight: 600;
+                         letter-spacing: .07em; text-transform: uppercase; color: var(--tenue); }
   /* Con scroll para que el botón de analizar quede a la vista sin bajar por
      cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
      solo para que deje de estorbar. */
@@ -874,7 +875,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.108.1 · 07-11";
+  window.VERSION = "v0.109 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1129,9 +1130,8 @@
   <!-- EL MES ES EL TÍTULO (v0.108). Antes decía "Estadísticas" y "El mes
        seleccionado", pero no QUÉ mes: ese estaba en #meses, arriba, que con el
        scroll ya no se ve. Ahora el selector de arriba de todo dice el mes y
-       deja elegir otro. El h2 queda para los lectores de pantalla, que la
-       sección tenga nombre. -->
-  <h2 class="soloLector">Estadísticas</h2>
+       deja elegir otro. Arriba, "Estadísticas" como rótulo chico (v0.109). -->
+  <h2 class="rotulo">Estadísticas</h2>
   <div class="fila">
     <select id="fuente" class="chico" aria-label="Mes de las estadísticas">
       <option value="todo">Todo lo analizado</option>

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.108.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.109**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -1177,10 +1177,15 @@ Lo que hay que saber para tocarlo:
 - El selector va a 18/700 (la letra del h2) en el alto de 44 de todo campo, con
   ancho fijo de 12,5em para que entre "Septiembre 2026" y el de la cadencia no
   salte: medido, 225 + 12 + 109 ("10 min (12)") de 384 a 412.
-- El h2 "Estadísticas" quedó `.soloLector`, para que la sección tenga nombre, y
-  el selector lleva `aria-label`. El margen de 24 que ponía el h2 lo pone ahora
-  `#zonaMes > .soloLector + .fila`: sin eso la fila quedó a 0 de la zona de
-  Análisis, y lo agarró la medición, no la captura.
+- El h2 "Estadísticas" quedó `.soloLector` en la v0.108 (solo para lectores de
+  pantalla) y **en la v0.109 volvió a la vista como rótulo chico** (`h2.rotulo`:
+  la letra de `.metricas .et`, en mayúsculas y tenue). Juan dudaba entre rótulo
+  o no; se le dibujaron tres —ese, uno chico en minúsculas y el h2 de 18 de
+  antes— y eligió ese. El selector sigue con `aria-label`.
+  Ojo con el margen de arriba: en la v0.108, sin el h2 visible, la fila quedó a
+  0 de la zona de Análisis (lo agarró la medición, no la captura). Ahora lo
+  pone el rótulo: 24 arriba, 8 hasta el selector (era 6 y el revisor lo
+  pasó a la escala).
 - Las capturas del celu, iguales byte a byte salvo `mes` y `mes-seccion`.
 - **La partida falsa sirve el mes en `/api/mes/2026/10`** y no en `/api/mes`:
   con la ruta vieja el título salía "api/mes" en la captura que estrenaba el
