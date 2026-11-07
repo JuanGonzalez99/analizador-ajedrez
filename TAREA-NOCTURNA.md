@@ -20,6 +20,17 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
 
 ## Qué hacer cada noche
 
+0. **Los domingos, antes que nada: la revisión del criterio del revisor**
+   (decisión de Juan, 7-nov-2026). Lanzá un agente aparte (no el revisor, que
+   no se revisa a sí mismo) que lea `DISENO.md` §2 y §3, lo que se agregó en la
+   semana (`git log --since="8 days ago" -- DISENO.md HOJA-DE-RUTA.md`) y
+   `.claude/agents/revisor-ux.md`, y proponga **principios** en vez de casos:
+   qué reglas generales salen de los gustos y de los errores, cuáles del
+   criterio actual sobran o se contradicen. Aplicá lo que proponga a
+   `revisor-ux.md` en un commit propio, y en el resumen de la mañana va como
+   primera sección, **"El criterio del revisor"**: qué cambió, en una línea
+   cada cosa, para que Juan lo apruebe o lo dé vuelta. Esa noche cuenta como
+   un ítem.
 1. **Arrancar.** El hook deja el checkout en `main`; confirmalo con
    `git status` (si no, `git checkout -B main origin/main`). **Y confirmá que
    estás en la punta de verdad**: `git fetch origin main` y que `git log -1`

@@ -454,3 +454,27 @@ hay. Las primeras salen del historial del traspaso.
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
   veredicto, los cuadritos, la lista.
+
+## 3. Lo que el revisor aprobó y a Juan no le copó
+
+Lo que más enseña: no el gusto en sí (eso va en §2) sino **qué miró el revisor,
+qué se le pasó y la regla general que sale**. El revisor lo lee antes que nada.
+Se anota cada vez que Juan rechaza algo que pasó por el revisor (decisión de
+Juan, 7-nov-2026). Las reglas que salen de acá las destila la revisión del
+criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
+
+- **El fundido de 120 ms al cambiar de pantalla** (v0.110). Lo decidió el
+  revisor con la duración y la curva de §1.8, y lo verificó congelando el
+  cuadro del medio. *Se le pasó*: una foto quieta no dice cómo se siente; y
+  la pantalla nueva llegaba con cosas animándose (la barra de la evaluación
+  desde cero) y la vieja parpadeaba antes de irse. *Regla*: el movimiento se
+  juzga mirando qué se mueve en todo el recorrido —antes, durante y después—
+  y no un cuadro; en duda, sin movimiento hasta que se diseñe en serio.
+- **La apertura en la cabecera de la Partida** (v0.111). El revisor había
+  pedido sacarla del inicio sin decir adónde; quien programa la puso al lado del
+  volver, el revisor midió que no empujaba nada, la aprobó, y en el mismo
+  informe marcó esa cabecera como lavado de cara. *Se le pasó*: que quede
+  bien donde está, no solo que no empuje. *Reglas* (ya en sus instrucciones):
+  no se pide mover sin decir adónde, y lo nuevo que rompe una zona es
+  CORREGIR, no un lavado para después.
+

@@ -15,6 +15,8 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
 
 ## Qué leés antes de opinar
 
+0. `DISENO.md` §3, **lo que aprobaste y a Juan no le copó**: qué se te pasó
+   cada vez y la regla que salió. Leelo primero: son tus errores conocidos.
 1. `DISENO.md` — el sistema de diseño (si ya existe) y los gustos de Juan, "me
    copa / no me copa", con su porqué. **Es tu criterio principal.**
 2. `NORTE.md`, sección UX — qué le importa a Juan y por qué.
