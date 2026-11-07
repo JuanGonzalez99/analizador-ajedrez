@@ -400,12 +400,13 @@ hay. Las primeras salen del historial del traspaso.
   acepto"* (6-nov-2026).
 - **La fila de abajo de la jugada en la D** (la misma grilla de cuatro que
   los cuadritos, el estado por color, "Siempre la mejor" y "Rival"): *"creo
-  que quedó bien la D"* (7-nov-2026, v0.106). **Y de la C le copó la idea de
-  los íconos en los botones**, *"sobre todo en la de rotar, que es muy
-  gráfico"*: el ícono dice lo que hace sin leer. No pidió cambiarlo ya; va con
-  el lavado de "dónde viven las preferencias del tablero". Es un matiz a
-  §1.7, que dice que el botón chico es solo texto: para una acción con un
-  dibujo universal (girar), ícono más palabra sí.
+  que quedó bien la D"* (7-nov-2026, v0.106). **Y de la C le coparon los
+  botones con ícono y texto**, *"sobre todo en la de rotar, que es muy
+  gráfico"*. Es un gusto, no una regla: él mismo aclaró *"quizás no sea lo
+  ideal, no soy UI UX"*. Así que **no cambia §1.7** (el botón chico es texto):
+  lo que pide es que, cuando se rediseñen esos botones (el lavado de "dónde
+  viven las preferencias del tablero"), **haya variantes con ícono y texto**
+  y el revisor juzgue con criterio de diseño dónde suman y dónde no.
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.

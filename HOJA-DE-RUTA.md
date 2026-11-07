@@ -116,9 +116,10 @@ lo demás se dibuja contra ella.
       el tablero que siguen entre jugadas, y están metidos entre los datos de
       la jugada; además ya hay hoja de ajustes. ¿Van pegados al tablero
       (íconos en su borde, como chess.com), en la hoja o en esta fila?
-      Juan (7-nov): la D quedó bien, y de la C le copó el ícono, *"sobre
-      todo en la de rotar"* (`DISENO.md` §2). Las variantes de este ítem
-      llevan íconos.
+      Juan (7-nov): la D quedó bien, y de la C le coparon los botones con ícono y texto, *"sobre
+      todo en la de rotar"* (`DISENO.md` §2). Que haya variantes con ícono y
+      texto; el revisor juzga si suman. Juan eligió esperar a este ítem y no
+      ponerle el ícono a "Girar" antes.
 
 ## Etapa 2 · Partir `index.html`
 
