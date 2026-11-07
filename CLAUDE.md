@@ -63,7 +63,11 @@ describe. §10 tiene las reglas de trabajo.
   Medido sobre una captura suya, sacando la escala del tablero (que mide 360 CSS
   de ancho): su viewport es de **≈420 × 810 CSS** con la barra de direcciones
   escondida, y ~745 de alto cuando está visible. **Dibujar a 412 × 760**, que es
-  el caso apretado. Una captura de 1500 px de alto no deja dimensionar cuánto se
+  el caso apretado.
+  **Ojo (v0.115, 7-nov-2026):** su captura de la v0.114 da **~405 CSS de
+  ancho** si el tablero entero (casillas más márgenes) mide 360; los ≈420 de
+  arriba parecen haber tomado las casillas solas como si fueran los 360. Lo que
+  dependa del ancho al píxel se prueba también a 400–405. Una captura de 1500 px de alto no deja dimensionar cuánto se
   ve de verdad.
 - Se escribe en **castellano rioplatense**, igual que el código y el traspaso.
 

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.114**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.115**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4597,8 +4597,11 @@ además un análisis de usabilidad a un agente aparte, sin contarle lo elegido
 (llegó a lo mismo en lo de fondo, y propuso Girar en la tuerca; Juan lo frenó
 por lo mismo: lo quiere a mano al arrancar). Quedó la idea de Juan:
 - **Girar, al costado del tablero, solo al arrancar**: `#btnGirarTab`, 34×44,
-  pegado a la fila 1 del lado de afuera de las casillas, a 4 de ellas (en el
-  celu de 412, entre 375 y 409); el toque se estira con un `::after` hasta el
+  pegado a la fila 1 del lado de afuera de las casillas. **v0.115**: 30 de
+  ancho y a 2 de las casillas (eran 34 y 4, y pedían 412 de pantalla). El celu
+  de Juan mide **~405 CSS**: sale de su captura, con el tablero de 360, y Girar
+  le caía en la fila. Ojo, que el "≈420" de `CLAUDE.md` parece haber medido las
+  casillas como si fueran el tablero entero. Ahora entra desde 401; el toque se estira con un `::after` hasta el
   borde de la pantalla y a 48 de alto. Se ve mientras la jugada es de libro y como mínimo en las
   cuatro primeras (`JUGADAS_GIRAR`), y nunca adentro de una variante. La
   posición la calcula `ubicarGirar()` con la escala del SVG, y un

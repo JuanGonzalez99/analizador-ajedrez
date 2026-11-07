@@ -499,7 +499,7 @@
   /* Al costado de la fila 1, entre el borde de las casillas y el de la
      pantalla (~40 px en el celu, donde a media altura vive el chevrón ›). La
      posición la pone `ubicarGirar()`: depende de la escala del SVG. */
-  #btnGirarTab { position: absolute; width: 34px; height: 44px; min-height: 0; padding: 0;
+  #btnGirarTab { position: absolute; width: 30px; height: 44px; min-height: 0; padding: 0;
                  display: grid; place-items: center; border-radius: var(--r-control); }
   #btnGirarTab.oculto { display: none; }
   #btnGirarTab > svg { width: 18px; height: 18px; }
@@ -961,7 +961,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.114 · 07-11";
+  window.VERSION = "v0.115 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6464,15 +6464,17 @@ function ubicarGirar(f) {
   const s = svg.getBoundingClientRect(), r = b.parentElement.getBoundingClientRect();
   if (!s.width) return;
   const k = s.width / (TAB_S * 8 + TAB_M * 2), borde = (TAB_M + TAB_S * 8) * k;
-  /* 4 de las casillas (la escala) y al menos 3 hasta el borde de la pantalla;
-     si no entra, a la fila. Se decide siempre, esté o no a la vista, para que
+  /* 2 de las casillas y al menos 3 hasta el borde de la pantalla; si no
+     entra, a la fila. Era 4 y 34 de ancho, y pedía 412: el celu de Juan mide
+     ~405 (su captura de la v0.114, con el tablero de 360) y Girar le caía en la
+     fila. Con 2 y 30 entra desde 401. Se decide siempre, esté o no a la vista, para que
      la fila ya esté bien cuando el botón se esconde. */
-  const entra = Math.round(s.left + borde) + 4 + 34 <= document.documentElement.clientWidth - 3;
+  const entra = Math.round(s.left + borde) + 2 + 30 <= document.documentElement.clientWidth - 3;
   document.body.classList.toggle("girarEnFila", !entra);
   const ver = entra && !PRUEBA && (IDX < JUGADAS_GIRAR || (f && f.cat === "libro"));
   b.classList.toggle("oculto", !ver);
   if (!ver) return;
-  b.style.left = (s.left - r.left + borde + 4) + "px";
+  b.style.left = (s.left - r.left + borde + 2) + "px";
   b.style.top = (s.top - r.top + borde - 44) + "px";
 }
 function pintarRevision() {
