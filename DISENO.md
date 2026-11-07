@@ -413,6 +413,12 @@ hay. Las primeras salen del historial del traspaso.
   mirando tres (ese, uno chico en minúsculas, el h2 de 18 de antes) eligió
   este. Él no dijo por qué; la recomendación que tenía era esta o ninguna,
   porque el h2 grande ponía dos títulos seguidos compitiendo con el mes.
+- **La barra de pestañas abajo** (la variante A de la estructura, v0.110): *"me
+  enamoré"*, el concepto. Lo de que tapa contenido no le parece grave: se
+  esconde al deslizar para arriba y vuelve al deslizar para abajo. Pero él
+  mismo dudó: Partidas → Partida → Mes *"medio que es un caminito"*, no son
+  pestañas independientes. Para destinos de verdad hermanos (los módulos) es
+  candidata fuerte (7-nov-2026).
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.
@@ -434,6 +440,11 @@ hay. Las primeras salen del historial del traspaso.
 - **Dos rayas paralelas casi pegadas** entre una tabla y la sección siguiente:
   *"hay algo ahí que se ve raro"*. Una sola raya entre secciones, y la tabla al
   ras del título y la leyenda (v0.102).
+- **El fundido al pasar de pantalla** (v0.110, 120 ms): *"no se sintió bien…
+  brusco, medio violento"*. Y que la pantalla **haga algo antes de irse** (la
+  barra de progreso que parpadea) y que la nueva **siga haciendo algo al
+  llegar** (la barra de la evaluación que se anima desde cero). Lo que cambia de
+  pantalla tiene que llegar quieto (7-nov-2026, v0.111).
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del

@@ -339,10 +339,20 @@
   .tarjetaMes b { display: block; font-size: var(--t-cuerpo, 16px); }
   .tarjetaMes small { display: block; color: var(--tenue); font-size: var(--t-secundario); font-weight: 400; }
   .tarjetaMes .flecha { color: var(--tenue); font-size: 22px; line-height: 1; }
-  /* el paso de pantalla: fundido corto, sin deslizar, para que el tablero no
-     se mueva (§1.8; con movimiento reducido lo apaga la regla de abajo) */
-  @keyframes fundido { from { opacity: 0; } }
-  body.fundido { animation: fundido 120ms cubic-bezier(.2, 0, 0, 1); }
+  /* EL PASO DE PANTALLA ES SECO (v0.111). La v0.110 tenía un fundido de
+     120 ms y a Juan no le copó: *"brusco, medio violento"*, y la pantalla
+     nueva "seguía haciendo algo" —la barra de la evaluación y la de progreso
+     se animaban desde cero al aparecer—. Ahora no hay fundido, y en el cambio
+     se apagan las transiciones un instante para que lo nuevo llegue quieto.
+     La transición buena de verdad va en la etapa 3 ("que se sienta bien"). */
+  body.quieto *, body.quieto *::before, body.quieto *::after { transition: none !important; }
+  /* la apertura, en el renglón del volver: es lo que decía el "Listo." del
+     inicio, que en la Partida no se veía. Mientras algo corre, ese lugar es
+     del estado. */
+  .cabvista .apertura { flex: 1; min-width: 0; text-align: right; font-size: 12.5px;
+    color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  body.ocupado .cabvista .apertura { visibility: hidden; }
+  .ajVersion { margin: var(--e-4) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
   /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
      agrega las perillas de medición. Se marca en <html> para que baste CSS y
      no haya que esconder cada cosa a mano desde JS. */
@@ -916,7 +926,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.110 · 07-11";
+  window.VERSION = "v0.111 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -946,6 +956,9 @@
   document.addEventListener("DOMContentLoaded", function () {
     var pie = document.getElementById("verPie");
     if (pie) pie.textContent = window.VERSION.split(" ")[0] + " · ";
+    /* también en la hoja: para saber si llegó el deploy sin salir de la partida */
+    var enHoja = document.getElementById("verAjustes");
+    if (enHoja) enHoja.textContent = "Versión " + window.VERSION;
   });
   var diag = document.getElementById("diag");
   var caja = document.getElementById("errores");
@@ -1240,6 +1253,7 @@
        este cambio parecía tener. -->
   <div class="principal parriba">
   <div class="cabvista"><h2><button type="button" class="volver" id="volverDeLaPartida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="volverAQue">Partidas</span></button></h2>
+    <span class="apertura" id="revApertura"></span>
     <!-- LA TUERCA ESTÁ DIBUJADA, no es el glifo ⚙ del sistema (v0.92). Es la
          misma lección de las piezas de la v27 (§4bis): un glifo depende de la
          fuente del aparato y el que sale es el hueco pensado para texto
@@ -1399,6 +1413,7 @@
        que ahí no existen. -->
   <label class="ajFila soloAncho"><span>Las jugadas de al lado</span>
     <select id="formaJugadas" class="chico"></select></label>
+  <p class="ajVersion" id="verAjustes"></p>
 </div>
 
 <p class="credito"><span id="verPie"></span>Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
@@ -3170,6 +3185,7 @@ function mostrarVista(v, opc) {
   let actual = VISTA;
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
   document.body.classList.toggle("enVista", actual !== "inicio");
+  document.body.classList.toggle("ocupado", OCUPADO);
   ver("zonaRevision", HAY.partida && actual === "partida");
   ver("zonaResumen", HAY.partida && actual === "partida");
   ver("zonaMes", actual === "mes");
@@ -3187,10 +3203,11 @@ function mostrarVista(v, opc) {
   if (opc.scroll) window.scrollTo(0, SCROLL[actual] || 0);
 }
 
-function fundido() {
-  document.body.classList.remove("fundido");
-  void document.body.offsetWidth;
-  document.body.classList.add("fundido");
+/* lo nuevo llega quieto: sin esto, la barra de la evaluación se animaba
+   desde cero al aparecer la Partida */
+function quieto() {
+  document.body.classList.add("quieto");
+  setTimeout(() => document.body.classList.remove("quieto"), 80);
 }
 
 /* Ir a otra pantalla empuja una entrada de historial, sobre la MISMA url para
@@ -3201,16 +3218,16 @@ function irAPantalla(v) {
   if (v === VISTA) return mostrarVista();
   const de = VISTA;
   try { history.pushState({ vista: v, de }, "", location.href); } catch (e) { /* nada */ }
+  quieto();
   mostrarVista(v);
-  fundido();
-  /* setTimeout y no requestAnimationFrame: rAF no corre en una pestaña que no
-     se está viendo, y entonces el salto no pasaría nunca */
-  setTimeout(() => window.scrollTo(0, 0), 0);
+  /* en el acto y no en un setTimeout: con la demora se pintaba un cuadro de la
+     pantalla nueva en el scroll de la vieja y después saltaba */
+  window.scrollTo(0, 0);
 }
 
 function volver() {
   if (history.state && history.state.vista) history.back();
-  else { mostrarVista("inicio", { scroll: true }); fundido(); }
+  else { quieto(); mostrarVista("inicio", { scroll: true }); }
 }
 
 /* El navegador guarda su propia posición de scroll por entrada de historial y
@@ -3220,8 +3237,8 @@ function volver() {
 try { history.scrollRestoration = "manual"; } catch (e) { /* navegador viejo */ }
 
 window.addEventListener("popstate", ev => {
+  quieto();
   mostrarVista((ev.state && ev.state.vista) || "inicio", { scroll: true });
-  fundido();
 });
 const log = (...a) => window.LOG.add("·", a.join(" "));
 
@@ -3236,11 +3253,19 @@ const estado = t => { $("estado").textContent = t; };
    la v26—, que en modo simple es lo primero que se nota. Se muestra con el
    primer progreso() y se va al terminar, no al llegar a cero: un barrido pasa
    por progreso(0) al arrancar cada partida. */
+/* LA BARRA ESPERA 300 ms ANTES DE APARECER (v0.111): una partida que ya estaba
+   en la caché sale al toque, y mostrar la barra para eso era un parpadeo en el
+   inicio justo antes de pasar a la Partida —Juan: "esa pantalla empieza a
+   hacer algo y después te lleva a la otra"—. Si sigue corriendo a los 300 ms,
+   se muestra. */
+let BARRA_T = null;
 const progreso = f => {
-  $("barra").classList.remove("oculto");
   $("progreso").style.width = Math.round(f * 100) + "%";
+  if ($("barra").classList.contains("oculto") && !BARRA_T)
+    BARRA_T = setTimeout(() => { BARRA_T = null; $("barra").classList.remove("oculto"); }, 300);
 };
 const esconderBarra = () => {
+  clearTimeout(BARRA_T); BARRA_T = null;
   $("barra").classList.add("oculto");
   $("progreso").style.width = "0%";
 };
@@ -6440,6 +6465,10 @@ function pintarRevision() {
 
   /* el rival y su elo salen de las cabeceras del PGN; si la partida no las
      trae (un PGN pegado a mano puede no traerlas) se muestra lo que haya */
+  /* sin el código ECO: en el celu entran ~240 px y "C54 " se come el nombre
+     sin decirle nada a la vista (revisor, v0.111). Completo, en el title. */
+  $("revApertura").textContent = (R.apertura || "").replace(/^[A-E]\d\d\s+/, "");
+  $("revApertura").title = R.apertura || "";
   const yo = ladoDelUsuario(R);
   if (yo) {
     const rival = (yo === "w" ? R.cab.Black : R.cab.White) || "";

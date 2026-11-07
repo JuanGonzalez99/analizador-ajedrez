@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.110**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.111**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -919,9 +919,31 @@ Cómo está hecho:
 
 Lo que quedó sin hacer, a propósito: el texto de Stockfish sigue siempre (la
 app no guarda el usuario, así que "solo la primera vez" no tiene de dónde
-salir); "Listo. Apertura…" sigue en el inicio (en la Partida no hay alto
-libre); Modo y Mate a la vista siguen en el inicio, y tocar una partida no la
+salir); Modo y Mate a la vista siguen en el inicio, y tocar una partida no la
 analiza sola: eso es una duda para Juan.
+
+**v0.111, lo que dijo Juan al usarla.** El fundido de 120 ms *"no se sintió
+bien… brusco, medio violento"*, y además la pantalla de origen "empezaba a
+hacer algo" antes de irse y la nueva "seguía haciendo algo" al llegar. Las tres
+cosas que lo hacían, y qué se hizo:
+- el fundido: se fue. El paso es seco hasta que la etapa 3 diseñe uno bueno;
+- la barra de la evaluación (y cualquier otra con `transition`) se animaba
+  desde cero al aparecer: `quieto()` pone `body.quieto`, que apaga las
+  transiciones 80 ms durante el cambio;
+- el scroll iba en un `setTimeout`, así que se pintaba un cuadro de la pantalla
+  nueva en el scroll de la vieja: ahora es en el acto;
+- la barra de progreso parpadeaba en el inicio aunque la partida saliera de la
+  caché: ahora espera 300 ms antes de aparecer (`BARRA_T`).
+
+Y dos cosas que la v0.110 había dejado sin hacer y Juan preguntó por qué:
+**la apertura** ("Listo. Apertura…" solo se veía en el inicio) ahora va en el
+renglón del volver, entre "‹ Partidas" y la tuerca, tenue y cortada con "…"
+(`#revApertura`, sin el código ECO, que queda en el `title`; se esconde
+mientras algo corre, porque ese lugar es del estado). No suma alto: la cabecera sigue en 34 y la fila de abajo en 743. El
+"no hay lugar" de la v0.110 era cierto para un renglón nuevo, pero el lugar
+existía al costado; tendría que haberse devuelto al revisor en vez de
+descartarse. Y **la versión** también se ve al pie de la hoja de ajustes
+(`#verAjustes`), para no tener que salir de la partida a buscarla.
 
 ## 4septies. Ganadas, empatadas y perdidas (v0.39, y el listado en la v0.42)
 
