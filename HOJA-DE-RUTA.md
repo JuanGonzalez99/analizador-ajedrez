@@ -104,8 +104,8 @@ lo demás se dibuja contra ella.
       de resumen repite la cadencia del select de al lado. Pregunta a
       contestar: ¿qué tiene que decir la cabecera para saber, sin subir, de qué
       mes, de qué cadencia y de cuántas partidas son los números? Con variantes.
-- [ ] **Lavado de cara de la estructura: cuáles son las pantallas y cómo se
-      pasa de una a otra** (revisor, v0.105). Hoy es una sola página larga con
+- [x] **Lavado de cara de la estructura: cuáles son las pantallas y cómo se
+      pasa de una a otra** (v0.110, 7-nov: tres pantallas, inicio + Partida + Mes con "‹ Partidas"; revisor, v0.105). Hoy es una sola página larga con
       zonas apiladas (entrada, Mes, Partidas, Revisión, Resumen) y al Mes se
       llega scrolleando. Con práctica y lecciones en camino (`NORTE.md`), ¿qué
       es la pantalla principal y cómo se va de una a otra en el celu sin
@@ -135,6 +135,19 @@ lo demás se dibuja contra ella.
       1280): "Total" queda a ~680 px de las etiquetas y el ojo se pierde en el
       renglón. ¿Ancho máximo de lectura, o dos tablas/secciones en columnas?
       Con variantes.
+- [ ] **Lavado de cara del inicio: elegir, bajar y apretar** (revisor, v0.110).
+      Con un mes real de 30 a 60 partidas, "Analizar la partida" queda debajo
+      de toda la lista. Ahora que la Partida es el detalle de la lista, lo
+      esperable (chess.com, Material) es tocar la fila y entrar, analizando si
+      hace falta. ¿Y entonces dónde viven Modo, Mate a la vista y "Analizar el
+      mes"? Va con la duda de Modo y Mate de abajo, y con la otra pregunta del
+      revisor: cuando lleguen práctica y lecciones, ¿el inicio es una entrada a
+      módulos o el analizador sigue siendo la pantalla principal? Con variantes.
+- [ ] **[PC] Lavado de cara: el inicio con el ancho de la compu** (revisor,
+      v0.110). A 1280 es una columna de cosas chicas sobre 1082 de ancho: el
+      select del mes mide 140 y la tarjeta de Estadísticas estira el "›" a
+      ~1000 px del título. ¿Lista y análisis lado a lado, o un ancho máximo de
+      lectura? Pariente del ítem del Mes de arriba. Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -234,6 +247,15 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   21 px, lejos de los 48 de §1.7.
 - **Tablero de fábrica:** pasó a "Noche" (el verde de A). Si tenías madera
   porque era la de fábrica, ahora ves Noche; si la querés, está en ajustes.
+- **No sé si esto te copa (v0.110):** la app pasó de una página larga a
+  pantallas. Inicio con usuario, mes y lista; la partida y las estadísticas en
+  pantalla entera con "‹ Partidas" arriba, y el gesto de volver del celu hace
+  lo mismo. Se descartaron las pestañas fijas abajo o arriba porque cortaban la
+  fila de botones de la jugada.
+- **Modo y Mate a la vista, y tocar para analizar** (revisor, v0.110):
+  (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
+  la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
+  revisor recomienda la 1.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
   área de toque invisible de 48 de `DISENO.md` §1.7.
 

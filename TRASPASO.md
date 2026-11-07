@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.109**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.110**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -800,6 +800,10 @@ propósito, que es lo que el anterior no hacía.
 
 ## 4sexies. Partida y Mes son dos vistas, y se conmutan (v0.38)
 
+> **Desde la v0.110 son TRES PANTALLAS** (inicio, Partida, Mes) y el
+> conmutador se fue: ver "Tres pantallas" al final de esta sección. Lo de
+> abajo es la historia; las tres trampas del scroll siguen valiendo.
+
 Cierra la decisión tomada al empezar el refactor: **dos vistas equivalentes**, no
 una apilada debajo de la otra. Se ve una por vez.
 
@@ -845,6 +849,79 @@ vuelta.
 
 Verificado en el navegador: desde scroll 0, 600 y 1200, abrir una partida deja
 el tablero **entero** en pantalla y volver restaura la posición exacta.
+
+### Tres pantallas: inicio, Partida y Mes (v0.110)
+
+El lavado de cara de la estructura (lo marcó el revisor en la v0.105). Hasta
+la v0.109 la app era **una sola página apilada**: la entrada arriba y la vista
+debajo, así que la revisión arrancaba en y=685 a 412×760 y volver a la lista
+era subir 680 px.
+
+**Se dibujaron tres** sobre la app de verdad (maqueta descartable): A, barra
+de navegación fija abajo (Partidas / Partida / Mes); B, barra fija arriba con
+el contexto (usuario · mes · cadencia) y pestañas; C, **inicio + volver**. El
+revisor eligió la C, y los números lo decidieron: con A la fila de abajo de la
+jugada quedaba 79 px tapada por la barra, y con B terminaba en 839 de 760.
+Además "Partida" no es un destino hermano de la lista sino su detalle (Material
+pone las pestañas para destinos de primer nivel, y esos van a ser los módulos
+de `NORTE.md`). La pregunta de la v0.108 —¿una barra común para el contexto?—
+quedó contestada con "no hace falta": el contexto vive en el inicio, en la
+Partida el contexto es la partida, y en el Mes el título es el mes.
+
+Cómo está hecho:
+
+- **`VISTA` es "inicio", "partida" o "mes"**, y `mostrarVista()` sigue siendo la
+  única puerta (la prueba ahora cubre también `zonaEstado` y `tarjetaMes`). Si
+  la pantalla pedida no tiene contenido y no hay nada corriendo, se ve el
+  inicio. Lo que es solo del inicio lleva `.soloInicio`, y `body.enVista` lo
+  esconde.
+- **`irAPantalla(v)` es el único que empuja historial** (`{ vista, de }` sobre la
+  misma URL). `volver()` hace `history.back()` si hay entrada, y `popstate`
+  restaura la pantalla y su scroll (`SCROLL.inicio`, `SCROLL.mes`). El "‹" dice
+  a dónde lleva: "Partidas", o "Estadísticas" si se llegó desde la lista del
+  Mes (`history.state.de`). Ojo con el nombre: `irA(i)` ya existía y es la de
+  las jugadas.
+- **El "‹ Partidas" ocupa el lugar del h2 "Revisión"** y mide lo mismo (34 la
+  cabecera): el área de 48 la pone un `::before` invisible, que a propósito no
+  llega a x<4, donde `mirar` estaciona el puntero (si no, sale con hover en
+  todas las capturas). En pantalla propia la cabecera va sin el margen de 24 y
+  el body con 8 arriba: medido, **la fila de abajo de la jugada termina en 743
+  de 760**, igual que antes al llegar.
+- **Cuándo se cambia sola de pantalla:** al terminar de analizar una partida
+  (va a la Partida) y con el primer resultado del mes (va al Mes, una sola vez:
+  si volviste al inicio a mitad de camino no te vuelve a llevar).
+- **El estado del trabajo salió a `#zonaEstado`** (estado, barra, Detener): en el
+  inicio se ve siempre, en Partida y Mes solo mientras algo corre
+  (`OCUPADO`, que pone `ocupado()`). Si no, cambiar el mes desde la cabecera de
+  Estadísticas analizaba sin mostrar ni progreso ni Detener. De paso, los
+  errores de "Buscar" (que vivían adentro de `zonaAnalizar`, escondida en ese
+  momento) ahora se ven.
+  **En Partida y Mes esa zona mide cero** (corrección del revisor): en el flujo,
+  analizar el mes con una partida abierta bajaba el tablero 79 px y al terminar
+  todo subía de golpe. Ahí el texto va en la cabecera, entre el volver y la
+  tuerca (12,5, tenue, una línea), la barra es una raya de 3 px en el borde de
+  abajo de la cabecera, y "Detener" queda en el inicio. Medido: volver 11,
+  tablero 172 y fila de abajo 743, iguales con y sin algo corriendo.
+- **La partida que acabás de ver se abre de un toque** desde la lista (si `R.meta`
+  es esa partida y no hay nada corriendo): si no, después de "‹ Partidas" había
+  que bajar hasta "Analizar la partida". El h2 de la lista pasó a "Partidas",
+  que es el nombre al que lleva el "‹".
+- **La tarjeta "Estadísticas de Octubre 2026 ›"** está en el inicio, abajo del
+  select del mes, y solo cuando el mes está analizado. El select del mes dice
+  "Octubre 2026" y no "2026-10", para que la tarjeta y el select no parezcan
+  dos meses distintos.
+- **Fundido de 120 ms** al cambiar de pantalla (`body.fundido`, curva de entrada de §1.8), sin deslizar,
+  para que el tablero no se mueva; con movimiento reducido lo apaga la regla
+  general.
+- **En la compu es igual.** Ahí también estaba apilado; la pantalla de la
+  Partida solo ganó los 24+8 px de arriba (por eso `tres columnas` da más aire
+  abajo).
+
+Lo que quedó sin hacer, a propósito: el texto de Stockfish sigue siempre (la
+app no guarda el usuario, así que "solo la primera vez" no tiene de dónde
+salir); "Listo. Apertura…" sigue en el inicio (en la Partida no hay alto
+libre); Modo y Mate a la vista siguen en el inicio, y tocar una partida no la
+analiza sola: eso es una duda para Juan.
 
 ## 4septies. Ganadas, empatadas y perdidas (v0.39, y el listado en la v0.42)
 

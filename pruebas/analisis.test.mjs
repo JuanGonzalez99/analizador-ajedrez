@@ -783,31 +783,37 @@ test("los segundos tienen su propio denominador", () => {
   assert.equal(t.seg, 4);
 });
 
-/* --- el conmutador Partida / Mes, v0.38 --- */
+/* --- las tres pantallas: inicio, Partida y Mes (v0.38, rehecho en la v0.110) --- */
 
-test("solo mostrarVista prende y apaga las zonas de las dos vistas", () => {
-  /* Con dos vistas equivalentes, un ver() suelto en cualquier final de análisis
-     las desincroniza: quedan las dos visibles, o ninguna, o una pestaña que no
-     corresponde. Tiene que haber una sola puerta. */
+test("solo mostrarVista prende y apaga las zonas de las pantallas", () => {
+  /* Con varias pantallas, un ver() suelto en cualquier final de análisis
+     las desincroniza: quedan dos visibles, o ninguna. Tiene que haber una
+     sola puerta. */
   const cuerpo = html.slice(html.indexOf("function mostrarVista"),
-                            html.indexOf("function volverAlMes"));
+                            html.indexOf("function fundido"));
   /* se cuenta por subcadena y no con expresión regular: el paréntesis obliga a
      escapar y es justo donde se rompe sin que nadie lo note */
   const contar = (texto, sub) => texto.split(sub).length - 1;
-  for (const z of ["zonaRevision", "zonaResumen", "zonaMes"]) {
+  for (const z of ["zonaRevision", "zonaResumen", "zonaMes", "zonaEstado", "tarjetaMes"]) {
     const marca = `ver("${z}"`;
     assert.equal(contar(html, marca), contar(cuerpo, marca),
       `${z} se prende o apaga fuera de mostrarVista`);
   }
 });
 
-test("solo el salto desde la lista del mes empuja historial", () => {
-  /* Conmutar con la pestaña es navegación deliberada y no tiene un "de dónde
-     venías"; empujarla también dejaría el historial lleno de entradas que no
-     significan nada. */
+test("solo irAPantalla empuja historial, y sobre la misma url", () => {
+  /* Un solo lugar empuja: así el gesto de volver de Android, la flecha del
+     navegador y el "‹" de arriba deshacen siempre lo mismo. */
   assert.equal((html.match(/history\.pushState/g) || []).length, 1);
-  assert.ok(html.includes('history.pushState({ vista: "partida" }, "", location.href)'),
+  const cuerpo = html.slice(html.indexOf("function irAPantalla"), html.indexOf("function volver()"));
+  assert.ok(cuerpo.includes('history.pushState({ vista: v, de }, "", location.href)'),
     "sobre la misma url, o una recarga da 404 en GitHub Pages");
+});
+
+test("lo de la entrada lleva soloInicio y se esconde en la Partida y el Mes", () => {
+  for (const id of ["zonaMeses", "zonaPartidas", "zonaAnalizar", "zonaPegar"])
+    assert.match(html, new RegExp(`id="${id}" class="[^"]*soloInicio`), id);
+  assert.ok(!html.includes('id="conmutador"'), "el conmutador lo reemplazó la tarjeta del mes");
 });
 
 /* --- de dónde salen los números, v0.36 --- */

@@ -295,13 +295,54 @@
      Es un fallo que no se ve en las pruebas: la clase está puesta, no surte
      efecto. */
   .oculto { display: none !important; }
-  /* El conmutador entre las dos vistas. Aparece solo cuando hay las dos: con
-     una sola no hay nada que conmutar y dos pestañas, una vacía, confunden. */
-  .conmutador { display: flex; gap: var(--e-2); margin: 16px 0 4px; }
-  .conmutador button { flex: 1; height: 40px; font-size: var(--t-secundario); font-weight: 600; }
-  /* lo elegido se subraya de acento, igual que la jugada en la tira (§1.6) */
-  .conmutador button.sel { box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
-  #volverMes { margin-bottom: 4px; }
+  /* PANTALLAS Y NO UNA PÁGINA APILADA (v0.110, §4sexies). El inicio es la
+     entrada —usuario, mes, lista, análisis—, y la Partida y el Mes ocupan la
+     pantalla entera, con "‹ Partidas" en el lugar del título. Se eligió entre
+     tres dibujadas (pestañas abajo, barra arriba con el contexto, esta): las
+     dos con barra fija le comían 64 a 70 px a la vista de la jugada y le
+     cortaban la fila de abajo, y "Partida" no es un destino hermano de la
+     lista sino su detalle. Lo que es solo del inicio lleva `.soloInicio`. */
+  body.enVista .soloInicio { display: none !important; }
+  /* en pantalla propia el título va arriba de todo: el margen de 24 era para
+     separarlo de la entrada, que ya no está encima */
+  body.enVista #zonaRevision .cabvista, body.enVista #zonaMes .cabvista { margin-top: 0; }
+  body.enVista { padding-top: 8px; }
+  /* LO QUE CORRE NO EMPUJA LA PANTALLA (revisor, v0.110): con la zona de
+     estado en el flujo, analizar el mes con una partida abierta bajaba el
+     tablero 79 px y la fila de abajo quedaba fuera; al terminar, todo subía de
+     golpe. En Partida y Mes la zona mide cero: el texto va en la cabecera,
+     entre el volver y la tuerca, y la barra es una línea de 3 px en el borde
+     de abajo de la cabecera. "Detener" queda en el inicio, a un "‹". */
+  body.enVista #zonaEstado { position: relative; height: 0; margin: 0; z-index: 2; }
+  body.enVista #estado { position: absolute; top: 0; left: 150px; right: 46px; margin: 0;
+    line-height: 34px; font-size: 12.5px; color: var(--tenue); text-align: right;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  body.enVista #zonaEstado .barra { position: absolute; top: 33px; left: 0; right: 0;
+    height: 3px; margin: 0; }
+  body.enVista #zonaEstado .fila { display: none; }
+  /* EL VOLVER NO AGRANDA EL RENGLÓN: lo visible mide lo que medía el h2
+     "Revisión", y el área de 48 de §1.7 la pone un ::before invisible. */
+  .volver { background: none; border: 0; padding: 0; margin: 0 0 0 -6px; font: inherit;
+            color: inherit; line-height: inherit; display: inline-flex; align-items: center;
+            gap: 0; position: relative; cursor: pointer; border-radius: 0; }
+  /* ni fondo al pasar el mouse: un bloque gris sobre el título se lee como
+     campo, no como volver. El área invisible no llega al borde izquierdo de la
+     pantalla (x 4), que es donde `mirar` estaciona el puntero. */
+  .volver:hover, .volver:active, .volver:focus { background: none; }
+  .volver:hover { color: var(--acento); }
+  .volver::before { content: ""; position: absolute; inset: -13px -10px -13px -4px; }
+  .volver svg { width: 22px; height: 22px; flex: none; }
+  /* La puerta al Mes desde el inicio: es tarjeta porque se toca */
+  .tarjetaMes { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                width: 100%; text-align: left; margin: var(--e-6) 0 0; padding: 12px 14px;
+                background: var(--superficie); border: 0; border-radius: 12px; color: var(--texto); }
+  .tarjetaMes b { display: block; font-size: var(--t-cuerpo, 16px); }
+  .tarjetaMes small { display: block; color: var(--tenue); font-size: var(--t-secundario); font-weight: 400; }
+  .tarjetaMes .flecha { color: var(--tenue); font-size: 22px; line-height: 1; }
+  /* el paso de pantalla: fundido corto, sin deslizar, para que el tablero no
+     se mueva (§1.8; con movimiento reducido lo apaga la regla de abajo) */
+  @keyframes fundido { from { opacity: 0; } }
+  body.fundido { animation: fundido 120ms cubic-bezier(.2, 0, 0, 1); }
   /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
      agrega las perillas de medición. Se marca en <html> para que baste CSS y
      no haya que esconder cada cosa a mano desde JS. */
@@ -855,8 +896,8 @@
   }
 </style>
 
-<h1>Analizador de partidas</h1>
-<p class="n">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
+<h1 class="soloInicio">Analizador de partidas</h1>
+<p class="n soloInicio">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
 
 <!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
      sirve para avisar que el módulo falló. Acá vive también el registro, para
@@ -875,7 +916,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.109 · 07-11";
+  window.VERSION = "v0.110 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1034,23 +1075,24 @@
   }, 6000);
 </script>
 
-<div class="fila">
+<div class="fila soloInicio">
   <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
   <button id="buscar">Buscar</button>
   <button id="verPegar" class="chico">o pegar un PGN</button>
 </div>
 
-<div id="zonaPegar" class="oculto" style="margin-top:10px">
+<div id="zonaPegar" class="oculto soloInicio" style="margin-top:10px">
   <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
   <div class="fila" style="margin-top:6px"><button id="usarPgn" class="chico">Usar este PGN</button></div>
 </div>
 
-<div id="zonaMeses" class="oculto"><h2>Mes</h2><select id="meses"></select></div>
-<div id="zonaPartidas" class="oculto"><h2>Partida</h2>
+<div id="zonaMeses" class="oculto soloInicio"><h2>Mes</h2><select id="meses"></select>
+  <button type="button" id="tarjetaMes" class="tarjetaMes oculto"><span><b id="tarjetaMesTit">Estadísticas</b><small id="tarjetaMesSub"></small></span><span class="flecha" aria-hidden="true">&rsaquo;</span></button></div>
+<div id="zonaPartidas" class="oculto soloInicio"><h2>Partidas</h2>
   <p class="marcadorMes oculto" id="partidasMarcador"></p>
   <div id="partidas" class="lista"></div></div>
 
-<div id="zonaAnalizar" class="oculto">
+<div id="zonaAnalizar" class="oculto soloInicio">
   <h2>Análisis</h2>
   <div class="fila solo-dev">
     <label>Profundidad
@@ -1103,7 +1145,6 @@
   <div class="fila" style="margin-top:8px">
     <button id="analizar">Analizar la partida</button>
     <button id="analizarMes" class="chico">Analizar el mes</button>
-    <button id="detener" class="chico oculto">Detener</button>
   </div>
   <div class="fila solo-dev" style="margin-top:8px">
     <button id="medir" class="chico">Copiar medición de Genial</button>
@@ -1111,13 +1152,15 @@
     <button id="barrido" class="chico">Barrer motores y memoria</button>
     <button id="salirDev" class="chico">Salir del modo dev</button>
   </div>
-  <p id="estado"></p>
-  <div class="barra oculto" id="barra"><i id="progreso"></i></div>
 </div>
 
-<div class="conmutador oculto" id="conmutador">
-  <button id="tabPartida">Partida</button>
-  <button id="tabMes">Mes</button>
+<!-- EL ESTADO DEL TRABAJO VIVE APARTE (v0.110): en el inicio se ve siempre,
+     y en la Partida o el Mes solo mientras algo corre, para que el progreso y
+     "Detener" no queden escondidos en otra pantalla. -->
+<div id="zonaEstado">
+  <p id="estado"></p>
+  <div class="barra oculto" id="barra"><i id="progreso"></i></div>
+  <div class="fila"><button id="detener" class="chico oculto">Detener</button></div>
 </div>
 
 <div id="zonaBanco" class="oculto solo-dev">
@@ -1131,6 +1174,7 @@
        seleccionado", pero no QUÉ mes: ese estaba en #meses, arriba, que con el
        scroll ya no se ve. Ahora el selector de arriba de todo dice el mes y
        deja elegir otro. Arriba, "Estadísticas" como rótulo chico (v0.109). -->
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDelMes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Partidas</button></h2></div>
   <h2 class="rotulo">Estadísticas</h2>
   <div class="fila">
     <select id="fuente" class="chico" aria-label="Mes de las estadísticas">
@@ -1195,8 +1239,7 @@
        termine DEBAJO de los cuadritos y los botones, que era el precio que
        este cambio parecía tener. -->
   <div class="principal parriba">
-  <button class="chico oculto" id="volverMes">&lsaquo; Volver al mes</button>
-  <div class="cabvista"><h2>Revisión</h2>
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDeLaPartida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="volverAQue">Partidas</span></button></h2>
     <!-- LA TUERCA ESTÁ DIBUJADA, no es el glifo ⚙ del sistema (v0.92). Es la
          misma lección de las piezas de la v27 (§4bis): un glifo depende de la
          fuente del aparato y el que sale es el hueco pensado para texto
@@ -3107,53 +3150,78 @@ function pintarExplicacion(id, partes, tocable = true) {
   return partes.length > 0;
 }
 
-/* Partida y Mes son dos vistas equivalentes y se ve una por vez.
+/* TRES PANTALLAS (v0.110): el inicio, la Partida y el Mes. Se ve una por vez.
    TODO lo que muestra u oculta esas zonas pasa por acá: antes cada final de
-   análisis las prendía y apagaba por su cuenta, y con dos vistas eso se
-   desincroniza al primer descuido. */
+   análisis las prendía y apagaba por su cuenta, y eso se desincroniza al
+   primer descuido. `VISTA` es la pantalla pedida; si no tiene contenido (y no
+   hay nada corriendo que la vaya a llenar) se ve el inicio. */
 const HAY = { partida: false, mes: false };
-let VISTA = "partida", DESDE_LISTA = false, SCROLL_MES = 0;
+let VISTA = "inicio", OCUPADO = false;
+const SCROLL = { inicio: 0, mes: 0 };
 
 function mostrarVista(v, opc) {
   opc = opc || {};
   if (v && v !== VISTA) {
-    /* al salir del mes se guarda dónde estabas. Volver y encontrar la lista
-       arriba de todo, después de haber bajado veinte partidas, es no volver. */
-    if (VISTA === "mes") SCROLL_MES = window.scrollY;
+    /* al salir se guarda dónde estabas. Volver y encontrar la lista arriba de
+       todo, después de haber bajado veinte partidas, es no volver. */
+    if (VISTA in SCROLL) SCROLL[VISTA] = window.scrollY;
     VISTA = v;
   }
-  const dos = HAY.partida && HAY.mes;
-  const actual = dos ? VISTA : (HAY.partida ? "partida" : "mes");
-  ver("conmutador", dos);
+  let actual = VISTA;
+  if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
+  document.body.classList.toggle("enVista", actual !== "inicio");
   ver("zonaRevision", HAY.partida && actual === "partida");
   ver("zonaResumen", HAY.partida && actual === "partida");
-  ver("zonaMes", HAY.mes && actual === "mes");
-  $("tabPartida").classList.toggle("sel", actual === "partida");
-  $("tabMes").classList.toggle("sel", actual === "mes");
-  /* el botón de volver solo cuando hay a dónde volver: se llegó desde la lista */
-  ver("volverMes", actual === "partida" && DESDE_LISTA && HAY.mes);
-  if (opc.scroll && actual === "mes") window.scrollTo(0, SCROLL_MES);
+  ver("zonaMes", actual === "mes");
+  ver("zonaEstado", actual === "inicio" || OCUPADO);
+  ver("tarjetaMes", HAY.mes);
+  if (HAY.mes) {
+    $("tarjetaMesTit").textContent = "Estadísticas de " +
+      (FUENTE === "todo" ? "todo lo analizado" : nombreMes($("meses").value));
+    $("tarjetaMesSub").textContent = MES && MES.resultados
+      ? cuantas(MES.resultados.length, "partida analizada", "partidas analizadas") : "";
+  }
+  /* "‹ Partidas" o "‹ Estadísticas": dice a dónde te lleva, que es de donde viniste */
+  const de = history.state && history.state.de;
+  $("volverAQue").textContent = de === "mes" ? "Estadísticas" : "Partidas";
+  if (opc.scroll) window.scrollTo(0, SCROLL[actual] || 0);
 }
 
-/* Volver al mes es siempre el mismo camino, venga del gesto de Android, de la
-   flecha del navegador, del botón o de la pestaña: si se llegó desde la lista
-   hay una entrada de historial que deshacer, y si no, es una conmutación. */
-function volverAlMes() {
-  if (DESDE_LISTA) history.back();
-  else mostrarVista("mes", { scroll: true });
+function fundido() {
+  document.body.classList.remove("fundido");
+  void document.body.offsetWidth;
+  document.body.classList.add("fundido");
+}
+
+/* Ir a otra pantalla empuja una entrada de historial, sobre la MISMA url para
+   que una recarga no dé 404 en GitHub Pages. Así el gesto de volver de
+   Android, la flecha del navegador y el "‹" de arriba hacen lo mismo, y un
+   gesto de más desde el inicio sale de la app, que es lo correcto. */
+function irAPantalla(v) {
+  if (v === VISTA) return mostrarVista();
+  const de = VISTA;
+  try { history.pushState({ vista: v, de }, "", location.href); } catch (e) { /* nada */ }
+  mostrarVista(v);
+  fundido();
+  /* setTimeout y no requestAnimationFrame: rAF no corre en una pestaña que no
+     se está viendo, y entonces el salto no pasaría nunca */
+  setTimeout(() => window.scrollTo(0, 0), 0);
+}
+
+function volver() {
+  if (history.state && history.state.vista) history.back();
+  else { mostrarVista("inicio", { scroll: true }); fundido(); }
 }
 
 /* El navegador guarda su propia posición de scroll por entrada de historial y
    la restaura al volver, pisando la nuestra. Con "manual" el control es de la
-   app. Medido: sin esto, volver al mes devolvía a una posición vieja de otra
+   app. Medido: sin esto, volver devolvía a una posición vieja de otra
    navegación en vez de a donde estabas. */
 try { history.scrollRestoration = "manual"; } catch (e) { /* navegador viejo */ }
 
-/* Solo el salto lista → partida empuja historial: es el único que tiene un
-   "de dónde venías". Conmutar con la pestaña es navegación deliberada. */
 window.addEventListener("popstate", ev => {
-  if (ev.state && ev.state.vista === "partida") { DESDE_LISTA = true; mostrarVista("partida"); }
-  else { DESDE_LISTA = false; mostrarVista("mes", { scroll: true }); }
+  mostrarVista((ev.state && ev.state.vista) || "inicio", { scroll: true });
+  fundido();
 });
 const log = (...a) => window.LOG.add("·", a.join(" "));
 
@@ -4744,7 +4812,7 @@ $("buscar").onclick = seguro("buscar", async () => {
     MESES = meses;
     TODO = null;
     $("meses").innerHTML = meses.slice().reverse()
-      .map(m => `<option value="${m}">${m.slice(-7).replace("/", "-")}</option>`).join("");
+      .map(m => `<option value="${m}">${nombreMes(m)}</option>`).join("");
     ver("zonaMeses", true);
     await cargarMes(meses[meses.length - 1]);
   } catch (e) { ver("zonaMeses", false); window.mostrarError("buscar", e); estado(e.message); }
@@ -4851,7 +4919,7 @@ $("fuente").onchange = seguro("fuente", async () => {
      es justamente para lo que sirve. */
   if (MES || (FUENTE === "todo" && TODO)) {
     pintarMes(MES ? MES.prof : TODO.prof);
-    HAY.mes = true; mostrarVista("mes");
+    HAY.mes = true; irAPantalla("mes");
   }
 });
 
@@ -4859,7 +4927,7 @@ async function cargarMes(url) {
   $("partidas").innerHTML = "<div>Cargando…</div>";
   $("partidasMarcador").textContent = ""; ver("partidasMarcador", false);
   ver("zonaPartidas", true);
-  HAY.mes = false; mostrarVista(VISTA);
+  HAY.mes = false; mostrarVista();
   MES = null;
   const j = await (await fetch(url)).json();
   PARTIDAS = (j.games || []).reverse();
@@ -4892,6 +4960,12 @@ async function cargarMes(url) {
       $("partidas").querySelectorAll("div").forEach(x => x.classList.remove("sel"));
       d.classList.add("sel");
       const g = PARTIDAS[+d.dataset.i];
+      /* la partida que acabás de ver se abre de un toque: después de "‹
+         Partidas" era bajar hasta "Analizar la partida" (revisor, v0.110) */
+      if (HAY.partida && !TRABAJANDO && R && R.meta && idPartida(R.meta) === idPartida(g)) {
+        irAPantalla("partida");
+        return;
+      }
       ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g;
       ver("zonaAnalizar", true);
       ocupado(false);
@@ -4927,7 +5001,9 @@ function ocupado(si) {
      trabajando. Desde la v0.74 la variante se abre TOCANDO EL TABLERO y no con
      un botón, así que lo que se apaga es el toque, no un `disabled`. */
   TRABAJANDO = si;
+  OCUPADO = si;
   ver("detener", si);
+  mostrarVista();
   if (si) CANCELAR = false;
 }
 $("detener").onclick = () => { CANCELAR = true; estado("Deteniendo\u2026"); };
@@ -4938,7 +5014,7 @@ $("analizar").onclick = seguro("analizar", async () => {
   anotarConfig();
   /* el mes NO se borra: sus datos siguen siendo válidos y con dos vistas
      perderlo por analizar una partida sería perder una pestaña entera */
-  HAY.partida = false; mostrarVista("partida");
+  HAY.partida = false; mostrarVista();
   progreso(0);
   try {
     const prof = +$("prof").value;
@@ -4956,7 +5032,7 @@ $("analizar").onclick = seguro("analizar", async () => {
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
-    HAY.partida = true; DESDE_LISTA = false; mostrarVista("partida");
+    HAY.partida = true; irAPantalla("partida");
     estado((R.deCache ? "Ya estaba analizada. " : "Listo. ") +
            (R.apertura ? "Apertura: " + R.apertura : ""));
     refrescarCache();
@@ -4986,8 +5062,12 @@ async function correrMes(desdeCero) {
     window.LOG.add("·", "barrido descartado: se van a analizar partidas nuevas");
   }
   ocupado(true);
-  HAY.partida = false; mostrarVista("mes");
+  HAY.partida = false; mostrarVista();
   ver("seguirMes", false);
+  /* se pasa al Mes con el primer resultado, no antes: una pantalla sin
+     números no dice nada. Una sola vez: si volviste al inicio a mitad de
+     camino, no te vuelve a llevar. */
+  let fui = VISTA === "mes";
 
   const desde = MES.hechas;
   const hasta = Math.min(PARTIDAS.length, desde + TOPE_MES);
@@ -5019,7 +5099,8 @@ async function correrMes(desdeCero) {
       MES.hechas = i + 1;
       progreso((i - desde + 1) / (hasta - desde));
       pintarMes(prof);
-      HAY.mes = true; mostrarVista("mes");
+      HAY.mes = true;
+      if (!fui) { fui = true; irAPantalla("mes"); } else mostrarVista();
     }
     const seg = Math.round((performance.now() - t0) / 1000);
     window.LOG.add("·", `mes: ${MES.resultados.length} partidas en ${seg} s · ` +
@@ -5028,7 +5109,7 @@ async function correrMes(desdeCero) {
       ? `Detenido en la partida ${MES.hechas}.`
       : `Listo: ${cuantas(MES.resultados.length, "partida", "partidas")} en ${seg} s.`);
     pintarMes(prof);
-    HAY.mes = true; mostrarVista("mes");
+    HAY.mes = true; mostrarVista();
     if (MES.hechas < PARTIDAS.length) {
       const quedan = PARTIDAS.length - MES.hechas;
       $("seguirMes").textContent = `Seguir con ${Math.min(TOPE_MES, quedan)} más (quedan ${quedan})`;
@@ -5077,7 +5158,7 @@ async function correrBanco(lista, queCompara) {
   const prof = +$("prof").value;
   if (prof <= 13) { estado("Para comparar poné profundidad 16 o 18."); return; }
   ocupado(true);
-  HAY.partida = false; HAY.mes = false; mostrarVista("partida");
+  HAY.partida = false; HAY.mes = false; mostrarVista("inicio");
   const filas = [];
   try {
     for (const c of lista) {
@@ -6285,22 +6366,11 @@ function pintarLista() {
       pintarResumen(MES.prof);
       pintarRevision();
       HAY.partida = true;
-      /* una entrada de historial sobre la MISMA url: el gesto de volver de
-         Android y la flecha del navegador devuelven al mes, y un segundo gesto
-         sale de la app, que es lo correcto. Sobre la misma url para que una
-         recarga no dé 404 en GitHub Pages. */
-      DESDE_LISTA = true;
-      try { history.pushState({ vista: "partida" }, "", location.href); } catch (e) { /* nada */ }
-      mostrarVista("partida");
-      /* Después del reflujo y sin animación. El desplazamiento suave lo
-         cancelaba el reajuste del navegador y la página quedaba en cualquier
-         lado —medido: el tablero terminaba 643 px arriba del borde—; por eso
-         además el body lleva overflow-anchor: none.
-         setTimeout y no requestAnimationFrame: rAF no corre en una pestaña que
-         no se está viendo, y entonces el salto no pasaría nunca. */
-      setTimeout(() => {
-        window.scrollTo(0, Math.max(0, $("conmutador").offsetTop - 8));
-      }, 0);
+      /* el salto va sin animación de scroll: el desplazamiento suave lo
+         cancelaba el reajuste del navegador (medido en la v0.38: el tablero
+         terminaba 643 px arriba del borde); por eso el body lleva
+         overflow-anchor: none */
+      irAPantalla("partida");
     };
   });
 }
@@ -6995,9 +7065,9 @@ document.addEventListener("keydown", seguro("teclas", ev => {
   else irA(tecla === "ArrowRight" ? IDX + 1 : IDX - 1);
 }));
 
-$("tabPartida").onclick = seguro("ver la partida", () => mostrarVista("partida"));
-$("tabMes").onclick = seguro("ver el mes", volverAlMes);
-$("volverMes").onclick = seguro("volver al mes", volverAlMes);
+$("volverDeLaPartida").onclick = seguro("volver", volver);
+$("volverDelMes").onclick = seguro("volver", volver);
+$("tarjetaMes").onclick = seguro("ver el mes", () => irAPantalla("mes"));
 
 const atras = () => PRUEBA ? verDeLaVariante(PRUEBA.ver - 1) : irA(IDX - 1);
 const adelante = () => PRUEBA ? verDeLaVariante(PRUEBA.ver + 1) : irA(IDX + 1);
