@@ -116,6 +116,9 @@ lo demás se dibuja contra ella.
       el tablero que siguen entre jugadas, y están metidos entre los datos de
       la jugada; además ya hay hoja de ajustes. ¿Van pegados al tablero
       (íconos en su borde, como chess.com), en la hoja o en esta fila?
+      Juan (7-nov): la D quedó bien, y de la C le copó el ícono, *"sobre
+      todo en la de rotar"* (`DISENO.md` §2). Las variantes de este ítem
+      llevan íconos.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -198,11 +201,6 @@ contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
 
-- **No sé si esto te copa (v0.106):** los botones de abajo ya no cambian la
-  palabra al prenderse ("Ocultar la mejor", "Pintar solo las mías"): se
-  encienden de verde como el cuadrito. "Mostrar la mejor" pasó a "Siempre la
-  mejor" y "Pintar las dos" a "Rival". La otra: volver a cambiar la palabra,
-  pero entonces no entran en la grilla de cuatro.
 - **No sé si esto te copa:** la barra verde a la izquierda de la partida elegida
   en la lista (alternativa: fondo `--elevada` sin barra).
 - **No sé si esto te copa:** en la fila del usuario, "Buscar" (alto normal) y "o
