@@ -447,6 +447,9 @@ hay. Las primeras salen del historial del traspaso.
   barra de progreso que parpadea) y que la nueva **siga haciendo algo al
   llegar** (la barra de la evaluación que se anima desde cero). Lo que cambia de
   pantalla tiene que llegar quieto (7-nov-2026, v0.111).
+- **La apertura en la cabecera de la Partida**, en gris al lado de "‹
+  Partidas" y pegada a la tuerca (v0.111): *"no me gustó para nada"*. Se sacó
+  en la v0.112; dónde va lo decide el lavado de la cabecera (7-nov-2026).
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del

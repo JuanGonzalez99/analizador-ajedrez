@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.111**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.112**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -934,6 +934,11 @@ cosas que lo hacían, y qué se hizo:
   nueva en el scroll de la vieja: ahora es en el acto;
 - la barra de progreso parpadeaba en el inicio aunque la partida saliera de la
   caché: ahora espera 300 ms antes de aparecer (`BARRA_T`).
+
+> **La apertura en la cabecera se sacó en la v0.112**: a Juan *"no me gustó
+> para nada"*. Vuelve a vivir solo en el "Listo." del inicio hasta que el
+> lavado de la cabecera de la Partida decida dónde va, con variantes. El
+> párrafo de abajo queda como historia.
 
 Y dos cosas que la v0.110 había dejado sin hacer y Juan preguntó por qué:
 **la apertura** ("Listo. Apertura…" solo se veía en el inicio) ahora va en el

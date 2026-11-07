@@ -50,6 +50,10 @@ describe. §10 tiene las reglas de trabajo.
   `alinear()` y `espacios()` contestan con números lo que uno iría a buscar a la
   captura. **Importarlo, no reescribirlo**: con eso una maqueta son ~35 líneas
   en vez de ~110, que es de dónde salía el grueso del costo de una tanda.
+- **Toda versión que cambia algo que se ve va con sus capturas, sin que Juan
+  las pida**, de día y de noche: celu a 2x, con `SendUserFile`, en el mismo
+  mensaje que dice la versión nueva. Si lo que cambió no se ve en una foto (una
+  transición), se dice. Pasó con la v0.111: hubo que pedirlas (7-nov-2026).
 - **Mirar la captura no es mirar lo que cambiaste: es mirar la pantalla.**
   Incluye los **espacios**: que nada quede pegado a nada. Ya pasó —una fila de
   botones mudada de lugar quedó pegada a la tarjeta de abajo, y lo vio el

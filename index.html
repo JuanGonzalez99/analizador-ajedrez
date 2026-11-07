@@ -346,12 +346,6 @@
      se apagan las transiciones un instante para que lo nuevo llegue quieto.
      La transición buena de verdad va en la etapa 3 ("que se sienta bien"). */
   body.quieto *, body.quieto *::before, body.quieto *::after { transition: none !important; }
-  /* la apertura, en el renglón del volver: es lo que decía el "Listo." del
-     inicio, que en la Partida no se veía. Mientras algo corre, ese lugar es
-     del estado. */
-  .cabvista .apertura { flex: 1; min-width: 0; text-align: right; font-size: 12.5px;
-    color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  body.ocupado .cabvista .apertura { visibility: hidden; }
   .ajVersion { margin: var(--e-4) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
   /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
      agrega las perillas de medición. Se marca en <html> para que baste CSS y
@@ -926,7 +920,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.111 · 07-11";
+  window.VERSION = "v0.112 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1253,7 +1247,6 @@
        este cambio parecía tener. -->
   <div class="principal parriba">
   <div class="cabvista"><h2><button type="button" class="volver" id="volverDeLaPartida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="volverAQue">Partidas</span></button></h2>
-    <span class="apertura" id="revApertura"></span>
     <!-- LA TUERCA ESTÁ DIBUJADA, no es el glifo ⚙ del sistema (v0.92). Es la
          misma lección de las piezas de la v27 (§4bis): un glifo depende de la
          fuente del aparato y el que sale es el hueco pensado para texto
@@ -3185,7 +3178,6 @@ function mostrarVista(v, opc) {
   let actual = VISTA;
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
   document.body.classList.toggle("enVista", actual !== "inicio");
-  document.body.classList.toggle("ocupado", OCUPADO);
   ver("zonaRevision", HAY.partida && actual === "partida");
   ver("zonaResumen", HAY.partida && actual === "partida");
   ver("zonaMes", actual === "mes");
@@ -6465,10 +6457,6 @@ function pintarRevision() {
 
   /* el rival y su elo salen de las cabeceras del PGN; si la partida no las
      trae (un PGN pegado a mano puede no traerlas) se muestra lo que haya */
-  /* sin el código ECO: en el celu entran ~240 px y "C54 " se come el nombre
-     sin decirle nada a la vista (revisor, v0.111). Completo, en el title. */
-  $("revApertura").textContent = (R.apertura || "").replace(/^[A-E]\d\d\s+/, "");
-  $("revApertura").title = R.apertura || "";
   const yo = ladoDelUsuario(R);
   if (yo) {
     const rival = (yo === "w" ? R.cab.Black : R.cab.White) || "";

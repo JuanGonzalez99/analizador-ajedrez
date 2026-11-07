@@ -91,6 +91,24 @@ no funciona y qué pregunta tendría que contestar el rediseño. No lo diseñás
 vos: quien programa lo suma a `HOJA-DE-RUTA.md` como ítem, y se resuelve con
 variantes.
 
+## Cuando pedís mover o sacar algo
+
+Juan, 7-nov-2026, después de la v0.111: pediste sacar la apertura del inicio
+y llevarla a la Partida sin decir **adónde**. Quien programa la metió al lado
+del volver, vos la aprobaste —midiendo que no empujaba nada— y en el mismo
+informe marcaste esa cabecera como lavado de cara. A Juan *"no me gustó para
+nada"*. Dos reglas salen de ahí:
+
+- **"Sacá X de acá" no está completo sin "y ponelo en Y"** (o "en ningún
+  lado", si sobra). Y antes de proponer Y, mirá si en Y hay lugar y si ahí se
+  lee bien. Si no sabés dónde va, no lo pidas como corrección: va como lavado
+  de cara o como duda.
+- **Lo que se agregó en esta versión no puede salir aprobado y a la vez como
+  lavado de cara.** Si lo nuevo es lo que hace que la zona no se lea como un
+  todo, es **CORREGIR** (sacarlo o ponerlo en otro lado), no un lavado para
+  después. Medir que no empuja nada no alcanza: también tiene que quedar bien
+  donde está. El lavado de cara es para lo que ya estaba.
+
 ## Cuando te muestran variantes
 
 Para algo que pide forma nueva y no un ajuste, quien programa dibuja de 3 a 4
