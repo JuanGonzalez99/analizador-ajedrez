@@ -319,6 +319,14 @@ test("la cadencia no se nombra en los titulos de seccion", () => {
     "la cabecera tiene que decir cual es");
 });
 
+test("la barra de progreso no queda suelta al terminar de juntar todo (v0.108.1)", () => {
+  /* `ocupado(false)` la esconde; un `progreso()` después la vuelve a mostrar
+     vacía, como franja gris bajo "Listo". */
+  const j = html.slice(html.indexOf("async function juntarTodo"), html.indexOf('$("fuente").onchange'));
+  const fin = j.slice(j.lastIndexOf("ocupado(false)"));
+  assert.ok(!/progreso\(/.test(fin), "la barra vuelve a aparecer después de esconderla");
+});
+
 test("la cabecera del mes dice qué mes (v0.108)", () => {
   /* Decía "Estadísticas" y "El mes seleccionado", y el mes estaba en #meses,
      arriba, fuera de la pantalla. Ahora el selector de arriba ES el mes. */

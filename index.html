@@ -874,7 +874,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.108 · 07-11";
+  window.VERSION = "v0.108.1 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4791,8 +4791,11 @@ async function juntarTodo() {
     estado("No se pudo juntar lo analizado.");
     bien = false;
   }
+  /* SIN `progreso(0)` ACÁ (v0.108.1): `ocupado(false)` ya la esconde y la
+     vacía, y el `progreso(0)` de después la volvía a mostrar, vacía, como una
+     franja gris suelta bajo "Listo" —el mismo error que se arregló en la v26,
+     vuelto por este camino—. Lo vio Juan al terminar de juntar "todo". */
   ocupado(false);
-  progreso(0);
   estado("");
   return bien;
 }

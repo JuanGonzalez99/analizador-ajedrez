@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.108**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.108.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -1188,6 +1188,12 @@ Lo que hay que saber para tocarlo:
   caja de `#meses` ("api-mes" → "2026-10"): verificado con la diferencia de
   píxeles, es el arnés y no la app.
 - De paso, "Listo: 1 partidas" pasó a usar `cuantas()`.
+- **v0.108.1: la franja gris suelta bajo "Listo"** (la vio Juan). `juntarTodo`
+  terminaba con `ocupado(false)` —que esconde la barra de progreso— y después
+  `progreso(0)`, que la volvía a mostrar vacía: 384 px de gris debajo de
+  "Listo" cada vez que se elegía "Todo lo analizado". Es el error de la v26
+  vuelto por otro camino. Medido: tras analizar la partida y el mes la barra ya
+  quedaba escondida; tras "todo", no. Ahora sí, y hay prueba.
 
 ### Tres arreglos reportados desde el celular
 
