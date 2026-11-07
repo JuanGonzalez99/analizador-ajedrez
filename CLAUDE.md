@@ -64,10 +64,13 @@ describe. §10 tiene las reglas de trabajo.
   de ancho): su viewport es de **≈420 × 810 CSS** con la barra de direcciones
   escondida, y ~745 de alto cuando está visible. **Dibujar a 412 × 760**, que es
   el caso apretado.
-  **Ojo (v0.115, 7-nov-2026):** su captura de la v0.114 da **~405 CSS de
-  ancho** si el tablero entero (casillas más márgenes) mide 360; los ≈420 de
-  arriba parecen haber tomado las casillas solas como si fueran los 360. Lo que
-  dependa del ancho al píxel se prueba también a 400–405. Una captura de 1500 px de alto no deja dimensionar cuánto se
+  **Ojo, corregido el 7-nov-2026 (v0.116): su viewport mide ~386 CSS de
+  ancho, no 420.** Medido sobre su captura con los **14 de margen de la
+  tarjeta** como regla: así encaja todo (tablero de 360, ~28 de las casillas al
+  borde). Los ≈420 de arriba salieron de una escala mal tomada, y en la v0.115
+  se volvió a errar con 16 de margen (dio 405). Medir siempre con dos
+  referencias que tengan que cerrar juntas. Lo que dependa del ancho al píxel
+  se prueba también a 386. Una captura de 1500 px de alto no deja dimensionar cuánto se
   ve de verdad.
 - Se escribe en **castellano rioplatense**, igual que el código y el traspaso.
 

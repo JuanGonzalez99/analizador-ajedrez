@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.115**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.116**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4597,11 +4597,15 @@ además un análisis de usabilidad a un agente aparte, sin contarle lo elegido
 (llegó a lo mismo en lo de fondo, y propuso Girar en la tuerca; Juan lo frenó
 por lo mismo: lo quiere a mano al arrancar). Quedó la idea de Juan:
 - **Girar, al costado del tablero, solo al arrancar**: `#btnGirarTab`, 34×44,
-  pegado a la fila 1 del lado de afuera de las casillas. **v0.115**: 30 de
-  ancho y a 2 de las casillas (eran 34 y 4, y pedían 412 de pantalla). El celu
-  de Juan mide **~405 CSS**: sale de su captura, con el tablero de 360, y Girar
-  le caía en la fila. Ojo, que el "≈420" de `CLAUDE.md` parece haber medido las
-  casillas como si fueran el tablero entero. Ahora entra desde 401; el toque se estira con un `::after` hasta el
+  pegado a la fila 1 del lado de afuera de las casillas, a 2 de ellas. **El
+  celu de Juan mide ~386 CSS de ancho**, y costó tres versiones saberlo: la
+  v0.114 pedía 412 y la v0.115 pedía 400 (calculada mal, con 16 de margen), y en
+  las dos Girar le caía en la fila. Medido en su captura de la v0.115 con los
+  **14 de margen de la tarjeta** como regla, todo encaja: 386 de ancho, tablero
+  de 360, ~28 de las casillas al borde. **v0.116**: si sobra lugar, 30 de ancho
+  y 3 hasta el borde; si no, una **pestaña pegada al borde de la pantalla**,
+  redondeada solo del lado del tablero, de lo que haya (mínimo 24: a 386 mide
+  26). Entra desde 360; el toque se estira con un `::after` hasta el
   borde de la pantalla y a 48 de alto. Se ve mientras la jugada es de libro y como mínimo en las
   cuatro primeras (`JUGADAS_GIRAR`), y nunca adentro de una variante. La
   posición la calcula `ubicarGirar()` con la escala del SVG, y un
@@ -4610,7 +4614,8 @@ por lo mismo: lo quiere a mano al arrancar). Quedó la idea de Juan:
   aparece —la Partida se pinta escondida y ahí el SVG mide 0— o se mueve.
 - **Cuando el canal no alcanza** —en el celu, por debajo de 412: a 320 el
   botón terminaba en 331, y de 400 a 411 se salía o tocaba el borde (lo midió
-  el revisor)— `ubicarGirar()` pone `body.girarEnFila`; ahí y **en la compu** (≥1110, donde al costado van las comidas)
+  el revisor; desde la v0.116, solo si no entra ni la pestaña de 24)—
+  `ubicarGirar()` pone `body.girarEnFila`; ahí y **en la compu** (≥1110, donde al costado van las comidas)
   Girar sigue en la fila, `#btnGirar`. El bloque de la compu va escrito
   `@media (width >= 1110px)` para no ser "el primero de 1110" que buscan las
   pruebas.
