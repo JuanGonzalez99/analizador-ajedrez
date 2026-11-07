@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.112**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.113**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4559,11 +4559,34 @@ arrastró la forma:
 - **"Pintar las dos" pasó a "Rival"**, con el texto entero en `title` y
   `aria-label`: "Las del rival" mide 79 y no entra; "Las dos" no dice las dos
   qué.
-- **Sin íconos**: el botón chico de §1.7 es texto.
+- **Sin íconos**: el botón chico de §1.7 es texto. *(Cambió en la v0.113,
+  abajo.)*
 - La fila pasa a 8 de los cuadritos (eran 6, fuera de la escala): a 412×760
   termina en 735 y no en 733.
 B se descartó además porque un control segmentado dice "elegí uno de tres" y
 son tres interruptores sueltos.
+
+**v0.113, dónde viven las preferencias del tablero** (lavado de cara, con
+variantes; revisor, v0.106). "Siempre la mejor", "Girar" y "Rival" son ajustes
+de cómo se ve el tablero metidos entre los datos de la jugada. Se dibujaron con
+`pantallas()`: **A** la misma fila con ícono y texto, **B** pastillas al pie del
+tablero (empujaba tira, curva y cuadritos 43 px y los dejaba a 4 del borde),
+**C** Girar como ícono solo en el canal derecho del tablero y los otros dos a la
+hoja de ajustes (acortaba 44), **D** Girar como en C y la fila con dos. **Eligió
+el revisor la A**: lo que Juan usa sigue a un toque (C lo manda a la hoja: dos
+toques y un select); Juan pidió ícono y texto *"sobre todo en la de rotar"*
+(`DISENO.md` §2) y en C y D Girar quedaba sin texto; y el canal entre el tablero
+y el borde mide 25 px, o sea que ahí no entra un toque de 48 y además lo
+comparte con el chevrón ›. Lo que quedó:
+- **Íconos de 18** dibujados en línea: la flecha de la mejor en `--f-mejor`
+  —el mismo verde de la flecha que pinta, así el botón dice qué hace—, dos
+  flechas en círculo para girar y un círculo mitad lleno ("los dos bandos")
+  para rival. Ícono y texto a 6, centrados.
+- **La fila no crece**: el ícono lleva `margin: -2px 0`; sin eso sumaba 4 px.
+  Medido, termina donde terminaba.
+- **Por debajo de 360 de ancho el ícono se esconde**: a 320 "Siempre la mejor"
+  con ícono no entra en 142 y el botón se partía en dos renglones (56 de alto).
+- El estado prendido no cambia (borde de acento y fondo al 14%).
 
 **v0.107, [PC] la barra vertical pegada al tablero en los anchos del medio**
 (revisor, v0.105): de 413 a 1109 quedaba a 140 px porque el arreglo de la v0.86

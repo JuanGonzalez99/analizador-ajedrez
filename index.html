@@ -491,6 +491,20 @@
               margin-top: var(--e-2); }
   .acciones > button { width: 100%; margin: 0; padding-left: 4px; padding-right: 4px; }
   .acciones > #btnMejor { grid-column: span 2; }
+  /* CON ÍCONO Y TEXTO (v0.113). El lavado de "dónde viven las preferencias
+     del tablero" dibujó cuatro: esta fila con íconos (A), una fila de
+     pastillas al pie del tablero (B, empujaba 43 px), Girar como ícono en el
+     canal del tablero y lo demás a la hoja (C) o a la fila (D). El revisor
+     eligió A: lo que Juan usa sigue a un toque, Girar conserva el texto que a
+     él le gustó con el ícono, y en el canal de 25 px no entra un toque de 48.
+     La flecha de "Siempre la mejor" es del verde de la flecha que pinta. El
+     margen negativo deja el ícono de 18 sin agrandar el renglón: sin él, la
+     fila crecía 4 px. */
+  .acciones > button { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .acciones > button > svg { width: 18px; height: 18px; flex: none; margin: -2px 0; }
+  /* En un celu de 320 "Siempre la mejor" con ícono no entra en sus 142 px y el
+     renglón se partía en dos (56 de alto): por debajo de 360 manda el texto. */
+  @media (max-width: 359px) { .acciones > button > svg { display: none; } }
   .acciones > button.prendido { border-color: var(--acento);
                                 background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
   /* el margen de arriba lo trae la tarjeta y no el bloque de arriba: desde la
@@ -920,7 +934,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.112 · 07-11";
+  window.VERSION = "v0.113 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1350,11 +1364,11 @@
   <div class="senales" id="senales"></div>
   <div class="acciones">
     <button class="chico" id="btnMejor" aria-pressed="false"
-            title="Mostrar la mejor en todas las jugadas">Siempre la mejor</button>
-    <button class="chico" id="btnGirar">Girar</button>
+            title="Mostrar la mejor en todas las jugadas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 L15.5 8.5 L12.5 5.5 L19.5 4.5 L18.5 11.5 L15.5 8.5" fill="var(--f-mejor)" stroke="var(--f-mejor)" stroke-width="2.4" stroke-linejoin="round"/></svg><span>Siempre la mejor</span></button>
+    <button class="chico" id="btnGirar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9"/><path d="M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3v4.3h-4.3"/><path d="M5.4 21v-4.3h4.3"/></svg><span>Girar</span></button>
     <button class="chico" id="btnAmbos" aria-pressed="false"
             title="Pintar también las jugadas del rival"
-            aria-label="Pintar también las jugadas del rival">Rival</button>
+            aria-label="Pintar también las jugadas del rival"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg><span>Rival</span></button>
   </div>
   </div>
 </div>

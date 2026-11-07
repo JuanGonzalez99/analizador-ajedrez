@@ -115,7 +115,7 @@ lo demás se dibuja contra ella.
       tiene un lugar común; ¿una barra fija que lean todas las vistas, en vez de
       que cada una lo repita? Con la v0.108 el mes se elige en dos lugares
       (la entrada y Estadísticas), sincronizados.
-- [ ] **Lavado de cara: dónde viven las preferencias del tablero** (revisor,
+- [x] **Lavado de cara: dónde viven las preferencias del tablero** (v0.113, 7-nov: la A, la misma fila con ícono y texto; revisor,
       v0.106). "Siempre la mejor", "Girar" y "Rival" son ajustes de cómo se ve
       el tablero que siguen entre jugadas, y están metidos entre los datos de
       la jugada; además ya hay hoja de ajustes. ¿Van pegados al tablero
@@ -270,6 +270,12 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
   la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
   revisor recomienda la 1.
+- **No sé si esto te copa (v0.113):** los tres botones de abajo quedaron en
+  su fila, con ícono y texto. La otra era Girar como ícono chiquito al borde
+  del tablero, como chess.com; el revisor no la eligió porque pierde el texto
+  y queda chica para el dedo. Se da vuelta fácil.
+  Y la flechita de "Siempre la mejor" va verde, como la flecha que pinta en
+  el tablero, y los otros dos íconos blancos; la otra es los tres blancos.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
   área de toque invisible de 48 de `DISENO.md` §1.7.
 
