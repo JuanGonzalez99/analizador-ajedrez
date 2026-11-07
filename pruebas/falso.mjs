@@ -211,8 +211,11 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
              result: RES === "0-1" ? "win" : MOTIVO },
   };
   const API = {
-    "/api/archives": { archives: [`http://localhost:${puerto}/api/mes`] },
-    "/api/mes": { games: [JUEGO] },
+    /* la ruta termina en AAAA/MM como la de chess.com: desde la v0.108 el
+       título del Mes sale de ahí ("Octubre 2026"), y con "/api/mes" la captura
+       decía "api/mes" */
+    "/api/archives": { archives: [`http://localhost:${puerto}/api/mes/2026/10`] },
+    "/api/mes/2026/10": { games: [JUEGO] },
   };
   return { PGN, CUAL, SUFIJO, jugadas, fens, forma, base, cabPgn, FALSO, API };
 }

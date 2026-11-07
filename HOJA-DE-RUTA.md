@@ -98,7 +98,7 @@ lo demás se dibuja contra ella.
       mismo error que la v0.86 arregló a 1280, en un ancho intermedio que
       `mirar` no mide: pegar barra y tablero como un bloque, a 8, en cualquier
       ancho, y sumarle a la línea "barra vertical:" de `mirar` el caso 1000×700.
-- [ ] **Lavado de cara de la cabecera del Mes** (revisor, v0.105): dice
+- [x] **Lavado de cara de la cabecera del Mes** (v0.108, 7-nov: la C, el selector del mes hace de título; revisor, v0.105): dice
       "Estadísticas" y "El mes seleccionado", pero no **qué mes**: ese está en
       `#meses`, arriba en la entrada, que con el scroll ya no se ve; y la línea
       de resumen repite la cadencia del select de al lado. Pregunta a
@@ -111,6 +111,10 @@ lo demás se dibuja contra ella.
       es la pantalla principal y cómo se va de una a otra en el celu sin
       scrollear por las demás? Es grande: va con variantes y a la mañana como
       duda.
+      El revisor (v0.108) suma: el contexto activo —usuario, mes, cadencia— no
+      tiene un lugar común; ¿una barra fija que lean todas las vistas, en vez de
+      que cada una lo repita? Con la v0.108 el mes se elige en dos lugares
+      (la entrada y Estadísticas), sincronizados.
 - [ ] **Lavado de cara: dónde viven las preferencias del tablero** (revisor,
       v0.106). "Siempre la mejor", "Girar" y "Rival" son ajustes de cómo se ve
       el tablero que siguen entre jugadas, y están metidos entre los datos de
@@ -126,6 +130,11 @@ lo demás se dibuja contra ella.
       en 1110 salta al diseño de compu. A 1000×900 podría andar por 570. Pregunta:
       ¿ese rango es "un celu grande" o "una compu chica"? ¿El tablero crece con el
       alto, como desde 1110, o el corte se corre más abajo? Con variantes.
+- [ ] **[PC] Lavado de cara: el Mes con el ancho de la compu** (revisor,
+      v0.108). La tabla de jugadas del Mes se estira a todo el ancho (1080 a
+      1280): "Total" queda a ~680 px de las etiquetas y el ojo se pierde en el
+      renglón. ¿Ancho máximo de lectura, o dos tablas/secciones en columnas?
+      Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -217,6 +226,11 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   21 px, lejos de los 48 de §1.7.
 - **Tablero de fábrica:** pasó a "Noche" (el verde de A). Si tenías madera
   porque era la de fábrica, ahora ves Noche; si la querés, está en ajustes.
+- **No sé si esto te copa** (v0.108): el título del Mes ahora es el selector
+  del mes ("Octubre 2026 ▾"), se fue el "Estadísticas" visible, y elegir otro
+  mes ahí lo carga y lo analiza. Si no: (1) volver a un rótulo chico arriba, o
+  (2) la A, sin tocar la estructura: el select chico dice "Octubre 2026" y solo
+  elige entre ese mes y todo.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
   área de toque invisible de 48 de `DISENO.md` §1.7.
 

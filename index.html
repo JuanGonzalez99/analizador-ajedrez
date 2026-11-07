@@ -271,6 +271,15 @@
   /* los selects del mes: 36 visibles y 12 entre ellos (§1.7), sin tocar el
      `.chico` del resto de la app */
   #zonaMes .fila { gap: var(--e-3); }
+  /* El selector del mes hace de título: la letra del h2 (18/700) en el alto de
+     cualquier campo (44, §1.7), y un ancho fijo que entra "Septiembre 2026",
+     el mes más largo, para que el de la cadencia no salte al cambiar de mes. */
+  #fuente { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
+  /* el margen de arriba era del h2 (24, el de todo h2): sin él la fila quedaba
+     pegada a la zona de Análisis, a 0 px */
+  #zonaMes > .soloLector + .fila { margin-top: 24px; }
+  .soloLector { position: absolute; width: 1px; height: 1px; overflow: hidden;
+                clip: rect(0 0 0 0); white-space: nowrap; margin: -1px; padding: 0; }
   /* Con scroll para que el botón de analizar quede a la vista sin bajar por
      cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
      solo para que deje de estorbar. */
@@ -865,7 +874,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.107 · 07-11";
+  window.VERSION = "v0.108 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1117,10 +1126,14 @@
 </div>
 
 <div id="zonaMes" class="oculto">
-  <h2>Estadísticas</h2>
+  <!-- EL MES ES EL TÍTULO (v0.108). Antes decía "Estadísticas" y "El mes
+       seleccionado", pero no QUÉ mes: ese estaba en #meses, arriba, que con el
+       scroll ya no se ve. Ahora el selector de arriba de todo dice el mes y
+       deja elegir otro. El h2 queda para los lectores de pantalla, que la
+       sección tenga nombre. -->
+  <h2 class="soloLector">Estadísticas</h2>
   <div class="fila">
-    <select id="fuente" class="chico">
-      <option value="mes">El mes seleccionado</option>
+    <select id="fuente" class="chico" aria-label="Mes de las estadísticas">
       <option value="todo">Todo lo analizado</option>
     </select>
     <select id="cadencia" class="chico" aria-label="Cadencia"></select>
@@ -4751,7 +4764,7 @@ $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
   const antes = el.onchange;
   el.onchange = e => {
     if (TODO) { TODO = null; window.LOG.add("·", "barrido descartado: cambió la configuración"); }
-    if (FUENTE === "todo") { FUENTE = "mes"; $("fuente").value = "mes"; }
+    if (FUENTE === "todo") { FUENTE = "mes"; pintarFuente(); }
     if (antes) antes.call(el, e);
   };
 });
@@ -4784,11 +4797,52 @@ async function juntarTodo() {
   return bien;
 }
 
+/* EL NOMBRE DEL MES SALE DE LA URL del archivo de chess.com, que termina en
+   ".../games/2026/10". Con mayúscula y sin "de", como en el selector. */
+const NOMBRES_MES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio",
+  "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+function nombreMes(url) {
+  const m = /(\d{4})\/(\d{2})\/?$/.exec(url || "");
+  return m ? `${NOMBRES_MES[+m[2] - 1]} ${m[1]}` : (url || "").slice(-7);
+}
+
+/* EL SELECTOR DEL MES DE LAS ESTADÍSTICAS (v0.108) y el de la entrada, #meses,
+   son EL MISMO ESTADO: el valor sale siempre del de la entrada y elegir acá lo
+   escribe allá. Se rearma entero cada vez porque es barato y así no hay dos
+   listas que se desincronicen. "Todo lo analizado" va PRIMERO: con un usuario
+   de varios años, al fondo de la lista nativa de Android se pierde. */
+function pintarFuente() {
+  const sel = $("fuente");
+  sel.innerHTML = '<option value="todo">Todo lo analizado</option>' +
+    (MESES.length ? '<optgroup label="Un mes"></optgroup>' : "");
+  const grupo = sel.querySelector("optgroup");
+  MESES.slice().reverse().forEach(u => {
+    const o = document.createElement("option");
+    o.value = u; o.textContent = nombreMes(u);
+    grupo.appendChild(o);
+  });
+  sel.value = FUENTE === "todo" ? "todo" : $("meses").value;
+}
+
 $("fuente").onchange = seguro("fuente", async () => {
-  FUENTE = $("fuente").value;
-  window.LOG.add("·", "fuente " + FUENTE);
+  const v = $("fuente").value;
+  window.LOG.add("·", "fuente " + (v === "todo" ? "todo" : nombreMes(v)));
+  /* OTRO MES desde acá es "mostrame las estadísticas de ese mes", o sea lo
+     mismo que elegirlo arriba y tocar "Analizar el mes": lo que ya está en la
+     caché sale al instante y lo que no, se analiza con la barra de siempre. */
+  /* Y el mes que ya está cargado pero sin analizar (se miraba "todo" sin haber
+     analizado nada) va por el mismo camino, sin volver a bajarlo. */
+  if (v !== "todo" && (v !== $("meses").value || !MES)) {
+    FUENTE = "mes";
+    $("capMes").textContent = `Cargando ${nombreMes(v).toLowerCase()}…`;
+    if (v !== $("meses").value) { $("meses").value = v; await cargarMes(v); }
+    if (PARTIDAS.length) await correrMes(true);
+    pintarFuente();
+    return;
+  }
+  FUENTE = v === "todo" ? "todo" : "mes";
   if (FUENTE === "todo" && !TODO && !await juntarTodo()) {
-    $("fuente").value = FUENTE = "mes";
+    FUENTE = "mes"; pintarFuente();
   }
   /* Se puede mirar lo acumulado sin haber analizado el mes que está cargado:
      es justamente para lo que sirve. */
@@ -4925,7 +4979,7 @@ async function correrMes(desdeCero) {
      rehace con las nuevas adentro. */
   if (TODO) {
     TODO = null;
-    FUENTE = "mes"; $("fuente").value = "mes";
+    FUENTE = "mes"; pintarFuente();
     window.LOG.add("·", "barrido descartado: se van a analizar partidas nuevas");
   }
   ocupado(true);
@@ -4969,7 +5023,7 @@ async function correrMes(desdeCero) {
       `caché ${cache.aciertos} aciertos, ${cache.fallos} fallos`);
     estado(CANCELAR
       ? `Detenido en la partida ${MES.hechas}.`
-      : `Listo: ${MES.resultados.length} partidas en ${seg} s.`);
+      : `Listo: ${cuantas(MES.resultados.length, "partida", "partidas")} en ${seg} s.`);
     pintarMes(prof);
     HAY.mes = true; mostrarVista("mes");
     if (MES.hechas < PARTIDAS.length) {
@@ -5333,7 +5387,7 @@ $("mateVista").onchange = seguro("mate a la vista", async () => {
   if (TODO) {
     TODO = null;
     window.LOG.add("·", "rebarriendo: cambió el corte de mate");
-    if (FUENTE === "todo" && !await juntarTodo()) { $("fuente").value = FUENTE = "mes"; }
+    if (FUENTE === "todo" && !await juntarTodo()) { FUENTE = "mes"; pintarFuente(); }
   }
   if (MES) MES.resultados.forEach(reDerivar);
   if (MES || (FUENTE === "todo" && TODO)) pintarMes(MES ? MES.prof : TODO.prof);
@@ -6086,9 +6140,8 @@ const nombreModo = () => $("modo").value === "amigable" ? "amigable" : "crítico
 
 function origenCorto(d, prof) {
   const partes = [];
-  /* La cadencia va PRIMERA: es el alcance de todo lo que sigue, y desde la
-     v0.46 se dice una sola vez acá en vez de repetirse en cada título. */
-  if (d.tiempo && d.tiempo.cadencia) partes.push(d.tiempo.cadencia.nombre);
+  /* La cadencia NO va acá desde la v0.108: la dice el selector de al lado
+     ("10 min (12)"), y repetirla era el mismo eco que se sacó en la v0.45. */
   partes.push(cuantas(d.porPartida.length, "partida", "partidas"),
               cuantas(d.todas.length, "jugada", "jugadas"));
   if (d.deTodo) partes.push(cuantas(TODO.meses, "mes", "meses"));
@@ -6134,6 +6187,7 @@ function origenLargo(d) {
 function pintarMes(prof) {
   const d = datosDeTablas();
   const { todas, porPartida } = d;
+  pintarFuente();
   if (!todas.length) {
     $("capMes").textContent = d.deTodo
       ? "Todavía no hay nada analizado a esta profundidad."

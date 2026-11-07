@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.107**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.108**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -1143,6 +1143,51 @@ medio de números que un aficionado no sabe leer, y ahí una frase con nombre
 —"Cómo se leen estos números"— se ve; un `?` chiquito en la esquina queda lejos
 y apartado. El `?` se queda para las tablas, donde el título ya dice de qué se
 trata y el ícono solo amplía.
+
+### El mes es el título (v0.108)
+
+Lavado de cara que marcó el revisor en la v0.105: la cabecera decía
+"Estadísticas" y "El mes seleccionado", pero **no qué mes**, que estaba en
+`#meses`, arriba en la entrada, fuera de la pantalla con el scroll; y la línea
+corta repetía la cadencia del select de al lado. Se dibujaron cuatro variantes
+con `pantallas()`: A el select dice el mes, B el mes como h2, C un solo selector
+de mes que hace de título, D un renglón de alcance. **Eligió el revisor la C**,
+con ajustes. Descartó A porque el select dice "Octubre 2026" y no deja elegir
+otro mes (parece que sí); B y D por "Este mes", que se lee como el del
+calendario; y D además repetía la cadencia.
+
+```
+antes  [Estadísticas]  [El mes seleccionado ▾] [10 min (1) ▾]  10 min · 1 partida · 18 jugadas · prof 16 · crítico
+ahora  [Octubre 2026 ▾] [10 min (1) ▾]                         1 partida · 18 jugadas · prof 16 · crítico
+```
+
+Lo que hay que saber para tocarlo:
+- **`#fuente` y `#meses` son el mismo estado.** `pintarFuente()` rearma las
+  opciones desde `MESES` —"Todo lo analizado" primero, después un
+  `<optgroup label="Un mes">` del más nuevo al más viejo— y el valor sale
+  siempre de `#meses`. Se llama al principio de `pintarMes` (también sin datos)
+  y donde antes se escribía `$("fuente").value = "mes"`. `FUENTE` sigue siendo
+  `"mes"` o `"todo"`: el resto del código no se enteró.
+- **Elegir otro mes desde acá lo carga y lo analiza**: `cargarMes` +
+  `correrMes(true)`, lo mismo que elegirlo arriba y tocar "Analizar el mes". Lo
+  que está en la caché sale al instante. Mientras baja, `capMes` dice
+  "Cargando octubre 2026…".
+- `nombreMes(url)` sale de la URL del archivo (`…/games/2026/10` → "Octubre
+  2026").
+- El selector va a 18/700 (la letra del h2) en el alto de 44 de todo campo, con
+  ancho fijo de 12,5em para que entre "Septiembre 2026" y el de la cadencia no
+  salte: medido, 225 + 12 + 109 ("10 min (12)") de 384 a 412.
+- El h2 "Estadísticas" quedó `.soloLector`, para que la sección tenga nombre, y
+  el selector lleva `aria-label`. El margen de 24 que ponía el h2 lo pone ahora
+  `#zonaMes > .soloLector + .fila`: sin eso la fila quedó a 0 de la zona de
+  Análisis, y lo agarró la medición, no la captura.
+- Las capturas del celu, iguales byte a byte salvo `mes` y `mes-seccion`.
+- **La partida falsa sirve el mes en `/api/mes/2026/10`** y no en `/api/mes`:
+  con la ruta vieja el título salía "api/mes" en la captura que estrenaba el
+  cambio (lo vio el revisor). Eso cambió además `revision-1.png`, y solo en la
+  caja de `#meses` ("api-mes" → "2026-10"): verificado con la diferencia de
+  píxeles, es el arnés y no la app.
+- De paso, "Listo: 1 partidas" pasó a usar `cuantas()`.
 
 ### Tres arreglos reportados desde el celular
 
@@ -4408,6 +4453,9 @@ son tres interruptores sueltos.
 **v0.107, [PC] la barra vertical pegada al tablero en los anchos del medio**
 (revisor, v0.105): de 413 a 1109 quedaba a 140 px porque el arreglo de la v0.86
 vivía solo en el `@media` de 1110. Detalle en §4sexvicies.
+
+**v0.108, el mes es el título de las estadísticas** (lavado de cara, con
+variantes). Detalle en §4decies, "El mes es el título".
 
 **Desde el 5-nov-2026 lo estético se ordena en `HOJA-DE-RUTA.md`**, etapa 1
 (identidad visual) y etapa 3 (animaciones). Lo de abajo es historia.

@@ -311,8 +311,31 @@ test("la cadencia no se nombra en los titulos de seccion", () => {
      alcance de la vista entera y se dice una sola vez, en la cabecera. */
   assert.ok(!html.includes("cadChip"), "volvio el chip por seccion");
   assert.ok(!html.includes("chipCadencia"));
+  /* Desde la v0.108 la dice el selector de la cadencia, al lado del mes, y la
+     línea corta no la repite (es el eco que se sacó en la v0.45). */
   const corto = html.slice(html.indexOf("function origenCorto"), html.indexOf("function origenLargo"));
-  assert.ok(corto.includes("d.tiempo.cadencia.nombre"), "la cabecera tiene que decir cual es");
+  assert.ok(!corto.includes("d.tiempo.cadencia.nombre"), "la cadencia vuelve a estar dos veces");
+  assert.ok(html.includes("o.textContent = `${censo[i].nombre} (${censo[i].partidas})`"),
+    "la cabecera tiene que decir cual es");
+});
+
+test("la cabecera del mes dice qué mes (v0.108)", () => {
+  /* Decía "Estadísticas" y "El mes seleccionado", y el mes estaba en #meses,
+     arriba, fuera de la pantalla. Ahora el selector de arriba ES el mes. */
+  assert.ok(!html.includes("El mes seleccionado</option>"), "volvió el select que no dice cuál");
+  assert.ok(html.includes('<h2 class="soloLector">Estadísticas</h2>'), "la sección sin nombre");
+  assert.ok(html.includes('aria-label="Mes de las estadísticas"'));
+  const f = html.slice(html.indexOf("function pintarFuente"), html.indexOf('$("fuente").onchange'));
+  assert.ok(f.indexOf('"todo"') < f.indexOf("optgroup"), "Todo lo analizado va primero");
+  assert.ok(f.includes('$("meses").value'), "el mes sale del de la entrada: es el mismo estado");
+  const pm = html.slice(html.indexOf("function pintarMes"));
+  assert.ok(pm.indexOf("pintarFuente()") < pm.indexOf("if (!todas.length)"),
+    "también sin datos tiene que decir de qué mes");
+  // el nombre sale de la url de chess.com
+  const nombre = new Function(html.slice(html.indexOf("const NOMBRES_MES"),
+    html.indexOf("/* EL SELECTOR DEL MES DE LAS")) + "return nombreMes;")();
+  assert.equal(nombre("https://api.chess.com/pub/player/x/games/2026/10"), "Octubre 2026");
+  assert.equal(nombre("https://api.chess.com/pub/player/x/games/2025/09"), "Septiembre 2025");
 });
 
 test("el ? no pliega la sección al tocarlo", () => {
