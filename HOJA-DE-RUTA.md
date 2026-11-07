@@ -199,6 +199,14 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
 desde el primer día (el profe hoy manda links de lichess) y es la base de
 Práctica y Lecciones, que también son "jugar desde una posición".
 
+- [ ] **La barra de navegación abajo, con los módulos** (Juan, 7-nov: eligió
+      esta opción). Cuando llegue el segundo módulo, una barra fija abajo con
+      ícono y texto (Análisis, Posiciones, y después Práctica y Lecciones), que
+      **se esconde al deslizar para arriba y vuelve al deslizar para abajo**,
+      así no tapa la fila de botones de la jugada. Adentro de Análisis sigue el
+      caminito de la v0.110 (Partidas → Partida → Mes, con "‹"). Es la variante
+      A de la estructura, que a Juan le encantó; se descartó para Partidas /
+      Partida / Mes porque esas no son pestañas independientes.
 - [ ] Abrir una posición desde un link (`…/#fen=…`) y jugarla contra el motor,
       con el nivel elegible.
 - [ ] Armar una posición a mano en el tablero.

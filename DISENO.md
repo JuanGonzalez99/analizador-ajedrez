@@ -418,7 +418,9 @@ hay. Las primeras salen del historial del traspaso.
   esconde al deslizar para arriba y vuelve al deslizar para abajo. Pero él
   mismo dudó: Partidas → Partida → Mes *"medio que es un caminito"*, no son
   pestañas independientes. Para destinos de verdad hermanos (los módulos) es
-  candidata fuerte (7-nov-2026).
+  candidata fuerte (7-nov-2026). **Eligió eso**: el caminito queda con
+  "‹", y la barra de abajo vuelve con los módulos, escondiéndose al deslizar
+  (`HOJA-DE-RUTA.md`, etapa 4).
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.
