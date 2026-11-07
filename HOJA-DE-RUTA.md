@@ -155,6 +155,13 @@ lo demás se dibuja contra ella.
       (rival, resultado, apertura) y en qué renglón vive todo junto, dejando el
       de arriba para navegar y para el estado? Con variantes.
 
+- [ ] **Que la Partida arranque en la posición inicial**, antes de la primera
+      jugada (pedido de Juan, 7-nov). Hoy abre en la jugada 1 (`IDX = 0` es
+      `R.filas[0]`): no existe una vista del tablero sin jugadas. Toca la tira,
+      la curva, la tarjeta, las flechas y la navegación, así que va en su propia
+      tanda. Surgió al discutir Girar en la tarjeta: la posición inicial sería
+      el lugar natural para elegir de qué lado verla.
+
 ## Etapa 2 · Partir `index.html`
 
 El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
