@@ -491,6 +491,33 @@
               margin-top: var(--e-2); }
   .acciones > button { width: 100%; margin: 0; padding-left: 4px; padding-right: 4px; }
   .acciones > #btnMejor { grid-column: span 2; }
+  /* v0.114: en el celu la fila queda con "Siempre la mejor" sola (Girar va al
+     costado del tablero y Rival a la hoja). En la compu, al lado del tablero
+     están las piezas comidas, así que Girar sigue en la fila. */
+  .acciones > #btnGirar { display: none; }
+  .revtab { position: relative; }
+  /* Al costado de la fila 1, entre el borde de las casillas y el de la
+     pantalla (~40 px en el celu, donde a media altura vive el chevrón ›). La
+     posición la pone `ubicarGirar()`: depende de la escala del SVG. */
+  #btnGirarTab { position: absolute; width: 34px; height: 44px; min-height: 0; padding: 0;
+                 display: grid; place-items: center; border-radius: var(--r-control); }
+  #btnGirarTab.oculto { display: none; }
+  #btnGirarTab > svg { width: 18px; height: 18px; }
+  /* El toque llega hasta el borde de la pantalla y a 48 de alto sin cambiar
+     lo que se ve (DISENO §1.7): a lo ancho no hay más lugar sin pisar las
+     casillas. */
+  #btnGirarTab::after { content: ""; position: absolute; top: -2px; bottom: -2px;
+                        left: 0; right: -4px; }
+  /* Cuando el canal no alcanza (en el celu, por debajo de 412 de ancho: a 320
+     el botón terminaba en 331), `ubicarGirar()` lo dice con esta clase y Girar
+     vuelve a la fila, al lado de "Siempre la mejor". */
+  body.girarEnFila .acciones > #btnGirar { display: flex; }
+  /* el corte de la compu, escrito así para que no se confunda con el bloque
+     grande de 1110 (las pruebas buscan el primero) */
+  @media (width >= 1110px) {
+    .acciones > #btnGirar { display: flex; }
+    #btnGirarTab { display: none !important; }
+  }
   /* CON ÍCONO Y TEXTO (v0.113). El lavado de "dónde viven las preferencias
      del tablero" dibujó cuatro: esta fila con íconos (A), una fila de
      pastillas al pie del tablero (B, empujaba 43 px), Girar como ícono en el
@@ -934,7 +961,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.113 · 07-11";
+  window.VERSION = "v0.114 · 07-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1304,6 +1331,12 @@
     <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
     <div id="tablero"></div>
     <div class="comidas"><div class="cGrupo" id="cArriba"></div><div class="cGrupo" id="cAbajo"></div></div>
+    <!-- GIRAR AL COSTADO DEL TABLERO, SOLO AL ARRANCAR (v0.114, idea de Juan).
+         Girar se usa al abrir la partida —para verla del lado que interesa— y
+         casi nunca después; por eso está a mano mientras dura la apertura y
+         después desaparece. Afuera de #tablero a propósito: ese se redibuja
+         entero en cada jugada y escucha el arrastre y las marcas. -->
+    <button id="btnGirarTab" class="oculto" aria-label="Girar el tablero"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9"/><path d="M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3v4.3h-4.3"/><path d="M5.4 21v-4.3h4.3"/></svg></button>
   </div>
   <!-- La tira de jugadas: lleva la partida ENTERA y se centra sola en la
        jugada actual, que es de donde sale que siempre se vea que hay más para
@@ -1366,9 +1399,6 @@
     <button class="chico" id="btnMejor" aria-pressed="false"
             title="Mostrar la mejor en todas las jugadas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 L15.5 8.5 L12.5 5.5 L19.5 4.5 L18.5 11.5 L15.5 8.5" fill="var(--f-mejor)" stroke="var(--f-mejor)" stroke-width="2.4" stroke-linejoin="round"/></svg><span>Siempre la mejor</span></button>
     <button class="chico" id="btnGirar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9"/><path d="M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3v4.3h-4.3"/><path d="M5.4 21v-4.3h4.3"/></svg><span>Girar</span></button>
-    <button class="chico" id="btnAmbos" aria-pressed="false"
-            title="Pintar también las jugadas del rival"
-            aria-label="Pintar también las jugadas del rival"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor"/></svg><span>Rival</span></button>
   </div>
   </div>
 </div>
@@ -1401,6 +1431,11 @@
     <select id="verEval" class="chico"></select></label>
   <label class="ajFila"><span>Marcas de la curva</span>
     <select id="marcasCurva" class="chico"></select></label>
+  <!-- "RIVAL" VIVÍA EN LA FILA DE ABAJO hasta la v0.113. Es de las que se ponen
+       una vez y se olvidan, y Juan no sabe cuánto le aporta: acá no ocupa la
+       pantalla de la jugada, y se guarda como los demás. -->
+  <label class="ajFila"><span>Jugadas del rival</span>
+    <select id="verRival" class="chico"><option value="no">atenuadas</option><option value="si">pintadas</option></select></label>
   <p class="ajGrupo">La explicación</p>
   <!-- DIAL TEMPORAL (v0.77): cuánto habla la tarjeta. Con quince conceptos
        compitiendo por una sola ranura, los de abajo del orden no salían nunca;
@@ -4797,7 +4832,16 @@ function laVarianteEnLaTira() {
   }).join("");
 }
 
+/* Rival y Siempre la mejor SE GUARDAN desde la v0.114, como el resto de las
+   preferencias: hasta ahí volvían a apagarse en cada carga. */
 let VER_AMBOS = false;
+try { VER_AMBOS = localStorage.getItem("verRival") === "si"; } catch (e) { /* incógnito */ }
+$("verRival").value = VER_AMBOS ? "si" : "no";
+$("verRival").onchange = seguro("rival", () => {
+  VER_AMBOS = $("verRival").value === "si";
+  try { localStorage.setItem("verRival", VER_AMBOS ? "si" : "no"); } catch (e) { /* incógnito */ }
+  if (R) pintarRevision();
+});
 let MES = null;
 let MESES = [];        /* urls de todos los archivos mensuales del usuario */
 let TODO = null;       /* filas flacas de todo lo analizado, o null */
@@ -6407,6 +6451,30 @@ function pintarLista() {
 }
 
 /* ============ revisión de una partida ============ */
+/* Girar al costado del tablero (v0.114): a la vista mientras dura la apertura
+   —las jugadas de libro, y como mínimo las dos primeras de cada lado, por si la
+   partida sale del libro enseguida— y después solo en la hoja de la compu o
+   en la fila. Se ubica pegado a la fila 1, del lado de afuera de las
+   casillas; el SVG mide 8 casillas más dos márgenes, y la escala sale de su
+   ancho en pantalla. */
+const JUGADAS_GIRAR = 4;
+function ubicarGirar(f) {
+  const b = $("btnGirarTab"), svg = $("tablero").querySelector("svg.tab");
+  if (!svg) return b.classList.add("oculto");
+  const s = svg.getBoundingClientRect(), r = b.parentElement.getBoundingClientRect();
+  if (!s.width) return;
+  const k = s.width / (TAB_S * 8 + TAB_M * 2), borde = (TAB_M + TAB_S * 8) * k;
+  /* 4 de las casillas (la escala) y al menos 3 hasta el borde de la pantalla;
+     si no entra, a la fila. Se decide siempre, esté o no a la vista, para que
+     la fila ya esté bien cuando el botón se esconde. */
+  const entra = Math.round(s.left + borde) + 4 + 34 <= document.documentElement.clientWidth - 3;
+  document.body.classList.toggle("girarEnFila", !entra);
+  const ver = entra && !PRUEBA && (IDX < JUGADAS_GIRAR || (f && f.cat === "libro"));
+  b.classList.toggle("oculto", !ver);
+  if (!ver) return;
+  b.style.left = (s.left - r.left + borde + 4) + "px";
+  b.style.top = (s.top - r.top + borde - 44) + "px";
+}
 function pintarRevision() {
   const f = R.filas[IDX];
   const c = presentar(f);
@@ -6852,9 +6920,7 @@ function pintarRevision() {
      cuatro "Pintar solo las mías" no entra */
   $("btnMejor").classList.toggle("prendido", VER_MEJOR);
   $("btnMejor").setAttribute("aria-pressed", VER_MEJOR ? "true" : "false");
-  $("btnAmbos").classList.toggle("prendido", VER_AMBOS);
-  $("btnAmbos").setAttribute("aria-pressed", VER_AMBOS ? "true" : "false");
-  $("btnAmbos").disabled = !ladoDelUsuario(R);
+  ubicarGirar(f);
   /* Adentro de la variante, "anterior" y "siguiente" se mueven POR LA
      VARIANTE. Es la misma promesa de siempre —la posición anterior y la
      siguiente— y no dos botones que significan una cosa u otra según dónde
@@ -7104,7 +7170,12 @@ const atras = () => PRUEBA ? verDeLaVariante(PRUEBA.ver - 1) : irA(IDX - 1);
 const adelante = () => PRUEBA ? verDeLaVariante(PRUEBA.ver + 1) : irA(IDX + 1);
 $("ant").onclick = seguro("anterior", atras);
 $("sig").onclick = seguro("siguiente", adelante);
-$("btnMejor").onclick = seguro("mejor", () => { VER_MEJOR = !VER_MEJOR; pintarRevision(); });
+$("btnMejor").onclick = seguro("mejor", () => {
+  VER_MEJOR = !VER_MEJOR;
+  try { localStorage.setItem("siempreMejor", VER_MEJOR ? "si" : "no"); } catch (e) { /* incógnito */ }
+  pintarRevision();
+});
+try { VER_MEJOR = localStorage.getItem("siempreMejor") === "si"; } catch (e) { /* incógnito */ }
 
 /* ARRASTRAR LA TIRA CON EL MOUSE (v0.80). Reportado desde una compu: en un
    celular el dedo scrollea la tira sola, pero con mouse arrastrar un
@@ -7169,7 +7240,16 @@ $("tileMejor").onkeydown = ev => {
    Este botón solo sale de la variante, y por eso vive adentro de su tarjeta. */
 $("btnProbar").onclick = seguro("volver de la variante", salirDePrueba);
 $("btnGirar").onclick = seguro("girar", () => { GIRADO = !GIRADO; pintarRevision(); });
-$("btnAmbos").onclick = seguro("pintar", () => { VER_AMBOS = !VER_AMBOS; pintarRevision(); });
+$("btnGirarTab").onclick = $("btnGirar").onclick;
+/* Un observador y no `resize`: la Partida se pinta todavía escondida (antes
+   de pasar de pantalla), y ahí el SVG mide 0 y el botón caía en cualquier
+   lado. El observador avisa cuando el tablero aparece y cuando cambia de
+   tamaño, que son las dos veces que hay que volver a ubicarlo. */
+/* sobre `.revtab` y no sobre `#tablero`: el tablero mide 360 en casi cualquier
+   ancho, así que al girar el celu se movía sin cambiar de tamaño y el
+   observador no saltaba (lo midió el revisor: de 412 a 400 el botón quedaba
+   afuera de la pantalla hasta pasar de jugada). La fila sí cambia de ancho. */
+new ResizeObserver(() => { if (R && R.filas[IDX]) ubicarGirar(R.filas[IDX]); }).observe(document.querySelector(".revtab"));
 
 function pintarResumen(prof) {
   const { filas, cab } = R;

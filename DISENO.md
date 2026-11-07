@@ -421,6 +421,12 @@ hay. Las primeras salen del historial del traspaso.
   candidata fuerte (7-nov-2026). **Eligió eso**: el caminito queda con
   "‹", y la barra de abajo vuelve con los módulos, escondiéndose al deslizar
   (`HOJA-DE-RUTA.md`, etapa 4).
+- **Cada control donde lo pide cuánto se usa** (7-nov-2026, v0.114): Girar
+  se usa al arrancar la partida y casi nunca después, así que va **a mano al
+  principio y después se esconde** (al costado del tablero, idea suya); lo que
+  se cambia seguido, a un toque; lo que se pone una vez, a la hoja. Y que un
+  botón no se lleve más protagonismo que lo que vale: "Siempre la mejor" a
+  todo el ancho *"ganó mucho protagonismo"*.
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.
@@ -477,4 +483,12 @@ criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
   bien donde está, no solo que no empuje. *Reglas* (ya en sus instrucciones):
   no se pide mover sin decir adónde, y lo nuevo que rompe una zona es
   CORREGIR, no un lavado para después.
+- **Los tres botones de la jugada con ícono y texto, en su fila** (v0.113).
+  El revisor eligió entre cuatro midiendo lugar, toque de 48 y que no empuje.
+  *Se le pasó*: **cada cuánto se usa cada uno**. Girar se toca al arrancar y
+  nunca más, Rival casi nunca, Siempre la mejor seguido: tres frecuencias
+  distintas en tres botones iguales. Juan lo vio en la captura. *Regla*: antes
+  de decidir dónde va un control, preguntarse cuándo y cada cuánto se toca; lo
+  de una vez va escondido o solo en el momento en que se usa, y el lugar a un
+  toque es para lo que se cambia seguido.
 

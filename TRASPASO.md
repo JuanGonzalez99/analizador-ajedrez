@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.113**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.114**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4587,6 +4587,37 @@ comparte con el chevrón ›. Lo que quedó:
 - **Por debajo de 360 de ancho el ícono se esconde**: a 320 "Siempre la mejor"
   con ícono no entra en 142 y el botón se partía en dos renglones (56 de alto).
 - El estado prendido no cambia (borde de acento y fondo al 14%).
+
+**v0.114, cada botón donde lo pide cuánto se usa** (Juan, al ver la v0.113).
+La tanda de la v0.113 decidió por lugar y por toque, pero **nadie preguntó
+cada cuánto se toca cada botón**, y eso era lo que decidía. Juan: Girar se usa
+al arrancar la partida, para verla del lado que interesa, y después casi nunca;
+"Siempre la mejor" la va cambiando; "Rival" no sabe cuánto le aporta. Se pidió
+además un análisis de usabilidad a un agente aparte, sin contarle lo elegido
+(llegó a lo mismo en lo de fondo, y propuso Girar en la tuerca; Juan lo frenó
+por lo mismo: lo quiere a mano al arrancar). Quedó la idea de Juan:
+- **Girar, al costado del tablero, solo al arrancar**: `#btnGirarTab`, 34×44,
+  pegado a la fila 1 del lado de afuera de las casillas, a 4 de ellas (en el
+  celu de 412, entre 375 y 409); el toque se estira con un `::after` hasta el
+  borde de la pantalla y a 48 de alto. Se ve mientras la jugada es de libro y como mínimo en las
+  cuatro primeras (`JUGADAS_GIRAR`), y nunca adentro de una variante. La
+  posición la calcula `ubicarGirar()` con la escala del SVG, y un
+  `ResizeObserver` sobre `.revtab` (no sobre `#tablero`, que mide 360 en casi
+  cualquier ancho y no avisaba al girar el celu) la rehace cuando el tablero
+  aparece —la Partida se pinta escondida y ahí el SVG mide 0— o se mueve.
+- **Cuando el canal no alcanza** —en el celu, por debajo de 412: a 320 el
+  botón terminaba en 331, y de 400 a 411 se salía o tocaba el borde (lo midió
+  el revisor)— `ubicarGirar()` pone `body.girarEnFila`; ahí y **en la compu** (≥1110, donde al costado van las comidas)
+  Girar sigue en la fila, `#btnGirar`. El bloque de la compu va escrito
+  `@media (width >= 1110px)` para no ser "el primero de 1110" que buscan las
+  pruebas.
+- **Rival se mudó a la hoja**: "Jugadas del rival: atenuadas / pintadas"
+  (`#verRival`), en "Cómo se ve la partida".
+- **Rival y Siempre la mejor se guardan** (`verRival`, `siempreMejor` en
+  `localStorage`); hasta acá se apagaban en cada carga.
+- **"Siempre la mejor" queda sola, en dos columnas** (abajo de Mejor y
+  Pérdida). A todo el ancho se llevaba demasiado protagonismo (Juan); revisarla
+  quedó en la hoja de ruta.
 
 **v0.107, [PC] la barra vertical pegada al tablero en los anchos del medio**
 (revisor, v0.105): de 413 a 1109 quedaba a 140 px porque el arreglo de la v0.86

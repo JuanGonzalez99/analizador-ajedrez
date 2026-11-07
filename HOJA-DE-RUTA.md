@@ -124,6 +124,11 @@ lo demás se dibuja contra ella.
       todo en la de rotar"* (`DISENO.md` §2). Que haya variantes con ícono y
       texto; el revisor juzga si suman. Juan eligió esperar a este ítem y no
       ponerle el ícono a "Girar" antes.
+- [ ] **"Siempre la mejor" se lleva mucho protagonismo** (Juan, v0.114). Sola
+      en la fila de abajo es el botón más grande de la pantalla para algo que es
+      una preferencia. ¿Más chico, otro lugar (pegado al cuadrito Mejor, que
+      hace lo mismo para una jugada), o que el cuadrito mismo sea el
+      interruptor? Con variantes.
 - [ ] **[PC] Lavado de cara: los anchos del medio, de 700 a 1109** (revisor,
       v0.107). Todo bien medido, pero no aprovecha la pantalla: el tablero queda
       fijo en 360 en una columna de 672, con ~160 px vacíos de cada lado, y recién
@@ -277,12 +282,10 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
   la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
   revisor recomienda la 1.
-- **No sé si esto te copa (v0.113):** los tres botones de abajo quedaron en
-  su fila, con ícono y texto. La otra era Girar como ícono chiquito al borde
-  del tablero, como chess.com; el revisor no la eligió porque pierde el texto
-  y queda chica para el dedo. Se da vuelta fácil.
-  Y la flechita de "Siempre la mejor" va verde, como la flecha que pinta en
-  el tablero, y los otros dos íconos blancos; la otra es los tres blancos.
+- **No sé si esto te copa:** la flechita de "Siempre la mejor" va verde, como
+  la flecha que pinta en el tablero; la otra es del color del texto.
+- **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
+  usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
   área de toque invisible de 48 de `DISENO.md` §1.7.
 
