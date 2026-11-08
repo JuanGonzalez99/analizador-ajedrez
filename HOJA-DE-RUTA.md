@@ -129,7 +129,7 @@ lo demás se dibuja contra ella.
       una preferencia. ¿Más chico, otro lugar (pegado al cuadrito Mejor, que
       hace lo mismo para una jugada), o que el cuadrito mismo sea el
       interruptor? Con variantes.
-- [ ] **[PC] Lavado de cara: los anchos del medio, de 700 a 1109** (revisor,
+- [x] **[PC] Lavado de cara: los anchos del medio, de 700 a 1109** (v0.118, 8-nov: A + B por rangos, el tablero crece de 700 a 949 y dos columnas desde 950; revisor,
       v0.107). Todo bien medido, pero no aprovecha la pantalla: el tablero queda
       fijo en 360 en una columna de 672, con ~160 px vacíos de cada lado, y recién
       en 1110 salta al diseño de compu. A 1000×900 podría andar por 570. Pregunta:
@@ -166,6 +166,17 @@ lo demás se dibuja contra ella.
       la curva, la tarjeta, las flechas y la navegación, así que va en su propia
       tanda. Surgió al discutir Girar en la tarjeta: la posición inicial sería
       el lugar natural para elegir de qué lado verla.
+- [ ] **[PC] Lavado de cara: la tira y la lista dicen lo mismo** (revisor,
+      v0.118). Desde 950 las jugadas aparecen dos veces, en la tira bajo el
+      tablero y en la lista del costado; y la curva cruza las dos columnas
+      mientras los cuadritos usan solo la principal, así que lo de abajo no
+      comparte columnas con lo de arriba. ¿Con la lista a la vista hace falta
+      la tira? ¿La curva va con la principal o con las dos? Con variantes.
+- [ ] **[PC] Lavado de cara: el lugar de las piezas comidas** (revisor,
+      v0.118). Desde 1110, en la apertura, la columna de las comidas queda
+      vacía: ~150 px libres al costado del tablero. ¿Se reserva siempre o solo
+      cuando hay algo comido? ¿O van arriba y abajo del tablero, como en
+      chess.com, y le devuelven ese ancho? Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
