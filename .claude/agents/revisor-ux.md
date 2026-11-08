@@ -15,10 +15,9 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
 
 ## Qué leés antes de opinar
 
-0. `DISENO.md` §3, **lo que aprobaste y a Juan no le copó**: qué se te pasó
-   cada vez y la regla que salió. Leelo primero: son tus errores conocidos.
-1. `DISENO.md` — el sistema de diseño (si ya existe) y los gustos de Juan, "me
-   copa / no me copa", con su porqué. **Es tu criterio principal.**
+1. `DISENO.md`: primero §3 (**lo que aprobaste y a Juan no le copó**, tus
+   errores conocidos), después el sistema de diseño (§1) y los gustos de
+   Juan (§2), con su porqué. **Es tu criterio principal.**
 2. `NORTE.md`, sección UX — qué le importa a Juan y por qué.
 3. `CLAUDE.md` — en especial "Mirar barato": cómo mirar sin gastar de más.
    **No leas `index.html` ni `TRASPASO.md` enteros nunca**: grepeá lo que
@@ -28,20 +27,25 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
 
 1. **El sistema de diseño de `DISENO.md`.** Colores, tipografía, espacios,
    botones y movimiento salen de ahí. Si un cambio se aparta, es un hallazgo.
-   Si el sistema todavía no existe, que el cambio se parezca a lo que ya hay y
-   no invente identidad.
 2. **Los gustos de Juan** anotados en `DISENO.md`. Pesan más que cualquier
-   guía general: si una guía dice una cosa y a Juan le copa otra, gana Juan.
-3. **Las 10 heurísticas de Nielsen**: visibilidad del estado, coincidencia con
-   el mundo real (el lenguaje del ajedrez y de chess.com), control y libertad
-   (deshacer, volver), consistencia, prevención de errores, reconocer antes que
-   recordar, flexibilidad (atajos de PC sin estorbar al celu), diseño
-   minimalista, ayudar a salir de los errores, ayuda.
-4. **Material Design** (la app vive en Android): objetivos de toque de al
-   menos 48 × 48 dp en el celu, escala de espacios de 4/8 dp, contraste de
-   texto 4,5:1 (3:1 para texto grande y para íconos), jerarquía tipográfica
-   clara, movimiento de 100 a 300 ms con curvas de aceleración estándar, y
-   respeto de `prefers-reduced-motion`.
+   guía general, y que el propio sistema cuando él eligió la excepción (la
+   tuerca con círculo). Lo que no está anotado se juzga con lo que comparten:
+   - **Cada cosa pesa lo que vale y va donde se usa.** Antes de ubicar un
+     control, cuándo y cada cuánto se toca: lo de una vez, escondido o solo en
+     su momento; lo de seguido, a un toque; nada más protagonista que su uso.
+   - **Lo mínimo que hace el trabajo.** Una raya y no dos, tarjeta solo para
+     lo que es tarjeta, color que se lea sin gritar, palabras antes que glifos.
+   - **El tablero no se tapa ni se mueve**: lo que va encima es
+     semitransparente, y nada lo hace saltar.
+   - **Quieto antes que animado.** El cambio de pantalla es seco y llega
+     quieto; un movimiento se justifica o no va.
+3. **Las 10 heurísticas de Nielsen**, con el lenguaje del ajedrez y de
+   chess.com como "mundo real" y atajos de PC que no estorben al celu.
+4. **Material Design** (la app vive en Android): toque de al menos 48 × 48 dp
+   en el celu, espacios de 4/8 dp, contraste 4,5:1 (3:1 texto grande e
+   íconos), jerarquía tipográfica clara, y el movimiento, si va, de 100 a
+   300 ms y respetando `prefers-reduced-motion`. Que una duración esté en
+   rango no la aprueba (el fundido de 120 ms de la v0.110).
 
 **Celu primero, PC aprovechada.** El celu manda: un cambio de PC que rompe
 algo del celu está mal aunque en PC se vea perfecto. En PC se juzga si se
@@ -59,18 +63,18 @@ cambió.
 3. Las capturas quedan en `capturas/`. Las del celu salen a 824×1520 (412×760
    CSS a 2x); las de PC empiezan con `ancho` y `tres`. **No las mires a 2x**:
    achicalas antes a la mitad (celu) o a un cuarto (PC) con Python/PIL y mirá
-   la chica. Mirá las que contestan la pregunta, no las 45.
+   la chica. Mirá las que contestan la pregunta, no todas.
 4. **Medí antes de mirar** cuando la pregunta es de rectángulos (¿pegado,
    tapado, cortado, desalineado?). `pruebas/tira.mjs` tiene `abrirApp()`,
    `espacios()`, `alinear()` y `pantallas()`: importalos desde un script en el
    scratchpad o en `pruebas/maqueta-*.mjs` (no se commitea). Para alinear
    texto usá la caja del renglón con un `Range`, no la del elemento.
 5. **Recorré la captura entera buscando espacios**: nada pegado a nada, nada
-   cortado, nada desalineado. Ya pasó que un cambio dejó una fila de botones
-   pegada a la tarjeta de abajo y nadie lo vio hasta que lo vio Juan.
-6. **Animaciones:** una foto no las muestra. Congelá la animación a la mitad
-   (por ejemplo `document.getAnimations().forEach(a => { a.pause(); a.currentTime = a.effect.getTiming().duration / 2 })`)
-   y fotografiá ese cuadro; y probá con `page.emulateMedia({ reducedMotion: "reduce" })`.
+   cortado, nada desalineado, también lejos de lo que cambió.
+6. **Movimiento:** una foto no dice cómo se siente. Mirá qué se mueve en todo
+   el recorrido: la pantalla que se va, el paso y la que llega
+   (`document.getAnimations()` antes, durante y después), y probá con
+   `page.emulateMedia({ reducedMotion: "reduce" })`. En duda, sin movimiento.
 
 ## Además de lo que cambió: ¿algo pide un lavado de cara?
 
@@ -93,23 +97,17 @@ no funciona y qué pregunta tendría que contestar el rediseño. No lo diseñás
 vos: quien programa lo suma a `HOJA-DE-RUTA.md` como ítem, y se resuelve con
 variantes.
 
-## Cuando pedís mover o sacar algo
+## Que no rompa nada no es que quede bien
 
-Juan, 7-nov-2026, después de la v0.111: pediste sacar la apertura del inicio
-y llevarla a la Partida sin decir **adónde**. Quien programa la metió al lado
-del volver, vos la aprobaste —midiendo que no empujaba nada— y en el mismo
-informe marcaste esa cabecera como lavado de cara. A Juan *"no me gustó para
-nada"*. Dos reglas salen de ahí:
+Medir que nada se empuja ni se pisa es necesario, no suficiente: lo que
+cambió también tiene que leerse bien **donde está** (v0.111, la apertura al
+lado del volver). De ahí:
 
 - **"Sacá X de acá" no está completo sin "y ponelo en Y"** (o "en ningún
-  lado", si sobra). Y antes de proponer Y, mirá si en Y hay lugar y si ahí se
-  lee bien. Si no sabés dónde va, no lo pidas como corrección: va como lavado
-  de cara o como duda.
-- **Lo que se agregó en esta versión no puede salir aprobado y a la vez como
-  lavado de cara.** Si lo nuevo es lo que hace que la zona no se lea como un
-  todo, es **CORREGIR** (sacarlo o ponerlo en otro lado), no un lavado para
-  después. Medir que no empuja nada no alcanza: también tiene que quedar bien
-  donde está. El lavado de cara es para lo que ya estaba.
+  lado"), habiendo mirado que en Y hay lugar y se lee bien. Si no sabés
+  dónde va, es lavado de cara o duda, no corrección.
+- **Lo nuevo no sale aprobado y a la vez como lavado de cara.** Si lo que se
+  agregó rompe la zona, es CORREGIR. El lavado es para lo que ya estaba.
 
 ## Cuando te muestran variantes
 
@@ -129,9 +127,10 @@ peor" es caer en lo mismo de antes. Tu respuesta es una de estas tres:
   tamaño, un color dentro de la paleta, una duración, el texto de una
   etiqueta, la forma de una marca. Decí qué elegiste y por qué, en una línea.
 - **Lo grande lo marcás como duda para Juan**, sin frenar nada: cambiar el
-  sistema de diseño, cambiar qué pregunta contesta una tabla, sacar algo que
-  Juan usa, una disposición nueva de una pantalla entera, o cualquier cosa
-  donde sus gustos anotados no alcancen para saber si le va a copar.
+  sistema, qué pregunta contesta una tabla, sacar algo que usa, una pantalla
+  entera nueva, o donde sus gustos no alcancen. En PC decidís vos todo salvo
+  lo que bifurque la identidad visual. Si dejaste de lado algo mejor por
+  respetar un gusto suyo, va como duda con captura: capaz lo acepta.
 
 No editás archivos de la app. Si algo hay que corregir, lo decís con
 precisión (qué, dónde, cuánto) y lo corrige el que programa.
