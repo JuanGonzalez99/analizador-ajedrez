@@ -541,7 +541,7 @@
   body.girarEnFila .acciones { display: grid; }
   /* el corte de la compu, escrito así para que no se confunda con el bloque
      grande de 1110 (las pruebas buscan el primero) */
-  @media (width >= 1110px) {
+  @media (width >= 950px) {
     .acciones > #btnGirar { display: flex; }
     .acciones { display: grid; }
     #btnGirarTab { display: none !important; }
@@ -769,14 +769,24 @@
      el corte se movió con ella: 700 + 22 + 360 + 28 = 1110. Mover el ancho sin
      mover el corte es lo que rompe, porque entre los dos números las columnas
      no entran y la principal se achica de nuevo. */
-  @media (min-width: 1110px) {
+  /* DESDE LA v0.118 ESTE BLOQUE ARRANCA EN 950 Y NO EN 1110 (lavado de "los
+     anchos del medio", revisor v0.107). De 950 a 1109 las dos columnas no
+     entran enteras, y es a propósito: la principal se achica (`minmax`) y la
+     lista conserva sus 360. Se dibujaron cuatro —tablero que crece en la
+     columna de 700, este diseño desde 900, la tarjeta al costado y hoy— y el
+     revisor eligió partir: crecer de 700 a 949 (la regla de abajo de este
+     bloque) y dos columnas desde 950. El corte iba en 900 y se corrió porque
+     ahí el tablero se achicaba 154 px al agrandar la ventana un píxel; en 950,
+     a 900 de alto, pasa de 596 a 492. De 1110 para arriba `minmax(0, 700px)`
+     vale 700 justo: nada cambia ahí. */
+  @media (min-width: 950px) {
     body { max-width: 1110px; }
     /* EL HUECO ES ENTRE COLUMNAS Y NO ENTRE FILAS. Las filas son la misma vista
        partida en pedazos —tarjetas, tablero, curva, cuadritos—, así que cada
        bloque se separa con SU margen, igual que cuando eran hermanos adentro de
        un solo div. Con `gap: 22px` a secas cada corte sumaba 22 px de aire que
        no existía, y el primero que lo pagaba era el de abajo de la curva. */
-    #zonaRevision { display: grid; grid-template-columns: 700px 360px;
+    #zonaRevision { display: grid; grid-template-columns: minmax(0, 700px) 360px;
                     column-gap: 22px; row-gap: 0; align-items: start; }
     /* LAS CUATRO PIEZAS VAN PUESTAS A MANO y no por acomodo automático: con la
        curva de hija directa, el automático la mandaría a la columna de al lado
@@ -794,7 +804,7 @@
     #zonaRevision > .pabajo   { grid-column: 1; grid-row: 5; }
 
     /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
-    #zonaRevision.solaTira { grid-template-columns: 700px; }
+    #zonaRevision.solaTira { grid-template-columns: minmax(0, 700px); }
     #zonaRevision.solaTira .colLista { display: none; }
     /* se queda a la vista mientras se recorre la partida, y nunca más alta que
        la pantalla: si creciera con la partida, en una de 80 jugadas habría que
@@ -872,6 +882,24 @@
     .cGrupo svg { background: var(--casilla-clara); border-radius: var(--r-chico); padding: 2px; }
     .cDif { font-size: var(--t-leyenda); font-weight: 700; color: var(--tenue);
             font-variant-numeric: tabular-nums; }
+  }
+  /* LAS PIEZAS COMIDAS, DESDE 1110 COMO ANTES (v0.118): se comen 140 de ancho
+     del lado del tablero. Se probaron desde 1000 y el lado iba 999 → 541,
+     1000 → 402: el tablero se achicaba dos veces mientras la ventana crecía, y
+     a cambio de un dato que se mira de reojo, con un agujero al costado en la
+     apertura, cuando no hay nada comido (revisor, v0.118). De 950 a 1109 manda
+     el tablero. */
+  @media (min-width: 950px) and (max-width: 1109px) { .comidas { display: none; } }
+  /* DE 700 A 949, LA COLUMNA DEL CELU CON EL TABLERO QUE CRECE (v0.118). Ahí
+     no entran dos columnas, y la de 700 ya llena casi todo el ancho: lo que
+     sobraba eran ~160 px a cada lado del tablero fijo en 360. El presupuesto
+     de alto es el mismo de las dos columnas; el de ancho, la columna menos la
+     barra ancha y su hueco (48) y el canal de Girar al costado (28). Medido:
+     800 × 1000 da 624, 949 × 900 da 596, 1000 × 700 (ya en dos columnas) 396. */
+  @media (min-width: 700px) and (max-width: 949px) {
+    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - 330px), calc(min(100vw, 700px) - 76px)), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - 304px), calc(min(100vw, 700px) - 76px)), 680px); }
+    svg.tab { max-width: var(--ladoTab); }
   }
   /* TRES COLUMNAS, Y LA TARJETA AL COSTADO (v0.90). Es el cambio invasivo de la
      tanda y el que más tablero compra: la tarjeta deja de gastar alto arriba del
@@ -989,7 +1017,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.117 · 07-11";
+  window.VERSION = "v0.118 · 08-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3856,7 +3884,7 @@ let MODO_EVAL = "horizontal";
    y horizontal gana. En una compu el tablero está limitado por el ALTO (v0.80),
    así que esos 24 px salen del tablero: la vertical le devuelve 26 px de lado.
    Misma medida, dos respuestas, porque la pregunta no es la misma. */
-const CORTE_ANCHO = "(min-width: 1110px)";
+const CORTE_ANCHO = "(min-width: 950px)";
 function evalPorDefecto() {
   return window.matchMedia(CORTE_ANCHO).matches ? "barra" : "horizontal";
 }

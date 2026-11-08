@@ -706,6 +706,30 @@ await pg.setViewportSize({ width: 1280, height: 800 });
 await pg.waitForTimeout(250);
 console.log("barra vertical: ", JSON.stringify({ corto: barraCorta, largo: barraLarga,
   a1000x700: barraMedia.hastaElTablero }));
+/* LOS ANCHOS DEL MEDIO (v0.118): de 700 a 949 el tablero crece en la columna
+   de 700, y desde 950 arrancan las dos columnas. Lo que se cuida: el lado a
+   cada lado de los cortes (que agrandar la ventana no lo achique de golpe más
+   de ~150), la barra pegada, que la curva entre en la pantalla y que nada
+   desborde. Con la barra vertical, que es la de fábrica en compu. */
+const anchosMedio = {};
+for (const [w, h] of [[800, 1000], [949, 900], [950, 900], [1000, 900], [1109, 900], [1110, 900], [1109, 800]]) {
+  await pg.setViewportSize({ width: w, height: h });
+  await pg.waitForTimeout(250);
+  anchosMedio[`${w}x${h}`] = await pg.evaluate(() => {
+    const z = document.getElementById("zonaRevision");
+    window.scrollTo(0, z.getBoundingClientRect().top + window.scrollY - 8);
+    const t = document.querySelector("svg.tab").getBoundingClientRect();
+    const c = document.getElementById("curva").getBoundingClientRect();
+    const b = document.querySelector(".evalbar").getBoundingClientRect();
+    return { lado: Math.round(t.width), barra: Math.round(t.left - b.right),
+             curva: `${Math.round(c.bottom)}/${innerHeight}`,
+             lista: getComputedStyle(document.querySelector(".colLista")).display !== "none",
+             desborde: document.documentElement.scrollWidth > innerWidth };
+  });
+}
+await pg.setViewportSize({ width: 1280, height: 800 });
+await pg.waitForTimeout(250);
+console.log("anchos del medio:", JSON.stringify(anchosMedio));
 await pg.evaluate(() => { for (let i = 0; i < 30; i++) document.getElementById("ant").click(); });
 await pg.waitForTimeout(500);
 await elegir("#verEval", "barra");

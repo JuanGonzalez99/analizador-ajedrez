@@ -2634,22 +2634,27 @@ test("la lista lateral no le saca lugar al celular", () => {
      gana la última, y puesta después le ganaba al display de adentro y la lista
      no se veía NUNCA. Se rompió así al escribirla. */
   const base = html.indexOf(".colLista, .soloAncho { display: none; }");
-  const ancha = html.indexOf("@media (min-width: 1110px)");
+  const ancha = html.indexOf("@media (min-width: 950px)");
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,
     "la regla base va antes de la media query, o la lista no se ve nunca");
-  assert.ok(html.includes("grid-template-columns: 700px 360px"),
+  assert.ok(html.includes("grid-template-columns: minmax(0, 700px) 360px"),
     "la columna principal sigue midiendo 700: es la medida de todas las decisiones");
   /* EL CORTE ES LA SUMA de lo que tiene que entrar, y está ATADO al ancho de la
      lista: mover uno sin el otro deja una franja donde las columnas no entran y
      la principal se achica de nuevo. Pasó al ensanchar la lista en la v0.82, y
-     lo agarró esta prueba. Por eso el corte se calcula acá y no se escribe. */
-  const anchoLista = +(html.match(/grid-template-columns: 700px (\d+)px/) || [])[1];
+     lo agarró esta prueba. Por eso el corte se calcula acá y no se escribe.
+     DESDE LA v0.118 EL CORTE VA ABAJO DE LA SUMA A PROPÓSITO: de 950 a 1109 la
+     principal se achica (`minmax`), y lo que se cuida ahora es que en el corte
+     le quede lugar a un tablero bastante más grande que el del celu (540 de
+     columna, 492 de tablero) y que de la suma para arriba siga midiendo 700. */
+  const anchoLista = +(html.match(/grid-template-columns: minmax\(0, 700px\) (\d+)px/) || [])[1];
   const corte = +(html.match(/@media \(min-width: (\d+)px\)\s*\{\s*body \{ max-width/) || [])[1];
-  assert.equal(corte, 700 + 22 + anchoLista + 28,
-    `el corte tiene que ser 700 + 22 + ${anchoLista} + 28, y es ${corte}`);
-  assert.ok(html.includes(`body { max-width: ${corte}px; }`),
-    "y el ancho del cuerpo es el mismo número que el corte");
+  assert.equal(700 + 22 + anchoLista + 28, 1110, "las dos columnas enteras entran en 1110");
+  assert.ok(corte < 1110 && corte - 28 - 22 - anchoLista >= 540,
+    `en el corte (${corte}) la principal mide al menos 540`);
+  assert.ok(html.includes("body { max-width: 1110px; }"),
+    "y el cuerpo llega hasta donde las dos columnas entran enteras");
 });
 
 test("el tiempo pensado sale en la lista, y null no es cero", () => {
@@ -2782,7 +2787,7 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      y ahí la barra quedaba a 140 px. */
   assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }"),
     "la caja del tablero mide lo que mide el tablero");
-  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 1110px)"));
+  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 950px)"));
   assert.ok(antesDelMedia.includes("var(--ladoTab, 360px)") &&
             /\.revtab \{[^}]*justify-content: center/.test(antesDelMedia),
     "en cualquier ancho, no solo en la compu");
@@ -2805,7 +2810,7 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
   /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de
      360 y el tablero quedaría más chico que en el celular. */
   const regla = html.indexOf("--ladoTab: clamp(360px");
-  const media = html.indexOf("@media (min-width: 1110px)");
+  const media = html.indexOf("@media (min-width: 950px)");
   assert.ok(media > 0 && regla > media,
     "y la regla vive adentro de la media query: en el celular el tablero no cambia");
   assert.ok(html.includes("svg.tab { width: 100%; max-width: 360px;"),
@@ -2818,7 +2823,7 @@ test("el dial de las jugadas tiene las dos formas y el apagado", () => {
     assert.ok(html.includes(k), `está la forma ${k}`);
   assert.ok(html.includes("grid-template-columns: 28px 1fr auto 1fr auto"),
     "la planilla es nº | blancas | reloj | negras | reloj, como la de papel");
-  assert.ok(html.includes('#zonaRevision.solaTira { grid-template-columns: 700px; }'),
+  assert.ok(html.includes('#zonaRevision.solaTira { grid-template-columns: minmax(0, 700px); }'),
     "sin lista, la columna no queda vacía");
 });
 

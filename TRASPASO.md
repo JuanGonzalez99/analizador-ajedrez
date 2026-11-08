@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.117**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.118**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -285,8 +285,9 @@ vista": la hoja vive al final del `<body>`, después de la atribución de las
 piezas, porque es `position: fixed`. Ahí adentro están los seis `<select>` de
 preferencias, que antes vivían sueltos en la fila del pie.
 
-Desde la v0.80 la vista Partida se parte en **dos columnas de 1110 px para
-arriba** (§4duovicies): `.principal` es la de siempre, de 700, y `.lateral` es
+Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
+**de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
+con `minmax`; de 700 a 949 es una columna con el tablero que crece; §7, v0.118): `.principal` es la de siempre, de 700, y `.lateral` es
 la lista de jugadas, que en el celular no existe. Desde la v0.88 la principal
 está partida, y desde la v0.90 son tres bloques —`.parriba` (encabezado),
 `.tarjetas`, `.pmedio` (tablero y tira)— más `.curva` y `.pabajo`, todos hijos
@@ -4661,6 +4662,40 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.118, [PC] los anchos del medio, de 700 a 1109** (lavado de cara del
+revisor, v0.107: el tablero quedaba fijo en 360 en una columna de 672, con ~160
+vacíos de cada lado). Se dibujaron cuatro sobre la app (barra vertical): hoy;
+A, el tablero crece con el alto en la columna de 700; B, el diseño de dos
+columnas desde 900 con la principal achicándose; C, la tarjeta a una columna
+de 280 a la izquierda, sin lista. A 1000 × 900 daban 360 / 596 / 542 / 622 de
+lado. **El revisor eligió A + B por rangos**: C dejaba la tarjeta sola arriba
+con la columna vacía, perdía la lista y sumaba una distribución que no existe
+en otro ancho; A sola dejaba 150 vacíos por lado a 1000. Lo que quedó:
+- El bloque grande pasó de `min-width: 1110px` a **`950px`**, con
+  `grid-template-columns: minmax(0, 700px) 360px` (y `solaTira` igual). De 1110
+  para arriba `minmax` vale 700 justo: `ancho` y `ancho-justo` salieron iguales
+  al byte. El de `width >= 950px` (Girar en la fila) y `CORTE_ANCHO` (la barra
+  vertical de fábrica) se movieron con él.
+- **El corte iba en 900** y se corrió a 950 por el ajuste del revisor: a 900
+  de alto, de 899 a 900 el lado caía 154 (596 → ~442). En 950 cae 104 (949 →
+  596, 950 → 492).
+- **De 700 a 949**, regla aparte afuera del bloque: `--ladoTab` con el mismo
+  presupuesto de alto (330 / 304) y de ancho `min(100vw, 700px) − 76` (barra
+  ancha + hueco, 48, y el canal de Girar al costado, 28). 800 × 1000 da 624.
+- **Las piezas comidas, desde 1110 como antes**: comen 140 de ancho del lado
+  del tablero. Se probaron desde 1000 y el lado iba 999 → 541, 1000 → 402: el
+  tablero se achicaba dos veces mientras la ventana crecía, a cambio de un dato
+  de reojo y con un agujero al costado en la apertura. El revisor corrigió su
+  propio pedido con los números a la vista: de 950 a 1109 manda el tablero.
+  Así de 950 a 1109 el tablero solo crece (a 900 de alto: 492 → 542 a 1000 →
+  596 a 1109), y el escalón de 1109 a 1110 es de 84 (596 → 512).
+- La prueba del corte "700 + 22 + lista + 28" cambió de sentido: ahora pide que
+  las dos enteras entren en 1110 y que en el corte la principal mida 540 o más.
+  Y `mirar` suma la línea **"anchos del medio"** (800×1000, 949/950/1000/1109/1110
+  × 900, 1109×800): lado, barra a 8, curva adentro y desborde.
+- Celu: idéntico al byte salvo `ajustes` y `mes-seccion`, que cambian solo por
+  el número de versión (comprobado corriendo la anterior con el número nuevo).
 
 **v0.107, [PC] la barra vertical pegada al tablero en los anchos del medio**
 (revisor, v0.105): de 413 a 1109 quedaba a 140 px porque el arreglo de la v0.86
