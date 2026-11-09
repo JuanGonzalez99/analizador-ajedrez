@@ -135,7 +135,7 @@ lo demás se dibuja contra ella.
       en 1110 salta al diseño de compu. A 1000×900 podría andar por 570. Pregunta:
       ¿ese rango es "un celu grande" o "una compu chica"? ¿El tablero crece con el
       alto, como desde 1110, o el corte se corre más abajo? Con variantes.
-- [ ] **[PC] Lavado de cara: el Mes con el ancho de la compu** (revisor,
+- [x] **[PC] Lavado de cara: el Mes con el ancho de la compu** (v0.119, 9-nov: la C, resumen fijo a la izquierda y secciones a la derecha; revisor,
       v0.108). La tabla de jugadas del Mes se estira a todo el ancho (1080 a
       1280): "Total" queda a ~680 px de las etiquetas y el ojo se pierde en el
       renglón. ¿Ancho máximo de lectura, o dos tablas/secciones en columnas?
@@ -172,6 +172,16 @@ lo demás se dibuja contra ella.
       mientras los cuadritos usan solo la principal, así que lo de abajo no
       comparte columnas con lo de arriba. ¿Con la lista a la vista hace falta
       la tira? ¿La curva va con la principal o con las dos? Con variantes.
+- [ ] **Lavado de cara: la lista "Partidas" del Mes** (revisor, v0.119; celu y
+      PC). Es el título más grande de la pantalla (h2 de 18 contra 14 de las
+      secciones) y está al fondo de todo: con las secciones abiertas, a ~1560
+      px. Repite el texto del volver ("‹ Partidas"), así que hay dos "Partidas"
+      que significan cosas distintas, y abrir una partida desde acá es
+      probablemente lo que más se toca. ¿Es la salida principal del Mes (y va
+      antes de las secciones, o a un toque) o un apéndice (y lleva título de
+      sección)? ¿Cómo se llama para no chocar con el volver? No va a la columna
+      izquierda de la compu: con 30 partidas rompe el resumen fijo. Pariente del
+      lavado del inicio. Con variantes.
 - [ ] **[PC] Lavado de cara: el lugar de las piezas comidas** (revisor,
       v0.118). Desde 1110, en la apertura, la columna de las comidas queda
       vacía: ~150 px libres al costado del tablero. ¿Se reserva siempre o solo
