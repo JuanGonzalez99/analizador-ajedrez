@@ -333,7 +333,7 @@ test("la cabecera del mes dice qué mes (v0.108)", () => {
   assert.ok(!html.includes("El mes seleccionado</option>"), "volvió el select que no dice cuál");
   /* v0.109: "Estadísticas" vuelve como rótulo chico arriba del mes (Juan, la 1 de tres) */
   assert.ok(html.includes('<h2 class="rotulo">Estadísticas</h2>'), "la sección sin nombre");
-  assert.ok(/#zonaMes > h2\.rotulo \{[^}]*text-transform: uppercase[^}]*color: var\(--tenue\)/.test(html),
+  assert.ok(/#zonaMes h2\.rotulo \{[^}]*text-transform: uppercase[^}]*color: var\(--tenue\)/.test(html),
     "el rótulo es chico y tenue: el título es el mes");
   assert.ok(html.includes('aria-label="Mes de las estadísticas"'));
   const f = html.slice(html.indexOf("function pintarFuente"), html.indexOf('$("fuente").onchange'));
@@ -3115,4 +3115,20 @@ test("la medición cuenta la mejor del motor marcada mala, en los dos modos", ()
   assert.ok(med.includes("LA MEJOR DEL MOTOR, MARCADA MALA"), "falta la sección de la cuarta falla");
   assert.ok(med.includes("mejorMala.critico") && med.includes("mejorMala.amigable"),
             "tiene que contar los dos modos");
+});
+
+test("el Mes en dos columnas solo en la compu (v0.119)", () => {
+  /* Las tablas se estiraban a todo el body (1082 a 1280). Desde 950 el resumen
+     va a la izquierda en 400 y las secciones a la derecha, con tope de 640;
+     abajo de 950 los envoltorios no tienen caja y el celu se apila como antes. */
+  assert.ok(html.includes(".mesGrid, .mesIzq, .mesDer { display: contents; }"), "en el celu los envoltorios no tienen caja");
+  const b = html.slice(html.indexOf("EL MES CON EL ANCHO DE LA COMPU"));
+  assert.ok(/@media \(min-width: 950px\) \{\s*\.mesGrid \{ display: grid; grid-template-columns: 400px minmax\(0, 640px\)/.test(b),
+    "la grilla del Mes arranca en 950, con el tope de 640");
+  assert.ok(/\(min-width: 950px\) and \(min-height: 720px\) \{\s*\.mesIzq \{ position: sticky/.test(b),
+    "el resumen solo queda fijo si entra en la ventana");
+  const z = html.slice(html.indexOf('<div id="zonaMes"'), html.indexOf('<div id="zonaRevision"'));
+  assert.ok(z.indexOf('class="mesIzq"') < z.indexOf('id="mesResumen"') &&
+            z.indexOf('id="mesResumen"') < z.indexOf('class="mesDer"') &&
+            z.indexOf('class="mesDer"') < z.indexOf('class="seccion"'), "resumen a la izquierda, secciones a la derecha");
 });

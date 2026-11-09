@@ -866,6 +866,31 @@ if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").
   await pg.waitForTimeout(200);
   await pg.evaluate(() => document.querySelector("#zonaMes details.seccion").scrollIntoView());
   await foto("mes-seccion");
+
+  /* EL MES EN LA COMPU (v0.119): resumen a la izquierda en 400 y secciones a
+     la derecha con tope de 640. Lo que se mide es lo que pidió el lavado: que
+     las columnas de números caigan en el mismo x en todas las tablas de la
+     derecha, que ninguna desborde y que el resumen quede fijo al bajar. La
+     captura empieza con "ancho", así que la comparación del celu la saltea. */
+  await pg.setViewportSize({ width: 1280, height: 900 });
+  await pg.evaluate(() => document.querySelectorAll("#zonaMes details.seccion").forEach(d => d.open = true));
+  await pg.evaluate(() => window.scrollTo(0, 0));
+  await pg.waitForTimeout(200);
+  const mesPc = await pg.evaluate(() => {
+    const R = e => e.getBoundingClientRect();
+    const xs = [...document.querySelectorAll("#zonaMes .mesDer table")]
+      .map(t => [...(t.rows[0]?.cells || [])].slice(1).map(c => Math.round(R(c).right)).join("/"));
+    const iz = R(document.querySelector(".mesIzq")), de = R(document.querySelector(".mesDer"));
+    return { izq: [Math.round(iz.left), Math.round(iz.width)], der: [Math.round(de.left), Math.round(de.width)],
+             columnasDistintas: new Set(xs.map(x => x.split("/").slice(-2).join("/"))).size,
+             desbordan: [...document.querySelectorAll("#zonaMes .tw")].filter(t => t.scrollWidth > t.clientWidth + 1).length };
+  });
+  await foto("ancho-mes");
+  await pg.evaluate(() => window.scrollTo(0, 900));
+  await pg.waitForTimeout(150);
+  mesPc.fijoAlBajar = await pg.evaluate(() => Math.round(document.querySelector(".mesIzq").getBoundingClientRect().top));
+  console.log("mes en la compu:", JSON.stringify(mesPc));
+  await pg.setViewportSize({ width: 412, height: 760 });
 }
 
 /* EL DEFAULT DE LA EVALUACIÓN SALE DEL ANCHO (v0.86), y se mide con dos cargas

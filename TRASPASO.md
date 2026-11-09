@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.118**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.119**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -292,8 +292,10 @@ la lista de jugadas, que en el celular no existe. Desde la v0.88 la principal
 está partida, y desde la v0.90 son tres bloques —`.parriba` (encabezado),
 `.tarjetas`, `.pmedio` (tablero y tira)— más `.curva` y `.pabajo`, todos hijos
 directos de la grilla. De 1500 px para arriba la tarjeta se muda a una columna
-propia a la izquierda (§4trigies). Todo lo demás sigue siendo una
-sola columna en cualquier pantalla.
+propia a la izquierda (§4trigies). El Mes también se parte desde 950
+(v0.119, §7): `.mesGrid` con el resumen en `.mesIzq` y las secciones en
+`.mesDer`, que en el celu son `display: contents`. Todo lo demás sigue siendo
+una sola columna en cualquier pantalla.
 
 **El registro está en un script clásico a propósito:** corre aunque el módulo
 falle, y por eso puede avisar que el módulo falló. Vive en `localStorage` y no
@@ -4662,6 +4664,43 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.119, [PC] el Mes con el ancho de la compu** (lavado de cara del revisor,
+v0.108: las tablas se estiraban a todo el body, 1082 a 1280 y 1472 a 1600, y
+"Total" quedaba a ~680 de su etiqueta). Tres variantes dibujadas sobre la app:
+A, todo `#zonaMes` en una columna de 720 centrada; B, la cabecera a lo ancho y
+las secciones en dos columnas con `column-count`; C, el resumen a la izquierda y
+las secciones a la derecha. **El revisor eligió C con ajustes**: A dejaba
+"Total" todavía a ~360 y corría el volver 181 px respecto de la Partida; B se
+lee en zigzag y, peor, al abrir una sección las demás saltan de columna (Juan
+las abre de a una). Lo que quedó, todo desde 950:
+- **Dos envoltorios en el HTML**, `.mesGrid > .mesIzq + .mesDer`. A la izquierda
+  rótulo, selects, línea de datos, "Cómo se leen", cuadritos, ganadas y la tabla
+  de categorías; a la derecha las siete secciones y la lista Partidas. **Abajo
+  de 950 son `display: contents`**, así que el celu se apila como antes: las
+  capturas salieron iguales al byte salvo `ajustes` y `mes-seccion`, que cambian
+  solo por el número de versión (comprobado corriendo la v0.118 con el número
+  nuevo). El selector del rótulo pasó de `#zonaMes > h2.rotulo` a
+  `#zonaMes h2.rotulo`: con el envoltorio, el `>` ya no le pegaba.
+- Grilla `400px minmax(0, 640px)`, hueco 32 (`--e-8`), 24 arriba hasta el
+  volver. **Tope de 640 también a 1600**, alineado a la izquierda: con 720 las
+  tablas de cuatro columnas se vuelven a estirar; el vacío a la derecha es el
+  margen de una página de lectura.
+- **El resumen queda fijo al bajar** (`sticky; top: 16px`), **solo con 720 de
+  alto o más**: mide 553 (702 con "Cómo se leen" abierto) y por debajo el sticky
+  le cortaría el final.
+- **Las tablas de la derecha comparten columnas**: cada número en 80 y la
+  etiqueta con el resto, así Malas, Jugadas y Tasa caen en el mismo x en las
+  seis (lo pidió el revisor como parte del cambio: la pila nueva se leía hecha
+  de pedazos, "Malas" iba de x 840 a 980). A 950 la derecha mide 490 y ninguna
+  desborda.
+- Sin raya arriba de la primera sección de la derecha: no hay nada que separar.
+  Y la derecha sube 16 (`margin-top: -16px`): el summary trae 11 de relleno, que
+  es su área de toque, y el título "Cómo terminaron" caía 17 px por debajo de
+  "ESTADÍSTICAS". Medido con `Range`, las líneas base quedan a 1 px.
+- `mirar` suma la línea **"mes en la compu"** (1280 × 900, todo abierto: anchos,
+  cuántos x distintos tienen las columnas de números, desbordes y dónde queda
+  el resumen al bajar) y la captura `ancho-mes`.
 
 **v0.118, [PC] los anchos del medio, de 700 a 1109** (lavado de cara del
 revisor, v0.107: el tablero quedaba fijo en 360 en una columna de 672, con ~160

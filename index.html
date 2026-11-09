@@ -271,6 +271,8 @@
   /* los selects del mes: 36 visibles y 12 entre ellos (§1.7), sin tocar el
      `.chico` del resto de la app */
   #zonaMes .fila { gap: var(--e-3); }
+  /* el Mes en dos columnas solo desde 950 (abajo, en su @media); acá, sin caja */
+  .mesGrid, .mesIzq, .mesDer { display: contents; }
   /* El selector del mes hace de título: la letra del h2 (18/700) en el alto de
      cualquier campo (44, §1.7), y un ancho fijo que entra "Septiembre 2026",
      el mes más largo, para que el de la cadencia no salte al cambiar de mes. */
@@ -279,7 +281,7 @@
      letra de los títulos de los cuadritos (`.metricas .et`), en tenue, así
      nombra la sección sin competir con el mes, que es el título de verdad. El
      24 de arriba es el de todo h2: separa de la zona de Análisis. */
-  #zonaMes > h2.rotulo { margin: var(--e-6) 0 var(--e-2); font-size: var(--t-minimo); font-weight: 600;
+  #zonaMes h2.rotulo { margin: var(--e-6) 0 var(--e-2); font-size: var(--t-minimo); font-weight: 600;
                          letter-spacing: .07em; text-transform: uppercase; color: var(--tenue); }
   /* Con scroll para que el botón de analizar quede a la vista sin bajar por
      cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
@@ -938,6 +940,43 @@
     /* la tarjeta arriba de todo en su columna, no estirada a dos filas */
     #zonaRevision > .tarjetas { align-self: start; }
   }
+  /* EL MES CON EL ANCHO DE LA COMPU (v0.119, lavado de cara del revisor de la
+     v0.108). Hasta acá las tablas del Mes se estiraban a todo el body —1082 a
+     1280, 1472 a 1600— y "Total" quedaba a ~680 px de su etiqueta. Se
+     dibujaron tres: A, todo en una columna de 720 centrada (Total seguía a
+     ~360 y el volver se corría 181 px de donde está en la Partida); B, las
+     secciones en dos columnas con column-count (lectura en zigzag, y al abrir
+     una sección las demás SALTAN de columna); C, esta. El revisor eligió C:
+     el resumen a la izquierda en 400, fijo, y las secciones a la derecha, que
+     crecen para abajo sin mover nada. Ajustes suyos: hueco de 32 (§1.5, el de
+     bloques grandes en PC), tope de 640 a la derecha también en 1600 —con 720
+     las tablas de cuatro columnas se vuelven a estirar— y alineado a la
+     izquierda, con el volver donde está en la Partida. */
+  @media (min-width: 950px) {
+    .mesGrid { display: grid; grid-template-columns: 400px minmax(0, 640px);
+               column-gap: var(--e-8); align-items: start; margin-top: var(--e-6); }
+    .mesIzq, .mesDer { display: block; min-width: 0; }
+    /* los dos títulos por la línea base (revisor, medido con Range): el
+       summary trae 11 de relleno —su área de toque y de hover— y el título de
+       la primera sección caía 17 px más abajo que "ESTADÍSTICAS" */
+    .mesDer { margin-top: calc(-1 * var(--e-4)); }
+    #zonaMes .mesIzq > h2.rotulo { margin-top: 0; }
+    /* una raya y no dos: arriba de la primera sección no hay nada que separar */
+    .mesDer > .seccion:first-child { border-top: 0; }
+    /* LAS TABLAS DE LA PILA COMPARTEN COLUMNAS (revisor): con el ancho
+       automático "Malas" caía en x 950, 980, 840 y 899 según la sección, y la
+       pila se leía hecha de pedazos. Cada número en 80 y la etiqueta se lleva
+       el resto: Malas, Jugadas y Tasa caen en el mismo x en todas. A 950 la
+       columna mide ~474 y a la etiqueta le quedan ~234; la más larga ("Dejé
+       comible la pieza que moví") mide ~210. */
+    .mesDer .seccion .tw :is(th, td):not(:first-child) { width: 80px; }
+  }
+  /* el resumen queda a la vista al bajar por las secciones, pero solo si entra
+     en la ventana: por debajo de 720 de alto, con "Cómo se leen" abierto, el
+     sticky le cortaría el final y quedaría contenido que no se alcanza */
+  @media (min-width: 950px) and (min-height: 720px) {
+    .mesIzq { position: sticky; top: 16px; }
+  }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
      nada avisa que se puede tocar. Reportado como "no responde nada".
@@ -1017,7 +1056,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.118 · 08-11";
+  window.VERSION = "v0.119 · 09-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1279,6 +1318,10 @@
        scroll ya no se ve. Ahora el selector de arriba de todo dice el mes y
        deja elegir otro. Arriba, "Estadísticas" como rótulo chico (v0.109). -->
   <div class="cabvista"><h2><button type="button" class="volver" id="volverDelMes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Partidas</button></h2></div>
+  <!-- DOS COLUMNAS EN LA COMPU (v0.119): a la izquierda el resumen, a la
+       derecha las secciones. En el celu los dos envoltorios son `display:
+       contents` y la página se apila igual que antes, al byte. -->
+  <div class="mesGrid"><div class="mesIzq">
   <h2 class="rotulo">Estadísticas</h2>
   <div class="fila">
     <select id="fuente" class="chico" aria-label="Mes de las estadísticas">
@@ -1293,6 +1336,7 @@
   <div class="metricas" id="mesCabecera"></div>
   <p class="marcadorMes" id="mesMarcador"></p>
   <div class="tw"><table id="mesResumen"></table></div>
+  </div><div class="mesDer">
 
   <details class="seccion">
     <summary><span class="tit">Cómo terminaron</span><button type="button" class="ayuda" data-ayuda="capDesenlaces" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
@@ -1329,6 +1373,7 @@
   <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
   <div id="mesLista" class="lista"></div>
   <div class="fila" style="margin-top:10px"><button id="seguirMes" class="chico oculto"></button></div>
+  </div></div>
 </div>
 
 <div id="zonaRevision" class="oculto">
