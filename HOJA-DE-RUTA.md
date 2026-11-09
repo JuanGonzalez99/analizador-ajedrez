@@ -148,6 +148,35 @@ lo demás se dibuja contra ella.
       mes"? Va con la duda de Modo y Mate de abajo, y con la otra pregunta del
       revisor: cuando lleguen práctica y lecciones, ¿el inicio es una entrada a
       módulos o el analizador sigue siendo la pantalla principal? Con variantes.
+      **Variantes dibujadas el 9-nov** (mes de 40 partidas, a 412×760): A tocar
+      y entrar con Modo y Mate a la tuerca; B igual con Modo y Mate plegados en
+      el inicio; C la entrada se pliega a "santico26 · cambiar" y el mes hace de
+      título. Filas a la vista: hoy 8, A 7, B 6, C 12. **El revisor eligió C
+      con ajustes**; no se construyó esa noche porque pide otra vuelta de
+      dibujo antes (2 y 5) y cambia el flujo principal: mejor entero la noche
+      siguiente. Lo que pidió:
+      1. **Las filas entran en este lavado**: rival (16, elipsis) · "Ganada /
+         Perdida / Tablas" (14, sin color) · la precisión de Juan si está
+         analizada, si no "sin analizar" (12,5 tenue) · fecha "4 oct" a la
+         derecha (12,5 tenue; hoy sale 9/4/2025, formato de EE.UU.). El ritmo
+         sale de la fila. Un renglón, sin subir el alto. La marca de la última
+         vista queda.
+      2. La tarjeta "Estadísticas ›" va entre el renglón resumen y la lista, a
+         todo el ancho, 12 arriba y 12 abajo. **Volver a dibujar C con
+         `HAY.mes = true`** y mirarla entera antes de construir.
+      3. El estado del inicio solo mientras se analiza el mes, en el lugar del
+         botón ("Analizando 12 de 40 · Parar"); lo de la última partida sobra.
+      4. Volver de la Partida devuelve la página a la misma altura de scroll
+         (la lista ya no scrollea sola).
+      5. PC: dibujar C a 1280 antes; tope de lectura de 640 para la columna
+         del inicio (el lado a lado es el ítem de PC del inicio).
+      Y decidió: los tres renglones chicos en uno ("40 partidas · 18 ganadas ·
+      0 tablas · 22 perdidas", 12,5 tenue, 12 y 12); sin la pista "Tocá una
+      partida…"; el botón dice "Analizar el mes · faltan 40" y no va si no
+      falta ninguna; "cambiar" despliega la entrada en el lugar, con toque de
+      48, y sin usuario guardado se arranca con la entrada abierta como hoy;
+      una sola hoja de ajustes, con el grupo nuevo "El análisis" (Modo, Mate);
+      tocar una partida sin analizar entra en seco a la Partida.
 - [ ] **[PC] Lavado de cara: el inicio con el ancho de la compu** (revisor,
       v0.110). A 1280 es una columna de cosas chicas sobre 1082 de ancho: el
       select del mes mide 140 y la tarjeta de Estadísticas estira el "›" a
@@ -307,6 +336,12 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
   la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
   revisor recomienda la 1.
+  **9-nov:** con las variantes del inicio dibujadas, el revisor eligió la C,
+  que va con la 1. Se construye la noche siguiente salvo que digas otra cosa.
+  Dos más que trae: después de la primera búsqueda el inicio ya no muestra el
+  título ni el campo del usuario (queda "santico26 · cambiar" y entran 12
+  partidas en vez de 8), y las filas pasan a "MewoneX · Ganada · 87 · 4 oct"
+  en vez de "Santico26 vs MewoneX · 1-0 · rapid · 9/4/2025".
 - **No sé si esto te copa (v0.117):** el cuadrito Mejor ahora prende la flecha
   en todas las jugadas hasta que lo volvés a tocar; ya no existe el vistazo de
   una sola jugada (la mejor igual está escrita en el cuadrito y en el
