@@ -75,6 +75,13 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
      va al resumen como duda).
    - *una vez al final*: una sola pasada sobre todo lo de la noche, antes del
      último push.
+   **Si el revisor frena porque es un parche** sobre algo que pide lavado de
+   cara (`revisor-ux.md`, "No se parcha lo que hay que rehacer"), el parche no
+   se pushea: se vuelve atrás, el lavado entra a `HOJA-DE-RUTA.md` arriba del
+   ítem, y si entra en la cuenta de "Por noche" se hace esa misma noche con
+   variantes. **Y quien programa también lo dice**, antes de construir: si el
+   ítem es mejorar una parte de una zona que se ve mal entera, no lo hace y
+   propone el lavado (decisión de Juan, 9-nov-2026).
    Lo que el revisor deja en "dudas para Juan" va al resumen. **Lo que deja en
    "lavado de cara" va a `HOJA-DE-RUTA.md`** como ítem nuevo sin tachar, al
    final de la etapa que se está haciendo, con lo que dijo el revisor; y al

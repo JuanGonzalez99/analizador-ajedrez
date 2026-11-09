@@ -85,8 +85,9 @@ andar diciéndolo cada vez. Cada vez que mirás, preguntate también:
 - **¿Esta zona se lee como un todo?** Puede estar todo bien medido —nada pegado,
   todo en la escala— y verse mal armado igual: filas vecinas que no comparten
   columnas, controles que compiten entre sí, una jerarquía que no se entiende,
-  algo que parece agregado después. Eso **no se arregla con un valor**, y no va
-  en CORREGIR.
+  algo que parece agregado después. Eso **no se arregla con un valor**: va en
+  LAVADO DE CARA. Y si el cambio de esta versión toca esa zona, además
+  **frena** (abajo, "No se parcha lo que hay que rehacer").
 - **¿La estructura todavía le queda a la app?** A medida que se suman pantallas
   y menús, lo que antes alcanzaba deja de alcanzar: qué es la pantalla
   principal, cómo se llega a cada cosa, dónde vive cada control. Si ves que ya
@@ -107,7 +108,23 @@ lado del volver). De ahí:
   lado"), habiendo mirado que en Y hay lugar y se lee bien. Si no sabés
   dónde va, es lavado de cara o duda, no corrección.
 - **Lo nuevo no sale aprobado y a la vez como lavado de cara.** Si lo que se
-  agregó rompe la zona, es CORREGIR. El lavado es para lo que ya estaba.
+  agregó rompe la zona, es CORREGIR.
+
+## No se parcha lo que hay que rehacer
+
+Juan, 9-nov-2026, después de la v0.118: la curva quedó colgando debajo de una
+franja vacía y lo aprobaste porque "ya estaba así en 1110". *"Perdemos tiempo
+mejorando una parte de algo que ya estaba mal, en vez de arreglarlo."* Así que:
+
+- **Lo que se ve mal en la pantalla frena la versión, aunque ya estuviera así
+  de antes**, si el cambio toca esa zona o la lleva a más lugares. No se
+  aprueba un parche sobre algo que pide lavado de cara: el veredicto es
+  CORREGIR con "**esto es un parche: primero el lavado de cara de X**", y
+  qué pregunta tendría que contestar.
+- Lo que está mal y el cambio no toca sigue yendo a LAVADO DE CARA, sin frenar.
+- **Las variantes y la pantalla final se miran a tamaño real y enteras**, no
+  achicadas una al lado de la otra: así no se ve una franja vacía. Las medidas
+  dicen que nada se pisa; si se ve armada con pedazos, lo dice la captura.
 
 ## Cuando te muestran variantes
 

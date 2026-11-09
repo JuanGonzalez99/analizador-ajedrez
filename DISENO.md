@@ -453,6 +453,12 @@ hay. Las primeras salen del historial del traspaso.
   barra de progreso que parpadea) y que la nueva **siga haciendo algo al
   llegar** (la barra de la evaluación que se anima desde cero). Lo que cambia de
   pantalla tiene que llegar quieto (7-nov-2026, v0.111).
+- **La curva colgando y la pantalla armada con pedazos** (v0.118, compu a
+  1000 de ancho): la curva cruza todo el ancho, pero arriba a la derecha no
+  tiene nada (la lista termina antes) y abajo los cuadritos ocupan solo la
+  izquierda; la barra vertical, un bloque crema alto. *"Cualquier ser humano
+  lo ve y dice que está horrible"* (9-nov-2026). Un tablero más grande no
+  compensa una pantalla que no se lee como un todo.
 - **La apertura en la cabecera de la Partida**, en gris al lado de "‹
   Partidas" y pegada a la tuerca (v0.111): *"no me gustó para nada"*. Se sacó
   en la v0.112; dónde va lo decide el lavado de la cabecera (7-nov-2026).
@@ -491,4 +497,11 @@ criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
   de decidir dónde va un control, preguntarse cuándo y cada cuánto se toca; lo
   de una vez va escondido o solo en el momento en que se usa, y el lugar a un
   toque es para lo que se cambia seguido.
-
+- **Los anchos del medio de la compu** (v0.118). Quien programa dibujó las
+  variantes buscando el tablero más grande; el revisor eligió midiendo lado,
+  saltos y desbordes, mirando las variantes achicadas una al lado de la otra.
+  Vio que la curva cruzaba dos columnas y los cuadritos una, pero lo mandó a
+  lavado "porque ya estaba así en 1110". *Se le pasó*: la pantalla entera, a
+  tamaño real, se veía armada con pedazos. *Reglas* (en sus instrucciones): lo
+  que se ve mal frena aunque viniera de antes si el cambio lo toca o lo
+  extiende —no se parcha lo que hay que rehacer—, y se mira a tamaño real.
