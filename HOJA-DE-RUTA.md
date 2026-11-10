@@ -248,6 +248,10 @@ lo demás se dibuja contra ella.
       Therkatz-Herzog Variation") en una app que habla en castellano. ¿Nombres
       en castellano como chess.com en español (Giuoco Piano, Defensa
       Siciliana), y hasta dónde: familia y variante, o completo?
+      **Juan (10-nov):** no sabe si le copa la apertura de subtítulo, *"sobre
+      todo cuando el nombre es muy largo"* (hoy se corta con "…"). Que las
+      variantes prueben también el largo: solo la familia, un nombre corto, o
+      la apertura en otro lugar.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -373,6 +377,10 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   una sola jugada (la mejor igual está escrita en el cuadrito y en el
   veredicto), y "Siempre la mejor" se fue de abajo. Si extrañás el vistazo, la
   otra es la D: el cuadrito vuelve a ser vistazo y "siempre" pasa a la tuerca.
+- **Pendiente de Juan, para revisar (10-nov):** la apertura de subtítulo en
+  la cabecera de la Partida (v0.123): *"no sé si me copa, sobre todo cuando el
+  nombre es muy largo"*. Por ahora queda así; se mira junto con el lavado del
+  idioma de las aperturas (etapa 1).
 - **No sé si esto te copa (v0.123):** arriba de la partida ya no dice "‹
   Partidas": dice "‹ MewoneX 601 · Ganada" y debajo, chiquita, la apertura. La
   flecha y el gesto de atrás te siguen llevando a la lista. La otra: que vuelva
