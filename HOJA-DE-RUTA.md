@@ -195,12 +195,19 @@ lo demás se dibuja contra ella.
       la curva, la tarjeta, las flechas y la navegación, así que va en su propia
       tanda. Surgió al discutir Girar en la tarjeta: la posición inicial sería
       el lugar natural para elegir de qué lado verla.
-- [ ] **[PC] Lavado de cara: la tira y la lista dicen lo mismo** (revisor,
-      v0.118). Desde 950 las jugadas aparecen dos veces, en la tira bajo el
-      tablero y en la lista del costado; y la curva cruza las dos columnas
-      mientras los cuadritos usan solo la principal, así que lo de abajo no
-      comparte columnas con lo de arriba. ¿Con la lista a la vista hace falta
-      la tira? ¿La curva va con la principal o con las dos? Con variantes.
+- [ ] **[PC] Lavado de cara de la Partida en la compu, entera** (Juan, 9-nov,
+      sobre la v0.118: *"horrible"*; junta dos lavados del revisor de la
+      v0.118, que por la regla de "no se parcha lo que hay que rehacer" no van
+      por separado). Desde 950: la curva cruza todo el ancho y **queda
+      colgando** —arriba a la derecha no tiene nada, la lista termina antes, y
+      abajo los cuadritos ocupan solo la izquierda—; la barra vertical es un
+      bloque crema alto que pesa más que el tablero; las jugadas aparecen dos
+      veces (tira y lista); y desde 1110 la columna de las piezas comidas
+      queda vacía en la apertura. Pregunta: ¿cómo se arma esa pantalla para
+      que se lea como un todo? ¿Hace falta la tira con la lista a la vista?
+      ¿La curva va con la principal? ¿Dónde van las comidas? Con variantes
+      miradas **enteras y a tamaño real** (`DISENO.md` §3, v0.118). Juan eligió
+      dejar la v0.118 como está hasta que llegue esto, en vez de volverla atrás.
 - [ ] **Lavado de cara: la lista "Partidas" del Mes** (revisor, v0.119; celu y
       PC). Es el título más grande de la pantalla (h2 de 18 contra 14 de las
       secciones) y está al fondo de todo: con las secciones abiertas, a ~1560
@@ -211,11 +218,6 @@ lo demás se dibuja contra ella.
       sección)? ¿Cómo se llama para no chocar con el volver? No va a la columna
       izquierda de la compu: con 30 partidas rompe el resumen fijo. Pariente del
       lavado del inicio. Con variantes.
-- [ ] **[PC] Lavado de cara: el lugar de las piezas comidas** (revisor,
-      v0.118). Desde 1110, en la apertura, la columna de las comidas queda
-      vacía: ~150 px libres al costado del tablero. ¿Se reserva siempre o solo
-      cuando hay algo comido? ¿O van arriba y abajo del tablero, como en
-      chess.com, y le devuelven ese ancho? Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
