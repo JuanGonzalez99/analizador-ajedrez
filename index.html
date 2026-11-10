@@ -930,8 +930,8 @@
        regla aparte y no un número distinto porque las tres formas de la eval se
        siguen pudiendo elegir a mano: el presupuesto tiene que seguir a la que
        esté puesta, no a la que se eligió de fábrica. Medido: 470 -> 496. */
-    #zonaRevision { --ladoTab: clamp(360px, calc(100vh - 330px), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 304px), 680px); }
+    #zonaRevision { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 261px), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 235px), 680px); }
     svg.tab { max-width: var(--ladoTab); }
     /* La barra pegada al tablero ya no necesita regla acá: la de afuera usa
        `--ladoTab`, que en este ancho vale lo de arriba (v0.107). */
@@ -985,8 +985,8 @@
      barra ancha y su hueco (48) y el canal de Girar al costado (28). Medido:
      800 × 1000 da 624, 949 × 900 da 596, 1000 × 700 (ya en dos columnas) 396. */
   @media (min-width: 700px) and (max-width: 949px) {
-    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - 330px), calc(min(100vw, 700px) - 76px)), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - 304px), calc(min(100vw, 700px) - 76px)), 680px); }
+    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 261px), calc(min(100vw, 700px) - 76px)), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 235px), calc(min(100vw, 700px) - 76px)), 680px); }
     svg.tab { max-width: var(--ladoTab); }
   }
   /* TRES COLUMNAS, Y LA TARJETA AL COSTADO (v0.90). Es el cambio invasivo de la
@@ -1021,8 +1021,8 @@
        pasa de 496 a 569 a 1500x800, o sea 73 px, no los ~90 que decía la lista
        de pendientes. La diferencia de 26 entre los dos números es la barra de
        evaluación horizontal, igual que en dos columnas. */
-    #zonaRevision          { --ladoTab: clamp(360px, calc(100vh - 257px), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 231px), 680px); }
+    #zonaRevision          { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 188px), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 162px), 680px); }
     /* la tarjeta arriba de todo en su columna, no estirada a dos filas */
     #zonaRevision > .tarjetas { align-self: start; }
   }
@@ -1152,6 +1152,13 @@
                 overflow: hidden; text-overflow: ellipsis; min-height: 1.25em; }
   .cabTit .l2:has(#revEstado:not(:empty)) #revAp, #revEstado:empty { display: none; }
   #zonaRevision .cabvista { margin-bottom: var(--e-3); }
+  /* [PC] EL ALTO DE LA CABECERA, EN UNA VARIABLE (v0.123.1, revisor): las
+     fórmulas del lado del tablero de la compu restan lo que hay arriba de él, y
+     con la barra de título de la v0.123 la cabecera pasó de 69 a 48 (del borde
+     de arriba de la cabecera al de la barra de la evaluación, medido). Los
+     números fijos que quedan en cada fórmula son el resto del presupuesto, el
+     mismo de antes; el próximo cambio de cabecera toca solo este. */
+  #zonaRevision { --altoCab: 48px; }
   /* sin min-height: en la disposición densa un renglón reservado que casi
      siempre está vacío cuesta más de lo que evita. Cuando no hay señales el
      bloque se esconde entero. */
@@ -1207,7 +1214,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.123 · 10-11";
+  window.VERSION = "v0.123.1 · 10-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

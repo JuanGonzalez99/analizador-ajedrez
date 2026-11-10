@@ -2769,12 +2769,14 @@ test("la columna está centrada y no clavada a la izquierda", () => {
 test("en la compu el tablero crece, pero lo limita el alto", () => {
   /* Si el tablero se lleva todo el ancho disponible, la tira y la curva —que
      son la navegación— se van abajo del pliegue. Lo que manda es el alto. */
-  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - 330px), 680px)"),
+  /* desde la v0.123.1 lo de arriba del tablero sale de --altoCab */
+  assert.ok(html.includes("#zonaRevision { --altoCab: 48px; }"), "el alto de la cabecera, en una variable");
+  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 261px), 680px)"),
     "el tablero se queda con lo que sobra de alto");
   /* Y CON LA BARRA VERTICAL SOBRAN 26 px MÁS (v0.86): la horizontal se suma al
      alto —16 de barra y 10 de margen— y la vertical lo comparte. Medido en el
      arnés a 1280x800: el lado pasa de 470 a 496. */
-  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - 304px), 680px)"),
+  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 235px), 680px)"),
     "sin la barra horizontal el presupuesto baja 26");
   assert.ok(html.includes('classList.toggle("sinEvalH"'),
     "y alguien prende la clase según la forma que esté puesta");
@@ -2799,10 +2801,10 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      separados por los 26 de la barra horizontal, igual que en dos columnas. */
   assert.ok(html.includes("@media (min-width: 1500px)"),
     "hay un corte de tres columnas");
-  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - 257px), 680px)") &&
-            html.includes("--ladoTab: clamp(360px, calc(100vh - 231px), 680px)"),
+  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 188px), 680px)") &&
+            html.includes("--ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 162px), 680px)"),
     "y su propio presupuesto de alto");
-  assert.equal(257 - 231, 330 - 304, "la diferencia entre los dos es la barra horizontal");
+  assert.equal(188 - 162, 261 - 235, "la diferencia entre los dos es la barra horizontal");
   assert.ok(html.includes("#zonaRevision > .tarjetas { grid-column: 1; grid-row: 1 / span 2; }"),
     "la tarjeta va en la primera columna");
   /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de

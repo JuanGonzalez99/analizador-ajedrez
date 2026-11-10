@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.123**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.123.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4669,6 +4669,17 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.123.1, [PC] el tablero recupera el alto de la cabecera** (revisor, sobre
+la v0.123). Las seis fórmulas de `--ladoTab` de la compu restaban un número fijo
+que incluía la cabecera vieja (69, del borde de arriba de la cabecera al de la
+barra de la evaluación); con la barra de título mide 48, y los 21 sobraban
+abajo (tres columnas: aire debajo de la curva 46 → 67, la franja vacía de la
+v0.118). Ahora restan `var(--altoCab)` (48, en `#zonaRevision`) más el resto
+del presupuesto de antes: 261/235 en dos columnas y en el rango del medio,
+188/162 en tres. Medido: lado 470 → 491 (dos columnas, 1280×800), 543 → 564
+(tres), aire debajo de la curva otra vez 46 en tres columnas; sin desbordes, la
+barra vertical sigue a 8. Celu: igual al byte salvo la versión del pie.
 
 **v0.123, la barra de título de la Partida** (lavado de cara del revisor,
 v0.111). Hasta acá: "‹ Partidas" arriba, y abajo, chico y tenue, "vs MewoneX
