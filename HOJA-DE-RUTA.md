@@ -177,7 +177,7 @@ lo demás se dibuja contra ella.
       48, y sin usuario guardado se arranca con la entrada abierta como hoy;
       una sola hoja de ajustes, con el grupo nuevo "El análisis" (Modo, Mate);
       tocar una partida sin analizar entra en seco a la Partida.
-- [ ] **[PC] Lavado de cara: el inicio con el ancho de la compu** (revisor,
+- [x] **[PC] Lavado de cara: el inicio con el ancho de la compu** (v0.122, 10-nov: la B, el mes fijo a la izquierda y la lista a la derecha; revisor,
       v0.110). A 1280 es una columna de cosas chicas sobre 1082 de ancho: el
       select del mes mide 140 y la tarjeta de Estadísticas estira el "›" a
       ~1000 px del título. ¿Lista y análisis lado a lado, o un ancho máximo de
@@ -233,6 +233,12 @@ lo demás se dibuja contra ella.
       sección)? ¿Cómo se llama para no chocar con el volver? No va a la columna
       izquierda de la compu: con 30 partidas rompe el resumen fijo. Pariente del
       lavado del inicio. Con variantes.
+- [ ] **[PC] La fila de la lista a 1280: ¿necesita 640?** (revisor, v0.122).
+      Con las columnas de la v0.122, entre el nombre y "Ganada" quedan ~390 px
+      vacíos y el resultado flota a mitad de la tarjeta. No frenó (es tabla,
+      chess.com hace lo mismo). Pregunta: ¿con ~520 la fila se lee más junta, y
+      el sobrante va a la columna izquierda? Con variantes, si se reabre el
+      inicio de la compu.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -358,6 +364,10 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   una sola jugada (la mejor igual está escrita en el cuadrito y en el
   veredicto), y "Siempre la mejor" se fue de abajo. Si extrañás el vistazo, la
   otra es la D: el cuadrito vuelve a ser vistazo y "siempre" pasa a la tuerca.
+- **No sé si esto te copa (v0.122, compu):** el inicio en la compu pasa a
+  tener el mes a la izquierda (el mes, el botón de analizar, Estadísticas) y la
+  lista a la derecha, como ya está el Mes. La otra era todo en una columna
+  centrada.
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
