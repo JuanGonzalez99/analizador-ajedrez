@@ -353,20 +353,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   en la hoja de ajustes, al fondo (hay que scrollear la hoja para verlos). Si
   los cambiás seguido, se suben al principio de la hoja; si los ponés una vez,
   quedan bien ahí.
-- **No sé si esto te copa (v0.120):** el inicio nuevo. La app se acuerda de tu
-  usuario y arranca con el mes cargado; tocar una partida la abre (y la
-  analiza si hace falta); el botón dice cuántas faltan del mes.
-- **Modo y Mate a la vista, y tocar para analizar** (revisor, v0.110; **hecho en
-  la v0.120**, se borra cuando lo veas):
-  (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
-  la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
-  revisor recomienda la 1.
-  **9-nov:** con las variantes del inicio dibujadas, el revisor eligió la C,
-  que va con la 1. Se construye la noche siguiente salvo que digas otra cosa.
-  Dos más que trae: después de la primera búsqueda el inicio ya no muestra el
-  título ni el campo del usuario (queda "santico26 · cambiar" y entran 12
-  partidas en vez de 8), y las filas pasan a "MewoneX · Ganada · 87 · 4 oct"
-  en vez de "Santico26 vs MewoneX · 1-0 · rapid · 9/4/2025".
 - **No sé si esto te copa (v0.117):** el cuadrito Mejor ahora prende la flecha
   en todas las jugadas hasta que lo volvés a tocar; ya no existe el vistazo de
   una sola jugada (la mejor igual está escrita en el cuadrito y en el

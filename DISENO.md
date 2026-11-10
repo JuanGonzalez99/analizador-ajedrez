@@ -427,6 +427,13 @@ hay. Las primeras salen del historial del traspaso.
   se cambia seguido, a un toque; lo que se pone una vez, a la hoja. Y que un
   botón no se lleve más protagonismo que lo que vale: "Siempre la mejor" a
   todo el ancho *"ganó mucho protagonismo"*.
+- **El inicio de la v0.120** (la C del revisor con sus ajustes): *"me copa
+  cómo quedó"* (10-nov-2026). Es decir: la entrada que se pliega a "usuario ·
+  cambiar", el mes como título, un renglón chico de recuento, "Analizar el mes
+  · faltan N", la tarjeta de Estadísticas antes de la lista, filas de un
+  renglón (rival · resultado · precisión · fecha) y tocar la fila para entrar.
+  No dijo por qué; lo que la distinguía de las otras era que entraban más
+  partidas a la vista y la partida se abría de un toque, como en chess.com.
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.
