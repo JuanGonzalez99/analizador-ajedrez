@@ -186,7 +186,7 @@ lo demás se dibuja contra ella.
       borde del Mes). Lo que queda, según el revisor: qué va en los ~540 px
       vacíos de la derecha —la Partida o las estadísticas al lado de la lista,
       o nada— y el hueco largo entre la precisión y la fecha de cada fila.
-- [ ] **Lavado de cara de la cabecera de la Partida** (revisor, v0.111). Lo que
+- [x] **Lavado de cara de la cabecera de la Partida** (v0.123, 10-nov: la B, barra de título con la apertura de subtítulo; y v0.123.1 [PC], el tablero recupera los 21 px; revisor, v0.111). Lo que
       dice qué partida es quedó partido: la apertura arriba, recostada contra
       la tuerca (se lee como si fuera de ella), y rival y resultado abajo, con
       un hueco grande en el medio. ¿Qué identifica la partida de un vistazo
@@ -210,7 +210,10 @@ lo demás se dibuja contra ella.
       queda vacía en la apertura. Pregunta: ¿cómo se arma esa pantalla para
       que se lea como un todo? ¿Hace falta la tira con la lista a la vista?
       ¿La curva va con la principal? ¿Dónde van las comidas? Con variantes
-      miradas **enteras y a tamaño real** (`DISENO.md` §3, v0.118). Juan eligió
+      miradas **enteras y a tamaño real** (`DISENO.md` §3, v0.118). El revisor
+      suma (v0.123.1): a 1280×800 y 1500×800 la fila Mejor / Pérdida / Caída /
+      Pensó asoma cortada por el borde de abajo; ¿entra en la primera pantalla o
+      es un detalle que se ve bajando y no asoma? Juan eligió
       dejar la v0.118 como está hasta que llegue esto, en vez de volverla atrás.
 - [ ] **Lavado de cara de la entrada desplegada** (revisor, v0.120). Con
       "cambiar" (o sin usuario guardado) el renglón tiene campo de 44, "Buscar"
@@ -239,6 +242,12 @@ lo demás se dibuja contra ella.
       chess.com hace lo mismo). Pregunta: ¿con ~520 la fila se lee más junta, y
       el sobrante va a la columna izquierda? Con variantes, si se reabre el
       inicio de la compu.
+- [ ] **Lavado de cara: el idioma de las aperturas** (revisor, v0.123; celu y
+      PC). Desde la v0.123 la apertura es el subtítulo de cada partida, y los
+      nombres de `aperturas.json` están en inglés ("Italian Game: Giuoco Piano,
+      Therkatz-Herzog Variation") en una app que habla en castellano. ¿Nombres
+      en castellano como chess.com en español (Giuoco Piano, Defensa
+      Siciliana), y hasta dónde: familia y variante, o completo?
 
 ## Etapa 2 · Partir `index.html`
 
@@ -364,6 +373,11 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   una sola jugada (la mejor igual está escrita en el cuadrito y en el
   veredicto), y "Siempre la mejor" se fue de abajo. Si extrañás el vistazo, la
   otra es la D: el cuadrito vuelve a ser vistazo y "siempre" pasa a la tuerca.
+- **No sé si esto te copa (v0.123):** arriba de la partida ya no dice "‹
+  Partidas": dice "‹ MewoneX 601 · Ganada" y debajo, chiquita, la apertura. La
+  flecha y el gesto de atrás te siguen llevando a la lista. La otra: que vuelva
+  "Partidas" al lado de la flecha, con el título en un segundo renglón (la
+  tarjeta y el tablero bajan ~20).
 - **No sé si esto te copa (v0.122, compu):** el inicio en la compu pasa a
   tener el mes a la izquierda (el mes, el botón de analizar, Estadísticas) y la
   lista a la derecha, como ya está el Mes. La otra era todo en una columna
