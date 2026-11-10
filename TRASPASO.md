@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.120**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.121**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4666,6 +4666,14 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.121, [PC] tope de lectura de 640 para la columna del inicio** (el punto 5
+del lavado del inicio). `body:not(.enVista) > .soloInicio` y `#zonaEstado` con
+`max-width: 640px`, a la izquierda como el Mes: a 1280 la tarjeta estiraba el
+"›" a ~1000 px del título y la fecha de cada fila quedaba a ~1050 del rival. En
+el celu no hace nada (el body mide menos de 640): las capturas del celu, iguales
+a las de la v0.120 salvo las que muestran el número de versión. Lado a lado o
+no es el ítem siguiente, "[PC] el inicio con el ancho de la compu".
 
 **v0.120, el inicio: elegir, bajar y apretar** (lavado de cara del revisor,
 v0.110; la variante C que eligió el 9-nov, con sus ajustes, `HOJA-DE-RUTA.md`).

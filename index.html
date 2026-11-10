@@ -380,6 +380,12 @@
   #btnAjustesInicio, #btnAjustes { position: relative; }
   #btnAjustesInicio::before, #btnAjustes::before { content: ""; position: absolute; inset: -7px; }
   #zonaMeses { margin-top: var(--e-4); }
+  /* [PC] TOPE DE LECTURA DE 640 para la columna del inicio (v0.121; revisor,
+     v0.120): a 1280 la tarjeta estiraba el "›" a ~1000 px del título y la
+     fila ponía la fecha a ~1050 del rival. A la izquierda, como el Mes. En el
+     celu no hace nada: el body ahí mide menos de 640. Lado a lado o no es el
+     ítem de PC del inicio. */
+  body:not(.enVista) > .soloInicio, body:not(.enVista) > #zonaEstado { max-width: 640px; }
   /* sin el botón, la fila no está: si no, corta el margen y quedan 24 */
   .botonMes:has(#analizarMes.oculto) { display: none; }
   #meses { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
@@ -1139,7 +1145,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.120 · 10-11";
+  window.VERSION = "v0.121 · 10-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
