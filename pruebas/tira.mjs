@@ -99,9 +99,8 @@ export async function abrirApp({ puerto = 8098, alto = 900, partida = null } = {
     await pg.fill("#usuario", partida.cabPgn("White", "Blancas"));
     await pg.click("#buscar");
     await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+    /* desde la v0.120 tocar la fila ya entra: analiza y pasa a la Partida */
     await pg.click("#partidas div[data-i]");
-    await pg.waitForSelector("#analizar", { state: "visible", timeout: 20000 });
-    await pg.click("#analizar");
     try {
       await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
     } catch (e) {

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.119**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.120**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -928,6 +928,8 @@ Lo que quedó sin hacer, a propósito: el texto de Stockfish sigue siempre (la
 app no guarda el usuario, así que "solo la primera vez" no tiene de dónde
 salir); Modo y Mate a la vista siguen en el inicio, y tocar una partida no la
 analiza sola: eso es una duda para Juan.
+> **v0.120 dio vuelta las tres** (lavado del inicio, §7): el usuario se guarda
+> y la entrada se pliega, Modo y Mate están en la hoja, y tocar la fila entra.
 
 **v0.111, lo que dijo Juan al usarla.** El fundido de 120 ms *"no se sintió
 bien… brusco, medio violento"*, y además la pantalla de origen "empezaba a
@@ -4664,6 +4666,83 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.120, el inicio: elegir, bajar y apretar** (lavado de cara del revisor,
+v0.110; la variante C que eligió el 9-nov, con sus ajustes, `HOJA-DE-RUTA.md`).
+Con un mes real de 30 a 60 partidas "Analizar la partida" quedaba debajo de toda
+la lista, y la lista tenía scroll propio de 34vh. Se construyó directo sobre la
+app (sin otra tanda de maqueta) y el revisor la miró andando, con un mes falso
+de 40 partidas (`pruebas/maqueta-inicio.mjs`, que no se commitea). Lo que quedó:
+- **La entrada se pliega.** Después de la primera búsqueda el h1, el texto de
+  Stockfish y el campo llevan `.deEntrada` y `body.entradaCerrada` los esconde;
+  arriba queda `#yaUsuario`, "Santico26 · cambiar" ("cambiar" es enlace, 24 a la
+  vista y 48 de toque con `::before`). **"cambiar" despliega solo el campo**
+  (`body.cambiando`), en el lugar de ese renglón y con la tuerca a la derecha:
+  el h1 y el texto de Stockfish quedan para cuando no hay usuario guardado
+  (corrección del revisor: reaparecían en el medio del uso y empujaban 98 px).
+  Para eso el título, el texto y el campo viven adentro de `.cabInicio`, con
+  `order` y `flex-wrap`. En ese modo "o pegar un PGN" va en su propio renglón,
+  8 debajo del campo (`margin-right: 100%` lo manda solo abajo): con usuario
+  guardado es la única puerta al PGN (corrección del revisor en la segunda
+  vuelta). Dónde vive de verdad lo decide el lavado de la entrada.
+  **El usuario se guarda** (`localStorage.usuario`): al reabrir arranca plegada
+  y buscando sola. Sin usuario guardado, abierta como siempre. Esto cambia lo
+  que decía §4sexies ("la app no guarda el usuario").
+- **Una tuerca en el inicio** (`#btnAjustesInicio`, misma hoja: `verAjustes`
+  recuerda cuál la abrió para devolverle el foco). Las dos tuercas se tocan en
+  48 con un `::before` de -7 y se ven igual que antes. Modo y Mate a la vista se
+  mudaron a la hoja, grupo nuevo "El análisis", con las opciones cortas.
+- **El mes es el título**: `#meses` con la letra de `#fuente` (18/700), sin los
+  h2 "Mes" ni "Partidas". Abajo, un renglón chico (`.resumenInicio`, 12,5
+  tenue): "40 partidas · 13 ganadas · 5 tablas · 22 perdidas". Sale de
+  `textoRecuento`, que usa `textoMarcador`: para que los dos marcadores sigan
+  hablando igual, **`textoMarcador` dice "tablas" y no "empatadas"** también en
+  el Mes (`mes` y `mes-seccion` cambian solo por eso).
+- **"Analizar el mes · faltan N"** es el botón principal (verde) y no está si no
+  falta ninguna. N sale de `marcarAnalizadas()`: al cargar el mes mira la caché
+  con la configuración de ahora, **sin motor**, rehace cada partida guardada con
+  `derivarFilas` y anota tu precisión en `PREC` (id → precisión, o null si no se
+  sabe tu lado). Lee la clave directo y no con `cache.leer`, para no ensuciar la
+  cuenta de aciertos del registro. `ESCANEADO` dice si ya terminó: antes, ni la
+  fila dice "sin analizar" ni el botón aparece. Lo que se analiza después entra
+  por `anotarAnalizada`. Mientras corre el mes, en el lugar del botón:
+  "Analizando 12 de 40 · Parar" y la barra (`#zonaEstado` es flex en el inicio;
+  en Partida y Mes sigue midiendo cero, al byte). "Listo…", "Elegí una
+  partida…" y la apertura del final ya no se escriben.
+- **La tarjeta "Estadísticas ›"** salió de `#zonaMeses` y va entre el renglón y
+  la lista, 12 y 12. Aparece apenas hay algo analizado del mes (`PREC.size`),
+  aunque las estadísticas no estén armadas: tocarla las arma con
+  `correrMes(true, true)`, el modo `soloCache`, que saltea lo no analizado y no
+  usa el tope de 50.
+- **La fila, un renglón** (`pintarFilas`): rival (16, elipsis) · Ganada /
+  Perdida / Tablas (14, sin color) · tu precisión redondeada o "sin analizar"
+  (12,5 tenue) · fecha "4 oct" a la derecha (`fechaCorta`, sin
+  `toLocaleDateString`, que daba 9/4/2025). El ritmo y el "Santico26 vs" se
+  fueron. Alto 50; la lista va entera, sin scroll propio: a 412 × 760 entran 9
+  filas con botón y tarjeta. La marca verde es la última partida vista
+  (`R.meta`), con la raya sola y sin negrita; la fila responde al toque con
+  `--elevada` (`:active`, y `:hover` solo con mouse).
+- **Tocar la fila entra** (`abrirPartida`): si es la que acabás de ver, la
+  abre; si no, `analizarElegida()` (el viejo onclick de `#analizar`, que se
+  fue). Si no sale de la caché en 300 ms (los de la barra, v0.111) entra en
+  seco a la Partida, que mientras tanto muestra **solo la cabecera** —volver,
+  "Analizando: posición 6 de 37" y la raya de progreso— con
+  `#zonaRevision.cargando` (lo de abajo sería la partida anterior), más el
+  renglón "vs MewoneX (601) · 1-0" armado desde `ELEGIDA_META`, y sin los
+  créditos del pie. Si volvés al inicio en el medio, al terminar no te lleva,
+  y el estado del inicio dice cuál corre ("Analizando vs MewoneX · 9 de 37";
+  el "vs …" es `.deQuien`, que en Partida y Mes no se ve). **Con algo
+  corriendo, tocar una fila avisa** con `avisar()`: 2,5 s de "Esperá que
+  termine el mes, o tocá Parar" encima del progreso, que después vuelve solo
+  (`estado()` guarda el último en `ULTIMO_ESTADO`). No abre la ya analizada
+  de la caché: compartiría `ocupado()` con el mes y su final soltaría el
+  estado del mes a mitad de camino. "Usar este PGN"
+  también analiza directo.
+- **Volver deja el inicio a la misma altura**: ya lo hacía `SCROLL.inicio`; con
+  la lista sin scroll propio es la página la que se acuerda. Medido: 400 → 400.
+- `tira.mjs::abrirApp` entra tocando la fila (ya no hay "Analizar la partida").
+- Comparación byte a byte del celu contra la v0.119: cambian `ajustes` (el
+  grupo nuevo), `mes` y `mes-seccion` ("tablas"); las demás, iguales.
 
 **v0.119, [PC] el Mes con el ancho de la compu** (lavado de cara del revisor,
 v0.108: las tablas se estiraban a todo el body, 1082 a 1280 y 1472 a 1600, y

@@ -83,7 +83,7 @@
   button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
     outline: 2px solid var(--acento); outline-offset: 2px; }
   /* El principal de la pantalla: uno solo (§1.7). En la entrada es analizar. */
-  #analizar { background: var(--acento); color: var(--sobre-acento); font-weight: 600; }
+  #analizarMes { background: var(--acento); color: var(--sobre-acento); font-weight: 600; }
   /* el chico, 36 a la vista (§1.7; medía 33). Los 3 px los pagan los márgenes
      de 10 → 8 de la vista de la jugada (v0.104) */
   button.chico, select.chico { padding: 5px 10px; font-size: 14px; }
@@ -336,11 +336,84 @@
   .volver svg { width: 22px; height: 22px; flex: none; }
   /* La puerta al Mes desde el inicio: es tarjeta porque se toca */
   .tarjetaMes { display: flex; align-items: center; justify-content: space-between; gap: 12px;
-                width: 100%; text-align: left; margin: var(--e-6) 0 0; padding: 12px 14px;
+                width: 100%; text-align: left; margin: var(--e-3) 0 0; padding: 12px 14px;
                 background: var(--superficie); border: 0; border-radius: 12px; color: var(--texto); }
   .tarjetaMes b { display: block; font-size: var(--t-cuerpo, 16px); }
   .tarjetaMes small { display: block; color: var(--tenue); font-size: var(--t-secundario); font-weight: 400; }
   .tarjetaMes .flecha { color: var(--tenue); font-size: 22px; line-height: 1; }
+  /* EL INICIO (v0.120, lavado de cara: la C del revisor con sus ajustes).
+     Arriba, el título y la tuerca; después de la primera búsqueda la entrada
+     se pliega (`body.entradaCerrada`) a "santico26 · cambiar". El mes hace de
+     título, un renglón chico cuenta el mes, y la lista va entera, sin scroll
+     propio: tocar una fila entra a la Partida. */
+  .cabInicio { display: flex; align-items: center; justify-content: space-between;
+               gap: var(--e-3); min-height: 34px; }
+  .cabInicio h1 { margin: 0; }
+  body.entradaCerrada .deEntrada { display: none !important; }
+  /* el título, el texto y el campo viven en la misma fila que la tuerca: de
+     entrada se apilan; con "cambiar" (`body.cambiando`) aparece SOLO el campo,
+     en el lugar de "Santico26 · cambiar" y con la tuerca a la derecha */
+  .cabInicio { flex-wrap: wrap; }
+  .cabInicio > p.n { order: 2; flex-basis: 100%; margin-top: 2px; }
+  .cabInicio > .campo { order: 3; flex-basis: 100%; }
+  body.entradaCerrada.cambiando .campo { display: flex !important; order: 0; flex: 1 1 0; min-width: 0; }
+  body.entradaCerrada.cambiando #zonaPegar:not(.oculto) { display: block !important; }
+  body.cambiando #yaUsuario { display: none; }
+  /* con "cambiar" va el campo y Buscar en un renglón, y "o pegar un PGN" en
+     el de abajo, a 8: con usuario guardado es la única puerta al PGN (revisor,
+     v0.120). El margen del 100% es lo que lo manda solo a su renglón. */
+  body.cambiando #verPegar { margin-right: 100%; flex: none; white-space: nowrap; }
+  /* la tuerca, a la altura del campo (44) y no centrada en los dos renglones */
+  body.cambiando #btnAjustesInicio { align-self: flex-start; margin-top: 5px; }
+  body.cambiando #usuario { flex: 1 1 0; min-width: 0; }
+  #yaUsuario { margin: 0; display: flex; align-items: baseline; min-width: 0; }
+  #yaUsuarioNombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #yaUsuario .sep { color: var(--tenue); margin: 0 var(--e-2); }
+  /* "cambiar" es un enlace, no un botón: 24 a la vista y 48 de toque (§1.7) */
+  #cambiarUsuario { background: none; border: 0; padding: 0; font: inherit; color: var(--acento);
+                    position: relative; border-radius: 0; flex: none; }
+  #cambiarUsuario::before { content: ""; position: absolute; inset: -12px -10px; }
+  #btnAjustesInicio { padding: 0; flex: none; display: grid; place-items: center;
+                      width: 34px; height: 34px; margin-left: auto; order: 1;
+                      border: 1px solid var(--linea); border-radius: 50%; }
+  /* las dos tuercas se ven de 34 y se tocan en 48 (§1.7; revisor, v0.120) */
+  #btnAjustesInicio, #btnAjustes { position: relative; }
+  #btnAjustesInicio::before, #btnAjustes::before { content: ""; position: absolute; inset: -7px; }
+  #zonaMeses { margin-top: var(--e-4); }
+  /* sin el botón, la fila no está: si no, corta el margen y quedan 24 */
+  .botonMes:has(#analizarMes.oculto) { display: none; }
+  #meses { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
+  .resumenInicio { margin: var(--e-3) 0; font-size: var(--t-leyenda); color: var(--tenue);
+                   font-variant-numeric: tabular-nums; }
+  /* el estado, en el inicio, solo mientras algo corre y en el lugar del botón:
+     "Analizando 12 de 40 · Parar" */
+  #estado:empty { display: none; }
+  body:not(.enVista) #zonaEstado { display: flex; flex-wrap: wrap; align-items: center;
+                                   gap: var(--e-2) var(--e-3); }
+  body:not(.enVista) #zonaEstado:has(#estado:not(:empty)) { margin: var(--e-3) 0; }
+  body:not(.enVista) #estado { margin: 0; min-height: 0; }
+  body:not(.enVista) #zonaEstado .barra { flex-basis: 100%; order: 3; margin: 0; }
+  #partidas.lista { margin-top: var(--e-3); max-height: none; overflow: visible; }
+  /* LA FILA, UN RENGLÓN (v0.120): rival · cómo terminó · tu precisión · fecha.
+     El ritmo y el "Santico26 vs" se fueron: el usuario es siempre el mismo. */
+  #partidas > div[data-i] { display: flex; align-items: baseline; gap: var(--e-2); white-space: nowrap; }
+  #partidas .rival { font-size: var(--t-cuerpo, 16px); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  #partidas .res { font-size: var(--t-secundario); flex: none; }
+  #partidas .prec, #partidas .fecha { font-size: var(--t-leyenda); color: var(--tenue); flex: none;
+                                      font-variant-numeric: tabular-nums; }
+  #partidas .fecha { margin-left: auto; padding-left: var(--e-2); }
+  /* la última vista se marca con la raya sola, sin negrita (una marca y no
+     dos), y la fila responde al toque (§1.10, "apretado") */
+  #partidas > div.sel { font-weight: 400; }
+  #partidas > div[data-i]:active { background: var(--elevada); }
+  @media (pointer: fine) and (hover: hover) { #partidas > div[data-i]:hover { background: var(--elevada); } }
+  body.enVista .deQuien { display: none; }
+  /* MIENTRAS SE ANALIZA LA PARTIDA QUE TOCASTE se ve su pantalla con el
+     volver y el progreso en la cabecera, y nada más: lo de abajo sería la
+     partida anterior. */
+  #zonaRevision.cargando > :not(.parriba),
+  #zonaRevision.cargando > .parriba > :not(.cabvista):not(.revcab) { display: none !important; }
+  body:has(#zonaRevision.cargando:not(.oculto)) .credito { display: none; }
   /* EL PASO DE PANTALLA ES SECO (v0.111). La v0.110 tenía un fundido de
      120 ms y a Juan no le copó: *"brusco, medio violento"*, y la pantalla
      nueva "seguía haciendo algo" —la barra de la evaluación y la de progreso
@@ -451,12 +524,6 @@
            color: var(--tenue); white-space: nowrap; }
 
   .marcadorMes { font-size: 14px; margin: 8px 0; font-variant-numeric: tabular-nums; }
-  /* La cantidad de partidas es el DENOMINADOR, no el resultado: va en su propio
-     renglón y en el gris de los datos de apoyo, para que el ojo caiga primero
-     en las ganadas y perdidas. En un renglón aparte, además, la frase no se
-     parte sola: a ancho de celular "15 partidas del mes · 8 ganadas · 1
-     empatada · 6 perdidas" ocupa dos renglones y corta por cualquier lado. */
-  .marcadorMes .deQue { display: block; font-size: 12.5px; color: var(--tenue); }
   /* `auto-fit` y no `repeat(3, ...)`: esta misma clase la usan la fila de la
      jugada, que desde la v0.93 tiene CUATRO cuadritos, y la cabecera del mes,
      que tiene tres. Con auto-fit cada una arma tantas columnas como hijos
@@ -1036,8 +1103,24 @@
   }
 </style>
 
-<h1 class="soloInicio">Analizador de partidas</h1>
-<p class="n soloInicio">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
+<!-- LA CABECERA DEL INICIO (v0.120, lavado de cara del inicio, la C del
+     revisor). Con la entrada abierta es el título; después de la primera
+     búsqueda la entrada se pliega a "santico26 · cambiar" y el mes pasa a ser
+     el título: así entran 12 partidas a la vista en vez de 8. La tuerca abre
+     la misma hoja de ajustes que la de la Partida (una sola hoja). -->
+<div class="cabInicio soloInicio">
+  <h1 class="deEntrada">Analizador de partidas</h1>
+  <p id="yaUsuario" class="oculto"><span id="yaUsuarioNombre"></span><span class="sep" aria-hidden="true">&middot;</span><button type="button" id="cambiarUsuario">cambiar</button></p>
+  <p class="n deEntrada">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
+  <div class="fila deEntrada campo">
+    <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
+    <button id="buscar">Buscar</button>
+    <button id="verPegar" class="chico">o pegar un PGN</button>
+  </div>
+  <button id="btnAjustesInicio" class="tuerca" aria-label="Ajustes" aria-expanded="false"
+          aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuercaI"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuercaI)"/></svg></button>
+</div>
+
 
 <!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
      sirve para avisar que el módulo falló. Acá vive también el registro, para
@@ -1056,7 +1139,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.119 · 09-11";
+  window.VERSION = "v0.120 · 10-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1218,25 +1301,19 @@
   }, 6000);
 </script>
 
-<div class="fila soloInicio">
-  <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
-  <button id="buscar">Buscar</button>
-  <button id="verPegar" class="chico">o pegar un PGN</button>
-</div>
 
-<div id="zonaPegar" class="oculto soloInicio" style="margin-top:10px">
+<div id="zonaPegar" class="oculto soloInicio deEntrada" style="margin-top:10px">
   <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
   <div class="fila" style="margin-top:6px"><button id="usarPgn" class="chico">Usar este PGN</button></div>
 </div>
 
-<div id="zonaMeses" class="oculto soloInicio"><h2>Mes</h2><select id="meses"></select>
-  <button type="button" id="tarjetaMes" class="tarjetaMes oculto"><span><b id="tarjetaMesTit">Estadísticas</b><small id="tarjetaMesSub"></small></span><span class="flecha" aria-hidden="true">&rsaquo;</span></button></div>
-<div id="zonaPartidas" class="oculto soloInicio"><h2>Partidas</h2>
-  <p class="marcadorMes oculto" id="partidasMarcador"></p>
-  <div id="partidas" class="lista"></div></div>
+<!-- EL MES HACE DE TÍTULO (v0.120), como en el Mes desde la v0.108: el
+     select dice "Octubre 2026" con la letra del h2, y abajo un solo renglón
+     chico con el recuento del mes. -->
+<div id="zonaMeses" class="oculto soloInicio"><select id="meses" aria-label="Mes"></select>
+  <p class="resumenInicio oculto" id="partidasMarcador"></p></div>
 
 <div id="zonaAnalizar" class="oculto soloInicio">
-  <h2>Análisis</h2>
   <div class="fila solo-dev">
     <label>Profundidad
       <select id="prof">
@@ -1268,27 +1345,9 @@
     <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
     <label><input type="checkbox" id="optBloques"> bloques</label>
   </div>
-  <div class="fila" style="margin-top:6px; font-size:14px">
-    <label>Modo
-      <select id="modo" class="chico">
-        <option value="critico" selected>crítico (centipeones)</option>
-        <option value="amigable">amigable (puntos de victoria)</option>
-      </select>
-    </label>
-    <label>Mate a la vista
-      <select id="mateVista" class="chico">
-        <option value="1">solo mate en 1</option>
-        <option value="2">hasta mate en 2</option>
-        <option value="3" selected>hasta mate en 3</option>
-        <option value="5">hasta mate en 5</option>
-        <option value="99">cualquiera</option>
-      </select>
-    </label>
-  </div>
-  <div class="fila" style="margin-top:8px">
-    <button id="analizar">Analizar la partida</button>
-    <button id="analizarMes" class="chico">Analizar el mes</button>
-  </div>
+  <!-- SE ENTRA TOCANDO LA FILA (v0.120): "Analizar la partida" se fue. El
+       botón del mes dice cuántas faltan y no está si no falta ninguna. -->
+  <div class="fila botonMes"><button id="analizarMes" class="oculto">Analizar el mes</button></div>
   <div class="fila solo-dev" style="margin-top:8px">
     <button id="medir" class="chico">Copiar medición de Genial</button>
     <button id="banco" class="chico">Comparar configuraciones</button>
@@ -1303,8 +1362,13 @@
 <div id="zonaEstado">
   <p id="estado"></p>
   <div class="barra oculto" id="barra"><i id="progreso"></i></div>
-  <div class="fila"><button id="detener" class="chico oculto">Detener</button></div>
+  <div class="fila"><button id="detener" class="chico oculto">Parar</button></div>
 </div>
+
+<!-- La puerta al Mes, entre el renglón del recuento y la lista (v0.120). -->
+<button type="button" id="tarjetaMes" class="tarjetaMes soloInicio oculto"><span><b id="tarjetaMesTit">Estadísticas</b><small id="tarjetaMesSub"></small></span><span class="flecha" aria-hidden="true">&rsaquo;</span></button>
+<div id="zonaPartidas" class="oculto soloInicio">
+  <div id="partidas" class="lista"></div></div>
 
 <div id="zonaBanco" class="oculto solo-dev">
   <h2 id="tituloBanco">Comparación de configuraciones</h2>
@@ -1554,6 +1618,22 @@
        que ahí no existen. -->
   <label class="ajFila soloAncho"><span>Las jugadas de al lado</span>
     <select id="formaJugadas" class="chico"></select></label>
+  <!-- MODO Y MATE VIVÍAN EN EL INICIO hasta la v0.120: se ponen una vez y se
+       olvidan, y en el inicio empujaban la lista. -->
+  <p class="ajGrupo">El análisis</p>
+  <label class="ajFila"><span>Modo</span>
+    <select id="modo" class="chico">
+      <option value="critico" selected>crítico</option>
+      <option value="amigable">amigable</option>
+    </select></label>
+  <label class="ajFila"><span>Mate a la vista</span>
+    <select id="mateVista" class="chico">
+      <option value="1">solo en 1</option>
+      <option value="2">hasta en 2</option>
+      <option value="3" selected>hasta en 3</option>
+      <option value="5">hasta en 5</option>
+      <option value="99">cualquiera</option>
+    </select></label>
   <p class="ajVersion" id="verAjustes"></p>
 </div>
 
@@ -3314,6 +3394,13 @@ function pintarExplicacion(id, partes, tocable = true) {
 const HAY = { partida: false, mes: false };
 let VISTA = "inicio", OCUPADO = false;
 const SCROLL = { inicio: 0, mes: 0 };
+/* LO ANALIZADO DEL MES QUE SE VE (v0.120): id de partida → tu precisión (o
+   null si no se sabe de qué lado jugaste). Sale de la caché al cargar el mes,
+   sin motor, y se completa con lo que se va analizando. `ESCANEADO` dice si ya
+   se terminó de mirar la caché: antes, ni la fila dice "sin analizar" ni el
+   botón dice cuántas faltan. */
+const PREC = new Map();
+let ESCANEADO = false;
 
 function mostrarVista(v, opc) {
   opc = opc || {};
@@ -3326,17 +3413,21 @@ function mostrarVista(v, opc) {
   let actual = VISTA;
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
   document.body.classList.toggle("enVista", actual !== "inicio");
-  ver("zonaRevision", HAY.partida && actual === "partida");
+  /* la partida que tocaste y todavía se analiza: su pantalla, solo con la
+     cabecera (el volver y el progreso) */
+  const cargando = actual === "partida" && !HAY.partida;
+  ver("zonaRevision", (HAY.partida || cargando) && actual === "partida");
+  $("zonaRevision").classList.toggle("cargando", cargando);
   ver("zonaResumen", HAY.partida && actual === "partida");
   ver("zonaMes", actual === "mes");
   ver("zonaEstado", actual === "inicio" || OCUPADO);
-  ver("tarjetaMes", HAY.mes);
-  if (HAY.mes) {
-    $("tarjetaMesTit").textContent = "Estadísticas de " +
-      (FUENTE === "todo" ? "todo lo analizado" : nombreMes($("meses").value));
-    $("tarjetaMesSub").textContent = MES && MES.resultados
-      ? cuantas(MES.resultados.length, "partida analizada", "partidas analizadas") : "";
-  }
+  /* la tarjeta está apenas hay algo analizado del mes, aunque las
+     estadísticas todavía no se hayan armado: tocarla las arma de la caché */
+  ver("tarjetaMes", HAY.mes || PREC.size > 0);
+  $("tarjetaMesTit").textContent = HAY.mes && FUENTE === "todo"
+    ? "Estadísticas de todo lo analizado" : "Estadísticas";
+  const nAnal = HAY.mes && MES && MES.resultados ? MES.resultados.length : PREC.size;
+  $("tarjetaMesSub").textContent = nAnal ? cuantas(nAnal, "partida analizada", "partidas analizadas") : "";
   /* "‹ Partidas" o "‹ Estadísticas": dice a dónde te lleva, que es de donde viniste */
   const de = history.state && history.state.de;
   $("volverAQue").textContent = de === "mes" ? "Estadísticas" : "Partidas";
@@ -3387,7 +3478,23 @@ const seguro = (donde, fn) => async (...a) => {
   try { return await fn(...a); }
   catch (e) { window.mostrarError(donde, e); estado("Falló: " + (e.message || e)); }
 };
-const estado = t => { $("estado").textContent = t; };
+/* EL ESTADO Y EL AVISO (v0.120). `estado` es lo que está pasando; `avisar`
+   pisa eso 2,5 s con algo que contesta un toque ("esperá que termine…") y
+   después vuelve solo. Con `html` se puede marcar un pedazo que solo se ve en
+   el inicio (`.deQuien`: qué partida corre, que en la Partida ya se sabe). */
+const sinHtml = t => String(t || "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+let ULTIMO_ESTADO = "", AVISO_HASTA = 0;
+const estado = (t, html) => {
+  ULTIMO_ESTADO = html ? t : sinHtml(t);
+  if (Date.now() < AVISO_HASTA) return;
+  $("estado").innerHTML = ULTIMO_ESTADO;
+};
+const avisar = t => {
+  AVISO_HASTA = Date.now() + 2500;
+  $("estado").textContent = t;
+  setTimeout(() => { if (Date.now() >= AVISO_HASTA) $("estado").innerHTML = ULTIMO_ESTADO; }, 2600);
+};
+let QUE_CORRE = null;
 /* La barra se esconde cuando no hay nada corriendo. Antes se quedaba en cero y
    se veía como una franja gris ancha bajo los botones —pendiente abierto desde
    la v26—, que en modo simple es lo primero que se nota. Se muestra con el
@@ -4113,13 +4220,18 @@ if (!window.DEV) {
    forma evidente de cerrarse es una trampa. El foco va y vuelve: al abrir queda
    en "Listo" y al cerrar vuelve a la tuerca, así no se pierde quien navega con
    teclado. */
-const verAjustes = abrir => {
+/* Dos tuercas, la del inicio y la de la Partida (v0.120), y una sola hoja: el
+   foco vuelve a la que la abrió. */
+let TUERCA = "btnAjustes";
+const verAjustes = (abrir, desde) => {
+  if (abrir && desde) TUERCA = desde;
   $("fondoAjustes").classList.toggle("oculto", !abrir);
   $("hojaAjustes").classList.toggle("oculto", !abrir);
-  $("btnAjustes").setAttribute("aria-expanded", abrir ? "true" : "false");
-  (abrir ? $("cerrarAjustes") : $("btnAjustes")).focus();
+  $(TUERCA).setAttribute("aria-expanded", abrir ? "true" : "false");
+  (abrir ? $("cerrarAjustes") : $(TUERCA)).focus();
 };
-$("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true));
+$("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustes"));
+$("btnAjustesInicio").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustesInicio"));
 $("cerrarAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
 $("fondoAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
 
@@ -4983,10 +5095,37 @@ $("buscar").onclick = seguro("buscar", async () => {
     $("meses").innerHTML = meses.slice().reverse()
       .map(m => `<option value="${m}">${nombreMes(m)}</option>`).join("");
     ver("zonaMeses", true);
+    try { localStorage.setItem("usuario", u); } catch (e) { /* incógnito */ }
+    $("yaUsuarioNombre").textContent = u;
+    entrada(false);
     await cargarMes(meses[meses.length - 1]);
-  } catch (e) { ver("zonaMeses", false); window.mostrarError("buscar", e); estado(e.message); }
+  } catch (e) {
+    /* con la lista de antes a la vista, el error no tira la entrada entera:
+       queda el campo abierto para corregir */
+    if (document.body.classList.contains("cambiando") && PARTIDAS.length)
+      ["zonaMeses", "zonaPartidas", "zonaAnalizar"].forEach(z => ver(z, true));
+    else { ver("zonaMeses", false); entrada(true); }
+    window.mostrarError("buscar", e); estado(e.message);
+  }
   $("buscar").disabled = false;
 });
+
+/* LA ENTRADA SE PLIEGA (v0.120): después de la primera búsqueda el título, el
+   texto de Stockfish y el campo se van, y arriba queda "santico26 · cambiar".
+   "cambiar" la despliega en el lugar. El usuario se guarda: al volver a abrir
+   la app arranca plegada y con el mes cargado; sin usuario guardado, abierta
+   como siempre. */
+function entrada(abierta) {
+  document.body.classList.toggle("entradaCerrada", !abierta);
+  document.body.classList.remove("cambiando");
+  ver("yaUsuario", !abierta);
+}
+/* "cambiar" despliega solo el campo, no el título de la primera vez (revisor,
+   v0.120: el h1 reaparecía en el medio del uso y empujaba todo 98 px) */
+$("cambiarUsuario").onclick = () => {
+  document.body.classList.add("cambiando");
+  $("usuario").focus(); $("usuario").select();
+};
 
 $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
 
@@ -5092,60 +5231,136 @@ $("fuente").onchange = seguro("fuente", async () => {
   }
 });
 
+let CARGA = 0;
 async function cargarMes(url) {
+  const yo = ++CARGA;
+  PREC.clear(); ESCANEADO = false;
   $("partidas").innerHTML = "<div>Cargando…</div>";
   $("partidasMarcador").textContent = ""; ver("partidasMarcador", false);
   ver("zonaPartidas", true);
   HAY.mes = false; mostrarVista();
   MES = null;
   const j = await (await fetch(url)).json();
+  if (yo !== CARGA) return;
   PARTIDAS = (j.games || []).reverse();
   window.LOG.add("·", `mes ${url.slice(-7)}: ${PARTIDAS.length} partidas`);
-  if (!PARTIDAS.length) { $("partidas").innerHTML = "<div>Ese mes no tiene partidas.</div>"; return; }
-  /* Ganadas, empatadas y perdidas del mes SIN analizar nada: el resultado ya
-     viene en el JSON de chess.com, que es el mismo que después usa el marcador
-     de la vista Mes. Por eso aparece apenas se elige el mes y no cuesta motor.
-     Dice "del mes" porque cuenta TODAS —analizadas o no, con asistencia o sin
-     ella— y el de la vista Mes cuenta menos: van a dar distinto, y cada uno
-     tiene que decir sobre qué partidas habla (§5.1). De las que no se sepa el
-     resultado, se dice cuántas son en vez de callarlas (§5.12). */
-  const marcador = textoMarcador(contarResultados(
-    PARTIDAS.map(g => resultadoDeLado(ladoEnJuego(g, USUARIO), g, null))));
-  /* innerHTML y no textContent: son dos renglones con distinto peso. Lo que se
-     interpola son números y palabras fijas —nunca el nombre de un rival—, así
-     que no hay nada del usuario que pueda entrar como HTML. */
-  $("partidasMarcador").innerHTML =
-    `<span class="deQue">${cuantas(PARTIDAS.length, "partida", "partidas")} del mes</span> ` +
-    marcador;
-  ver("partidasMarcador", true);
-  $("partidas").innerHTML = PARTIDAS.map((g, i) => {
-    const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
-    const res = g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "\u00bd-\u00bd";
-    return `<div data-i="${i}">${g.white.username} vs ${g.black.username} \u00b7 ${res}
-      <span style="opacity:.6">\u00b7 ${g.time_class} \u00b7 ${f}</span></div>`;
-  }).join("");
-  $("partidas").querySelectorAll("div[data-i]").forEach(d => {
-    d.onclick = () => {
-      $("partidas").querySelectorAll("div").forEach(x => x.classList.remove("sel"));
-      d.classList.add("sel");
-      const g = PARTIDAS[+d.dataset.i];
-      /* la partida que acabás de ver se abre de un toque: después de "‹
-         Partidas" era bajar hasta "Analizar la partida" (revisor, v0.110) */
-      if (HAY.partida && !TRABAJANDO && R && R.meta && idPartida(R.meta) === idPartida(g)) {
-        irAPantalla("partida");
-        return;
-      }
-      ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g;
-      ver("zonaAnalizar", true);
-      ocupado(false);
-      estado("");
-    };
-  });
   ELEGIDA = null; ELEGIDA_ID = null; ELEGIDA_META = null;
   ver("zonaAnalizar", true);
   ocupado(false);
-  estado("Elegí una partida, o analizá el mes entero.");
-  $("analizarMes").textContent = `Analizar el mes (${Math.min(TOPE_MES, PARTIDAS.length)} de ${PARTIDAS.length})`;
+  estado("");
+  if (!PARTIDAS.length) { $("partidas").innerHTML = "<div>Ese mes no tiene partidas.</div>"; return; }
+  /* Ganadas, empatadas y perdidas del mes SIN analizar nada: el resultado ya
+     viene en el JSON de chess.com. Dice cuántas son en total porque cuenta
+     TODAS —analizadas o no— y el marcador de la vista Mes cuenta menos (§5.1).
+     Un solo renglón chico desde la v0.120 (antes eran dos). */
+  $("partidasMarcador").textContent = textoRecuento(PARTIDAS.length, contarResultados(
+    PARTIDAS.map(g => resultadoDeLado(ladoEnJuego(g, USUARIO), g, null))));
+  ver("partidasMarcador", true);
+  pintarFilas();
+  await marcarAnalizadas(yo);
+}
+
+/* "40 partidas · 18 ganadas · 0 tablas · 22 perdidas": las palabras son las
+   del marcador del Mes, que es la misma función. */
+function textoRecuento(n, m) {
+  const resto = textoMarcador(m);
+  return cuantas(n, "partida", "partidas") + (resto ? " \u00b7 " + resto : "");
+}
+
+/* tu precisión en una partida analizada: el promedio de tus jugadas, la misma
+   cuenta de la lista del Mes */
+function precisionDe(r) {
+  const mias = filasDelUsuario(r);
+  return mias.length ? mias.reduce((a, x) => a + x.precision, 0) / mias.length : null;
+}
+
+/* QUÉ ESTÁ ANALIZADO, mirando la caché y sin motor: cada partida que está con
+   la configuración de ahora se rehace de sus evaluaciones guardadas, que es
+   lo mismo que hace abrirla. La clave se lee directo y no con `cache.leer`
+   para no ensuciar la cuenta de aciertos del registro. */
+async function marcarAnalizadas(yo) {
+  const prof = +$("prof").value, vte = variante(opcionesDePantalla());
+  let libro = null;
+  for (const g of PARTIDAS) {
+    if (yo !== CARGA) return;
+    const id = idPartida(g);
+    let v = null;
+    try { v = await cache._tx("readonly", st => st.get(cache.clave(id, prof, vte))); } catch (e) { /* sin caché */ }
+    if (!v || !v.evs) continue;
+    try {
+      const prep = prepararPartida(g.pgn);
+      if (v.evs.length !== prep.fens.length) continue;
+      libro = libro || await cargarLibro();
+      const d = derivarFilas(prep.jugadas, prep.fens, v.evs, libro, 0, $("modo").value,
+                             prep.tiempos, MATE_VISTA());
+      PREC.set(id, precisionDe({ cab: prep.cab, filas: d.filas }));
+    } catch (e) { /* una partida que no se lee queda "sin analizar" */ }
+  }
+  if (yo !== CARGA) return;
+  ESCANEADO = true;
+  pintarFilas(); pintarBotonMes(); mostrarVista();
+}
+
+/* lo que se acaba de analizar entra a la lista y al botón sin volver a mirar
+   la caché */
+function anotarAnalizada(g, r) {
+  if (!g || !PARTIDAS.includes(g)) return;
+  PREC.set(idPartida(g), precisionDe(r));
+  pintarFilas(); pintarBotonMes();
+}
+
+function pintarBotonMes() {
+  const faltan = PARTIDAS.filter(g => !PREC.has(idPartida(g))).length;
+  $("analizarMes").textContent = `Analizar el mes \u00b7 faltan ${faltan}`;
+  ver("analizarMes", ESCANEADO && faltan > 0 && !OCUPADO);
+}
+
+const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+/* "4 oct", y no lo que diga el teléfono: `toLocaleDateString` daba 9/4/2025 */
+const fechaCorta = t => { const d = new Date((t || 0) * 1000); return `${d.getDate()} ${MESES_CORTOS[d.getMonth()]}`; };
+const PALABRA_FIN = { gane: "Ganada", perdi: "Perdida", empate: "Tablas" };
+
+/* LA FILA (v0.120): rival · cómo terminó · tu precisión o "sin analizar" ·
+   fecha. Sin color en el resultado: el color de la app es de las jugadas. La
+   marca de la izquierda es la última partida que viste. */
+function pintarFilas() {
+  if (!PARTIDAS.length) return;
+  const vista = HAY.partida && R && R.meta ? idPartida(R.meta) : null;
+  $("partidas").innerHTML = PARTIDAS.map((g, i) => {
+    const lado = ladoEnJuego(g, USUARIO);
+    const b = g.white.username, n = g.black.username;
+    const rival = lado === "w" ? n : lado === "b" ? b : `${b} vs ${n}`;
+    const fin = lado ? (PALABRA_FIN[resultadoDeLado(lado, g, null)] || "")
+      : g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "Tablas";
+    const id = idPartida(g);
+    const p = PREC.get(id);
+    const prec = !ESCANEADO && !PREC.has(id) ? ""
+      : !PREC.has(id) ? "sin analizar" : p == null ? "analizada" : Math.round(p);
+    return `<div data-i="${i}"${id === vista ? ' class="sel"' : ""}>` +
+      `<span class="rival">${sinHtml(rival)}</span><span class="res">${fin}</span>` +
+      `<span class="prec" title="tu precisión">${prec}</span>` +
+      `<span class="fecha">${fechaCorta(g.end_time)}</span></div>`;
+  }).join("");
+  $("partidas").querySelectorAll("div[data-i]").forEach(d => {
+    d.onclick = seguro("abrir la partida", () => abrirPartida(PARTIDAS[+d.dataset.i]));
+  });
+}
+
+/* TOCAR LA FILA ENTRA (v0.120), como en chess.com: si es la que acabás de
+   ver, la abre; si no, la analiza (la caché la devuelve al toque si ya
+   estaba). Mientras se analiza el mes no hace nada: el motor está ocupado, y
+   el estado lo dice un momento ("esperá que termine…", corrección del
+   revisor: muda era peor). */
+async function abrirPartida(g) {
+  if (!g) return;
+  if (HAY.partida && R && R.meta && idPartida(R.meta) === idPartida(g)) { irAPantalla("partida"); return; }
+  if (TRABAJANDO) {
+    avisar(QUE_CORRE === "mes" ? "Esperá que termine el mes, o tocá Parar"
+                               : "Esperá que termine esta, o tocá Parar");
+    return;
+  }
+  ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g;
+  await analizarElegida();
 }
 
 $("usarPgn").onclick = seguro("pgn", () => {
@@ -5153,15 +5368,13 @@ $("usarPgn").onclick = seguro("pgn", () => {
   if (!t) return;
   /* un PGN pegado no trae el JSON del mes, así que no hay motivo que mostrar */
   ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t }); ELEGIDA_META = null;
-  ver("zonaAnalizar", true); ocupado(false); estado("PGN cargado.");
+  return analizarElegida();
 });
 
 function ocupado(si) {
   /* al soltar el trabajo se esconde la barra: es el único lugar por donde pasan
      todos los finales, el bueno y los de error */
   if (!si) esconderBarra();
-  $("analizar").disabled = si || !ELEGIDA;
-  $("analizarMes").disabled = si || !PARTIDAS.length;
   $("banco").disabled = si || !ELEGIDA;
   $("barrido").disabled = si || !ELEGIDA;
   $("buscar").disabled = si;
@@ -5172,12 +5385,13 @@ function ocupado(si) {
   TRABAJANDO = si;
   OCUPADO = si;
   ver("detener", si);
+  pintarBotonMes();
   mostrarVista();
   if (si) CANCELAR = false;
 }
 $("detener").onclick = () => { CANCELAR = true; estado("Deteniendo\u2026"); };
 
-$("analizar").onclick = seguro("analizar", async () => {
+async function analizarElegida() {
   if (!ELEGIDA) return;
   ocupado(true);
   anotarConfig();
@@ -5185,11 +5399,34 @@ $("analizar").onclick = seguro("analizar", async () => {
      perderlo por analizar una partida sería perder una pestaña entera */
   HAY.partida = false; mostrarVista();
   progreso(0);
+  /* SE ENTRA EN SECO A LA PARTIDA (v0.120) si no sale de la caché enseguida:
+     el progreso va en su cabecera. Los 300 ms son los de la barra (v0.111):
+     una partida ya analizada sale antes y se pasa directo, sin una pantalla
+     vacía en el medio. Si volviste al inicio mientras tanto, al terminar no
+     te lleva: la fila queda marcada y se abre de un toque. */
+  let fui = false;
+  QUE_CORRE = "partida";
+  /* mientras carga, la cabecera ya dice qué partida es (lo sabe el JSON del
+     mes; con un PGN pegado no hay y el renglón va vacío) */
+  const m = ELEGIDA_META, ladoM = m ? ladoEnJuego(m, USUARIO) : null;
+  const rivalM = !m ? "" : ladoM === "w" ? m.black.username : ladoM === "b" ? m.white.username : "";
+  if (m) {
+    const eloM = ladoM === "w" ? m.black.rating : ladoM === "b" ? m.white.rating : "";
+    $("revRival").textContent = rivalM ? "vs " + rivalM + (eloM ? " (" + eloM + ")" : "")
+                                       : `${m.white.username} vs ${m.black.username}`;
+    const finM = comoTermino({ Result: m.white.result === "win" ? "1-0" : m.black.result === "win" ? "0-1" : "1/2-1/2" }, m);
+    $("revFin").textContent = finM ? finM.res : "";
+  } else { $("revRival").textContent = ""; $("revFin").textContent = ""; }
+  const quien = rivalM ? `<span class="deQuien"> vs ${sinHtml(rivalM)} \u00b7</span>` : "";
+  const tEntrar = setTimeout(() => {
+    if (VISTA === "inicio" && OCUPADO) { fui = true; irAPantalla("partida"); }
+  }, 300);
   try {
     const prof = +$("prof").value;
     estado("Levantando el motor\u2026");
     R = await analizarPartida(ELEGIDA, prof, ELEGIDA_ID, (hechas, total, fase) => {
-      estado(`${fase}: posición ${hechas} de ${total}`);
+      estado(fase === "análisis" ? `Analizando${quien} ${hechas} de ${total}`
+                                 : sinHtml(`${fase}: ${hechas} de ${total}`), true);
       progreso(hechas / total);
     }, opcionesDePantalla());
     /* `analizarPartida` no lo sabe ni tiene por qué: recibe un PGN suelto. El
@@ -5201,22 +5438,32 @@ $("analizar").onclick = seguro("analizar", async () => {
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
-    HAY.partida = true; irAPantalla("partida");
-    estado((R.deCache ? "Ya estaba analizada. " : "Listo. ") +
-           (R.apertura ? "Apertura: " + R.apertura : ""));
+    clearTimeout(tEntrar);
+    HAY.partida = true;
+    if (VISTA === "partida") { quieto(); mostrarVista(); }
+    else if (!fui) irAPantalla("partida");
+    else mostrarVista();
+    estado("");
+    anotarAnalizada(ELEGIDA_META, R);
+    pintarFilas();
     refrescarCache();
   } catch (e) {
     estado("No se pudo: " + e.message);
     window.LOG.add("ERR", "analizar: " + (e.message || e));
   }
+  clearTimeout(tEntrar);
   ocupado(false);
-});
+}
 
 /* ============ el mes ============ */
 $("analizarMes").onclick = seguro("analizar el mes", () => correrMes(true));
 $("seguirMes").onclick = seguro("seguir el mes", () => correrMes(false));
 
-async function correrMes(desdeCero) {
+/* `soloCache` arma las estadísticas con lo que ya está analizado, sin motor:
+   es lo que hace la tarjeta "Estadísticas" cuando el mes está analizado de
+   otra vez y todavía no se juntó (v0.120). */
+async function correrMes(desdeCero, soloCache) {
+  QUE_CORRE = "mes";
   if (!PARTIDAS.length) return;
   if (!USUARIO) { estado("Para el mes hace falta buscar por usuario."); return; }
   if (desdeCero || !MES) MES = { hechas: 0, resultados: [], prof: +$("prof").value };
@@ -5239,7 +5486,7 @@ async function correrMes(desdeCero) {
   let fui = VISTA === "mes";
 
   const desde = MES.hechas;
-  const hasta = Math.min(PARTIDAS.length, desde + TOPE_MES);
+  const hasta = soloCache ? PARTIDAS.length : Math.min(PARTIDAS.length, desde + TOPE_MES);
   const t0 = performance.now();
   window.LOG.add("·", `mes: partidas ${desde + 1} a ${hasta} a profundidad ${prof}`);
 
@@ -5247,12 +5494,13 @@ async function correrMes(desdeCero) {
     for (let i = desde; i < hasta; i++) {
       if (CANCELAR) break;
       const g = PARTIDAS[i];
+      if (soloCache && !PREC.has(idPartida(g))) { MES.hechas = i + 1; continue; }
       const tp = performance.now();
-      estado(`Partida ${i + 1} de ${hasta}\u2026`);
+      estado(`Analizando ${i + 1} de ${hasta}`);
       let r = null;
       try {
         r = await analizarPartida(g.pgn, prof, idPartida(g), (hechas, total) => {
-          estado(`Partida ${i + 1} de ${hasta} \u00b7 posición ${hechas} de ${total}`);
+          estado(`Analizando ${i + 1} de ${hasta}`);
           progreso((i - desde + hechas / total) / (hasta - desde));
         }, opcionesDePantalla());
       } catch (e) {
@@ -5262,6 +5510,7 @@ async function correrMes(desdeCero) {
       if (r) {
         r.meta = g;
         MES.resultados.push(r);
+        anotarAnalizada(g, r);
         window.LOG.add("·", `partida ${i + 1}: ${r.filas.length} jugadas en ` +
           `${Math.round(performance.now() - tp)} ms${r.deCache ? " (de caché)" : ""}`);
       }
@@ -5274,9 +5523,8 @@ async function correrMes(desdeCero) {
     const seg = Math.round((performance.now() - t0) / 1000);
     window.LOG.add("·", `mes: ${MES.resultados.length} partidas en ${seg} s · ` +
       `caché ${cache.aciertos} aciertos, ${cache.fallos} fallos`);
-    estado(CANCELAR
-      ? `Detenido en la partida ${MES.hechas}.`
-      : `Listo: ${cuantas(MES.resultados.length, "partida", "partidas")} en ${seg} s.`);
+    /* el estado del inicio es solo mientras corre: lo que falta lo dice el botón */
+    estado("");
     pintarMes(prof);
     HAY.mes = true; mostrarVista();
     if (MES.hechas < PARTIDAS.length) {
@@ -6096,7 +6344,7 @@ function textoMarcador(m) {
   const partes = [];
   if (m.gane + m.empate + m.perdi)
     partes.push(cuantas(m.gane, "ganada", "ganadas"),
-                cuantas(m.empate, "empatada", "empatadas"),
+                `${m.empate} tablas`,
                 cuantas(m.perdi, "perdida", "perdidas"));
   if (m.sinDato)
     partes.push(cuantas(m.sinDato, "sin resultado conocido", "sin resultado conocido"));
@@ -7264,7 +7512,14 @@ document.addEventListener("keydown", seguro("teclas", ev => {
 
 $("volverDeLaPartida").onclick = seguro("volver", volver);
 $("volverDelMes").onclick = seguro("volver", volver);
-$("tarjetaMes").onclick = seguro("ver el mes", () => irAPantalla("mes"));
+$("tarjetaMes").onclick = seguro("ver el mes", () =>
+  HAY.mes ? irAPantalla("mes") : correrMes(true, true));
+
+/* con usuario guardado se arranca plegado y buscando (v0.120) */
+try {
+  const u = localStorage.getItem("usuario");
+  if (u) { $("usuario").value = u; $("yaUsuarioNombre").textContent = u; entrada(false); $("buscar").click(); }
+} catch (e) { /* incógnito */ }
 
 const atras = () => PRUEBA ? verDeLaVariante(PRUEBA.ver - 1) : irA(IDX - 1);
 const adelante = () => PRUEBA ? verDeLaVariante(PRUEBA.ver + 1) : irA(IDX + 1);

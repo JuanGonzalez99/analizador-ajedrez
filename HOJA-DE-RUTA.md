@@ -140,7 +140,7 @@ lo demás se dibuja contra ella.
       1280): "Total" queda a ~680 px de las etiquetas y el ojo se pierde en el
       renglón. ¿Ancho máximo de lectura, o dos tablas/secciones en columnas?
       Con variantes.
-- [ ] **Lavado de cara del inicio: elegir, bajar y apretar** (revisor, v0.110).
+- [x] **Lavado de cara del inicio: elegir, bajar y apretar** (v0.120, 10-nov: la C con sus ajustes; revisor, v0.110).
       Con un mes real de 30 a 60 partidas, "Analizar la partida" queda debajo
       de toda la lista. Ahora que la Partida es el detalle de la lista, lo
       esperable (chess.com, Material) es tocar la fila y entrar, analizando si
@@ -208,6 +208,17 @@ lo demás se dibuja contra ella.
       ¿La curva va con la principal? ¿Dónde van las comidas? Con variantes
       miradas **enteras y a tamaño real** (`DISENO.md` §3, v0.118). Juan eligió
       dejar la v0.118 como está hasta que llegue esto, en vez de volverla atrás.
+- [ ] **Lavado de cara de la entrada desplegada** (revisor, v0.120). Con
+      "cambiar" (o sin usuario guardado) el renglón tiene campo de 44, "Buscar"
+      de 44 y "o pegar un PGN" de 36: tres alturas y dos pesos. En la v0.120,
+      con "cambiar", el PGN no aparece porque no entraba en un renglón.
+      Pregunta: ¿cambiar de usuario y pegar un PGN son la misma acción? ¿El PGN
+      va en el mismo renglón, en la hoja, o en un "más" del campo? Con variantes.
+- [ ] **El color de la barra de progreso** (revisor, v0.120). Es `--texto`, casi
+      blanca: mientras corre el mes es lo más luminoso de la pantalla y le gana
+      al botón principal. §1.1 no dice qué color tiene el progreso; va a
+      `DISENO.md` como propuesta (es sistema de diseño: no se cambia de noche
+      sin Juan, se propone).
 - [ ] **Lavado de cara: la lista "Partidas" del Mes** (revisor, v0.119; celu y
       PC). Es el título más grande de la pantalla (h2 de 18 contra 14 de las
       secciones) y está al fondo de todo: con las secciones abiertas, a ~1560
@@ -334,7 +345,15 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   pantalla entera con "‹ Partidas" arriba, y el gesto de volver del celu hace
   lo mismo. Se descartaron las pestañas fijas abajo o arriba porque cortaban la
   fila de botones de la jugada.
-- **Modo y Mate a la vista, y tocar para analizar** (revisor, v0.110):
+- **No sé si esto te copa (v0.120):** Modo y Mate a la vista viven ahora solo
+  en la hoja de ajustes, al fondo (hay que scrollear la hoja para verlos). Si
+  los cambiás seguido, se suben al principio de la hoja; si los ponés una vez,
+  quedan bien ahí.
+- **No sé si esto te copa (v0.120):** el inicio nuevo. La app se acuerda de tu
+  usuario y arranca con el mes cargado; tocar una partida la abre (y la
+  analiza si hace falta); el botón dice cuántas faltan del mes.
+- **Modo y Mate a la vista, y tocar para analizar** (revisor, v0.110; **hecho en
+  la v0.120**, se borra cuando lo veas):
   (1) Modo y Mate se mudan a la hoja de la tuerca y tocar una partida la abre y
   la analiza directo, como chess.com; (2) quedan en el inicio como hoy. El
   revisor recomienda la 1.
