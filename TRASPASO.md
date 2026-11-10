@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.121**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.122**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -294,8 +294,11 @@ está partida, y desde la v0.90 son tres bloques —`.parriba` (encabezado),
 directos de la grilla. De 1500 px para arriba la tarjeta se muda a una columna
 propia a la izquierda (§4trigies). El Mes también se parte desde 950
 (v0.119, §7): `.mesGrid` con el resumen en `.mesIzq` y las secciones en
-`.mesDer`, que en el celu son `display: contents`. Todo lo demás sigue siendo
-una sola columna en cualquier pantalla.
+`.mesDer`, que en el celu son `display: contents`. Y el inicio, desde 950
+(v0.122, §7): `.iniGrid` con el mes en `.iniIzq` (`#zonaMeses`, `#zonaAnalizar`,
+`#zonaEstado`, `#tarjetaMes`) y la lista en `.iniDer`, también `display:
+contents` en el celu y en Partida y Mes. Todo lo demás sigue siendo una sola
+columna en cualquier pantalla.
 
 **El registro está en un script clásico a propósito:** corre aunque el módulo
 falle, y por eso puede avisar que el módulo falló. Vive en `localStorage` y no
@@ -4666,6 +4669,41 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.122, [PC] el inicio con el ancho de la compu** (lavado de cara del
+revisor, v0.110). Con el tope de 640 de la v0.121, a 1280 quedaban ~540 px
+vacíos a la derecha y la fecha de cada fila a 421 de la precisión. Tres
+variantes dibujadas sobre la app con un mes falso de 40 partidas
+(`pruebas/maqueta-inicio-pc.mjs`, no se commitea): A, la columna centrada (10
+filas a la vista; el borde cambia al pasar al Mes, que está a la izquierda); B,
+el mes a la izquierda y la lista a la derecha; C, la lista en dos columnas a
+todo el ancho (20 filas, pero se lee en zigzag, la fecha salta de columna).
+**El revisor eligió B con dos ajustes**. Lo que quedó:
+- Desde 950, `.iniGrid` es grilla de `300px minmax(0, 640px)` con 32 de hueco:
+  a la izquierda el select del mes, el recuento, "Analizar el mes · faltan N",
+  el estado y la tarjeta Estadísticas, **fijos al bajar** (sticky a 16, solo
+  con 720 de alto o más, como el Mes); a la derecha la lista. La cabecera
+  (usuario · cambiar, tuerca) abarca las 972. 15 filas a la vista a 1280×800
+  contra 10. 300 y no 400 como el Mes: lo de la izquierda no llena 400.
+- Ajuste 1: 16 entre la cabecera y el cuerpo (con 0 la tuerca tocaba la lista).
+- Corrección del revisor sobre lo construido: el select (224), el botón (232) y
+  la tarjeta (300) cerraban en tres bordes distintos; los tres a 300.
+- Ajuste 2: **la fila en columnas desde 700**: rival `minmax(0, 1fr)` ·
+  resultado 5,2em · precisión 5,5em · fecha 3,6em, las dos últimas a la
+  derecha, 12 de hueco y `align-items: baseline` explícito. El hueco queda
+  entre el rival y el resultado, como el archivo de chess.com. En el celu sigue
+  el renglón de la v0.120: en grilla, a 386, al rival le quedarían ~110; si se
+  quiere, se dibuja aparte (a 386 y 412, con un nombre de 20 y "sin analizar").
+- El armazón envuelve a `#zonaEstado`, que **no** es `.soloInicio` (se ve en
+  Partida y Mes mientras algo corre): por eso `.iniGrid` no lleva la clase y es
+  `display: contents` fuera del inicio. La regla del tope de 640 dejó de usar
+  `body > …` (los hijos ya no son directos del body); se mantuvo la misma
+  especificidad para que la cabecera pueda pisarla con 972.
+- Medido: 1280 y 1000, la izquierda en x 99 / 14 y la lista en 431 / 346;
+  800, una columna de 640 como antes; sin desborde. Comparación del celu contra
+  la v0.121: cambia solo `mes-seccion`, por el número de versión del pie.
+- Master-detail (la Partida al lado de la lista) no se dibujó: la Partida en la
+  compu pide 950 o más, y tiene su propio lavado entero pendiente.
 
 **v0.121, [PC] tope de lectura de 640 para la columna del inicio** (el punto 5
 del lavado del inicio). `body:not(.enVista) > .soloInicio` y `#zonaEstado` con

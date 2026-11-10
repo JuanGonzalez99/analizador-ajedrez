@@ -385,7 +385,9 @@
      fila ponía la fecha a ~1050 del rival. A la izquierda, como el Mes. En el
      celu no hace nada: el body ahí mide menos de 640. Lado a lado o no es el
      ítem de PC del inicio. */
-  body:not(.enVista) > .soloInicio, body:not(.enVista) > #zonaEstado { max-width: 640px; }
+  body:not(.enVista) .soloInicio, body:not(.enVista) #zonaEstado { max-width: 640px; }
+  /* el armazón de las dos columnas de la compu (v0.122): en el celu no existe */
+  .iniGrid, .iniIzq, .iniDer { display: contents; }
   /* sin el botón, la fila no está: si no, corta el margen y quedan 24 */
   .botonMes:has(#analizarMes.oculto) { display: none; }
   #meses { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
@@ -1050,6 +1052,43 @@
   @media (min-width: 950px) and (min-height: 720px) {
     .mesIzq { position: sticky; top: 16px; }
   }
+  /* [PC] EL INICIO CON EL ANCHO DE LA COMPU (v0.122, lavado de cara del
+     revisor, v0.110). Con el tope de 640 de la v0.121 a 1280 quedaban ~540 px
+     vacíos a la derecha. Se dibujaron tres con un mes de 40: A, la columna
+     centrada (10 filas a la vista, y el borde cambia al ir al Mes, que está a
+     la izquierda); B, esta; C, la lista en dos columnas (20 filas, pero se lee
+     en zigzag y son dos tablas compitiendo). El revisor eligió B: el mes —el
+     select, el recuento, "Analizar el mes" y Estadísticas— fijo a la
+     izquierda en 300, y la lista a la derecha en 640. Es el esqueleto del Mes
+     (v0.119) y entran 15 filas en vez de 10. 300 y no 400 como el Mes: lo que
+     lleva no llena 400, y estirar la tarjeta aleja el "›" del título. Ajuste
+     suyo: 16 entre la cabecera y el cuerpo (con 0 la tuerca tocaba la lista). */
+  @media (min-width: 950px) {
+    body:not(.enVista) > .cabInicio { max-width: calc(300px + var(--e-8) + 640px); }
+    body:not(.enVista) .iniGrid { display: grid; grid-template-columns: 300px minmax(0, 640px);
+               column-gap: var(--e-8); align-items: start; margin-top: var(--e-4); }
+    body:not(.enVista) :is(.iniIzq, .iniDer) { display: block; min-width: 0; }
+    body:not(.enVista) .iniGrid #zonaMeses { margin-top: 0; }
+    body:not(.enVista) .iniGrid #partidas.lista { margin-top: 0; }
+    /* un borde derecho y no tres (revisor): el select medía 224, el botón 232 y
+       la tarjeta 300; los tres al ancho de la columna */
+    body:not(.enVista) .iniGrid :is(#meses, #analizarMes) { width: 100%; }
+  }
+  @media (min-width: 950px) and (min-height: 720px) {
+    body:not(.enVista) .iniIzq { position: sticky; top: 16px; }
+  }
+  /* [PC] LA FILA EN COLUMNAS (v0.122, revisor): con 640 de ancho la fecha
+     quedaba a 421 de la precisión. Resultado, precisión y fecha en columnas
+     fijas, alineadas, como el archivo de chess.com; el hueco queda entre el
+     rival y el resultado, y la raya y el hover sostienen el renglón. El celu
+     sigue con el renglón de la v0.120 (en grilla, a 386, al rival le quedan
+     ~110: se dibuja aparte antes de decidir). */
+  @media (min-width: 700px) {
+    #partidas > div[data-i] { display: grid; grid-template-columns: minmax(0, 1fr) 5.2em 5.5em 3.6em;
+                              column-gap: var(--e-3); align-items: baseline; }
+    #partidas .prec, #partidas .fecha { text-align: right; }
+    #partidas .fecha { margin-left: 0; padding-left: 0; }
+  }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
      nada avisa que se puede tocar. Reportado como "no responde nada".
@@ -1145,7 +1184,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.121 · 10-11";
+  window.VERSION = "v0.122 · 10-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1316,6 +1355,9 @@
 <!-- EL MES HACE DE TÍTULO (v0.120), como en el Mes desde la v0.108: el
      select dice "Octubre 2026" con la letra del h2, y abajo un solo renglón
      chico con el recuento del mes. -->
+<!-- [PC] EL MES A LA IZQUIERDA Y LA LISTA A LA DERECHA desde 950 (v0.122): en
+     el celu el armazón es display: contents y no cambia nada. -->
+<div class="iniGrid"><div class="iniIzq">
 <div id="zonaMeses" class="oculto soloInicio"><select id="meses" aria-label="Mes"></select>
   <p class="resumenInicio oculto" id="partidasMarcador"></p></div>
 
@@ -1373,8 +1415,10 @@
 
 <!-- La puerta al Mes, entre el renglón del recuento y la lista (v0.120). -->
 <button type="button" id="tarjetaMes" class="tarjetaMes soloInicio oculto"><span><b id="tarjetaMesTit">Estadísticas</b><small id="tarjetaMesSub"></small></span><span class="flecha" aria-hidden="true">&rsaquo;</span></button>
+</div><div class="iniDer">
 <div id="zonaPartidas" class="oculto soloInicio">
   <div id="partidas" class="lista"></div></div>
+</div></div>
 
 <div id="zonaBanco" class="oculto solo-dev">
   <h2 id="tituloBanco">Comparación de configuraciones</h2>
