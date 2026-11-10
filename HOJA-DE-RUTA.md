@@ -182,6 +182,10 @@ lo demás se dibuja contra ella.
       select del mes mide 140 y la tarjeta de Estadísticas estira el "›" a
       ~1000 px del título. ¿Lista y análisis lado a lado, o un ancho máximo de
       lectura? Pariente del ítem del Mes de arriba. Con variantes.
+      **v0.121 (10-nov):** ya tiene un tope de lectura de 640 a la izquierda (el
+      borde del Mes). Lo que queda, según el revisor: qué va en los ~540 px
+      vacíos de la derecha —la Partida o las estadísticas al lado de la lista,
+      o nada— y el hueco largo entre la precisión y la fecha de cada fila.
 - [ ] **Lavado de cara de la cabecera de la Partida** (revisor, v0.111). Lo que
       dice qué partida es quedó partido: la apertura arriba, recostada contra
       la tuerca (se lee como si fuera de ella), y rival y resultado abajo, con
