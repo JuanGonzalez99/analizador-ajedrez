@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.122**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.123**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4669,6 +4669,44 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.123, la barra de título de la Partida** (lavado de cara del revisor,
+v0.111). Hasta acá: "‹ Partidas" arriba, y abajo, chico y tenue, "vs MewoneX
+(601)" con "1-0" en la otra punta y un hueco en el medio; la apertura no tenía
+lugar desde la v0.112 (a Juan no le gustó al lado de la tuerca). Cuatro
+variantes dibujadas a 412×760 sobre la app (`pruebas/maqueta-cabecera.mjs`, no
+se commitea): A, todo en un renglón sin apertura (sube 27); B, barra de título
+con subtítulo (sube 25); C, el renglón de abajo junto a la izquierda (no mueve
+nada, pero es parchar lo de hoy); D, el rival como título de 18 debajo del
+volver (empuja 19). **El revisor eligió B**, con ajustes. Lo que quedó:
+- `.cabvista` de la Partida: "‹" solo (`#volverAQue` sigue, `hidden`: el
+  destino lo dicen `aria-label` y `title`, "Volver a Partidas" o "a
+  Estadísticas") + `.cabTit` de dos renglones + la tuerca. Renglón 1: rival
+  (16/700, **es lo único que se recorta**), fuerza (12,5 tenue) y "· Ganada"
+  (14), las dos últimas `flex: none`. El resultado sale de `PALABRA_FIN` como en
+  la fila del inicio; sin lado del usuario (PGN pegado), "Blanco vs Negro · 1-0".
+  Renglón 2: la apertura (`R.apertura`, 12,5 tenue, elipsis) **sin el código
+  ECO** del principio. Todo lo llena `pintarCabPartida`, desde el render y desde
+  la carga (`ELEGIDA_META`). `.revcab` se fue.
+- 12 hasta la barra de la evaluación. La tarjeta y el tablero suben 21.
+- **Mientras algo corre, el estado va en el subtítulo**: el título ocupa el
+  lugar entre el volver y la tuerca donde iba `#estado`. `estado()` y `avisar()`
+  escriben por `pintarEstado` en `#estado` y en `#revEstado`; `body.enPartida`
+  (clase nueva, al lado de `enVista`) esconde `#estado`, y con `#revEstado` no
+  vacío la apertura se esconde (l2 tiene `min-height`: nada salta). En el Mes no
+  cambió nada.
+- La raya de progreso, en la Partida, **al borde de arriba** (`top: -8px`, y 0–3):
+  con 33 cruzaba el subtítulo, y abajo de él quedaba a 6 de la barra de la
+  evaluación, dos rayas casi pegadas (revisor). En el Mes sigue en 33.
+- El volver toca en 48×48 (`::before`, `-13px -22px -13px -4px`, sin pasar del x
+  4 donde `mirar` estaciona el puntero). Y de paso, el revisor encontró que
+  `button:not(:disabled):hover` le ganaba a `.volver:hover { background: none }`:
+  en la compu el volver se ponía gris al pasar el mouse. Ahora pesa más.
+- Medido a 386 con un rival de 25 letras, fuerza 1234, "Perdida" y una apertura
+  larga: se recorta el nombre, quedan 10 entre "Perdida" y la tuerca.
+- Pruebas: las tres que miraban `.revcab` pasan a mirar `.cabTit`.
+- Comparación del celu contra la v0.122: cambian todas las de la Partida;
+  iguales `mes` y `ancho-mes`.
 
 **v0.122, [PC] el inicio con el ancho de la compu** (lavado de cara del
 revisor, v0.110). Con el tope de 640 de la v0.121, a 1280 quedaban ~540 px

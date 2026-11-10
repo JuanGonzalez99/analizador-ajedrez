@@ -322,6 +322,15 @@
   body.enVista #zonaEstado .barra { position: absolute; top: 33px; left: 0; right: 0;
     height: 3px; margin: 0; }
   body.enVista #zonaEstado .fila { display: none; }
+  /* en la Partida el texto va en el subtítulo de la barra de título (v0.123) */
+  body.enPartida #estado { display: none; }
+  /* y la raya, al borde de arriba de la pantalla (revisor): con 33 cruzaba el
+     subtítulo, y debajo de él quedaba a 6 de la barra de la evaluación, dos
+     rayas paralelas casi pegadas (DISENO.md §2). -8 cancela el relleno de
+     arriba del body. */
+  body.enPartida #zonaEstado .barra { top: -8px; }
+  /* el volver es la flecha sola: el ::before la lleva a 48 x 48 (revisor), sin pasar del x 4 de antes */
+  #volverDeLaPartida::before { inset: -13px -22px -13px -4px; }
   /* EL VOLVER NO AGRANDA EL RENGLÓN: lo visible mide lo que medía el h2
      "Revisión", y el área de 48 de §1.7 la pone un ::before invisible. */
   .volver { background: none; border: 0; padding: 0; margin: 0 0 0 -6px; font: inherit;
@@ -329,8 +338,10 @@
             gap: 0; position: relative; cursor: pointer; border-radius: 0; }
   /* ni fondo al pasar el mouse: un bloque gris sobre el título se lee como
      campo, no como volver. El área invisible no llega al borde izquierdo de la
-     pantalla (x 4), que es donde `mirar` estaciona el puntero. */
-  .volver:hover, .volver:active, .volver:focus { background: none; }
+     pantalla (x 4), que es donde `mirar` estaciona el puntero. El :not(:disabled)
+     es para pesar más que `button:not(:disabled):hover`, que hasta la v0.123
+     le ganaba y en la compu sí ponía el bloque gris (revisor). */
+  .volver:not(:disabled):hover, .volver:active, .volver:focus { background: none; }
   .volver:hover { color: var(--acento); }
   .volver::before { content: ""; position: absolute; inset: -13px -10px -13px -4px; }
   .volver svg { width: 22px; height: 22px; flex: none; }
@@ -1119,16 +1130,28 @@
   }
   .credito { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-6) 0 0; }
   .credito a { color: inherit; }
-  .revcab { display: flex; justify-content: space-between; gap: 8px; font-size: var(--t-leyenda);
-            color: var(--tenue); margin-top: var(--e-2); align-items: center; }
-  /* El nombre CEDE y se recorta; el resultado nunca. El nombre de chess.com
-     puede tener hasta 25 caracteres, así que sin esto un rival de nombre largo
-     parte el renglón en dos y empuja el tablero hacia abajo. Medido: con el
-     recorte, 0 de 30 combinaciones de nombre y resultado envuelven. */
-  .revcab .rival { flex: 1 1 auto; min-width: 0; overflow: hidden;
-                   text-overflow: ellipsis; white-space: nowrap; }
-  .revcab .fin { flex: 0 0 auto; white-space: nowrap; font-weight: 700;
-                 color: color-mix(in srgb, currentColor 95%, transparent); }
+  /* LA BARRA DE TÍTULO DE LA PARTIDA (v0.123; lavado de cara del revisor,
+     v0.111). Hasta acá: "‹ Partidas" arriba, y abajo, chico, "vs MewoneX
+     (601)" con "1-0" en la otra punta y un hueco en el medio; la apertura no
+     tenía lugar desde la v0.112. Se dibujaron cuatro: A, todo en un renglón sin
+     apertura; B, esta; C, el renglón de abajo junto a la izquierda; D, el
+     rival como título de 18 debajo del volver (empujaba 19). El revisor eligió
+     B: la cabecera es UNA cosa —el título es la partida, la apertura su
+     subtítulo, lejos de la tuerca— y devuelve ~21 px al tablero. Ajustes
+     suyos: el nombre cede y se recorta, la fuerza y el resultado nunca (un
+     usuario de chess.com llega a 25 letras); el resultado en palabras del lado
+     de Juan, como la fila del inicio, en 14 y sin color; 12 hasta la barra. */
+  .cabTit { flex: 1 1 auto; min-width: 0; margin-left: 4px; line-height: 1.25; }
+  .cabTit .l1 { display: flex; align-items: baseline; gap: 5px; font-size: var(--t-cuerpo, 16px);
+                white-space: nowrap; }
+  .cabTit .rival { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .cabTit .elo { flex: none; font-size: var(--t-leyenda); color: var(--tenue); }
+  .cabTit .fin { flex: none; font-size: var(--t-secundario); }
+  .cabTit .fin:not(:empty)::before { content: "\00b7"; color: var(--tenue); margin-right: 5px; }
+  .cabTit .l2 { font-size: var(--t-leyenda); color: var(--tenue); white-space: nowrap;
+                overflow: hidden; text-overflow: ellipsis; min-height: 1.25em; }
+  .cabTit .l2:has(#revEstado:not(:empty)) #revAp, #revEstado:empty { display: none; }
+  #zonaRevision .cabvista { margin-bottom: var(--e-3); }
   /* sin min-height: en la disposición densa un renglón reservado que casi
      siempre está vacío cuesta más de lo que evita. Cuando no hay señales el
      bloque se esconde entero. */
@@ -1184,7 +1207,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.122 · 10-11";
+  window.VERSION = "v0.123 · 10-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1502,7 +1525,12 @@
        termine DEBAJO de los cuadritos y los botones, que era el precio que
        este cambio parecía tener. -->
   <div class="principal parriba">
-  <div class="cabvista"><h2><button type="button" class="volver" id="volverDeLaPartida"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="volverAQue">Partidas</span></button></h2>
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDeLaPartida" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="volverAQue" hidden>Partidas</span></button></h2>
+    <!-- LA BARRA DE TÍTULO DE LA PARTIDA (v0.123, la B del revisor): el título es
+         la partida —rival, fuerza, cómo terminó— y la apertura va de subtítulo.
+         Mientras algo corre, el estado ocupa el lugar del subtítulo. -->
+    <div class="cabTit"><div class="l1"><span id="revRival" class="rival"></span><span id="revElo" class="elo"></span><span id="revFin" class="fin"></span></div>
+      <div class="l2"><span id="revAp"></span><span id="revEstado"></span></div></div>
     <!-- LA TUERCA ESTÁ DIBUJADA, no es el glifo ⚙ del sistema (v0.92). Es la
          misma lección de las piezas de la v27 (§4bis): un glifo depende de la
          fuente del aparato y el que sale es el hueco pensado para texto
@@ -1513,8 +1541,6 @@
          deja el resto en `currentColor` y lo hace andar en los dos temas. -->
     <button id="btnAjustes" aria-label="Ajustes" aria-expanded="false"
             aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuerca"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuerca)"/></svg></button></div>
-  <div class="revcab"><span id="revRival" class="rival"></span>
-    <span id="revFin" class="fin"></span></div>
   <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
   </div>
   <!-- EL ORDEN DE ESTA VISTA SE DECIDIÓ DIBUJÁNDOLO (v0.74, §4septdecies):
@@ -3463,6 +3489,7 @@ function mostrarVista(v, opc) {
   let actual = VISTA;
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
   document.body.classList.toggle("enVista", actual !== "inicio");
+  document.body.classList.toggle("enPartida", actual === "partida");
   /* la partida que tocaste y todavía se analiza: su pantalla, solo con la
      cabecera (el volver y el progreso) */
   const cargando = actual === "partida" && !HAY.partida;
@@ -3481,6 +3508,9 @@ function mostrarVista(v, opc) {
   /* "‹ Partidas" o "‹ Estadísticas": dice a dónde te lleva, que es de donde viniste */
   const de = history.state && history.state.de;
   $("volverAQue").textContent = de === "mes" ? "Estadísticas" : "Partidas";
+  /* desde la v0.123 el volver es la flecha sola: el destino lo dicen la
+     etiqueta y el globito */
+  $("volverDeLaPartida").ariaLabel = $("volverDeLaPartida").title = "Volver a " + $("volverAQue").textContent;
   if (opc.scroll) window.scrollTo(0, SCROLL[actual] || 0);
 }
 
@@ -3537,12 +3567,15 @@ let ULTIMO_ESTADO = "", AVISO_HASTA = 0;
 const estado = (t, html) => {
   ULTIMO_ESTADO = html ? t : sinHtml(t);
   if (Date.now() < AVISO_HASTA) return;
-  $("estado").innerHTML = ULTIMO_ESTADO;
+  pintarEstado(ULTIMO_ESTADO);
 };
+/* en la Partida el estado va en el subtítulo de la barra de título (v0.123),
+   en el lugar de la apertura; en el inicio y el Mes, donde estaba */
+const pintarEstado = h => { $("estado").innerHTML = h; $("revEstado").innerHTML = h; };
 const avisar = t => {
   AVISO_HASTA = Date.now() + 2500;
-  $("estado").textContent = t;
-  setTimeout(() => { if (Date.now() >= AVISO_HASTA) $("estado").innerHTML = ULTIMO_ESTADO; }, 2600);
+  pintarEstado(sinHtml(t));
+  setTimeout(() => { if (Date.now() >= AVISO_HASTA) pintarEstado(ULTIMO_ESTADO); }, 2600);
 };
 let QUE_CORRE = null;
 /* La barra se esconde cuando no hay nada corriendo. Antes se quedaba en cero y
@@ -5462,11 +5495,10 @@ async function analizarElegida() {
   const rivalM = !m ? "" : ladoM === "w" ? m.black.username : ladoM === "b" ? m.white.username : "";
   if (m) {
     const eloM = ladoM === "w" ? m.black.rating : ladoM === "b" ? m.white.rating : "";
-    $("revRival").textContent = rivalM ? "vs " + rivalM + (eloM ? " (" + eloM + ")" : "")
-                                       : `${m.white.username} vs ${m.black.username}`;
-    const finM = comoTermino({ Result: m.white.result === "win" ? "1-0" : m.black.result === "win" ? "0-1" : "1/2-1/2" }, m);
-    $("revFin").textContent = finM ? finM.res : "";
-  } else { $("revRival").textContent = ""; $("revFin").textContent = ""; }
+    const finM = ladoM ? PALABRA_FIN[resultadoDeLado(ladoM, m, null)]
+      : m.white.result === "win" ? "1-0" : m.black.result === "win" ? "0-1" : "Tablas";
+    pintarCabPartida(rivalM || `${m.white.username} vs ${m.black.username}`, eloM, finM, "");
+  } else pintarCabPartida("", "", "", "");
   const quien = rivalM ? `<span class="deQuien"> vs ${sinHtml(rivalM)} \u00b7</span>` : "";
   const tEntrar = setTimeout(() => {
     if (VISTA === "inicio" && OCUPADO) { fui = true; irAPantalla("partida"); }
@@ -6287,6 +6319,16 @@ function desenlace(lado, meta, cab) {
 
    Devuelve null cuando no se sabe el resultado (`*` o sin encabezado): callarse
    es mejor que inventar, y ahí la cabecera queda como estaba. */
+/* La barra de título de la Partida (v0.123): rival, fuerza, cómo terminó y,
+   de subtítulo, la apertura. */
+function pintarCabPartida(rival, elo, fin, ap) {
+  $("revRival").textContent = rival || "";
+  $("revElo").textContent = elo ? String(elo) : "";
+  $("revFin").textContent = fin || "";
+  /* sin el código ECO del principio ("C54 Italian Game…"): para quien lee es
+     un glifo que hay que descifrar */
+  $("revAp").textContent = (ap || "").replace(/^[A-E]\d\d\s+/, "");
+}
 const RESULTADOS = { "1-0": "1-0", "0-1": "0-1", "1/2-1/2": "Tablas" };
 function comoTermino(cab, meta) {
   const res = RESULTADOS[(cab && cab.Result) || ""] || null;
@@ -6940,14 +6982,16 @@ function pintarRevision() {
   /* el rival y su elo salen de las cabeceras del PGN; si la partida no las
      trae (un PGN pegado a mano puede no traerlas) se muestra lo que haya */
   const yo = ladoDelUsuario(R);
+  const fin = comoTermino(R.cab, R.meta);
   if (yo) {
     const rival = (yo === "w" ? R.cab.Black : R.cab.White) || "";
     const elo = (yo === "w" ? R.cab.BlackElo : R.cab.WhiteElo) || "";
-    $("revRival").textContent = rival ? "vs " + rival + (elo ? " (" + elo + ")" : "") : "";
+    pintarCabPartida(rival, elo, PALABRA_FIN[resultadoDeLado(yo, R.meta, R.cab)], R.apertura);
   } else {
     /* con un PGN pegado no se sabe de qué lado jugaba el usuario, así que no hay
        "rival": se nombran los dos, que es más útil que dejar el renglón vacío */
-    $("revRival").textContent = [R.cab.White, R.cab.Black].filter(Boolean).join(" vs ");
+    pintarCabPartida([R.cab.White, R.cab.Black].filter(Boolean).join(" vs "), "",
+                     fin ? fin.res : "", R.apertura);
   }
   /* El contador "jugada N de M" se fue en la v0.62bis. Contaba MEDIAS jugadas,
      así que la misma posición tenía dos números en la misma pantalla: la
@@ -6955,8 +6999,6 @@ function pintarRevision() {
      en la partida— lo hacen mejor la tarjeta, que da la jugada en el idioma del
      ajedrez, y la raya del "estás acá" de la curva, que la da en proporción.
      Al sacarlo queda UN SOLO sistema de numeración en toda la vista. */
-  const fin = comoTermino(R.cab, R.meta);
-  $("revFin").textContent = fin ? fin.res : "";
 
   /* La barra se llena con lo que le toca a las blancas, y acompaña al tablero
      cuando se gira. El número va en la punta del que va ganando, que es donde

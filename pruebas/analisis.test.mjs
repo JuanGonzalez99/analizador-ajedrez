@@ -1781,15 +1781,18 @@ test("la cabecera perdió el contador de medias jugadas", () => {
      pantalla: la tarjeta "18… Kg8" y el contador "36 de 36". */
   assert.ok(!html.includes("jugada ${IDX + 1} de"), "volvió el contador");
   assert.ok(!html.includes('id="revJugada"'), "y su elemento");
-  assert.ok(html.includes('$("revFin").textContent = fin ? fin.res : "";'));
+  assert.ok(html.includes('$("revFin").textContent = fin || "";'));
 });
 
 test("el nombre del rival cede y el resultado no", () => {
   /* El nombre de chess.com puede tener 25 caracteres: sin el recorte parte el
      renglón en dos y empuja el tablero hacia abajo. Medido: con el recorte,
      0 de 30 combinaciones de nombre y resultado envuelven. */
-  assert.ok(html.includes(".revcab .rival { flex: 1 1 auto; min-width: 0; overflow: hidden;"));
-  assert.ok(html.includes(".revcab .fin { flex: 0 0 auto; white-space: nowrap;"));
+  /* desde la v0.123 vive en la barra de título: el nombre se recorta, la
+     fuerza y el resultado nunca */
+  assert.ok(html.includes(".cabTit .rival { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; }"));
+  assert.ok(html.includes(".cabTit .elo { flex: none;"));
+  assert.ok(html.includes(".cabTit .fin { flex: none;"));
 });
 
 test("la tira se centra sola en la jugada actual", () => {
@@ -2517,7 +2520,7 @@ test("el orden de la vista es el que se eligió mirando las seis maquetas", () =
      La tarjeta va ARRIBA del tablero: se lee primero. */
   const z = html.slice(html.indexOf('<div id="zonaRevision"'),
                        html.indexOf('<div id="zonaResumen"'));
-  const orden = ["revcab", 'id="evalh"', 'id="veredicto"', '"revtab"', 'id="tira"',
+  const orden = ['class="cabTit"', 'id="evalh"', 'id="veredicto"', '"revtab"', 'id="tira"',
                  'id="curva"', '"metricas"'];
   let antes = -1;
   for (const q of orden) {
