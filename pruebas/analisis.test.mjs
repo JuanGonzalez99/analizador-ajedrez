@@ -2634,7 +2634,10 @@ test("la lista lateral no le saca lugar al celular", () => {
      gana la última, y puesta después le ganaba al display de adentro y la lista
      no se veía NUNCA. Se rompió así al escribirla. */
   const base = html.indexOf(".colLista, .soloAncho { display: none; }");
-  const ancha = html.indexOf("@media (min-width: 950px)");
+  /* el bloque grande de la compu, el que abre renglón: desde la v0.126.1 hay
+     una regla de una línea (`.cabInicio > .campo`) más arriba con el mismo
+     media, y la búsqueda a secas caía en esa y la prueba se ponía roja */
+  const ancha = html.indexOf("@media (min-width: 950px) {\n");
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,
     "la regla base va antes de la media query, o la lista no se ve nunca");
@@ -2782,7 +2785,7 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      y ahí la barra quedaba a 140 px. */
   assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }"),
     "la caja del tablero mide lo que mide el tablero");
-  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 950px)"));
+  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 950px) {\n"));
   assert.ok(antesDelMedia.includes("var(--ladoTab, 360px)") &&
             /\.revtab \{[^}]*justify-content: center/.test(antesDelMedia),
     "en cualquier ancho, no solo en la compu");
