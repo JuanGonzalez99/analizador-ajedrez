@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.127**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.128**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,43 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.128, la lista del Mes pasa a sección: "Partida por partida"** (lavado
+de cara del revisor, v0.119). Al fondo del Mes había un `<h2>Partidas</h2>` de
+18 —el título más grande de la pantalla, con el mismo nombre que el "‹
+Partidas" de arriba—, una leyenda y `#mesLista` en una caja con scroll de 34vh
+y filas de formato viejo ("vs rival · precisión 88.5 · 18 jugadas · 8/8/2025",
+fecha de EE.UU., en dos renglones). Tres variantes sobre la app con 30
+partidas, a 412×760 y 1280×900 (`pruebas/maqueta-lista-mes.mjs`, no se
+commitea): **A** una sección más al final; **B** sacarla (la salida es el
+volver, que lleva a la misma lista); **C** cinco filas arriba, después del
+resumen, con "Ver las 30". **El revisor eligió A**: al Mes se entra a mirar
+números, abrir una partida desde ahí es de vez en cuando, y para eso está el
+inicio a un toque; C ponía una copia de la pantalla de la que venís antes de
+las estadísticas, y B la contó como "borrar algo que Juan usa" (queda como
+duda). Lo que quedó:
+- `details.seccion` "Partida por partida", **cerrada** como las otras, con su
+  "?" (`#capLista`, por `pintarLeyenda`): dice de qué mes son —`pintarLista`
+  lista siempre el mes cargado, aunque el selector diga "Todo lo analizado"—,
+  que se tocan para abrir, y que las asistidas no entran en los números. Dice "de cualquier ritmo" porque la lista **no sigue** al selector de
+  ritmo ni al de fuente, a diferencia de las tablas de alrededor
+  (`datosDeTablas`); ya era así antes, y si debe seguirlos queda para el lavado
+  de las secciones del Mes (revisor).
+- **Las filas son las del inicio**: `filaDePartida(g, i, prec, sel, cab)` las
+  escribe para las dos listas, y el CSS de la fila va con `:is(#partidas,
+  #mesLista)`, también la grilla de columnas desde 700. Sin el scroll de 34vh
+  (`#mesLista.lista { max-height: none }`): un scroll adentro de otro al fondo
+  de la página solo estorbaba.
+- La partida **asistida** dice "asistida" en el lugar de la precisión, tenue,
+  como "sin analizar" en el inicio; se fue el "ASISTIDA, fuera del promedio".
+- `#seguirMes` quedó **afuera** de la sección (adentro de una cerrada no se
+  vería), en `.filaSeguir`, 16 debajo; sin el botón la fila no se dibuja.
+- PC: en la columna derecha, al final, igual que en el celu. Hereda los ~390 px
+  vacíos entre rival y resultado de la lista del inicio a 1280: es el ítem
+  "[PC] La fila de la lista a 1280", que ahora vale para las dos.
+- De paso, dos pruebas de la compu estaban en rojo desde la v0.126.1: buscaban
+  el primer `@media (min-width: 950px)` y caían en la regla de una línea de
+  `.cabInicio > .campo`. Ahora buscan el bloque que abre renglón.
 
 **v0.127, la barra de progreso en verde** (Juan, 11-nov, sobre la propuesta de
 `DISENO.md` §1.10). `.barra > i` pasó de `currentColor` (`--texto`) a

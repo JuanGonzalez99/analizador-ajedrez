@@ -229,8 +229,9 @@ lo demás se dibuja contra ella.
       al botón principal. §1.1 no dice qué color tiene el progreso; va a
       `DISENO.md` como propuesta (es sistema de diseño: no se cambia de noche
       sin Juan, se propone).
-- [ ] **Lavado de cara: la lista "Partidas" del Mes** (revisor, v0.119; celu y
-      PC). Es el título más grande de la pantalla (h2 de 18 contra 14 de las
+- [x] **Lavado de cara: la lista "Partidas" del Mes** (v0.128, 11-nov: la A,
+      una sección más, "Partida por partida", cerrada y con las filas del inicio;
+      revisor, v0.119; celu y PC). Es el título más grande de la pantalla (h2 de 18 contra 14 de las
       secciones) y está al fondo de todo: con las secciones abiertas, a ~1560
       px. Repite el texto del volver ("‹ Partidas"), así que hay dos "Partidas"
       que significan cosas distintas, y abrir una partida desde acá es
@@ -245,6 +246,8 @@ lo demás se dibuja contra ella.
       chess.com hace lo mismo). Pregunta: ¿con ~520 la fila se lee más junta, y
       el sobrante va a la columna izquierda? Con variantes, si se reabre el
       inicio de la compu.
+      **Desde la v0.128 vale también para la lista del Mes** ("Partida por
+      partida"), que usa la misma fila: arreglando una se arreglan las dos.
 - [ ] **Lavado de cara: el idioma de las aperturas** (revisor, v0.123; celu y
       PC). Desde la v0.123 la apertura es el subtítulo de cada partida, y los
       nombres de `aperturas.json` están en inglés ("Italian Game: Giuoco Piano,
@@ -288,6 +291,15 @@ lo demás se dibuja contra ella.
       A 1280 la fila del campo termina en 399 y la tuerca queda sola en 1071,
       sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una
       cabecera propia? Pariente del lavado de arriba.
+- [ ] **Lavado de cara: el Mes como pila de siete secciones iguales**
+      (revisor, v0.128; celu). Todas pesan lo mismo, de "Cómo terminaron" a
+      "Partida por partida", y la única abierta es la tabla de categorías.
+      ¿Cuáles se miran cada vez que uno entra al Mes y cuáles son de consulta?
+      Las primeras, a la vista o arriba; las otras, juntas y más abajo. De
+      paso: "Partida por partida" lista todas las partidas del mes cargado, de
+      cualquier ritmo, mientras las secciones de alrededor siguen al selector
+      de ritmo y al de fuente (la ayuda lo dice; ¿la lista debería seguir el
+      mismo filtro?). Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -444,6 +456,13 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   verde debajo del campo, y solo aparece con la entrada abierta (la primera vez
   o después de "cambiar"). La otra: sumarlo al renglón plegado, "Santico26 ·
   cambiar · pegar PGN", para tenerlo a un toque.
+- **No sé si esto te copa (v0.128):** la lista de partidas del fondo del Mes
+  es ahora una sección más, "Partida por partida", cerrada, con las mismas
+  filas del inicio. ¿Abrís partidas desde el Mes, o siempre desde el inicio?
+  Si nunca desde el Mes, la otra es sacarla del todo (para abrir una partida
+  volvés con "‹ Partidas", que es la misma lista) y pasar la marca de
+  "asistida" a la fila del inicio. No se sacó de noche porque es borrar algo
+  que capaz usás.
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el

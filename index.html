@@ -440,17 +440,23 @@
   #partidas.lista { margin-top: var(--e-3); max-height: none; overflow: visible; }
   /* LA FILA, UN RENGLÓN (v0.120): rival · cómo terminó · tu precisión · fecha.
      El ritmo y el "Santico26 vs" se fueron: el usuario es siempre el mismo. */
-  #partidas > div[data-i] { display: flex; align-items: baseline; gap: var(--e-2); white-space: nowrap; }
-  #partidas .rival { font-size: var(--t-cuerpo, 16px); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-  #partidas .res { font-size: var(--t-secundario); flex: none; }
-  #partidas .prec, #partidas .fecha { font-size: var(--t-leyenda); color: var(--tenue); flex: none;
+  :is(#partidas, #mesLista) > div[data-i] { display: flex; align-items: baseline; gap: var(--e-2); white-space: nowrap; }
+  :is(#partidas, #mesLista) .rival { font-size: var(--t-cuerpo, 16px); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  :is(#partidas, #mesLista) .res { font-size: var(--t-secundario); flex: none; }
+  :is(#partidas, #mesLista) :is(.prec, .fecha) { font-size: var(--t-leyenda); color: var(--tenue); flex: none;
                                       font-variant-numeric: tabular-nums; }
-  #partidas .fecha { margin-left: auto; padding-left: var(--e-2); }
+  :is(#partidas, #mesLista) .fecha { margin-left: auto; padding-left: var(--e-2); }
+  /* la lista del Mes, la misma fila del inicio y sin su caja con scroll: al
+     fondo de la página un scroll adentro de otro solo estorba (v0.128). Los 8
+     de arriba: sin leyenda corta, la caja quedaba a 2 del título */
+  #mesLista.lista { max-height: none; overflow: visible; margin: var(--e-2) 0 var(--e-4); }
+  .filaSeguir { margin-top: var(--e-4); }
+  .filaSeguir:has(#seguirMes.oculto) { display: none; }
   /* la última vista se marca con la raya sola, sin negrita (una marca y no
      dos), y la fila responde al toque (§1.10, "apretado") */
   #partidas > div.sel { font-weight: 400; }
-  #partidas > div[data-i]:active { background: var(--elevada); }
-  @media (pointer: fine) and (hover: hover) { #partidas > div[data-i]:hover { background: var(--elevada); } }
+  :is(#partidas, #mesLista) > div[data-i]:active { background: var(--elevada); }
+  @media (pointer: fine) and (hover: hover) { :is(#partidas, #mesLista) > div[data-i]:hover { background: var(--elevada); } }
   body.enVista .deQuien { display: none; }
   /* MIENTRAS SE ANALIZA LA PARTIDA QUE TOCASTE se ve su pantalla con el
      volver y el progreso en la cabecera, y nada más: lo de abajo sería la
@@ -1132,10 +1138,10 @@
      sigue con el renglón de la v0.120 (en grilla, a 386, al rival le quedan
      ~110: se dibuja aparte antes de decidir). */
   @media (min-width: 700px) {
-    #partidas > div[data-i] { display: grid; grid-template-columns: minmax(0, 1fr) 5.2em 5.5em 3.6em;
+    :is(#partidas, #mesLista) > div[data-i] { display: grid; grid-template-columns: minmax(0, 1fr) 5.2em 5.5em 3.6em;
                               column-gap: var(--e-3); align-items: baseline; }
-    #partidas .prec, #partidas .fecha { text-align: right; }
-    #partidas .fecha { margin-left: 0; padding-left: 0; }
+    :is(#partidas, #mesLista) :is(.prec, .fecha) { text-align: right; }
+    :is(#partidas, #mesLista) .fecha { margin-left: 0; padding-left: 0; }
   }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
@@ -1251,7 +1257,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.127 · 11-11";
+  window.VERSION = "v0.128 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1550,10 +1556,18 @@
     <div class="tw"><table id="mesTramo"></table></div>
   </details>
 
-  <h2>Partidas</h2>
-  <p class="cap">Compara partidas entre sí. Tocá una para abrirla; ya está analizada.</p>
-  <div id="mesLista" class="lista"></div>
-  <div class="fila" style="margin-top:10px"><button id="seguirMes" class="chico oculto"></button></div>
+  <!-- PARTIDA POR PARTIDA (v0.128, lavado de la lista del Mes, la A del
+       revisor). Era un h2 de 18 al fondo —el título más grande de la pantalla—
+       que decía "Partidas", igual que el volver de arriba. Es un apéndice: para
+       abrir partidas está el inicio, a un toque del volver. Así que va como
+       una sección más, cerrada, con las filas del inicio. "Seguir" queda afuera:
+       adentro de una sección cerrada no se vería nunca. -->
+  <details class="seccion">
+    <summary><span class="tit">Partida por partida</span><button type="button" class="ayuda" data-ayuda="capLista" aria-expanded="false" aria-label="Qué muestra esta lista">?</button></summary>
+    <p class="cap" id="capLista"></p>
+    <div id="mesLista" class="lista"></div>
+  </details>
+  <div class="fila filaSeguir"><button id="seguirMes" class="chico oculto"></button></div>
   </div></div>
 </div>
 
@@ -5470,6 +5484,21 @@ const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "s
 const fechaCorta = t => { const d = new Date((t || 0) * 1000); return `${d.getDate()} ${MESES_CORTOS[d.getMonth()]}`; };
 const PALABRA_FIN = { gane: "Ganada", perdi: "Perdida", empate: "Tablas" };
 
+/* La fila, escrita una vez: la usan la lista del inicio y la del Mes
+   (v0.128), que antes tenía su formato propio con la fecha de EE.UU. `cab`
+   es el respaldo cuando no hay JSON del mes (un PGN pegado). */
+function filaDePartida(g, i, prec, sel, cab) {
+  const lado = ladoEnJuego(g, USUARIO);
+  const b = g.white.username, n = g.black.username;
+  const rival = lado === "w" ? n : lado === "b" ? b : `${b} vs ${n}`;
+  const fin = lado ? (PALABRA_FIN[resultadoDeLado(lado, g.white.result ? g : null, cab)] || "")
+    : g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "Tablas";
+  return `<div data-i="${i}"${sel ? ' class="sel"' : ""}>` +
+    `<span class="rival">${sinHtml(rival || "?")}</span><span class="res">${fin}</span>` +
+    `<span class="prec" title="tu precisión">${prec}</span>` +
+    `<span class="fecha">${g.end_time ? fechaCorta(g.end_time) : ""}</span></div>`;
+}
+
 /* LA FILA (v0.120): rival · cómo terminó · tu precisión o "sin analizar" ·
    fecha. Sin color en el resultado: el color de la app es de las jugadas. La
    marca de la izquierda es la última partida que viste. */
@@ -5477,19 +5506,11 @@ function pintarFilas() {
   if (!PARTIDAS.length) return;
   const vista = HAY.partida && R && R.meta ? idPartida(R.meta) : null;
   $("partidas").innerHTML = PARTIDAS.map((g, i) => {
-    const lado = ladoEnJuego(g, USUARIO);
-    const b = g.white.username, n = g.black.username;
-    const rival = lado === "w" ? n : lado === "b" ? b : `${b} vs ${n}`;
-    const fin = lado ? (PALABRA_FIN[resultadoDeLado(lado, g, null)] || "")
-      : g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "Tablas";
     const id = idPartida(g);
     const p = PREC.get(id);
     const prec = !ESCANEADO && !PREC.has(id) ? ""
       : !PREC.has(id) ? "sin analizar" : p == null ? "analizada" : Math.round(p);
-    return `<div data-i="${i}"${id === vista ? ' class="sel"' : ""}>` +
-      `<span class="rival">${sinHtml(rival)}</span><span class="res">${fin}</span>` +
-      `<span class="prec" title="tu precisión">${prec}</span>` +
-      `<span class="fecha">${fechaCorta(g.end_time)}</span></div>`;
+    return filaDePartida(g, i, prec, id === vista);
   }).join("");
   $("partidas").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = seguro("abrir la partida", () => abrirPartida(PARTIDAS[+d.dataset.i]));
@@ -6924,16 +6945,18 @@ function pintarMes(prof) {
    una partida y revisarla, y eso solo tiene sentido sobre el mes cargado. */
 function pintarLista() {
   if (!MES) { $("mesLista").innerHTML = ""; return; }
+  /* "asistida" en el lugar de la precisión, como "sin analizar" en el inicio:
+     esa precisión no mide juego propio, y lo de que no entra en los números
+     lo dice el "?" (v0.128) */
   $("mesLista").innerHTML = MES.resultados.map((r, i) => {
-    const mias = filasDelUsuario(r);
-    const g = r.meta || {};
-    const rival = (r.cab.White || "").toLowerCase() === USUARIO ? r.cab.Black : r.cab.White;
-    const p = mias.length ? (mias.reduce((a, x) => a + x.precision, 0) / mias.length).toFixed(1) : "\u2014";
-    const f = new Date((g.end_time || 0) * 1000).toLocaleDateString();
-    const marca = esAsistida(r) ? " \u00b7 ASISTIDA, fuera del promedio" : "";
-    return `<div data-i="${i}">vs ${rival || "?"} \u00b7 precisión ${p}
-      <span style="opacity:.6">\u00b7 ${mias.length} jugadas \u00b7 ${f}${marca}</span></div>`;
+    const g = r.meta && r.meta.white ? r.meta
+      : { white: { username: r.cab.White || "" }, black: { username: r.cab.Black || "" } };
+    const p = precisionDe(r);
+    return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? "\u2014" : Math.round(p),
+                         false, r.cab);
   }).join("");
+  pintarLeyenda("capLista", [], [`Todas las partidas analizadas de ${nombreMes($("meses").value)}, de cualquier ritmo.`,
+    "Tocá una para abrirla.", "Las asistidas van marcadas y no entran en los números."]);
   $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
       R = MES.resultados[+d.dataset.i];

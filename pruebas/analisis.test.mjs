@@ -278,7 +278,7 @@ test("el ? de cada seccion cae en la misma columna", () => {
   assert.ok(html.includes(".seccion > summary > .tit { flex: 1; min-width: 0; }"));
   assert.ok(!/\.seccion > summary \{[^}]*space-between/.test(html));
   const sums = [...html.matchAll(/<summary><span class="tit">.*?<\/summary>/g)];
-  assert.equal(sums.length, 6, "las seis secciones envuelven su titulo");
+  assert.equal(sums.length, 7, "las siete secciones envuelven su titulo (Partida por partida, v0.128)");
   for (const m of sums)
     assert.ok(m[0].indexOf("cadChip") < 0 || m[0].indexOf("cadChip") < m[0].indexOf("class=\"ayuda"),
       "el chip va con el titulo, adentro; el ? queda ultimo");
