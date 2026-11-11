@@ -275,7 +275,12 @@
   /* los selects del mes: 36 visibles y 12 entre ellos (§1.7), sin tocar el
      `.chico` del resto de la app */
   #zonaMes .fila { gap: var(--e-3); }
-  /* el Mes en dos columnas solo desde 950 (abajo, en su @media); acá, sin caja */
+  /* el Mes en dos columnas solo desde 1000 (abajo, en su @media); acá, sin caja.
+     LOS CORTES DEL INICIO Y DEL MES PASARON DE 950 A 1000 (v0.128.2, revisor):
+     desde la v0.125 el body se ensancha recién en 1000, y entre 950 y 999 la
+     grilla de dos columnas se armaba adentro de ~672 y a la lista le tocaba
+     lo que sobraba (en el Mes, el rival en 0 px). Cada pantalla cambia de
+     forma en el mismo ancho que el body. */
   .mesGrid, .mesIzq, .mesDer { display: contents; }
   /* El selector del mes hace de título: la letra del h2 (18/700) en el alto de
      cualquier campo (44, §1.7), y un ancho fijo que entra "Septiembre 2026",
@@ -389,13 +394,13 @@
               line-height: 20px; position: relative; border-radius: 0; }
   #verPegar:not(:disabled):hover, #verPegar:active { background: none; }
   #verPegar::before { content: ""; position: absolute; inset: -12px -10px -16px; }
-  /* [PC] desde 950, donde el inicio tiene dos columnas, la fila del campo
+  /* [PC] desde 1000 (950 hasta la v0.128.2), donde el inicio tiene dos columnas, la fila del campo
      tiene tope de 300: termina en el mismo borde que la columna del mes, y el
      PGN abierto usa el ancho entero, como la lista (v0.126.1, revisor: con
      400 y 640 eran tres bordes derechos que no coincidían con nada). Por
-     debajo de 950 la fila llena la columna hasta la tuerca, como en el celu,
+     debajo de 1000 la fila llena la columna hasta la tuerca, como en el celu,
      y termina con todo lo de abajo. */
-  @media (min-width: 950px) { .cabInicio > .campo { max-width: 300px; }
+  @media (min-width: 1000px) { .cabInicio > .campo { max-width: 300px; }
                               body:not(.enVista) #zonaPegar { max-width: calc(300px + var(--e-8) + 640px); } }
   #zonaPegar { margin-top: var(--e-4); }
   /* el placeholder en la letra de la app; lo pegado sigue en mono */
@@ -1081,7 +1086,7 @@
      bloques grandes en PC), tope de 640 a la derecha también en 1600 —con 720
      las tablas de cuatro columnas se vuelven a estirar— y alineado a la
      izquierda, con el volver donde está en la Partida. */
-  @media (min-width: 950px) {
+  @media (min-width: 1000px) {
     .mesGrid { display: grid; grid-template-columns: 400px minmax(0, 640px);
                column-gap: var(--e-8); align-items: start; margin-top: var(--e-6); }
     .mesIzq, .mesDer { display: block; min-width: 0; }
@@ -1103,7 +1108,7 @@
   /* el resumen queda a la vista al bajar por las secciones, pero solo si entra
      en la ventana: por debajo de 720 de alto, con "Cómo se leen" abierto, el
      sticky le cortaría el final y quedaría contenido que no se alcanza */
-  @media (min-width: 950px) and (min-height: 720px) {
+  @media (min-width: 1000px) and (min-height: 720px) {
     .mesIzq { position: sticky; top: 16px; }
   }
   /* [PC] EL INICIO CON EL ANCHO DE LA COMPU (v0.122, lavado de cara del
@@ -1117,7 +1122,7 @@
      (v0.119) y entran 15 filas en vez de 10. 300 y no 400 como el Mes: lo que
      lleva no llena 400, y estirar la tarjeta aleja el "›" del título. Ajuste
      suyo: 16 entre la cabecera y el cuerpo (con 0 la tuerca tocaba la lista). */
-  @media (min-width: 950px) {
+  @media (min-width: 1000px) {
     body:not(.enVista) > .cabInicio { max-width: calc(300px + var(--e-8) + 640px); }
     body:not(.enVista) .iniGrid { display: grid; grid-template-columns: 300px minmax(0, 640px);
                column-gap: var(--e-8); align-items: start; margin-top: var(--e-4); }
@@ -1128,7 +1133,7 @@
        la tarjeta 300; los tres al ancho de la columna */
     body:not(.enVista) .iniGrid :is(#meses, #analizarMes) { width: 100%; }
   }
-  @media (min-width: 950px) and (min-height: 720px) {
+  @media (min-width: 1000px) and (min-height: 720px) {
     body:not(.enVista) .iniIzq { position: sticky; top: 16px; }
   }
   /* [PC] LA FILA EN COLUMNAS (v0.122, revisor): con 640 de ancho la fecha
@@ -1264,7 +1269,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.128.1 · 11-11";
+  window.VERSION = "v0.128.2 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

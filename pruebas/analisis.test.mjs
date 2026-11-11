@@ -2637,7 +2637,7 @@ test("la lista lateral no le saca lugar al celular", () => {
   /* el bloque grande de la compu, el que abre renglón: desde la v0.126.1 hay
      una regla de una línea (`.cabInicio > .campo`) más arriba con el mismo
      media, y la búsqueda a secas caía en esa y la prueba se ponía roja */
-  const ancha = html.indexOf("@media (min-width: 950px) {\n");
+  const ancha = html.indexOf("@media (min-width: 1000px) {\n");
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,
     "la regla base va antes de la media query, o la lista no se ve nunca");
@@ -2785,7 +2785,7 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      y ahí la barra quedaba a 140 px. */
   assert.ok(html.includes(".revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }"),
     "la caja del tablero mide lo que mide el tablero");
-  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 950px) {\n"));
+  const antesDelMedia = html.slice(0, html.indexOf("@media (min-width: 1000px) {\n"));
   assert.ok(antesDelMedia.includes("var(--ladoTab, 360px)") &&
             /\.revtab \{[^}]*justify-content: center/.test(antesDelMedia),
     "en cualquier ancho, no solo en la compu");
@@ -3114,9 +3114,9 @@ test("el Mes en dos columnas solo en la compu (v0.119)", () => {
      abajo de 950 los envoltorios no tienen caja y el celu se apila como antes. */
   assert.ok(html.includes(".mesGrid, .mesIzq, .mesDer { display: contents; }"), "en el celu los envoltorios no tienen caja");
   const b = html.slice(html.indexOf("EL MES CON EL ANCHO DE LA COMPU"));
-  assert.ok(/@media \(min-width: 950px\) \{\s*\.mesGrid \{ display: grid; grid-template-columns: 400px minmax\(0, 640px\)/.test(b),
-    "la grilla del Mes arranca en 950, con el tope de 640");
-  assert.ok(/\(min-width: 950px\) and \(min-height: 720px\) \{\s*\.mesIzq \{ position: sticky/.test(b),
+  assert.ok(/@media \(min-width: 1000px\) \{\s*\.mesGrid \{ display: grid; grid-template-columns: 400px minmax\(0, 640px\)/.test(b),
+    "la grilla del Mes arranca en 1000 (v0.128.2; era 950), con el tope de 640");
+  assert.ok(/\(min-width: 1000px\) and \(min-height: 720px\) \{\s*\.mesIzq \{ position: sticky/.test(b),
     "el resumen solo queda fijo si entra en la ventana");
   const z = html.slice(html.indexOf('<div id="zonaMes"'), html.indexOf('<div id="zonaRevision"'));
   assert.ok(z.indexOf('class="mesIzq"') < z.indexOf('id="mesResumen"') &&

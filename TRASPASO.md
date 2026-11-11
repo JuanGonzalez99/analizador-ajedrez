@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.128.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.128.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -296,9 +296,9 @@ la lista de jugadas, que en el celular no existe. Desde la v0.88 la principal
 está partida, y desde la v0.90 son tres bloques —`.parriba` (encabezado),
 `.tarjetas`, `.pmedio` (tablero y tira)— más `.curva` y `.pabajo`, todos hijos
 directos de la grilla. De 1500 px para arriba la tarjeta se muda a una columna
-propia a la izquierda (§4trigies). El Mes también se parte desde 950
+propia a la izquierda (§4trigies). El Mes también se parte, desde 1000 (950 hasta la v0.128.2)
 (v0.119, §7): `.mesGrid` con el resumen en `.mesIzq` y las secciones en
-`.mesDer`, que en el celu son `display: contents`. Y el inicio, desde 950
+`.mesDer`, que en el celu son `display: contents`. Y el inicio, desde 1000 (950 hasta la v0.128.2)
 (v0.122, §7): `.iniGrid` con el mes en `.iniIzq` (`#zonaMeses`, `#zonaAnalizar`,
 `#zonaEstado`, `#tarjetaMes`) y la lista en `.iniDer`, también `display:
 contents` en el celu y en Partida y Mes. Todo lo demás sigue siendo una sola
@@ -4674,6 +4674,22 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.128.2, [PC] el inicio y el Mes pasan a dos columnas en 1000, no en 950**
+(revisor, al revisar la v0.128.1). Desde la v0.125 el body se ensancha a 1110
+recién en `@media (min-width: 1000px)`, pero las dos columnas del inicio y del
+Mes seguían arrancando en 950: entre 950 y 999 la grilla se armaba adentro de
+~672 y a la lista le tocaba lo que sobraba —`#partidas` en 340 con el rival en
+66, y `#mesLista` en 240 con **el rival en 0 px** (se veía "Ganada · 89 ·
+fecha" sin nombre)—. Media pantalla de un monitor de 1920 da 960. Los cinco
+`@media (min-width: 950px)` (la fila del campo, `.iniGrid`, `.mesGrid` y sus
+dos sticky) pasaron a 1000: **cada pantalla cambia de forma en el mismo ancho
+que el body**. Medido de 940 a 1100: el rival siempre en 210 y ningún nombre
+cortado; entre 950 y 999 se ve igual que a 949 (lista de 640 en el inicio, 672
+en el Mes). La corrección de lo que dijo la v0.128.1: con la grilla de antes,
+a 950 el rival tenía 78 y no 66 (el `column-gap` de la columna de aire seguía
+aunque ella midiera 0); con el corte en 1000 deja de importar. Celu igual al
+byte salvo la versión.
+
 **v0.128.1, [PC] la fila de la lista: el resultado pegado al rival**
 (revisor, v0.122). A 1280 quedaban 281 px entre el nombre y "Ganada", y el
 resultado se leía con los datos tenues y no con el rival. Tres variantes en el
@@ -4684,8 +4700,7 @@ grilla es `minmax(0, 15em) 5.2em minmax(0, 1fr) 5.5em 3.6em` (precisión y
 fecha con `grid-column` 4 y 5); el aire queda antes de los datos de la derecha
 y la lista sigue en 640, con el mismo borde que las tablas del Mes (la A lo
 rompía ahí). Vale para las dos listas. Medido de 700 a 1600: con los nombres de
-prueba nada se corta, salvo a 950, donde la columna de la lista mide 326 y el
-rival tiene ~66 px; con la grilla de antes tenía lo mismo. **El grupo del
+prueba nada se corta, salvo entre 950 y 999, lo que arregló la v0.128.2. **El grupo del
 inicio no se centra** (empieza en 99 y sobran 210 a la derecha a 1280): inicio,
 Mes y Partida arrancan en el mismo borde, y centrar uno haría saltar el
 contenido al cambiar de pantalla. Celu: igual al byte salvo la versión.
