@@ -193,8 +193,10 @@ lo demás se dibuja contra ella.
       (rival, resultado, apertura) y en qué renglón vive todo junto, dejando el
       de arriba para navegar y para el estado? Con variantes.
 
-- [ ] **Que la Partida arranque en la posición inicial**, antes de la primera
-      jugada (pedido de Juan, 7-nov). Hoy abre en la jugada 1 (`IDX = 0` es
+- [x] **Que la Partida arranque en la posición inicial**, antes de la primera
+      jugada (v0.124, 11-nov: tarjeta "Posición inicial / Juegan las blancas",
+      sin galón ni "‹" para atrás; de paso se fue el salto de 2 px de la
+      tarjeta; pedido de Juan, 7-nov). Hoy abre en la jugada 1 (`IDX = 0` es
       `R.filas[0]`): no existe una vista del tablero sin jugadas. Toca la tira,
       la curva, la tarjeta, las flechas y la navegación, así que va en su propia
       tanda. Surgió al discutir Girar en la tarjeta: la posición inicial sería
@@ -252,6 +254,14 @@ lo demás se dibuja contra ella.
       todo cuando el nombre es muy largo"* (hoy se corta con "…"). Que las
       variantes prueben también el largo: solo la familia, un nombre corto, o
       la apertura en otro lugar.
+
+- [ ] **Lavado de cara: la fila de datos cuando no hay jugada** (revisor,
+      v0.124; celu). En la posición inicial Pérdida, Caída y Pensó dicen "—" y
+      solo Mejor dice algo: tres cuadritos vacíos con protagonismo. ¿Qué
+      muestra la fila cuando no hay jugada que juzgar: los cuatro en "—", solo
+      Mejor, o nada? De paso: en la última jugada de la partida de prueba
+      Pensó dice "·" y no "—" (puede ser que esa partida no traiga relojes).
+      Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -390,6 +400,13 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   tener el mes a la izquierda (el mes, el botón de analizar, Estadísticas) y la
   lista a la derecha, como ya está el Mes. La otra era todo en una columna
   centrada.
+- **No sé si esto te copa (v0.124):** la partida abre en la posición inicial,
+  con la tarjeta "Posición inicial · Juegan las blancas." y la mejor jugada en
+  el cuadrito Mejor. La otra: que abra en la inicial pero sin tarjeta, con el
+  tablero subiendo a su lugar.
+- Del revisor (v0.124), para el lavado de las preferencias del tablero: Girar
+  al costado mide 27×44 a 386 de ancho, lejos de los 48 de toque, y ahora se ve
+  en la primera pantalla de cada partida.
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
