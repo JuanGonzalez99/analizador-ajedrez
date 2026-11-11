@@ -2638,23 +2638,16 @@ test("la lista lateral no le saca lugar al celular", () => {
   assert.ok(base > 0 && ancha > 0, "están las dos reglas");
   assert.ok(base < ancha,
     "la regla base va antes de la media query, o la lista no se ve nunca");
-  assert.ok(html.includes("grid-template-columns: minmax(0, 700px) 360px"),
-    "la columna principal sigue midiendo 700: es la medida de todas las decisiones");
-  /* EL CORTE ES LA SUMA de lo que tiene que entrar, y está ATADO al ancho de la
-     lista: mover uno sin el otro deja una franja donde las columnas no entran y
-     la principal se achica de nuevo. Pasó al ensanchar la lista en la v0.82, y
-     lo agarró esta prueba. Por eso el corte se calcula acá y no se escribe.
-     DESDE LA v0.118 EL CORTE VA ABAJO DE LA SUMA A PROPÓSITO: de 950 a 1109 la
-     principal se achica (`minmax`), y lo que se cuida ahora es que en el corte
-     le quede lugar a un tablero bastante más grande que el del celu (540 de
-     columna, 492 de tablero) y que de la suma para arriba siga midiendo 700. */
-  const anchoLista = +(html.match(/grid-template-columns: minmax\(0, 700px\) (\d+)px/) || [])[1];
-  const corte = +(html.match(/@media \(min-width: (\d+)px\)\s*\{\s*body \{ max-width/) || [])[1];
-  assert.equal(700 + 22 + anchoLista + 28, 1110, "las dos columnas enteras entran en 1110");
-  assert.ok(corte < 1110 && corte - 28 - 22 - anchoLista >= 540,
-    `en el corte (${corte}) la principal mide al menos 540`);
-  assert.ok(html.includes("body { max-width: 1110px; }"),
-    "y el cuerpo llega hasta donde las dos columnas entran enteras");
+  /* DESDE LA v0.125 la Partida de la compu es el tablero abrazado a su barra
+     y sus comidas (`max-content`) y un panel a la derecha, y la página mide lo
+     que mide ese conjunto, centrada. */
+  assert.ok(html.includes("grid-template-columns: max-content var(--panel)"),
+    "el tablero y su panel, sin una columna estirada");
+  assert.ok(html.includes("body.enVista:has(#zonaRevision:not(.oculto)) { max-width: none; }"),
+    "en la Partida el cuerpo no tiene tope fijo");
+  assert.ok(html.includes("--panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 380px)"),
+    "de 1000 a 1110 el panel crece de a poco: el tablero no se achica cuando la ventana crece");
+  assert.ok(!html.includes("@media (min-width: 1500px)"), "las tres columnas de 1500 se fueron");
 });
 
 test("el tiempo pensado sale en la lista, y null no es cero", () => {
@@ -2773,12 +2766,12 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      son la navegación— se van abajo del pliegue. Lo que manda es el alto. */
   /* desde la v0.123.1 lo de arriba del tablero sale de --altoCab */
   assert.ok(html.includes("#zonaRevision { --altoCab: 48px; }"), "el alto de la cabecera, en una variable");
-  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 261px), 680px)"),
-    "el tablero se queda con lo que sobra de alto");
+  assert.ok(html.includes("--ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 78px), calc(100vw - var(--panel) - 184px)), 680px)"),
+    "el tablero se queda con lo que sobra de alto, o de ancho si la ventana es angosta (v0.125)");
   /* Y CON LA BARRA VERTICAL SOBRAN 26 px MÁS (v0.86): la horizontal se suma al
      alto —16 de barra y 10 de margen— y la vertical lo comparte. Medido en el
      arnés a 1280x800: el lado pasa de 470 a 496. */
-  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 235px), 680px)"),
+  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 52px),"),
     "sin la barra horizontal el presupuesto baja 26");
   assert.ok(html.includes('classList.toggle("sinEvalH"'),
     "y alguien prende la clase según la forma que esté puesta");
@@ -2798,21 +2791,13 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      (35,4) no entraba en los 34 que quedan adentro del borde (v0.105). */
   assert.ok(html.includes(".evalbar.ancha { width: 40px; }"),
     "la barra ancha da para el número entero");
-  /* TRES COLUMNAS DE 1500 PARA ARRIBA (v0.90): la tarjeta se va al costado y
-     deja de gastar alto arriba del tablero. Los dos presupuestos siguen
-     separados por los 26 de la barra horizontal, igual que en dos columnas. */
-  assert.ok(html.includes("@media (min-width: 1500px)"),
-    "hay un corte de tres columnas");
-  assert.ok(html.includes("--ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 188px), 680px)") &&
-            html.includes("--ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 162px), 680px)"),
-    "y su propio presupuesto de alto");
-  assert.equal(188 - 162, 261 - 235, "la diferencia entre los dos es la barra horizontal");
-  assert.ok(html.includes("#zonaRevision > .tarjetas { grid-column: 1; grid-row: 1 / span 2; }"),
-    "la tarjeta va en la primera columna");
+  /* en la compu la barra va a 32 y de borde a borde de las casillas (v0.125) */
+  assert.ok(html.includes(".evalbar.ancha { width: 32px; margin-block: var(--mTab); }"),
+    "la barra de la compu, angosta y alineada a las casillas");
   /* EL PISO NO ES OPCIONAL: en una ventana baja y ancha la cuenta da menos de
      360 y el tablero quedaría más chico que en el celular. */
   const regla = html.indexOf("--ladoTab: clamp(360px");
-  const media = html.indexOf("@media (min-width: 950px)");
+  const media = html.indexOf("@media (min-width: 1000px)");
   assert.ok(media > 0 && regla > media,
     "y la regla vive adentro de la media query: en el celular el tablero no cambia");
   assert.ok(html.includes("svg.tab { width: 100%; max-width: 360px;"),
@@ -2821,12 +2806,13 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
 
 test("el dial de las jugadas tiene las dos formas y el apagado", () => {
   /* Es un dial temporal, como el de la v0.76: se va cuando el usuario elija. */
-  for (const k of ["planilla:", "renglon:", "no:"])
+  for (const k of ["planilla:", "renglon:"])
     assert.ok(html.includes(k), `está la forma ${k}`);
   assert.ok(html.includes("grid-template-columns: 28px 1fr auto 1fr auto"),
     "la planilla es nº | blancas | reloj | negras | reloj, como la de papel");
-  assert.ok(html.includes('#zonaRevision.solaTira { grid-template-columns: minmax(0, 700px); }'),
-    "sin lista, la columna no queda vacía");
+  assert.ok(html.includes('#zonaRevision.solaTira .colLista { display: none; }') &&
+            html.includes("window.matchMedia(CORTE_ANCHO).matches && !!formaJugadas().clase"),
+    "sin lista, el panel no deja un hueco y la tira vuelve abajo del tablero");
 });
 
 /* EL DIAL DE LA v0.76 ES TEMPORAL y estas dos pruebas también: cuando el

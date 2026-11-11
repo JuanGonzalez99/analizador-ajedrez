@@ -201,7 +201,8 @@ lo demás se dibuja contra ella.
       la curva, la tarjeta, las flechas y la navegación, así que va en su propia
       tanda. Surgió al discutir Girar en la tarjeta: la posición inicial sería
       el lugar natural para elegir de qué lado verla.
-- [ ] **[PC] Lavado de cara de la Partida en la compu, entera** (Juan, 9-nov,
+- [x] **[PC] Lavado de cara de la Partida en la compu, entera** (v0.125, 11-nov:
+      la D, tablero a la izquierda y un panel a la derecha, sin tira; Juan, 9-nov,
       sobre la v0.118: *"horrible"*; junta dos lavados del revisor de la
       v0.118, que por la regla de "no se parcha lo que hay que rehacer" no van
       por separado). Desde 950: la curva cruza todo el ancho y **queda
@@ -262,6 +263,20 @@ lo demás se dibuja contra ella.
       Mejor, o nada? De paso: en la última jugada de la partida de prueba
       Pensó dice "·" y no "—" (puede ser que esa partida no traiga relojes).
       Con variantes.
+
+- [ ] **[PC] Lavado de cara: dónde van las piezas comidas** (revisor, v0.125).
+      Con la partida recién empezada la columna de las comidas está vacía y
+      queda una calle de ~120 px entre el tablero y el panel, con Girar solo en
+      el medio. ¿Reservan su columna desde la jugada 1, o viven en otro lado
+      —arriba y abajo del tablero, junto a cada jugador, como chess.com—? Con
+      variantes.
+- [ ] **[PC] La Partida en ventanas angostas y altas** (revisor, v0.125). De
+      1000 a 1100 de ancho con 900 de alto el tablero lo manda el ancho y
+      quedan ~390 px vacíos abajo. ¿Otra disposición en ese rango (curva o
+      cuadritos debajo del tablero)? Con variantes.
+- [ ] **[PC] El Resumen al ancho del grupo** (revisor, v0.125; leve). Debajo
+      de la Partida el Resumen mide 1082 centrado y el grupo de arriba otra
+      cosa: dos cajas centradas de anchos distintos (a 1600, 27 px corrido).
 
 ## Etapa 2 · Partir `index.html`
 
@@ -407,6 +422,13 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
 - Del revisor (v0.124), para el lavado de las preferencias del tablero: Girar
   al costado mide 27×44 a 386 de ancho, lejos de los 48 de toque, y ahora se ve
   en la primera pantalla de cada partida.
+- **No sé si esto te copa (v0.125, compu):** la partida en la compu es ahora
+  el tablero grande a la izquierda (680 en una pantalla de 800 de alto, era
+  512) y un panel a la derecha con todo lo de la jugada: tarjeta, cuadritos,
+  curva, las mejores y la lista, con "‹ ›" abajo de la lista. **La tira de
+  jugadas no está en la compu** (la lista ya está a la vista) y "sin la
+  lista" se fue de los ajustes. La otra: dejar la tira abajo del tablero (la A
+  de las variantes; el tablero queda en 632).
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el

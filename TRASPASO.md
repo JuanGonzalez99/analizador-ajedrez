@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.124**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.125**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -285,6 +285,10 @@ vista": la hoja vive al final del `<body>`, después de la atribución de las
 piezas, porque es `position: fixed`. Ahí adentro están los seis `<select>` de
 preferencias, que antes vivían sueltos en la fila del pie.
 
+**Desde la v0.125 la Partida de la compu es otra** (§7, v0.125): de **1000**
+para arriba (el inicio y el Mes siguen partiéndose en 950), tablero a la izquierda y un panel a la derecha (tarjeta, cuadritos,
+curva, alternativas, lista y "‹ ›"), sin tres columnas y con la tira mudada
+por DOM al pie de la lista. Lo que sigue en este párrafo es la historia.
 Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
 **de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
 con `minmax`; de 700 a 949 es una columna con el tablero que crece; §7, v0.118): `.principal` es la de siempre, de 700, y `.lateral` es
@@ -4669,6 +4673,87 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.125, [PC] la Partida en la compu, de nuevo** (lavado de cara: Juan, 9-nov,
+sobre la v0.118, *"horrible"*). Cuatro variantes dibujadas sobre la app a
+1280×800 y 1500×900 (`pruebas/maqueta-pcpartida.mjs`, no se commitea): **A**
+panel a la derecha con la tira (tablero 632), **B** tres columnas (564, la
+izquierda vacía de la mitad para abajo), **C** la de hoy ajustada (512, los
+cuadritos seguían cortados), **D** = A sin la tira (676). **El revisor eligió
+D** con ajustes, y quien programa juzgó dos de ellos distinto:
+- **El corte de la Partida pasó a 1000** (revisor, segunda vuelta): el bloque
+  grande de la compu, el de Girar (`width >= 1000px`), el de 700 a 999 y
+  `CORTE_ANCHO` (evaluación de fábrica, tira, Girar) se movieron juntos; los
+  `@media` del inicio y del Mes siguen en 950. En 950 el tablero bajaba de 617
+  a 446 al cruzarlo (171, más que los ~150 que cuidaba la v0.118) y el cuadrito
+  Mejor, a 74, cortaba "la jugada". En 1000: 617 → 476.
+- **Grilla** (`@media (min-width: 1000px)`): `max-content var(--panel)`, centrada.
+  Izquierda: `.parriba` en la fila 1 y `.pmedio` en las filas 2 a 5. Derecha:
+  `.tarjetas`, `.pabajo` (cuadritos), `.curva` y `.colLista`, una por fila; la
+  lista llena lo que sobra con `height: 0; min-height: calc(100% - …)`, así no
+  estira la fila (`minmax(0, 1fr)`). **El panel arranca y termina con las
+  casillas**, no con la caja del SVG: `--mTab` = `--ladoTab` × 15 / 366 es el
+  margen de coordenadas en pantalla, y lo usan la tarjeta (arriba), la lista
+  (abajo), la barra (`margin-block`) y las comidas (`padding`). Medido a
+  1280×800: casillas 94–718, barra 94–718, tarjeta desde 94, "‹ ›" termina en
+  718.
+- **La página mide lo que mide el conjunto**: el cuerpo se suelta solo en la
+  Partida (`body.enVista:has(#zonaRevision:not(.oculto))`) y el Resumen queda en
+  1082 centrado. Con el tope de 1110 o 1500 el tablero quedaba en el medio de
+  una columna estirada con huecos de 150. Ojo: con `max-content`, todo lo que
+  vive en la columna tiene que tener ancho escrito o cero: la caja del tablero
+  lleva `width: var(--ladoTab)` (si no, mide los 300 de fábrica de un SVG) y la
+  tira sin lista `width: 0; min-width: 100%` (si no, la partida entera en un
+  renglón la estira a 2700).
+- **El tablero**: `--ladoTab` = el menor entre el alto (pantalla − cabecera −
+  52 con la barra vertical, −78 con la horizontal) y el ancho (`100vw −
+  --panel − 184`), con
+  piso 360 y techo 680. 1280×800: 512 → 680. 1600×720: 620, 24 de aire abajo.
+  **`--panel` crece de 340 (en 1000) a 380 (en 1110)** en vez de saltar: con un
+  corte en 1110 el tablero pasaba de 609 a 550 al agrandar un píxel la
+  ventana. Medido (900 de alto): 999 → 617 (columna del celu), 1000 → 476, 1050
+  → 508, 1109 → 545, 1110 → 546.
+- **La tira se muda al pie de la lista** (`pintarRevision`, por DOM: vive en
+  `.pmedio`, que la grilla no puede partir) y ahí muestra solo "‹ ›" como dos
+  botones anchos, como chess.com bajo su lista. Con una variante en la forma
+  "abajo" (`#zonaRevision.conVariante`) la tira se ve entera, porque ahí es
+  donde se ve la variante.
+  Cruzar el corte repinta (`matchMedia(...).addEventListener("change")`).
+  **Juzgado distinto del revisor**: pidió sacar "‹ ›" del todo porque "los
+  galones hacen el paso a paso", pero los galones son dibujo desde la v0.66;
+  sin botones, con el mouse solo quedaban la rueda, el teclado y la lista.
+- **Girar** es el `#btnGirarTab` del costado, de 44, en la columna de las
+  comidas a media altura (las del rival crecen desde arriba y las propias
+  desde abajo) y **siempre a la vista** (`ubicarGirar`, rama de la compu); la
+  fila `.acciones` no se dibuja en la compu. **Juzgado distinto del revisor**:
+  pidió la lógica del celu (solo en la apertura), pero en la compu no hay otro
+  Girar y se perdería.
+- **Barra a 32** (era 40) y **comidas a 64** (eran 132, dos piezas por
+  renglón), y ya no se esconden de 950 a 1109. **Las tres columnas de 1500 se
+  fueron.** El Resumen arranca debajo de la primera pantalla
+  (`padding-bottom` de `#zonaRevision`, y no `min-height`, que estiraría la
+  fila de la lista).
+- **Lo que pidió el revisor en la primera vuelta** (y quedó): la cabecera
+  cruza las dos columnas, con la tuerca al ras del panel (`width: 0;
+  min-width: 100%`, si no el nombre largo de la apertura estiraba la columna
+  `max-content`); **los galones del tablero no van en la compu** (`.galon`, la
+  clase la pone `dibujar`): con el mouse una flecha dibujada se lee "clic
+  acá"; **"sin la lista" se fue del dial** (la lista solo existe en la compu y
+  sin ella el panel quedaba vacío al lado del tablero; lo guardado cae en la
+  planilla); la lista tiene **mínimo cuatro renglones** (`min-height` de 300
+  en `.colLista`; de 950 a ~1000 quedaban dos) y las etiquetas de los
+  cuadritos no se parten; la tira de la variante deja 24 al final, fuera del
+  desvanecido. El ancho del tablero descuenta 184 (no 180): con 180 la tuerca
+  desbordaba 2 px cerca del corte. Achicar o agrandar la ventana vuelve a
+  centrar la jugada elegida de la tira (`ResizeObserver`). **Quedó sin hacer**: que el Resumen tome el
+  ancho del grupo cuando pasa de 1082 (leve; son dos cajas centradas de anchos
+  distintos).
+- `mirar`: el arrastre y la rueda de la tira se miden a 900 de ancho (en la
+  compu ya no hay tira), y "anchos del medio" dice qué desborda cuando algo
+  desborda. Las líneas "curva ancha" y "tres
+  columnas" quedaron midiendo cosas que ya no existen (la curva mide 380);
+  "anchos del medio" y "lado del tablero" siguen sirviendo. Celu: igual al byte
+  salvo la versión del pie.
 
 **v0.124, la Partida arranca en la posición inicial** (pedido de Juan, 7-nov).
 Hasta acá abría en la jugada 1 (`IDX = 0` es `R.filas[0]`) y no había forma de

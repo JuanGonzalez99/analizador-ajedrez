@@ -498,14 +498,18 @@ for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
 /* Las dos formas de la lista, una captura cada una: son dos densidades y cuál
    sirve se decide mirándolas. */
 await pg.setViewportSize({ width: 1280, height: 800 });
-for (const f of ["planilla", "renglon", "no"]) {
+for (const f of ["planilla", "renglon"]) {
   await elegir("#formaJugadas", f);
   await pg.waitForTimeout(250);
   await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -10));
   await foto("ancho-" + f);
 }
-await elegir("#formaJugadas", "planilla");
+/* DESDE LA v0.125 en la compu la tira no se ve (queda "‹ ›" al pie de la
+   lista), así que el arrastre y la rueda se miden a 900 de ancho, donde la
+   Partida es la columna del celu y el mouse se la encuentra. */
+await pg.setViewportSize({ width: 900, height: 800 });
+await pg.waitForTimeout(300);
 
 /* EL ARRASTRE Y LA RUEDA de la tira, con el mouse de verdad: con el dedo se
    scrollea sola, pero con mouse arrastrar un overflow-x selecciona el texto y
@@ -726,7 +730,8 @@ console.log("barra vertical: ", JSON.stringify({ corto: barraCorta, largo: barra
    de ~150), la barra pegada, que la curva entre en la pantalla y que nada
    desborde. Con la barra vertical, que es la de fábrica en compu. */
 const anchosMedio = {};
-for (const [w, h] of [[800, 1000], [949, 900], [950, 900], [1000, 900], [1109, 900], [1110, 900], [1109, 800]]) {
+/* desde la v0.125 el corte de la Partida es 1000 */
+for (const [w, h] of [[800, 1000], [949, 900], [999, 900], [1000, 900], [1050, 900], [1109, 900], [1110, 900], [1109, 800]]) {
   await pg.setViewportSize({ width: w, height: h });
   await pg.waitForTimeout(250);
   anchosMedio[`${w}x${h}`] = await pg.evaluate(() => {
@@ -738,7 +743,12 @@ for (const [w, h] of [[800, 1000], [949, 900], [950, 900], [1000, 900], [1109, 9
     return { lado: Math.round(t.width), barra: Math.round(t.left - b.right),
              curva: `${Math.round(c.bottom)}/${innerHeight}`,
              lista: getComputedStyle(document.querySelector(".colLista")).display !== "none",
-             desborde: document.documentElement.scrollWidth > innerWidth };
+             /* y si desborda, QUÉ: el primero que se pasa del borde */
+             desborde: document.documentElement.scrollWidth > innerWidth &&
+               ([...document.querySelectorAll("body *")].map(e => [e, e.getBoundingClientRect()])
+                 .filter(([, r]) => r.width && r.right > innerWidth + 0.5)
+                 .map(([e, r]) => `${e.id || e.className || e.tagName}:${Math.round(r.right)}`)[0] ||
+                `${document.documentElement.scrollWidth - innerWidth} px sin culpable a la vista`) };
   });
 }
 await pg.setViewportSize({ width: 1280, height: 800 });

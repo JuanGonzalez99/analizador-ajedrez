@@ -629,10 +629,13 @@
   body.girarEnFila .acciones { display: grid; }
   /* el corte de la compu, escrito así para que no se confunda con el bloque
      grande de 1110 (las pruebas buscan el primero) */
-  @media (width >= 950px) {
-    .acciones > #btnGirar { display: flex; }
-    .acciones { display: grid; }
-    #btnGirarTab { display: none !important; }
+  /* EN LA COMPU (v0.125) Girar es el del costado, en la columna de las
+     comidas y a media altura, siempre a la vista: la fila del panel ocupaba un
+     renglón entero para algo que se toca una vez. Siempre y no solo en la
+     apertura como en el celu, porque en la compu no hay otro Girar. */
+  @media (width >= 1000px) {
+    .acciones { display: none !important; }
+    #btnGirarTab { width: 44px; }
   }
   /* CON ÍCONO Y TEXTO (v0.113). El lavado de "dónde viven las preferencias
      del tablero" dibujó cuatro: esta fila con íconos (A), una fila de
@@ -871,72 +874,106 @@
      ahí el tablero se achicaba 154 px al agrandar la ventana un píxel; en 950,
      a 900 de alto, pasa de 596 a 492. De 1110 para arriba `minmax(0, 700px)`
      vale 700 justo: nada cambia ahí. */
-  @media (min-width: 950px) {
+  @media (min-width: 1000px) {
     body { max-width: 1110px; }
-    /* EL HUECO ES ENTRE COLUMNAS Y NO ENTRE FILAS. Las filas son la misma vista
-       partida en pedazos —tarjetas, tablero, curva, cuadritos—, así que cada
-       bloque se separa con SU margen, igual que cuando eran hermanos adentro de
-       un solo div. Con `gap: 22px` a secas cada corte sumaba 22 px de aire que
-       no existía, y el primero que lo pagaba era el de abajo de la curva. */
-    #zonaRevision { display: grid; grid-template-columns: minmax(0, 700px) 360px;
-                    column-gap: 22px; row-gap: 0; align-items: start; }
-    /* LAS CUATRO PIEZAS VAN PUESTAS A MANO y no por acomodo automático: con la
-       curva de hija directa, el automático la mandaría a la columna de al lado
-       de la primera mitad. Tres renglones: arriba la vista y la lista, en el
-       medio la curva cruzando las dos columnas, abajo los cuadritos.
-       LA CURVA ES EL ÚNICO ELEMENTO QUE MEJORA SIENDO ANCHO: es una serie de
-       tiempo de 40 a 100 puntos, y a 700 px cada jugada tiene 7 px de ancho
-       contra 15 a 1082. Todo lo demás —el tablero es cuadrado, la tarjeta es
-       texto— o no gana nada o empeora. */
-    #zonaRevision > .parriba  { grid-column: 1; grid-row: 1; }
-    #zonaRevision > .tarjetas { grid-column: 1; grid-row: 2; }
-    #zonaRevision > .pmedio   { grid-column: 1; grid-row: 3; }
-    #zonaRevision > .colLista { grid-column: 2; grid-row: 1 / span 3; }
-    #zonaRevision > .curva    { grid-column: 1 / -1; grid-row: 4; }
-    #zonaRevision > .pabajo   { grid-column: 1; grid-row: 5; }
+    /* LA PARTIDA EN LA COMPU, DE NUEVO (v0.125; lavado de cara pedido por Juan
+       sobre la v0.118: "horrible"). Es la D del revisor entre cuatro: el tablero
+       a la izquierda y UN panel a la derecha que cuenta todo lo de la jugada
+       —tarjeta, cuadritos, curva, las mejores de acá y la lista—, como
+       chess.com. Lo que se fue: la curva cruzando todo el ancho y colgando, los
+       cuadritos cortados abajo, la tira repitiendo la lista, la tarjeta arriba
+       del tablero y las tres columnas de 1500. Las otras eran A (la misma con
+       la tira), B (tres columnas, tablero de 564) y C (la de hoy ajustada,
+       seguía cortada). Medido a 1280 × 800: el tablero pasa de 512 a 680 y
+       todo entra en la primera pantalla.
+       LA PÁGINA MIDE LO QUE MIDE EL CONJUNTO, centrada, y no un tope fijo: con
+       1110 o 1500 de tope el tablero se iba al medio de una columna estirada y
+       quedaban huecos de 150 de los dos lados. Por eso la primera columna es
+       `max-content` —barra, tablero y comidas abrazados— y el cuerpo se suelta
+       solo en la Partida. */
+    body.enVista:has(#zonaRevision:not(.oculto)) { max-width: none; }
+    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen { max-width: 1082px; margin-inline: auto; }
+    #zonaRevision { --panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 380px); --mTab: calc(var(--ladoTab) * 15 / 366);
+                    display: grid; grid-template-columns: max-content var(--panel);
+                    grid-template-rows: auto auto auto auto minmax(0, 1fr);
+                    justify-content: center; column-gap: 24px; row-gap: 0; align-items: start;
+                    /* el Resumen arranca debajo de la primera pantalla y no asoma
+                       cortado (revisor): 68 son la cabecera y los márgenes del
+                       tablero. Relleno y no `min-height`, que estiraría la fila
+                       de la lista. */
+                    padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 20px - var(--ladoTab))); }
+    /* EL PANEL ARRANCA Y TERMINA CON LAS CASILLAS, no con la caja del SVG, que
+       lleva 15 unidades de margen para las coordenadas (`--mTab` en pantalla):
+       un solo renglón arriba y otro abajo para barra, tablero y panel. La lista
+       llena lo que sobra: alto 0 y mínimo el área, así no estira la fila. */
+    /* la cabecera cruza las dos columnas: volver a la izquierda y la tuerca al
+       ras del panel, como en el celu. En la primera columna sola la tuerca caía
+       en el hueco entre las comidas y el panel (revisor). Ancho 0 y mínimo el
+       área: si no, el nombre largo de la apertura estiraba la primera columna
+       (`max-content`) y la página desbordaba de 950 a 1110. */
+    #zonaRevision > .parriba  { grid-column: 1 / -1; grid-row: 1; width: 0; min-width: 100%; }
+    #zonaRevision > .pmedio   { grid-column: 1; grid-row: 2 / -1; }
+    #zonaRevision > .tarjetas { grid-column: 2; grid-row: 2; margin-top: calc(10px + var(--mTab)); }
+    #zonaRevision > .pabajo   { grid-column: 2; grid-row: 3; }
+    #zonaRevision > .curva    { grid-column: 2; grid-row: 4; }
+    #zonaRevision > .colLista { grid-column: 2; grid-row: 5; align-self: stretch;
+                                height: 0; min-height: max(calc(100% - 10px - var(--mTab)), 300px); }
+    /* MÍNIMO CUATRO RENGLONES de lista (300 son las alternativas, cuatro
+       renglones, "‹ ›" y sus márgenes): con el tablero limitado por el ancho
+       —de 950 a ~1000— quedaban dos. Ahí el panel se pasa del pie de las
+       casillas, que es justo cuando abajo sobra lugar. Y las etiquetas de los
+       cuadritos no se parten: a 320 "MEJOR ↗" caía en dos renglones. */
+    #zonaRevision .metricas .et { white-space: nowrap; }
+    #zonaRevision .tarjetas .veredicto { margin-top: 0; }
 
-    /* sin lista, la columna no queda vacía: la vista vuelve a ser una sola */
-    #zonaRevision.solaTira { grid-template-columns: minmax(0, 700px); }
+    /* sin lista, la tira vuelve abajo del tablero y el panel termina en la curva */
     #zonaRevision.solaTira .colLista { display: none; }
-    /* se queda a la vista mientras se recorre la partida, y nunca más alta que
-       la pantalla: si creciera con la partida, en una de 80 jugadas habría que
-       scrollear la página para ver el final de la lista. */
-    /* el margen la pone EN LÍNEA con "Revisión": sin él la lista arrancaba 24 px
-       más arriba que el título de al lado —el que trae el h2— y las dos
-       columnas empezaban a distinta altura. Se vio en la captura. */
     .colLista { display: block; }
-    .lateral { display: block; position: sticky; top: 14px; margin-top: 24px; }
-    /* el menor de los dos: la pantalla y la columna de al lado. El segundo lo
-       mide `pintarRevision`; el `100vh` de reserva es para el primer pintado. */
-    .lateral .jugadas { max-height: min(calc(100vh - 28px),
-      calc(var(--altoCol, 100vh) - 24px - var(--altoAlts, 0px))); }
+    .lateral { display: flex; flex-direction: column; height: calc(100% - var(--e-3)); margin-top: var(--e-3); }
+    .lateral .jugadas { flex: 1 1 auto; min-height: 0; max-height: none; }
+    /* LA TIRA SE MUDA AL PIE DE LA LISTA (`pintarRevision`, por DOM): con la
+       lista a la vista repetía las mismas jugadas, así que queda solo "‹ ›",
+       como los botones de chess.com bajo su lista. Los galones del tablero no
+       los reemplazan: desde la v0.66 son dibujo. Con una variante en la forma
+       "abajo" la tira vuelve a mostrarse, porque ahí es donde se ve. */
+    .lateral > .tira { flex: none; margin-top: var(--e-2); gap: var(--e-2); }
+    /* sin lista la tira vuelve abajo del tablero, y ahí no puede MEDIR la
+       columna: con `max-content` la partida entera en un renglón la estiraba a
+       2700 px. Ancho 0 y mínimo el de la columna. */
+    .pmedio > .tira { width: 0; min-width: 100%; }
+    #zonaRevision:not(.conVariante) .lateral #tiraSc { display: none; }
+    /* la última de la variante —la recién probada— sale del desvanecido de 24
+       del borde derecho */
+    .lateral #tiraSc::after { content: ""; flex: 0 0 24px; }
+    /* LOS GALONES DEL TABLERO NO VAN EN LA COMPU (revisor, v0.125): con el
+       mouse una flecha a los costados se lee como "clic acá" y es dibujo desde
+       la v0.66; el paso a paso lo hacen "‹ ›" al pie de la lista. */
+    #tablero .galon { display: none; }
+    #zonaRevision:not(.conVariante) .lateral > .tira > button {
+      flex: 1 1 0; background: var(--superficie); border: 1px solid var(--linea);
+      border-radius: var(--r-control); color: var(--texto); transform: none; }
+    #zonaRevision:not(.conVariante) .lateral > .tira > button:disabled { color: var(--tenue); opacity: .5; }
     /* el dial de la lista no existe en el celular: elige entre cosas que ahí no
        se ven, y esa fila de controles ya viene cargada. */
     .soloAncho { display: flex; }
-    /* EL TABLERO CRECE, PERO LO QUE MANDA ES EL ALTO Y NO EL ANCHO. En una
-       compu sobran 680 px de ancho, y si el tablero se los toma todos la TIRA y
-       la CURVA —que son la navegación— se van abajo del pliegue: en una pantalla
-       de 800 de alto no entrarían, y para pasar de jugada habría que scrollear.
-       El presupuesto está medido sobre la vista, no estimado: arriba del tablero
-       hay 185 px (título, cabecera y tarjeta) y abajo, hasta que termina la
-       curva, 110. Se descuentan 330 y no los 305 que da la suma: con los 305
-       justos la curva terminaba EXACTAMENTE en el borde de abajo, medido, y una
-       curva pegada al filo se lee como cortada. Los 25 de más son ese aire.
-       Va con `clamp` y no con un `min` por el PISO: en una ventana baja y ancha
-       la cuenta da menos de 360 y el tablero terminaría más chico que en el
-       celular, que es exactamente al revés de lo que se quiso. */
-    /* EL LADO DEL TABLERO, UNA VEZ Y EN UNA VARIABLE, porque ahora lo necesitan
-       dos reglas: el tamaño del SVG y el ancho de su caja. Escrito dos veces se
-       despegarían al primer ajuste.
-       SIN LA BARRA HORIZONTAL EL PRESUPUESTO BAJA 26 px: son los 16 de alto de
-       la barra más los 10 de su margen, que dejan de gastarse arriba del
-       tablero. Es lo que compra el default de la v0.86 en una compu, y es una
-       regla aparte y no un número distinto porque las tres formas de la eval se
-       siguen pudiendo elegir a mano: el presupuesto tiene que seguir a la que
-       esté puesta, no a la que se eligió de fábrica. Medido: 470 -> 496. */
-    #zonaRevision { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 261px), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 235px), 680px); }
+    /* EL LADO DEL TABLERO: lo manda el alto —la pantalla menos la cabecera y
+       los márgenes— y, si la ventana es angosta, el ancho que dejan el panel,
+       la barra y las comidas (164, 16 de la barra de scroll y 4 de aire: con
+       184 justos la tuerca, al ras del panel, desbordaba 2 px). Con la barra
+       vertical, la de fábrica, 52 de alto: 8 arriba, 10 y 10 de márgenes del
+       tablero y 24 de aire abajo; la horizontal suma 26. El piso de 360 es el
+       del celu: en una ventana baja nunca queda más chico. */
+    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 78px), calc(100vw - var(--panel) - 184px)), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 52px), calc(100vw - var(--panel) - 184px)), 680px); }
     svg.tab { max-width: var(--ladoTab); }
+    /* con la columna en `max-content` la caja necesita su ancho escrito: si no,
+       la columna se mide con los 300 de fábrica de un SVG y el tablero queda en
+       300 */
+    .revtab > #tablero { flex: 0 0 var(--ladoTab); width: var(--ladoTab); }
+    /* LA BARRA VA DE BORDE A BORDE DE LAS CASILLAS y a 32 (revisor): con 39 y
+       la altura del SVG entero era un bloque que pesaba más que el tablero.
+       "-12.8" entra. */
+    .evalbar.ancha { width: 32px; margin-block: var(--mTab); }
     /* La barra pegada al tablero ya no necesita regla acá: la de afuera usa
        `--ladoTab`, que en este ancho vale lo de arriba (v0.107). */
     /* LA TIRA DE COMIDAS EXISTE SOLO ACÁ. En el celular no hay ancho de sobra;
@@ -944,8 +981,11 @@
     /* 132 y no 108: son los 100 de las cinco piezas del renglón, el hueco de 6 y
        el número. Con 108 el "+3" no entraba al lado y se caía a un renglón
        propio, que es la misma información contada en dos veces el alto. */
+    /* 64 (v0.125): dos piezas por renglón. Con 132 la columna era un agujero
+       al costado del tablero en la apertura; angosta, el tablero gana el ancho.
+       Va de borde a borde de las casillas, como la barra. */
     .comidas { display: flex; flex-direction: column; justify-content: space-between;
-               flex: 0 0 132px; padding: 2px 0 22px; }
+               flex: 0 0 64px; padding: var(--mTab) 0; position: relative; }
     /* EL PANEL DE ALTERNATIVAS EXISTE SOLO ACÁ, como todo lo de esta tanda. Va
        arriba de la lista y no abajo: abajo se iría del pliegue. */
     .alts { display: block; background: var(--superficie); border: 1px solid var(--linea);
@@ -975,61 +1015,29 @@
     .cDif { font-size: var(--t-leyenda); font-weight: 700; color: var(--tenue);
             font-variant-numeric: tabular-nums; }
   }
-  /* LAS PIEZAS COMIDAS, DESDE 1110 COMO ANTES (v0.118): se comen 140 de ancho
-     del lado del tablero. Se probaron desde 1000 y el lado iba 999 → 541,
-     1000 → 402: el tablero se achicaba dos veces mientras la ventana crecía, y
-     a cambio de un dato que se mira de reojo, con un agujero al costado en la
-     apertura, cuando no hay nada comido (revisor, v0.118). De 950 a 1109 manda
-     el tablero. */
-  @media (min-width: 950px) and (max-width: 1109px) { .comidas { display: none; } }
+  /* EL CORTE DE LA PARTIDA PASÓ DE 950 A 1000 (v0.125, revisor), y solo el de
+     la Partida: el inicio y el Mes siguen en 950. En 950 el tablero bajaba de
+     617 a 446 al cruzarlo (171; la v0.118 cuidaba que no pasara de ~150) y el
+     cuadrito Mejor, a 74, cortaba "la jugada". En 1000: 476, un salto de 141.
+     De 1000 a 1110 el panel CRECE de 340 a 380 en vez de saltar: con un corte
+     en 1110 el tablero pasaba de 609 a 550 al agrandar la ventana un píxel, el
+     error que la v0.118 ya había visto con las comidas. Las comidas no se
+     esconden: con 64 de columna no le sacan al tablero lo que le sacaban con
+     132. `CORTE_ANCHO` (la evaluación de fábrica, la tira, Girar) se movió
+     junto. */
   /* DE 700 A 949, LA COLUMNA DEL CELU CON EL TABLERO QUE CRECE (v0.118). Ahí
      no entran dos columnas, y la de 700 ya llena casi todo el ancho: lo que
      sobraba eran ~160 px a cada lado del tablero fijo en 360. El presupuesto
      de alto es el mismo de las dos columnas; el de ancho, la columna menos la
      barra ancha y su hueco (48) y el canal de Girar al costado (28). Medido:
      800 × 1000 da 624, 949 × 900 da 596, 1000 × 700 (ya en dos columnas) 396. */
-  @media (min-width: 700px) and (max-width: 949px) {
+  @media (min-width: 700px) and (max-width: 999px) {
     #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 261px), calc(min(100vw, 700px) - 76px)), 680px); }
     #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 235px), calc(min(100vw, 700px) - 76px)), 680px); }
     svg.tab { max-width: var(--ladoTab); }
   }
-  /* TRES COLUMNAS, Y LA TARJETA AL COSTADO (v0.90). Es el cambio invasivo de la
-     tanda y el que más tablero compra: la tarjeta deja de gastar alto arriba del
-     tablero, y en una compu el alto ES el tablero. Medido: el lado pasa de 496 a
-     586 a 1500x800.
-
-     LA v0.74 PUSO LA TARJETA ARRIBA PORQUE "SE LEE PRIMERO", y eso no se
-     contradice: en una pantalla ancha la izquierda también es primero. Lo que se
-     mueve es dónde está el "antes", no que esté antes.
-
-     EL CORTE ES 1500 Y NO MENOS porque la cuenta no cierra: 300 de tarjeta, 360
-     de lista, 44 de barra de evaluación, 132 de piezas comidas y dos huecos de
-     22 son 880 sin una sola casilla de tablero. Abajo de eso siguen valiendo las
-     dos columnas de la v0.80, intactas. */
-  @media (min-width: 1500px) {
-    body { max-width: 1500px; }
-    #zonaRevision { grid-template-columns: 300px minmax(0, 1fr) 360px; }
-    #zonaRevision.solaTira { grid-template-columns: 300px minmax(0, 1fr); }
-    #zonaRevision > .parriba  { grid-column: 2; grid-row: 1; }
-    #zonaRevision > .tarjetas { grid-column: 1; grid-row: 1 / span 2; }
-    #zonaRevision > .pmedio   { grid-column: 2; grid-row: 2; }
-    #zonaRevision > .colLista { grid-column: 3; grid-row: 1 / span 2; }
-    #zonaRevision > .curva    { grid-column: 1 / -1; grid-row: 3; }
-    #zonaRevision > .pabajo   { grid-column: 2; grid-row: 4; }
-    /* La tarjeta no gasta más alto arriba del tablero, así que el presupuesto
-       baja lo que ella medía. LOS NÚMEROS SALEN DE MEDIR, no de sumar el CSS:
-       se puso el descuento estimado, se leyó el aire que quedaba abajo de la
-       curva y se corrigió hasta que dieran los mismos 25 px que en dos columnas
-       —la reserva que la v0.74 puso a propósito para que la curva no se lea
-       cortada—. La primera estimación erraba por 17. Lo que compra: el lado
-       pasa de 496 a 569 a 1500x800, o sea 73 px, no los ~90 que decía la lista
-       de pendientes. La diferencia de 26 entre los dos números es la barra de
-       evaluación horizontal, igual que en dos columnas. */
-    #zonaRevision          { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 188px), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, calc(100vh - var(--altoCab) - 162px), 680px); }
-    /* la tarjeta arriba de todo en su columna, no estirada a dos filas */
-    #zonaRevision > .tarjetas { align-self: start; }
-  }
+  /* LAS TRES COLUMNAS DE 1500 SE FUERON EN LA v0.125: desde 950 la tarjeta
+     ya vive en el panel de la derecha, que era lo que ellas resolvían. */
   /* EL MES CON EL ANCHO DE LA COMPU (v0.119, lavado de cara del revisor de la
      v0.108). Hasta acá las tablas del Mes se estiraban a todo el body —1082 a
      1280, 1472 a 1600— y "Total" quedaba a ~680 px de su etiqueta. Se
@@ -1218,7 +1226,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.124 · 11-11";
+  window.VERSION = "v0.125 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4135,7 +4143,7 @@ let MODO_EVAL = "horizontal";
    y horizontal gana. En una compu el tablero está limitado por el ALTO (v0.80),
    así que esos 24 px salen del tablero: la vertical le devuelve 26 px de lado.
    Misma medida, dos respuestas, porque la pregunta no es la misma. */
-const CORTE_ANCHO = "(min-width: 950px)";
+const CORTE_ANCHO = "(min-width: 1000px)";
 function evalPorDefecto() {
   return window.matchMedia(CORTE_ANCHO).matches ? "barra" : "horizontal";
 }
@@ -4261,8 +4269,12 @@ function aplicarFormaPrueba(id) {
    sabe usándolas, no mirándolas. */
 const FORMAS_JUGADAS = {
   planilla: { nombre: "planilla",        clase: "planilla" },
-  renglon:  { nombre: "una por renglón", clase: "renglon" },
-  no:       { nombre: "sin la lista",    clase: "" }
+  renglon:  { nombre: "una por renglón", clase: "renglon" }
+  /* "sin la lista" se fue en la v0.125 (revisor): la lista existe solo en la
+     compu, y ahí es lo que llena el panel y lo que se recorre con el mouse;
+     sin ella el panel terminaba en la curva con 430 px vacíos al lado del
+     tablero, lo que Juan rechazó en la v0.118. Quien la tenía guardada cae en
+     la planilla (`iniciarFormaJugadas`). */
 };
 let FORMA_JUGADAS = "planilla";
 function formaJugadas() { return FORMAS_JUGADAS[FORMA_JUGADAS] || FORMAS_JUGADAS.planilla; }
@@ -4694,7 +4706,7 @@ function dibujar(fen, jugada, mejor, prueba) {
      lo fueran, así que lo son. */
   const mitad = M + T / 2;
   const galon = (x, hacia) =>
-    `<path d="M ${x + hacia * 2.5} ${mitad - 7} L ${x - hacia * 2.5} ${mitad} L ${x + hacia * 2.5} ${mitad + 7}"
+    `<path class="galon" d="M ${x + hacia * 2.5} ${mitad - 7} L ${x - hacia * 2.5} ${mitad} L ${x + hacia * 2.5} ${mitad + 7}"
       fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
       stroke-linejoin="round" opacity=".38"/>`;
   /* Los galones SE QUEDAN, y son solo dibujo: avisan que el tablero se
@@ -6920,6 +6932,18 @@ function ubicarGirar(f) {
   if (!svg) return b.classList.add("oculto");
   const s = svg.getBoundingClientRect(), r = b.parentElement.getBoundingClientRect();
   if (!s.width) return;
+  /* EN LA COMPU (v0.125) va en la columna de las comidas, a media altura —las
+     del rival crecen desde arriba y las propias desde abajo, así que el medio
+     queda libre— y siempre a la vista: ahí no hay otro Girar. */
+  if (window.matchMedia(CORTE_ANCHO).matches) {
+    const c = document.querySelector(".revtab .comidas").getBoundingClientRect();
+    document.body.classList.remove("girarEnFila");
+    b.classList.remove("oculto", "pestana");
+    b.style.width = "";
+    b.style.left = (c.left - r.left + (c.width - 44) / 2) + "px";
+    b.style.top = (s.top - r.top + s.height / 2 - 22) + "px";
+    return;
+  }
   const k = s.width / (TAB_S * 8 + TAB_M * 2), borde = (TAB_M + TAB_S * 8) * k;
   /* 2 de las casillas. Si sobra, 30 de ancho y 3 hasta el borde de la
      pantalla; si no, una PESTAÑA pegada al borde, redondeada solo del lado del
@@ -7244,6 +7268,14 @@ function pintarRevision() {
   $("tiraSc").querySelectorAll("span[data-v]").forEach(sp => {
     sp.onclick = () => verDeLaVariante(+sp.dataset.v);
   });
+  /* EN LA COMPU LA TIRA VIVE AL PIE DE LA LISTA (v0.125), y se muda por DOM
+     porque está adentro de `.pmedio`, que la grilla no puede partir. Sin lista
+     (el dial en "no") vuelve abajo del tablero, que es su lugar en el celu. Con
+     una variante en la forma "abajo" se muestra entera: es donde se ve. */
+  const tiraEl = $("tira"), alPanel = window.matchMedia(CORTE_ANCHO).matches && !!formaJugadas().clase;
+  if (alPanel && tiraEl.parentElement !== $("lateral")) $("lateral").append(tiraEl);
+  else if (!alPanel && tiraEl.parentElement === $("lateral")) document.querySelector(".pmedio").append(tiraEl);
+  $("zonaRevision").classList.toggle("conVariante", varAbajo);
   medirTira();
   centrarTira();
   /* en la inicial no hay jugada elegida: la tira arranca del principio */
@@ -7750,7 +7782,13 @@ $("btnGirarTab").onclick = $("btnGirar").onclick;
    ancho, así que al girar el celu se movía sin cambiar de tamaño y el
    observador no saltaba (lo midió el revisor: de 412 a 400 el botón quedaba
    afuera de la pantalla hasta pasar de jugada). La fila sí cambia de ancho. */
-new ResizeObserver(() => { if (R && (IDX < 0 || R.filas[IDX])) ubicarGirar(IDX < 0 ? null : R.filas[IDX]); }).observe(document.querySelector(".revtab"));
+/* cruzar el corte de la compu muda la tira y Girar: se repinta entero */
+window.matchMedia(CORTE_ANCHO).addEventListener("change", () => {
+  if (R && !$("zonaRevision").classList.contains("oculto")) pintarRevision();
+});
+/* y la tira vuelve a centrar la elegida: con una variante abierta, achicar la
+   ventana la dejaba tapada por el desvanecido (revisor, v0.125) */
+new ResizeObserver(() => { if (R && (IDX < 0 || R.filas[IDX])) { ubicarGirar(IDX < 0 ? null : R.filas[IDX]); centrarTira(); } }).observe(document.querySelector(".revtab"));
 
 function pintarResumen(prof) {
   const { filas, cab } = R;
