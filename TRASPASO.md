@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.126**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.126.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,15 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.126.1, [PC] los bordes de la entrada** (revisor, sobre la v0.126). Con el
+PGN abierto a 1280 había tres bordes derechos que no coincidían con nada: la
+fila del campo en 499 (tope de 400), el textarea en 739 (el tope de lectura de
+640) y la columna del mes en 399. Desde 950 la fila del campo tiene tope de
+**300** (termina con la columna del mes; el campo queda en 207) y `#zonaPegar`
+usa el ancho entero del inicio, `300 + 32 + 640`, como la lista y la tuerca.
+Medido a 1280: Buscar 314–399, mes 99–399, PGN 99–1071, lista 431–1071. De 700
+a 949 (una columna de 640) sigue el tope de 400.
 
 **v0.126, la entrada desplegada** (lavado de cara del revisor, v0.120). Con
 "cambiar", o sin usuario guardado, el renglón tenía campo de 44, "Buscar" de 44
