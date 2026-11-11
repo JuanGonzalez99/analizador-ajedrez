@@ -249,6 +249,14 @@ lo demás se dibuja contra ella.
       inicio de la compu.
       **Desde la v0.128 vale también para la lista del Mes** ("Partida por
       partida"), que usa la misma fila: arreglando una se arreglan las dos.
+- [ ] **Lavado de cara: la precisión en la fila de la lista** (Juan, 11-nov,
+      sobre la v0.128; celu y PC, vale para el inicio y el Mes). El número
+      suelto después del resultado ("Ganada 89") no se entiende como
+      precisión. Que se entienda sin invadir la pantalla. Variantes a dibujar:
+      la pastilla neutra como el archivo de chess.com, "89%", una palabra
+      corta ("prec. 89") y un ícono chico delante; a 386 de ancho, que al
+      rival no le falte lugar. Con variantes.
+
 - [ ] **Lavado de cara: el idioma de las aperturas** (revisor, v0.123; celu y
       PC). Desde la v0.123 la apertura es el subtítulo de cada partida, y los
       nombres de `aperturas.json` están en inglés ("Italian Game: Giuoco Piano,

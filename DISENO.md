@@ -498,6 +498,11 @@ hay. Las primeras salen del historial del traspaso.
 - **La apertura en la cabecera de la Partida**, en gris al lado de "‹
   Partidas" y pegada a la tuerca (v0.111): *"no me gustó para nada"*. Se sacó
   en la v0.112; dónde va lo decide el lavado de la cabecera (7-nov-2026).
+- **El número suelto en la fila de la lista** (la precisión, "Ganada 89"):
+  *"se ve rara la lista. El número suelto no sé si se entiende"*. Quiere que
+  se entienda sin aprenderlo, *"sin invadir la pantalla"* (11-nov-2026,
+  v0.128). Un número en una fila tiene que decir qué es, por forma o por
+  palabra.
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
