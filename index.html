@@ -387,12 +387,12 @@
               line-height: 20px; position: relative; border-radius: 0; }
   #verPegar:not(:disabled):hover, #verPegar:active { background: none; }
   #verPegar::before { content: ""; position: absolute; inset: -12px -10px -16px; }
-  /* [PC] la fila del campo con tope: en la columna de 640 el campo se iba a
-     ~540 px para un nombre de usuario. Desde 950, donde el inicio tiene dos
-     columnas, 300: así termina en el mismo borde que la columna del mes, y el
+  /* [PC] desde 950, donde el inicio tiene dos columnas, la fila del campo
+     tiene tope de 300: termina en el mismo borde que la columna del mes, y el
      PGN abierto usa el ancho entero, como la lista (v0.126.1, revisor: con
-     400 y 640 eran tres bordes derechos que no coincidían con nada). */
-  @media (min-width: 700px) { .cabInicio > .campo { max-width: 400px; } }
+     400 y 640 eran tres bordes derechos que no coincidían con nada). Por
+     debajo de 950 la fila llena la columna hasta la tuerca, como en el celu,
+     y termina con todo lo de abajo. */
   @media (min-width: 950px) { .cabInicio > .campo { max-width: 300px; }
                               body:not(.enVista) #zonaPegar { max-width: calc(300px + var(--e-8) + 640px); } }
   #zonaPegar { margin-top: var(--e-4); }
@@ -1249,7 +1249,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.126.1 · 11-11";
+  window.VERSION = "v0.126.2 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

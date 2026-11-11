@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.126.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.126.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4681,7 +4681,9 @@ fila del campo en 499 (tope de 400), el textarea en 739 (el tope de lectura de
 **300** (termina con la columna del mes; el campo queda en 207) y `#zonaPegar`
 usa el ancho entero del inicio, `300 + 32 + 640`, como la lista y la tuerca.
 Medido a 1280: Buscar 314–399, mes 99–399, PGN 99–1071, lista 431–1071. De 700
-a 949 (una columna de 640) sigue el tope de 400.
+a 949 (una columna de 640), desde la **v0.126.2**, no hay tope: la fila llena la columna hasta la
+tuerca y termina en el mismo borde que el PGN y la lista (con 400 quedaba en
+463, sin coincidir con nada; revisor).
 
 **v0.126, la entrada desplegada** (lavado de cara del revisor, v0.120). Con
 "cambiar", o sin usuario guardado, el renglón tenía campo de 44, "Buscar" de 44
