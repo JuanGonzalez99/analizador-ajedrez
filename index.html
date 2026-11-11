@@ -1138,9 +1138,16 @@
      sigue con el renglón de la v0.120 (en grilla, a 386, al rival le quedan
      ~110: se dibuja aparte antes de decidir). */
   @media (min-width: 700px) {
-    :is(#partidas, #mesLista) > div[data-i] { display: grid; grid-template-columns: minmax(0, 1fr) 5.2em 5.5em 3.6em;
+    /* v0.128.1 (revisor): el rival con tope de 15em y el resultado pegado a
+       él, que es lo que se lee junto ("contra quién y cómo salió"); el aire
+       pasa a la columna del medio, antes de los datos tenues. Con 1fr en el
+       rival quedaban 281 px entre el nombre y "Ganada" a 1280. */
+    :is(#partidas, #mesLista) > div[data-i] { display: grid;
+                              grid-template-columns: minmax(0, 15em) 5.2em minmax(0, 1fr) 5.5em 3.6em;
                               column-gap: var(--e-3); align-items: baseline; }
     :is(#partidas, #mesLista) :is(.prec, .fecha) { text-align: right; }
+    :is(#partidas, #mesLista) .prec { grid-column: 4; }
+    :is(#partidas, #mesLista) .fecha { grid-column: 5; }
     :is(#partidas, #mesLista) .fecha { margin-left: 0; padding-left: 0; }
   }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
@@ -1257,7 +1264,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.128 · 11-11";
+  window.VERSION = "v0.128.1 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

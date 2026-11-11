@@ -240,7 +240,8 @@ lo demás se dibuja contra ella.
       sección)? ¿Cómo se llama para no chocar con el volver? No va a la columna
       izquierda de la compu: con 30 partidas rompe el resumen fijo. Pariente del
       lavado del inicio. Con variantes.
-- [ ] **[PC] La fila de la lista a 1280: ¿necesita 640?** (revisor, v0.122).
+- [x] **[PC] La fila de la lista a 1280: ¿necesita 640?** (v0.128.1, 11-nov:
+      la B, el rival con tope de 15em y el resultado pegado; sigue en 640; revisor, v0.122).
       Con las columnas de la v0.122, entre el nombre y "Ganada" quedan ~390 px
       vacíos y el resultado flota a mitad de la tarjeta. No frenó (es tabla,
       chess.com hace lo mismo). Pregunta: ¿con ~520 la fila se lee más junta, y

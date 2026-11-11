@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.128**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.128.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,22 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.128.1, [PC] la fila de la lista: el resultado pegado al rival**
+(revisor, v0.122). A 1280 quedaban 281 px entre el nombre y "Ganada", y el
+resultado se leía con los datos tenues y no con el rival. Tres variantes en el
+inicio a 1280×900 (`pruebas/maqueta-fila-pc.mjs`, no se commitea): **A** la
+lista en 520 y el grupo centrado, **B** el rival con tope y el resultado pegado,
+**C** el rating del rival en el hueco. **El revisor eligió B**: desde 700 la
+grilla es `minmax(0, 15em) 5.2em minmax(0, 1fr) 5.5em 3.6em` (precisión y
+fecha con `grid-column` 4 y 5); el aire queda antes de los datos de la derecha
+y la lista sigue en 640, con el mismo borde que las tablas del Mes (la A lo
+rompía ahí). Vale para las dos listas. Medido de 700 a 1600: con los nombres de
+prueba nada se corta, salvo a 950, donde la columna de la lista mide 326 y el
+rival tiene ~66 px; con la grilla de antes tenía lo mismo. **El grupo del
+inicio no se centra** (empieza en 99 y sobran 210 a la derecha a 1280): inicio,
+Mes y Partida arrancan en el mismo borde, y centrar uno haría saltar el
+contenido al cambiar de pantalla. Celu: igual al byte salvo la versión.
 
 **v0.128, la lista del Mes pasa a sección: "Partida por partida"** (lavado
 de cara del revisor, v0.119). Al fondo del Mes había un `<h2>Partidas</h2>` de
