@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.125**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.126**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,36 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.126, la entrada desplegada** (lavado de cara del revisor, v0.120). Con
+"cambiar", o sin usuario guardado, el renglón tenía campo de 44, "Buscar" de 44
+y "o pegar un PGN" chico de 36: tres alturas y dos pesos; y sin usuario el campo
+medía 145 y cortaba el placeholder ("usuario de ches"). Cuatro variantes sobre
+la app a 412×760 (`pruebas/maqueta-entrada.mjs`, no se commitea): **A** el PGN
+como enlace de texto debajo del campo, **B** el PGN fuera de la entrada (un
+enlace en el párrafo la primera vez, la hoja con "cambiar"), **C** un
+conmutador "Usuario | PGN" arriba del campo, **D** un "⋯" al lado de Buscar.
+**El revisor eligió A**: buscar un usuario y pegar un PGN son dos fuentes de
+partidas distintas y la segunda es rara, así que pesa como "cambiar" (§2,
+frecuencia de uso). B mezclaba una acción con las preferencias, C le daba a lo
+raro un control a todo el ancho (el error de la v0.113) y D era un glifo para un
+menú de una sola opción.
+- `#usuario` es `flex: 1` siempre (antes solo con "cambiar"): 291 a 412, 265 a
+  386, y el placeholder entra entero. [PC] `.cabInicio > .campo` con tope de
+  400 desde 700 de ancho (el campo queda en 307 a 1280; si no, ~540).
+- `#verPegar` es enlace: acento, 14, renglón de 20, solo en su renglón con
+  `margin-right: 100%`. **El toque de 48 va justo**: 12 arriba hasta el campo
+  y 16 abajo hasta lo que sigue (el mes, o el PGN abierto, que pasó de 10 a 16
+  por eso). Medido: campo hasta 60, toque 60–108, mes y PGN desde 108.
+- El enlace abre y cierra (`verPgn`): dice "cerrar el PGN" abierto, con
+  `aria-expanded`; "cambiar" lo arranca cerrado.
+- "Usar este PGN" pasó de chico (36) a secundario (44), como Buscar: es la
+  acción de su renglón. El placeholder del textarea, en la letra de la app
+  (lo pegado sigue en mono).
+- El pie no corta "CC BY-SA 3.0" en dos renglones a 386 (`white-space:
+  nowrap` en el enlace; revisor).
+- `mirar` no fotografía el inicio, así que la comparación del celu sale igual
+  salvo el número de versión del pie en `mes-seccion`.
 
 **v0.125, [PC] la Partida en la compu, de nuevo** (lavado de cara: Juan, 9-nov,
 sobre la v0.118, *"horrible"*). Cuatro variantes dibujadas sobre la app a

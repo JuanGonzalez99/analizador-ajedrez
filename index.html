@@ -121,7 +121,9 @@
      Van colores de sistema y no fijos: `Canvas` y `CanvasText` siguen solos el
      esquema claro/oscuro, que es lo que hace el resto de la pantalla. */
   option { background-color: var(--elevada); color: var(--texto); }
-  input#usuario { width: 145px; }
+  /* el campo del usuario llena el renglón (v0.126): con 145 fijo el
+     placeholder se cortaba en "usuario de ches" */
+  input#usuario { flex: 1 1 0; min-width: 0; }
   textarea { width: 100%; height: 80px; font: 12px/1.4 ui-monospace, monospace; }
   .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
@@ -373,10 +375,26 @@
   /* con "cambiar" va el campo y Buscar en un renglón, y "o pegar un PGN" en
      el de abajo, a 8: con usuario guardado es la única puerta al PGN (revisor,
      v0.120). El margen del 100% es lo que lo manda solo a su renglón. */
-  body.cambiando #verPegar { margin-right: 100%; flex: none; white-space: nowrap; }
+  /* "o pegar un PGN" es un ENLACE en su renglón, debajo del campo (v0.126,
+     lavado de la entrada desplegada: la A del revisor). Antes era un botón
+     chico de 36 al lado de Buscar: tres alturas y dos pesos en un renglón.
+     Pegar un PGN es otra fuente de partidas, y rara, así que pesa como
+     "cambiar": texto en acento, 14. El margen del 100% lo manda solo a su
+     renglón. El área de toque es de 48 y va justa entre el campo (12 arriba)
+     y lo que sigue (16 abajo: el mes o el PGN abierto), sin pisar ninguno. */
+  #verPegar { margin: 4px 100% 0 0; flex: none; white-space: nowrap; background: none; border: 0;
+              padding: 0; min-height: 0; color: var(--acento); font-size: var(--t-secundario);
+              line-height: 20px; position: relative; border-radius: 0; }
+  #verPegar:not(:disabled):hover, #verPegar:active { background: none; }
+  #verPegar::before { content: ""; position: absolute; inset: -12px -10px -16px; }
+  /* [PC] la fila del campo con tope: en la columna de 640 el campo se iba a
+     ~540 px para un nombre de usuario */
+  @media (min-width: 700px) { .cabInicio > .campo { max-width: 400px; } }
+  #zonaPegar { margin-top: var(--e-4); }
+  /* el placeholder en la letra de la app; lo pegado sigue en mono */
+  #pgn::placeholder { font: var(--t-secundario)/1.4 system-ui, sans-serif; }
   /* la tuerca, a la altura del campo (44) y no centrada en los dos renglones */
   body.cambiando #btnAjustesInicio { align-self: flex-start; margin-top: 5px; }
-  body.cambiando #usuario { flex: 1 1 0; min-width: 0; }
   #yaUsuario { margin: 0; display: flex; align-items: baseline; min-width: 0; }
   #yaUsuarioNombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #yaUsuario .sep { color: var(--tenue); margin: 0 var(--e-2); }
@@ -1202,7 +1220,7 @@
   <div class="fila deEntrada campo">
     <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
     <button id="buscar">Buscar</button>
-    <button id="verPegar" class="chico">o pegar un PGN</button>
+    <button id="verPegar" aria-expanded="false" aria-controls="zonaPegar">o pegar un PGN</button>
   </div>
   <button id="btnAjustesInicio" class="tuerca" aria-label="Ajustes" aria-expanded="false"
           aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuercaI"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuercaI)"/></svg></button>
@@ -1226,7 +1244,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.125 · 11-11";
+  window.VERSION = "v0.126 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1389,9 +1407,9 @@
 </script>
 
 
-<div id="zonaPegar" class="oculto soloInicio deEntrada" style="margin-top:10px">
+<div id="zonaPegar" class="oculto soloInicio deEntrada">
   <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
-  <div class="fila" style="margin-top:6px"><button id="usarPgn" class="chico">Usar este PGN</button></div>
+  <div class="fila" style="margin-top:8px"><button id="usarPgn">Usar este PGN</button></div>
 </div>
 
 <!-- EL MES HACE DE TÍTULO (v0.120), como en el Mes desde la v0.108: el
@@ -1734,7 +1752,7 @@
 
 <p class="credito"><span id="verPie"></span>Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
   rel="noopener">Cburnett</a> de Colin M.L. Burnett,
-  <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener">CC BY-SA 3.0</a>.</p>
+  <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener" style="white-space:nowrap">CC BY-SA 3.0</a>.</p>
 
 <script type="module">
 let Chess;
@@ -5195,7 +5213,13 @@ $("cacheBorrar").onclick = seguro("borrar caché", async () => {
   window.LOG.add("·", "caché borrada");
 });
 
-$("verPegar").onclick = () => ver("zonaPegar", $("zonaPegar").classList.contains("oculto"));
+/* el enlace abre y cierra lo mismo, y lo dice (v0.126, revisor) */
+function verPgn(abierto) {
+  ver("zonaPegar", abierto);
+  $("verPegar").textContent = abierto ? "cerrar el PGN" : "o pegar un PGN";
+  $("verPegar").setAttribute("aria-expanded", abierto ? "true" : "false");
+}
+$("verPegar").onclick = () => verPgn($("zonaPegar").classList.contains("oculto"));
 
 $("buscar").onclick = seguro("buscar", async () => {
   const u = $("usuario").value.trim();
@@ -5242,6 +5266,7 @@ function entrada(abierta) {
    v0.120: el h1 reaparecía en el medio del uso y empujaba todo 98 px) */
 $("cambiarUsuario").onclick = () => {
   document.body.classList.add("cambiando");
+  verPgn(false);
   $("usuario").focus(); $("usuario").select();
 };
 
