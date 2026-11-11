@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.126.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.127**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,12 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.127, la barra de progreso en verde** (Juan, 11-nov, sobre la propuesta de
+`DISENO.md` §1.10). `.barra > i` pasó de `currentColor` (`--texto`) a
+`--acento`: 4,9:1 contra el riel en `--linea`. Es una sola regla y pinta los
+dos lugares: la barra del inicio y la raya de 3 px de arriba de la Partida y
+las vistas.
 
 **v0.126.1, [PC] los bordes de la entrada** (revisor, sobre la v0.126). Con el
 PGN abierto a 1280 había tres bordes derechos que no coincidían con nada: la

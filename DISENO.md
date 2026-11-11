@@ -42,6 +42,7 @@ se dice con la luz, no con sombras**: lo que está más arriba es más claro.
 | `--casilla-clara` | `#e6e1d3` | tablero | — |
 | `--casilla-oscura` | `#7f9466` | tablero | — |
 | `--marca` | `#3f5163` | lo que se dibuja con el botón derecho | (ya existe) |
+| el progreso | `--acento` sobre riel `--linea` | la barra de análisis, en el inicio y arriba de la Partida (v0.127) | 4,9 contra el riel |
 
 **El borde de campo no es el que pidió el revisor.** Pidió `#6b6f75` "a 3:1",
 y lo da sobre el fondo (3,3) pero **no sobre la superficie (2,85)**, que es
@@ -324,8 +325,8 @@ derecho usan el mismo polígono**, en `--marca`: las distingue el color.
 | el tirador | 36×4 en `--borde-campo` | 3,5:1 sobre superficie; con `--linea` daba 1,2 y no se veía |
 | los selects | 44 de alto, 12 entre uno y otro | son campos (§1.7); "Listo" es chico y queda en 36 |
 
-**Propuesta, sin aplicar: el color del progreso** (revisor, v0.120; escrita
-el 11-nov, espera a Juan porque es sistema de diseño). §1.1 no dice de qué
+**El color del progreso: el acento** (revisor, v0.120; propuesta del 11-nov,
+**aprobada por Juan y aplicada en la v0.127**). §1.1 no dice de qué
 color es la barra de progreso, y hoy sale de `currentColor`, o sea `--texto`
 casi blanco: mientras corre el mes es lo más luminoso de la pantalla (8,8:1
 sobre su riel en `--linea`). Tres dibujadas sobre el inicio a 412×760, con
@@ -457,6 +458,11 @@ hay. Las primeras salen del historial del traspaso.
   renglón (rival · resultado · precisión · fecha) y tocar la fila para entrar.
   No dijo por qué; lo que la distinguía de las otras era que entraban más
   partidas a la vista y la partida se abría de un toque, como en chess.com.
+- **La barra de progreso en verde** (`--acento`), en vez de casi blanca:
+  *"me copa la barra de progreso en verde"* (11-nov-2026, v0.127). Se le
+  mostraron tres (blanca, verde, gris); la verde se lee "está trabajando" sin
+  ganarle al resto de la pantalla, y no le molestaron los tres verdes juntos
+  del inicio.
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.

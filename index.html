@@ -128,7 +128,9 @@
   .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
   #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
   .barra { height: 4px; background: var(--linea); border-radius: 2px; overflow: hidden; margin-top: 6px; }
-  .barra > i { display: block; height: 100%; background: currentColor; width: 0; transition: width var(--m-media) var(--m-entra); }
+  /* el progreso va en el acento (v0.127, Juan: "me copa"): en --texto era lo
+     más luminoso de la pantalla mientras corría el mes (revisor, v0.120) */
+  .barra > i { display: block; height: 100%; background: var(--acento); width: 0; transition: width var(--m-media) var(--m-entra); }
 
   /* EL MENÚ DE AJUSTES (v0.91, §4untrigies). Las cuatro decisiones las tomó el
      usuario mirando maquetas, y cada una tiene su porqué medido:
@@ -1249,7 +1251,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.126.2 · 11-11";
+  window.VERSION = "v0.127 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
