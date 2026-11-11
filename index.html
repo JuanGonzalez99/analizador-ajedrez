@@ -665,6 +665,10 @@
   .veredicto .txt { flex: 1; min-width: 0; }
   .veredicto .tit { font-weight: 700; font-size: var(--t-cuerpo); line-height: 1.4; }
   .veredicto .sub { font-size: 12.5px; color: var(--tenue); }
+  /* LOS MISMOS 2 PX QUE .exp (v0.124, revisor): la tarjeta medía 59 con la
+     frase fija y 61 con explicación, y el tablero saltaba 2 px. Solo el del
+     veredicto: en la de la variante sub y exp van juntos. */
+  #vSub { margin-top: 2px; }
   /* La explicación va con el color del texto normal y NO con el tenue del
      subtítulo: es lo único de la tarjeta que cambia en cada jugada, así que si
      se pinta como el resto se pierde entre dos renglones grises. */
@@ -1214,7 +1218,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.123.1 · 10-11";
+  window.VERSION = "v0.124 · 11-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1952,8 +1956,10 @@ function curvaVentaja(filas, lado, verAmbos) {
    jugada k-1 porque el 0 es la posición inicial. Vive acá y no en el manejador
    para que se pueda probar sin un DOM. */
 function jugadaEnLaCurva(t, n) {
-  if (n <= 0) return 0;
-  return Math.max(0, Math.min(n - 1, Math.round(t * n) - 1));
+  if (n <= 0) return -1;
+  /* desde la v0.124 el punto 0 también se puede elegir: es la posición inicial,
+     que es IDX = -1 */
+  return Math.max(-1, Math.min(n - 1, Math.round(t * n) - 1));
 }
 
 /*
@@ -4047,10 +4053,13 @@ function dibujarCurva(filas, idx, lado, verAmbos, forma) {
      Los anchos no son cualquiera: 4 y 2,2 dejan 0,9 de funda de cada lado, o
      sea un contorno. Con 3,6 y 1,4 quedaban tres franjas casi iguales y sobre
      el relleno claro se leía como DOS líneas finas, no como una. */
+  /* En la posición inicial (idx -1, v0.124) la raya NO va: caería pegada al
+     borde redondeado y se leía como un error de dibujo (revisor). Ahí no hay
+     nada marcado, igual que en la tira y la lista. */
   const aca = ((idx + 1) * 100 / filas.length).toFixed(2);
-  s += `<line x1="${aca}" y1="0" x2="${aca}" y2="100" stroke="var(--eval-negras)"
+  if (idx >= 0) s += `<line x1="${aca}" y1="0" x2="${aca}" y2="100" stroke="var(--eval-negras)"
          stroke-width="4" vector-effect="non-scaling-stroke"/>`;
-  s += `<line x1="${aca}" y1="0" x2="${aca}" y2="100" stroke="var(--eval-blancas)"
+  if (idx >= 0) s += `<line x1="${aca}" y1="0" x2="${aca}" y2="100" stroke="var(--eval-blancas)"
          stroke-width="2.2" vector-effect="non-scaling-stroke"/>`;
   /* LAS MARCAS VAN DESPUÉS DEL "ESTÁS ACÁ", siempre. Si no, la marca de la
      jugada que se está mirando queda tapada justo por la raya que dice que la
@@ -4691,7 +4700,12 @@ function dibujar(fen, jugada, mejor, prueba) {
   /* Los galones SE QUEDAN, y son solo dibujo: avisan que el tablero se
      desliza, que es lo que la v32 les pidió. Lo que se fue en la v0.66 son sus
      ZONAS DE TOQUE, abajo. */
-  s += galon(M / 2 - 1, 1) + galon(T + M + M / 2 + 1, -1);
+  /* Y SOLO DEL LADO EN QUE SE PUEDE IR (v0.124, revisor): en la posición
+     inicial no hay jugada anterior y en la última no hay siguiente, así que el
+     galón de ese lado prometía un deslizamiento que no hace nada. Es lo mismo
+     que dice "‹" o "›" apagado abajo. */
+  if (!(prueba && prueba.sinAtras)) s += galon(M / 2 - 1, 1);
+  if (!(prueba && prueba.sinAdelante)) s += galon(T + M + M / 2 + 1, -1);
   /* LAS ZONAS DE TOQUE DE LOS GALONES SE FUERON EN LA v0.66, y el comentario
      que estaba acá lo venía anunciando desde la v32: se comían los 10 px
      exteriores de las columnas a y h, "si alguna vez se puede tocar una
@@ -4823,8 +4837,10 @@ function centrarTira() {
   if (sel) sc.scrollLeft = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;
 }
 
+/* `i` va de -1 —la posición inicial, antes de la primera jugada (v0.124)— a la
+   última fila. */
 function irA(i) {
-  if (!R || i < 0 || i >= R.filas.length || i === IDX) return;
+  if (!R || i < -1 || i >= R.filas.length || i === IDX) return;
   IDX = i;
   /* el señalado NO se apaga acá: lo tira `pintarRevision`, que es por donde
      pasan también los caminos que no llaman a `irA` —abrir la variante tocando
@@ -5523,7 +5539,7 @@ async function analizarElegida() {
        el motivo salía ahí y no acá. */
     R.meta = ELEGIDA_META;
     progreso(1);
-    IDX = 0;
+    IDX = -1;
     GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
@@ -6877,7 +6893,7 @@ function pintarLista() {
   $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
       R = MES.resultados[+d.dataset.i];
-      IDX = 0;
+      IDX = -1;
       GIRADO = (R.cab.Black || "").toLowerCase() === USUARIO;
       pintarResumen(MES.prof);
       pintarRevision();
@@ -6924,9 +6940,32 @@ function ubicarGirar(f) {
   b.classList.toggle("pestana", pestana);
   b.style.top = (s.top - r.top + borde - 44) + "px";
 }
+/* LA POSICIÓN INICIAL (v0.124, pedido de Juan): la Partida abre ANTES de la
+   primera jugada, con IDX = -1. No es una fila —no hay jugada que juzgar—, así
+   que se arma un objeto con lo poco que la pantalla le pide a una fila: la
+   posición, la evaluación para la barra y la mejor jugada para el cuadrito y la
+   flecha verde. Todo sale de `R.evs[0]`, que el análisis ya tenía: la posición
+   de arranque se evalúa igual, porque de ahí sale la pérdida de la primera
+   jugada. La evaluación viene del lado del que mueve, como todas (`textoEval`).
+   `uci` en null: no hay jugada que trajo hasta acá, así que no hay flecha azul
+   ni casillas marcadas. */
+function filaDeArranque() {
+  const ev = (R.evs && R.evs[0]) || null;
+  const turno = R.filas.length ? R.filas[0].turno : "w";
+  const otro = turno === "w" ? "b" : "w";
+  return {
+    inicio: true, turno, uci: null, rev: null, remate: null,
+    fen: fenDeLaJugada(0) || new Chess().fen(),
+    mejor: ev ? ev.mejor || null : null,
+    mateDe: ev && ev.mate ? (ev.mate > 0 ? turno : otro) : null,
+    evalBlancas: ev ? aBlancas(ev, turno) : 0,
+    evalTexto: ev ? textoEval(ev, turno) : ""
+  };
+}
 function pintarRevision() {
-  const f = R.filas[IDX];
-  const c = presentar(f);
+  const enInicio = IDX < 0;
+  const f = enInicio ? filaDeArranque() : R.filas[IDX];
+  const c = enInicio ? null : presentar(f);
   /* EL SEÑALADO SE VA ACÁ, y por el mismo motivo que las marcas del usuario:
      una frase señala una casilla DE ESTA POSICIÓN, así que en cuanto el tablero
      muestra otra —otra jugada, o una variante— la flecha naranja estaría
@@ -6954,18 +6993,22 @@ function pintarRevision() {
   const antesF = IDX > 0 ? R.filas[IDX - 1] : null;
   const rivalErro = !!antesF && antesF.turno !== f.turno &&
                     ["error", "grave", "omision"].includes(antesF.cat);
-  const partes = partesDeLaExplicacion(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
+  const partes = enInicio ? [] : partesDeLaExplicacion(f, f.mejor === f.uci ? null : sanDeLaMejor(IDX),
                                        ladoUsr ? f.turno === ladoUsr : null,
                                        sanDeUci(f.fen, f.mejorRival),
                                        observarJugada(f, fenDeLaJugada(IDX)),
                                        { ranuras: ranurasDeLaExplicacion(),
                                          salioDelLibro, rivalErro });
   const explicado = partes.map(p => p.txt).join(" ");
-  const color = `var(--c-${c.clave})`;
+  /* En la posición inicial la tarjeta no juzga nada: sin símbolo, con el borde
+     de la línea y no de una categoría, y dice qué es y a quién le toca. */
+  const color = enInicio ? "var(--linea)" : `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
-  $("vIco").textContent = c.icono;
+  $("vIco").textContent = enInicio ? "" : c.icono;
   $("vIco").style.color = color;
-  $("vTit").textContent = `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
+  $("vIco").classList.toggle("oculto", enInicio);
+  $("vTit").textContent = enInicio ? "Posición inicial"
+    : `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} \u2014 ${c.nombre}`;
   /* UN SOLO RENGLÓN ABAJO DEL TÍTULO, y qué dice depende de si hay algo que
      decir: la explicación de esta jugada, o la frase fija de la categoría
      cuando no la hay. Nunca las dos, que era el eco de la v0.44.
@@ -6979,7 +7022,8 @@ function pintarRevision() {
      para que una jugada sin elección no mostrara números, y ahora no los
      muestra ninguna. */
   const hayExp = !!explicado;
-  $("vSub").textContent = hayExp ? "" : c.desc;
+  $("vSub").textContent = hayExp ? ""
+    : enInicio ? (f.turno === "w" ? "Juegan las blancas." : "Juegan las negras.") : c.desc;
   $("vSub").classList.toggle("oculto", hayExp);
   if (hayExp) pintarExplicacion("vExp", partes, !PRUEBA); else $("vExp").innerHTML = "";
   $("vExp").classList.toggle("oculto", !hayExp);
@@ -7050,19 +7094,20 @@ function pintarRevision() {
 
   $("veredicto").classList.toggle("invertida", modo === "tarjeta");
 
-  $("mPerdida").textContent = f.perdida.toFixed(2);
+  /* en la inicial no hay jugada: pérdida, caída y tiempo no existen */
+  $("mPerdida").textContent = enInicio ? "\u2014" : f.perdida.toFixed(2);
   /* UN DECIMAL, no cero. El cuadrito redondeaba —"21 pt"— mientras la tarjeta
      decía "20.9 puntos de victoria"; cuando los números se fueron de la tarjeta
      en la v0.72, ese decimal se perdía. Y no es adorno: la caída es la medida en
      la que se apoyan el modo amigable y la precisión, así que redondearla a
      entero borra la diferencia entre una imprecisión y una jugada buena en el
      rango donde más se parecen. La pérdida, al lado, siempre tuvo dos. */
-  $("mCaida").textContent = f.caida.toFixed(1) + " pt";
+  $("mCaida").textContent = enInicio ? "\u2014" : f.caida.toFixed(1) + " pt";
   /* `f.seg` ya viajaba en la fila desde la v0.43 y no lo usaba nadie más que
      las tablas. `tiempoCorto` pone el "·" cuando la partida no trae relojes
      —correspondencia, o un PGN pegado a mano—, así que el cuadrito no cambia de
      forma entre partidas. */
-  $("mPenso").textContent = tiempoCorto(f.seg);
+  $("mPenso").textContent = enInicio ? "\u2014" : tiempoCorto(f.seg);
   /* Cuando la jugada jugada YA era la mejor no hay nada distinto que mostrar.
      El cuadrito se grisa y deja de responder: sin eso parecia que tocarlo no
      hacia nada, o sea un bug. */
@@ -7096,7 +7141,7 @@ function pintarRevision() {
      mejor es de la de ANTES. Traducirla a notación con el FEN del tablero da
      `a2a3` crudo en vez de `a3`, porque la jugada no es legal ahí. Adentro de la
      variante las dos son la misma, y por eso la distinción se ve una sola vez. */
-  const fenDeLaMejor = PRUEBA ? vista.fen : fenDeLaJugada(IDX);
+  const fenDeLaMejor = PRUEBA ? vista.fen : enInicio ? f.fen : fenDeLaJugada(IDX);
   /* La jugada de la partida que se dibuja en azul, si hay alguna. */
   const uciAzul = PRUEBA ? (PRUEBA.ver === 0 && real ? real.uci : null) : f.uci;
   /* Cuando la mejor ES la que se dibuja en azul no hay nada distinto que
@@ -7113,7 +7158,10 @@ function pintarRevision() {
     desde: PRUEBA ? PRUEBA.desde : null,
     destinos: PRUEBA ? PRUEBA.destinos : [],
     uci: PRUEBA && PRUEBA.ver ? PRUEBA.linea[PRUEBA.ver - 1].uci : null,
-    resalta: RESALTA
+    resalta: RESALTA,
+    /* los galones, con la misma regla que "‹" y "›" (abajo de todo) */
+    sinAtras: PRUEBA ? PRUEBA.ver === 0 : IDX < 0,
+    sinAdelante: PRUEBA ? PRUEBA.ver === PRUEBA.linea.length : IDX === R.filas.length - 1
   };
   /* LAS MARCAS DEL USUARIO SE VAN ACÁ, y por eso no hay que acordarse de
      borrarlas en ningún otro lado: cada camino que cambia lo que muestra el
@@ -7198,6 +7246,8 @@ function pintarRevision() {
   });
   medirTira();
   centrarTira();
+  /* en la inicial no hay jugada elegida: la tira arranca del principio */
+  if (enInicio && !PRUEBA) $("tiraSc").scrollLeft = 0;
 
   /* LA LISTA LATERAL (v0.80), en la columna que solo existe en pantalla ancha.
      `celda` es LA MISMA que pinta la tira: una jugada se ve igual en los dos
@@ -7264,6 +7314,7 @@ function pintarRevision() {
         lista.scrollTop = fila.offsetTop + fila.offsetHeight - lista.clientHeight;
     }
     if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
+    if (enInicio && !PRUEBA) lista.scrollTop = 0;
     /* LA LISTA NO PUEDE SER MÁS ALTA QUE LA COLUMNA DE AL LADO (v0.88), y esto
        es lo que paga que la curva cruce las dos columnas. La curva pasó a ser
        una fila propia de la grilla, así que ARRANCA DEBAJO DE LA MÁS ALTA de las
@@ -7373,7 +7424,7 @@ function pintarRevision() {
      siguiente— y no dos botones que significan una cosa u otra según dónde
      estés: lo que cambia es qué línea se está recorriendo. De la partida se
      sale por el botón, que es lo único que dice "volver". */
-  $("ant").disabled = PRUEBA ? PRUEBA.ver === 0 : IDX === 0;
+  $("ant").disabled = PRUEBA ? PRUEBA.ver === 0 : IDX < 0;
   $("sig").disabled = PRUEBA ? PRUEBA.ver === PRUEBA.linea.length
                              : IDX === R.filas.length - 1;
 }
@@ -7699,7 +7750,7 @@ $("btnGirarTab").onclick = $("btnGirar").onclick;
    ancho, así que al girar el celu se movía sin cambiar de tamaño y el
    observador no saltaba (lo midió el revisor: de 412 a 400 el botón quedaba
    afuera de la pantalla hasta pasar de jugada). La fila sí cambia de ancho. */
-new ResizeObserver(() => { if (R && R.filas[IDX]) ubicarGirar(R.filas[IDX]); }).observe(document.querySelector(".revtab"));
+new ResizeObserver(() => { if (R && (IDX < 0 || R.filas[IDX])) ubicarGirar(IDX < 0 ? null : R.filas[IDX]); }).observe(document.querySelector(".revtab"));
 
 function pintarResumen(prof) {
   const { filas, cab } = R;

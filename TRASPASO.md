@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.123.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.124**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4669,6 +4669,49 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.124, la Partida arranca en la posición inicial** (pedido de Juan, 7-nov).
+Hasta acá abría en la jugada 1 (`IDX = 0` es `R.filas[0]`) y no había forma de
+ver el tablero antes de mover. Ahora **`IDX = -1` es la posición inicial**, y
+abrir una partida —desde la lista del inicio (`analizarElegida`) o desde la del
+Mes (`pintarLista`)— arranca ahí.
+- No es una fila: `filaDeArranque()` arma lo poco que `pintarRevision` le pide a
+  una —posición, evaluación para la barra, mejor jugada— desde `R.evs[0]`, que
+  el análisis ya tenía (de ahí sale la pérdida de la primera jugada). `uci` en
+  null: sin flecha azul ni casillas marcadas. Si un día cambia qué lee
+  `pintarRevision` de la fila, mirar que la de arranque lo tenga o que el
+  camino `enInicio` lo esquive.
+- La tarjeta dice "Posición inicial" / "Juegan las blancas." (o "las negras",
+  con un PGN que arranca desde una posición), **sin símbolo** (`#vIco` oculto)
+  y con el borde en `--linea`: no juzga nada. Pérdida, Caída y Pensó en "—";
+  Mejor nombra la mejor de la inicial, y prendido dibuja su flecha.
+- En la tira y en la lista de la compu no queda ninguna marcada, y las dos
+  vuelven al principio; la raya del "estás acá" de la curva cae en el punto 0,
+  y **tocar la punta izquierda de la curva lleva a la inicial**
+  (`jugadaEnLaCurva` devuelve -1 para el punto 0). "‹" se apaga en la inicial
+  y no en la jugada 1; `irA` acepta -1; teclado y rueda andan igual.
+- Tocar una pieza en la inicial abre la variante desde ahí (`abrirPrueba(0)`, o
+  sea `IDX + 1`, sin tocar nada), y el "Volver" de la variante vuelve a la
+  inicial. Girar está a la vista, como en la apertura.
+- **El salto de 2 px se fue** (revisor): la tarjeta medía 59 con la frase fija
+  y 61 con explicación —el `margin-top: 2px` de `.exp`—, y el tablero bajaba 2
+  al pasar de la inicial a la jugada 1, y entre cualquier jugada con y sin
+  explicación. Ahora `#vSub` lleva los mismos 2 (solo el del veredicto: en la
+  de la variante sub y exp van juntos). Medido a 412 y 386: tablero en 151 en
+  la inicial, en la jugada 1 y en las que no tienen explicación; 170 solo en
+  las de explicación de dos renglones, que es el ítem de la etapa 3.
+- **La raya del "estás acá" de la curva no va en la inicial**: en el punto 0
+  caía pegada al borde redondeado y se leía como error de dibujo (revisor).
+- **Los galones del tablero solo del lado en que se puede ir**: sin el
+  izquierdo en la inicial (o al arranque de una variante) y sin el derecho en
+  la última jugada (o al final de la variante). La capa de `dibujar` lleva
+  `sinAtras` y `sinAdelante`, con la misma regla que "‹" y "›".
+- `mirar` saca `revision-inicio` (y una línea "inicial:") y después pasa a la
+  primera jugada. Contra la v0.123.1 cambiaron, y por lo que se espera: la
+  versión del pie, "‹" que en la jugada 1 ahora se puede tocar, y las de la
+  variante y la última jugada (`prueba-*`, `encadenadas` y las de PC), por el
+  galón que ya no va. Las demás, iguales al byte.
+  Medido a 412 y 386; sin errores de página.
 
 **v0.123.1, [PC] el tablero recupera el alto de la cabecera** (revisor, sobre
 la v0.123). Las seis fórmulas de `--ladoTab` de la compu restaban un número fijo

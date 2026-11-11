@@ -100,6 +100,19 @@ console.log("cabecera de la vista:", JSON.stringify({
   tuercaContraLaR: (await alinear(pg, ".cabvista h2", "#btnAjustes")).desvio,
 }));
 
+/* LA POSICIÓN INICIAL (v0.124): la Partida abre antes de la primera jugada.
+   Se fotografía y se pasa a la primera, así el resto de las capturas sigue
+   siendo el mismo que antes y la comparación byte a byte sirve. */
+console.log("inicial:", JSON.stringify(await pg.evaluate(() => ({
+  titulo: document.getElementById("vTit").textContent,
+  sub: document.getElementById("vSub").textContent,
+  anterior: document.getElementById("ant").disabled,
+  elegidaEnLaTira: !!document.querySelector("#tiraSc .sel"),
+  perdida: document.getElementById("mPerdida").textContent,
+}))));
+await foto("revision-inicio");
+await pg.click("#sig");
+await pg.waitForTimeout(200);
 await foto("revision-1");
 /* la vista desde su primer renglón: es donde se ve si la barra y la tarjeta
    quedaron pegadas, que es lo que pasó al reordenar en la v0.74 */
@@ -578,7 +591,8 @@ console.log("tecla n:       ", JSON.stringify(await pg.evaluate(() => {
    no de mirar el tablero. */
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 for (let i = 0; i < 60; i++) { if (await pg.locator("#ant").isDisabled()) break; await pg.click("#ant"); }
-for (let i = 0; i < 6; i++) await pg.click("#sig");
+/* 7 y no 6 desde la v0.124: el primer paso sale de la posición inicial */
+for (let i = 0; i < 7; i++) await pg.click("#sig");
 await pg.waitForTimeout(300);
 await pg.evaluate(() => document.getElementById("tablero").scrollIntoView({ block: "center" }));
 await pg.waitForTimeout(250);

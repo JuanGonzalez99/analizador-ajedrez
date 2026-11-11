@@ -1124,7 +1124,7 @@ test("forzada no es una categoría: no se cuenta en ninguna tabla", () => {
 test("los dos lugares que pintan una jugada usan el mismo presentador", () => {
   /* La tarjeta del veredicto y la tira de jugadas. Si uno se olvida, la misma
      jugada sale forzada en un lado y Mejor en el otro. */
-  assert.ok(html.includes("const c = presentar(f);"), "la tarjeta del veredicto");
+  assert.ok(html.includes("const c = enInicio ? null : presentar(f);"), "la tarjeta del veredicto");
   assert.ok(html.includes("const p = presentar(x);"), "la tira de jugadas");
   assert.ok(!html.includes("CATEGORIAS[x.cat].icono"), "quedó el camino viejo en la tira");
   assert.ok(!html.includes("const c = CATEGORIAS[f.cat];"), "quedó el camino viejo en la tarjeta");
@@ -1133,7 +1133,7 @@ test("los dos lugares que pintan una jugada usan el mismo presentador", () => {
      cuadritos de abajo— y con ellos el caso especial de la forzada, que existía
      para que una jugada sin elección no los mostrara. */
   assert.ok(!html.includes("puntos de victoria`"), "los números ya no están en la tarjeta");
-  assert.ok(html.includes('$("vSub").textContent = hayExp ? "" : c.desc;'),
+  assert.ok(/\$\("vSub"\)\.textContent = hayExp \? ""\s*: enInicio \? [^\n]+ : c\.desc;/.test(html),
     "un solo renglón: la explicación, o la frase fija cuando no hay");
 });
 
@@ -1447,15 +1447,17 @@ test("una partida sin filas no rompe la curva", () => {
 
 test("el toque sobre la curva cae en la jugada de abajo", () => {
   /* La inversa de ejeX, y es lo que hace que el dedo caiga siempre en algo:
-     el borde izquierdo es la primera jugada y el derecho la última, sin
+     el borde izquierdo es la posición inicial (v0.124) y el derecho la última, sin
      agujeros ni índices fuera de rango. */
-  assert.equal(A.jugadaEnLaCurva(0, 10), 0);
+  assert.equal(A.jugadaEnLaCurva(0, 10), -1, "el punto 0 es la posición inicial (v0.124)");
+  assert.equal(A.jugadaEnLaCurva(0.04, 10), -1);
+  assert.equal(A.jugadaEnLaCurva(0.06, 10), 0, "y el punto 1, la primera jugada");
   assert.equal(A.jugadaEnLaCurva(1, 10), 9);
   assert.equal(A.jugadaEnLaCurva(0.54, 10), 4, "5,4 cae en el punto 5, que es la jugada 4");
   assert.equal(A.jugadaEnLaCurva(0.56, 10), 5, "y 5,6 en el punto 6, que es la jugada 5");
-  assert.equal(A.jugadaEnLaCurva(-0.3, 10), 0, "un toque afuera no se sale del rango");
+  assert.equal(A.jugadaEnLaCurva(-0.3, 10), -1, "un toque afuera no se sale del rango");
   assert.equal(A.jugadaEnLaCurva(1.3, 10), 9);
-  assert.equal(A.jugadaEnLaCurva(0.5, 0), 0, "sin jugadas no hay a dónde ir");
+  assert.equal(A.jugadaEnLaCurva(0.5, 0), -1, "sin jugadas no hay a dónde ir");
 });
 
 test("los puntos de la curva NO van adentro del SVG", () => {
@@ -1983,7 +1985,7 @@ test("la explicación se deriva al pintar y no viaja en la caché", () => {
   /* Es lo que deja que una partida ya analizada estrene el texto sin volver a
      correr el motor: lo que se guarda son las evaluaciones, no las filas. */
   assert.ok(!html.includes("explicacion:"), "no hay campo guardado en la fila");
-  assert.ok(html.includes("const partes = partesDeLaExplicacion("),
+  assert.ok(html.includes("const partes = enInicio ? [] : partesDeLaExplicacion("),
     "se arma en pintarRevision, en cada pintada");
   const campos = (html.match(/const CAMPOS_FLACOS = \[([^\]]+)\]/) || [])[1];
   for (const c of ["oportunidad", "cap", "mateContra", "unicaBuena"])
