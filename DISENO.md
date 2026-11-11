@@ -324,6 +324,29 @@ derecho usan el mismo polígono**, en `--marca`: las distingue el color.
 | el tirador | 36×4 en `--borde-campo` | 3,5:1 sobre superficie; con `--linea` daba 1,2 y no se veía |
 | los selects | 44 de alto, 12 entre uno y otro | son campos (§1.7); "Listo" es chico y queda en 36 |
 
+**Propuesta, sin aplicar: el color del progreso** (revisor, v0.120; escrita
+el 11-nov, espera a Juan porque es sistema de diseño). §1.1 no dice de qué
+color es la barra de progreso, y hoy sale de `currentColor`, o sea `--texto`
+casi blanco: mientras corre el mes es lo más luminoso de la pantalla (8,8:1
+sobre su riel en `--linea`). Tres dibujadas sobre el inicio a 412×760, con
+"Analizando 12 de 40 · Parar" y el 30 %:
+
+| | relleno | contra el riel (`--linea`) | se lee como |
+|---|---|---|---|
+| hoy | `--texto` | 8,8 | lo más importante de la pantalla |
+| **la recomendada** | `--acento` | 4,9 | "la app está trabajando", como Material (el progreso va en el color primario) |
+| la quieta | `--tenue` | 4,2 | un dato más, al nivel del recuento |
+
+**Por qué el acento:** en el inicio, mientras corre, no hay botón principal a
+la vista (el botón se vuelve "Analizando… · Parar", y Parar es secundario),
+así que no le compite a nada, y es el mismo verde de lo que está activo. El
+tenue se lee "en pausa", no "trabajando". Acento (4,9) y tenue (4,2) pasan el
+3:1 de un componente que no es texto. **Es la misma regla para los dos
+lugares**: también pinta la raya de 3 px de arriba de la Partida y de las
+vistas (`body.enVista #zonaEstado .barra`), donde el verde es la barra de carga
+de siempre. Si se aprueba, va como `.barra > i { background: var(--acento) }`
+y una fila en la tabla de §1.1. El revisor estuvo de acuerdo (11-nov).
+
 ### 1.11 Cómo se usa esto
 
 - **En el código son variables en `:root`**, una por fila de las tablas de

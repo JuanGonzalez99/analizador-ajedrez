@@ -224,7 +224,7 @@ lo demás se dibuja contra ella.
       con "cambiar", el PGN no aparece porque no entraba en un renglón.
       Pregunta: ¿cambiar de usuario y pegar un PGN son la misma acción? ¿El PGN
       va en el mismo renglón, en la hoja, o en un "más" del campo? Con variantes.
-- [ ] **El color de la barra de progreso** (revisor, v0.120). Es `--texto`, casi
+- [x] **El color de la barra de progreso** (11-nov: propuesta escrita en `DISENO.md` §1.10, el acento; espera el ok de Juan para aplicarse; revisor, v0.120). Es `--texto`, casi
       blanca: mientras corre el mes es lo más luminoso de la pantalla y le gana
       al botón principal. §1.1 no dice qué color tiene el progreso; va a
       `DISENO.md` como propuesta (es sistema de diseño: no se cambia de noche
@@ -444,6 +444,11 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   verde debajo del campo, y solo aparece con la entrada abierta (la primera vez
   o después de "cambiar"). La otra: sumarlo al renglón plegado, "Santico26 ·
   cambiar · pegar PGN", para tenerlo a un toque.
+- **Para aprobar (11-nov): la barra de progreso en verde** (`--acento`) en vez
+  de casi blanca, en el inicio y en la raya de arriba de la Partida
+  (`DISENO.md` §1.10). Es sistema de diseño, así que no se aplicó. La otra:
+  `--tenue`, más quieta. Con la verde, en el inicio quedan tres verdes juntos
+  mientras analiza ("cambiar", la barra y la raya de la partida elegida).
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
