@@ -402,8 +402,8 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   centrada.
 - **No sé si esto te copa (v0.124):** la partida abre en la posición inicial,
   con la tarjeta "Posición inicial · Juegan las blancas." y la mejor jugada en
-  el cuadrito Mejor. La otra: que abra en la inicial pero sin tarjeta, con el
-  tablero subiendo a su lugar.
+  el cuadrito Mejor. La otra: que siga abriendo en la jugada 1 y la inicial
+  quede a un toque de "‹".
 - Del revisor (v0.124), para el lavado de las preferencias del tablero: Girar
   al costado mide 27×44 a 386 de ancho, lejos de los 48 de toque, y ahora se ve
   en la primera pantalla de cada partida.
