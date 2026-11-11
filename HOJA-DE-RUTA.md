@@ -218,7 +218,7 @@ lo demás se dibuja contra ella.
       Pensó asoma cortada por el borde de abajo; ¿entra en la primera pantalla o
       es un detalle que se ve bajando y no asoma? Juan eligió
       dejar la v0.118 como está hasta que llegue esto, en vez de volverla atrás.
-- [ ] **Lavado de cara de la entrada desplegada** (revisor, v0.120). Con
+- [x] **Lavado de cara de la entrada desplegada** (v0.126, 11-nov: la A, el PGN como enlace debajo del campo; v0.126.1 [PC] bordes; revisor, v0.120). Con
       "cambiar" (o sin usuario guardado) el renglón tiene campo de 44, "Buscar"
       de 44 y "o pegar un PGN" de 36: tres alturas y dos pesos. En la v0.120,
       con "cambiar", el PGN no aparece porque no entraba en un renglón.
@@ -277,6 +277,17 @@ lo demás se dibuja contra ella.
 - [ ] **[PC] El Resumen al ancho del grupo** (revisor, v0.125; leve). Debajo
       de la Partida el Resumen mide 1082 centrado y el grupo de arriba otra
       cosa: dos cajas centradas de anchos distintos (a 1600, 27 px corrido).
+- [ ] **Lavado de cara: la cabecera del inicio con "cambiar"** (revisor,
+      v0.126; celu). Con la entrada abierta por "cambiar" no hay cómo volver
+      sin buscar (Nielsen 3: falta un "cancelar"), y la cabecera es otra que la
+      de la primera vez: el título se va y la tuerca se mete en la fila del
+      campo. ¿El renglón del enlace junta las salidas ("o pegar un PGN ·
+      cancelar")? ¿La tuerca vive siempre en el mismo lugar del inicio, con
+      usuario o sin él? Con variantes.
+- [ ] **[PC] La tuerca sola arriba a la derecha del inicio** (revisor, v0.126).
+      A 1280 la fila del campo termina en 399 y la tuerca queda sola en 1071,
+      sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una
+      cabecera propia? Pariente del lavado de arriba.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -429,6 +440,10 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   jugadas no está en la compu** (la lista ya está a la vista) y "sin la
   lista" se fue de los ajustes. La otra: dejar la tira abajo del tablero (la A
   de las variantes; el tablero queda en 632).
+- **No sé si esto te copa (v0.126):** "o pegar un PGN" es ahora un enlace
+  verde debajo del campo, y solo aparece con la entrada abierta (la primera vez
+  o después de "cambiar"). La otra: sumarlo al renglón plegado, "Santico26 ·
+  cambiar · pegar PGN", para tenerlo a un toque.
 - **Girar al costado del tablero (v0.114, idea de Juan):** si a los días no lo
   usás, se saca.
 - Del revisor, para toda la app: los botones chicos (~37) todavía no tienen el
