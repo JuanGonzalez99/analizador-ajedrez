@@ -109,6 +109,18 @@ const vDoc = norm((doc.match(/al día en la \*\*(v[\d.]+)\*\*/) || [])[1]);
 chequear("el traspaso está al día",
   vHtml && vHtml === vDoc ? [] : [`index.html es ${vHtml} y TRASPASO.md dice ${vDoc}`]);
 
+/* 7bis. La precisión de la fila dice qué es (v0.129). Juan no entendió el
+   número suelto ("Ganada 89"): el número va con "prec." y el Mes no pone un
+   "—" mudo donde no hay precisión. */
+{
+  const fila = (html.match(/function filaDePartida[\s\S]*?\n\}/) || [""])[0];
+  const lista = (html.match(/function pintarLista[\s\S]*?\n\}/) || [""])[0];
+  chequear("la precisión de la fila dice qué es", [
+    ...(/prec\.\\u00a0/.test(fila) ? [] : ["filaDePartida no antepone \"prec.\" al número"]),
+    ...(/"\\u2014" : Math\.round/.test(lista) ? ["pintarLista vuelve a poner un guion mudo"] : []),
+  ]);
+}
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

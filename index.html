@@ -1269,7 +1269,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.128.2 · 11-11";
+  window.VERSION = "v0.129 · 12-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5498,7 +5498,14 @@ const PALABRA_FIN = { gane: "Ganada", perdi: "Perdida", empate: "Tablas" };
 
 /* La fila, escrita una vez: la usan la lista del inicio y la del Mes
    (v0.128), que antes tenía su formato propio con la fecha de EE.UU. `cab`
-   es el respaldo cuando no hay JSON del mes (un PGN pegado). */
+   es el respaldo cuando no hay JSON del mes (un PGN pegado).
+   LA PRECISIÓN DICE QUÉ ES (v0.129, lavado pedido por Juan): "Ganada 89" no
+   se entendía. Se dibujaron seis (89, 89%, pastilla, "prec. 89", diana,
+   columna con encabezado) y el revisor eligió la palabra: el % se lee como
+   probabilidad de ganar, la diana es un glifo que hay que descifrar y el
+   encabezado se va con el scroll. Solo el número lleva "prec."; "sin
+   analizar", "analizada" y "asistida" ya dicen qué son, y el "—" del Mes se
+   fue (otro glifo mudo). */
 function filaDePartida(g, i, prec, sel, cab) {
   const lado = ladoEnJuego(g, USUARIO);
   const b = g.white.username, n = g.black.username;
@@ -5507,7 +5514,7 @@ function filaDePartida(g, i, prec, sel, cab) {
     : g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "Tablas";
   return `<div data-i="${i}"${sel ? ' class="sel"' : ""}>` +
     `<span class="rival">${sinHtml(rival || "?")}</span><span class="res">${fin}</span>` +
-    `<span class="prec" title="tu precisión">${prec}</span>` +
+    `<span class="prec" title="tu precisión">${typeof prec === "number" ? "prec.\u00a0" + prec : prec}</span>` +
     `<span class="fecha">${g.end_time ? fechaCorta(g.end_time) : ""}</span></div>`;
 }
 
@@ -6964,7 +6971,7 @@ function pintarLista() {
     const g = r.meta && r.meta.white ? r.meta
       : { white: { username: r.cab.White || "" }, black: { username: r.cab.Black || "" } };
     const p = precisionDe(r);
-    return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? "\u2014" : Math.round(p),
+    return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? "" : Math.round(p),
                          false, r.cab);
   }).join("");
   pintarLeyenda("capLista", [], [`Todas las partidas analizadas de ${nombreMes($("meses").value)}, de cualquier ritmo.`,

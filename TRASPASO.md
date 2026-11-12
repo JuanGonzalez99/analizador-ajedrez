@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.128.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.129**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,32 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.129, la precisión de la fila dice qué es: "prec. 89"** (lavado pedido
+por Juan sobre la v0.128: *"el número suelto no sé si se entiende"*; celu y
+PC, inicio y Mes). Se dibujaron seis con `tira()` a 386 sobre la fila de
+verdad: el número suelto, "89%", pastilla neutra como el archivo de
+chess.com, "prec. 89", una diana chica delante, y una estructural (columna
+propia a la derecha con un renglón de encabezado). El revisor eligió la
+palabra: el "%" al lado de "Ganada" se lee como probabilidad de ganar, la
+pastilla le da peso a un dato secundario (y con "sin analizar" pesa más que
+el resultado), la diana es el glifo chico que hay que descifrar (§2 de
+`DISENO.md`, el `½-½`) y el encabezado se va con el scroll en la lista larga
+del Mes. Las tiras no se commitean; lo que queda:
+- `filaDePartida` antepone `prec.` + espacio duro **solo cuando la precisión
+  es un número**. "sin analizar", "analizada" y "asistida" ya dicen qué son y
+  van solos. El "—" que ponía el Mes donde no había precisión se fue (otro
+  glifo mudo): ahora no va nada. Mismo tono tenue y tamaño de leyenda.
+- Medido a 386: "prec. 100" mide 58 y "sin analizar" 66; el rival sigue a 8
+  del resultado (caja), y el nombre largo se recorta con "…" como antes.
+  "prec." y no "precisión" porque la palabra entera recorta el rival en más
+  filas.
+- En la compu la columna 4 de 5.5em (77 px) entra "prec. 100" y "sin
+  analizar" sin cortar (`scrollWidth` = `clientWidth`). Sin encabezado.
+- Chequeo estático 7bis: que `filaDePartida` lleve el "prec." y que el guion
+  mudo no vuelva a `pintarLista`.
+- Duda para Juan: si "prec. 89" ensucia la fila, la otra es "89%" (más limpio,
+  más ambiguo).
 
 **v0.128.2, [PC] el inicio y el Mes pasan a dos columnas en 1000, no en 950**
 (revisor, al revisar la v0.128.1). Desde la v0.125 el body se ensancha a 1110

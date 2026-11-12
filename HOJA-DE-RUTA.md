@@ -249,7 +249,7 @@ lo demás se dibuja contra ella.
       inicio de la compu.
       **Desde la v0.128 vale también para la lista del Mes** ("Partida por
       partida"), que usa la misma fila: arreglando una se arreglan las dos.
-- [ ] **Lavado de cara: la precisión en la fila de la lista** (Juan, 11-nov,
+- [x] **Lavado de cara: la precisión en la fila de la lista** (v0.129, 12-nov: la D, "prec. 89", y el "—" del Mes se fue; revisor; Juan, 11-nov,
       sobre la v0.128; celu y PC, vale para el inicio y el Mes). El número
       suelto después del resultado ("Ganada 89") no se entiende como
       precisión. Que se entienda sin invadir la pantalla. Variantes a dibujar:
@@ -406,6 +406,9 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **"prec. 89" en la fila (v0.129, 12-nov):** ¿te copa o ensucia la fila? La
+  otra es "89%", más limpio pero se puede leer como probabilidad de ganar.
+  Tira de las seis que se dibujaron en el resumen del 12-nov.
 - **Pendiente de Juan, para cuando quiera (9-nov):** revisar lo que cambió en
   el criterio del revisor el domingo 8-nov (commit `1af4576`, "principios en
   vez de casos"). No lo quiso ver todavía; hasta entonces queda aplicado.
