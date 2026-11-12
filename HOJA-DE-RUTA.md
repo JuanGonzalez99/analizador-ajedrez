@@ -309,6 +309,13 @@ lo demás se dibuja contra ella.
       cualquier ritmo, mientras las secciones de alrededor siguen al selector
       de ritmo y al de fuente (la ayuda lo dice; ¿la lista debería seguir el
       mismo filtro?). Con variantes.
+- [ ] **[PC] Lavado de cara: la fila de la lista como dos islas** (revisor,
+      v0.129; inicio y Mes). A 1280, entre el resultado (columna 2) y la
+      precisión ("prec. 89", pegada a la fecha) quedan ~200 px y la fila se lee
+      como dos islas. ¿A ≥700 la lista necesita cinco columnas repartidas en
+      640, o va el renglón del celu (rival · resultado · prec. · fecha)? La
+      v0.128.1 ya achicó el hueco una vez: esto pide forma, no otro número. Con
+      variantes.
 
 ## Etapa 2 · Partir `index.html`
 
