@@ -413,9 +413,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **"prec. 89" en la fila (v0.129, 12-nov):** ¿te copa o ensucia la fila? La
-  otra es "89%", más limpio pero se puede leer como probabilidad de ganar.
-  Tira de las seis que se dibujaron en el resumen del 12-nov.
 - **Pendiente de Juan, para cuando quiera (9-nov):** revisar lo que cambió en
   el criterio del revisor el domingo 8-nov (commit `1af4576`, "principios en
   vez de casos"). No lo quiso ver todavía; hasta entonces queda aplicado.

@@ -504,6 +504,12 @@ hay. Las primeras salen del historial del traspaso.
   v0.128). Un número en una fila tiene que decir qué es, por forma o por
   palabra. Desde la v0.129 dice "prec. 89" (lo eligió el revisor entre
   seis; "89%" se descartó porque al lado de "Ganada" parece probabilidad).
+  **Juan sobre "prec. 89" (12-nov-2026): *"es un cumple"*.** Le gustaría algo
+  más minimalista, *"que no sume palabras"*, pero no se le ocurren
+  alternativas y por ahora queda así. O sea: entender vale más que limpiar,
+  pero una palabra en cada fila es el mínimo aceptable, no lo ideal. Si
+  aparece una forma que diga "precisión" sin texto y sin glifo que haya que
+  descifrar, se le muestra.
 - **Las tablas metidas en tarjeta** (fondo más claro, borde redondeado, v0.98):
   *"quedaron raras"*. Van sueltas sobre el fondo, con las rayas entre filas
   (6-nov-2026, v0.99). Las tarjetas siguen para lo que es tarjeta: la del
