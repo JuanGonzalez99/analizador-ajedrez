@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.129**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.130**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -273,7 +273,7 @@ lo que hay que mirar.
 | Zona | Qué hay |
 |---|---|
 | `<script>` clásico | registro, captura de errores, panel de diagnóstico |
-| bloque de análisis | evaluación, geometría, categorías, `derivarFilas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`) |
+| bloque de análisis | evaluación, geometría, categorías, `derivarFilas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), y al final el nombre de la apertura en castellano (`aperturaEs`, v0.130) |
 | motor | clase `Motor`, grupo de motores, `evaluarPosiciones` |
 | caché | IndexedDB |
 | análisis | `analizarPartida`, barrido, híbrido |
@@ -4673,6 +4673,59 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.130, la apertura en castellano, y nunca cortada** (lavado de cara del
+revisor, v0.123; Juan, 10-nov: no sabe si le copa de subtítulo, *"sobre todo
+cuando el nombre es muy largo"*). Celu y PC: es la barra de título de la
+Partida, la misma en los dos. Se dibujaron cuatro a 386 sobre la cabecera de
+verdad, con tres nombres cada una: A, solo la familia ("Apertura italiana");
+B, familia y primera variante; C, el nombre completo traducido (se sigue
+cortando); D, la barra de un renglón y la apertura en la tarjeta mientras dura
+el libro. El revisor eligió **B con ajustes**: D hace saltar el tablero 17 px
+al entrar y salir del libro y el nombre se va cuando termina, C se sigue
+cortando, A pierde lo que sirve para entrenar (Najdorf, Giuoco Piano) y queda
+como respaldo adentro de B. Lo que queda:
+- `aperturaEs(nombre)` (al final del bloque de análisis, así se prueba en
+  node) devuelve `{ largo, corto }`: "Apertura italiana: Giuoco Piano" y
+  "Apertura italiana". Dos puntos y no "·" (el "·" ya separa datos del mismo
+  nivel en el renglón de arriba); "Apertura"/"Defensa" se quedan.
+- **La familia** sale de una regla (la palabra del tipo —Defense, Opening,
+  Gambit…— va adelante) y tres diccionarios chicos: adjetivos con su femenino y
+  masculino (`AP_ADJ`), complementos con "de" (`AP_DE`) y nombres propios con
+  nombre castellano (`AP_PROPIO`: Londres, Zaragoza, Moscú). Las 149 familias
+  salen limpias; `AP_FIJO` tiene las raras (Ruy Lopez → "Apertura española").
+- **La variante** es solo la primera parte después de los dos puntos, y se
+  muestra **solo si cada palabra es un nombre propio o una que sabemos
+  decir**; si queda una palabra de `AP_INGLES` (la lista de las palabras en
+  inglés que aparecen en el libro), o un prefijo Anti-/Pseudo-/Semi-…, va la
+  familia sola. Un castellano a medias es peor que no decirla. También se
+  rechazan las compuestas con gentilicio inglés ("Czech-Indian", "Nimzo-Dutch")
+  y las que llevan números ("System3"): pasaban por apellido y las encontró el
+  revisor recorriendo las palabras con mayúscula de la salida. Una variante
+  hecha solo de adjetivos es una variante sin decirlo: "Closed" → "variante
+  cerrada", "Accelerated Dragon" → "variante del dragón acelerado". Si son solo
+  nombres propios va pelada ("Defensa siciliana: Najdorf"); con un adjetivo,
+  con su palabra ("variante del avance", "ataque clásico"). Sale variante en
+  2.486 de los 3.329 nombres.
+- **Familias comodín** (`AP_COMODIN`: peón de dama, peón de rey, defensa
+  india…): no dicen nada, así que va la variante sola ("Sistema Londres
+  acelerado").
+- **Nunca "…"**: `ajustarApertura` pone el largo y, si el renglón desborda
+  (`scrollWidth > clientWidth`, medido en píxeles), el corto. Un
+  `ResizeObserver` sobre el renglón vuelve a medir al girar o cambiar la
+  ventana y cuando la Partida aparece (se pinta escondida, y ahí todo mide 0).
+  **Y `pintarEstado` la vuelve a medir**: mientras se ve el estado o un aviso
+  (`avisar`, 2,5 s) la apertura está escondida y no se decide; al vaciarse el
+  estado el renglón no cambia de ancho, el observador no salta, y volvía el
+  "…" (lo reprodujo el revisor a 386, navegando con un aviso a la vista).
+  Medido con la partida de prueba: el largo entra de 300 a 1600; a 280 pasa a
+  la familia, y vuelve al ensanchar. Largo: mediana 32 letras, p90 44, máximo
+  62; corto, máximo 37 (entran ~45 a 386).
+- Prueba de unidad que recorre los 3.329 nombres y falla si a la salida queda
+  una palabra de `AP_INGLES`. **Si se suma una palabra al libro que no está en
+  la lista, pasa por apellido**: la lista hay que agrandarla a mano.
+- Duda para Juan: si la apertura de subtítulo, ya sin cortarse, le copa; la
+  otra es la barra de un renglón y la apertura en el Resumen (no se dibujó).
 
 **v0.129, la precisión de la fila dice qué es: "prec. 89"** (lavado pedido
 por Juan sobre la v0.128: *"el número suelto no sé si se entiende"*; celu y

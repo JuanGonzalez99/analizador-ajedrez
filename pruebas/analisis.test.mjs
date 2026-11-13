@@ -3123,3 +3123,43 @@ test("el Mes en dos columnas solo en la compu (v0.119)", () => {
             z.indexOf('id="mesResumen"') < z.indexOf('class="mesDer"') &&
             z.indexOf('class="mesDer"') < z.indexOf('class="seccion"'), "resumen a la izquierda, secciones a la derecha");
 });
+
+/* --- el nombre de la apertura en castellano (v0.130) --- */
+
+test("aperturaEs: familia y variante, y el respaldo de solo la familia", () => {
+  assert.deepEqual(A.aperturaEs("C54 Italian Game: Giuoco Piano, Therkatz-Herzog Variation"),
+    { largo: "Apertura italiana: Giuoco Piano", corto: "Apertura italiana" });
+  assert.equal(A.aperturaEs("B90 Sicilian Defense: Najdorf Variation").largo, "Defensa siciliana: Najdorf");
+  assert.equal(A.aperturaEs("C02 French Defense: Advance Variation").largo,
+    "Defensa francesa: variante del avance");
+  assert.equal(A.aperturaEs("C30 King's Gambit Declined").largo, "Gambito de rey rehusado");
+  /* la familia comodín no dice nada: va la variante sola */
+  assert.equal(A.aperturaEs("D00 Queen's Pawn Game: Accelerated London System").largo,
+    "Sistema Londres acelerado");
+  /* una variante con inglés que no sabemos decir no se muestra */
+  assert.equal(A.aperturaEs("C57 Italian Game: Two Knights Defense, Fried Liver Attack").largo,
+    "Apertura italiana: defensa de los dos caballos");
+  /* solo adjetivos: una variante sin decirlo */
+  assert.equal(A.aperturaEs("B27 Sicilian Defense: Accelerated Dragon").largo,
+    "Defensa siciliana: variante del dragón acelerado");
+  assert.equal(A.aperturaEs("C84 Ruy Lopez: Closed").largo, "Apertura española: variante cerrada");
+  /* lo que pasaba por apellido (revisor, v0.130) */
+  assert.equal(A.aperturaEs("A50 Indian Defense: Czech-Indian").largo, "Defensa india");
+  assert.equal(A.aperturaEs("C00 French Defense: Mediterranean Defense").largo, "Defensa francesa");
+  assert.equal(A.aperturaEs("E30 Nimzo-Indian Defense: St. Petersburg Variation").largo,
+    "Defensa nimzoindia: San Petersburgo");
+  assert.deepEqual(A.aperturaEs(""), { largo: "", corto: "" });
+});
+
+test("aperturaEs: ninguno de los nombres del libro sale con una palabra en inglés", () => {
+  const libro = JSON.parse(fs.readFileSync(new URL("../aperturas.json", import.meta.url), "utf8"));
+  const malas = [];
+  for (const n of new Set(Object.values(libro.nombres))) {
+    const r = A.aperturaEs(n);
+    const palabras = (r.largo + " " + r.corto).split(/[\s:,]+/);
+    if (!r.largo || palabras.some(w => A.AP_INGLES.has(w) || /^(Anti|Pseudo|Ultra)-|-(Indian|Polish|American|Dutch)$/.test(w) ||
+                                      (/\d/.test(w) && !/^[KQRBN]?[a-h][1-8]\+?$/.test(w))))
+      malas.push(n + " → " + r.largo);
+  }
+  assert.deepEqual(malas.slice(0, 5), []);
+});

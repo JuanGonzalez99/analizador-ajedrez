@@ -1269,7 +1269,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.129 · 12-11";
+  window.VERSION = "v0.130 · 13-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3478,6 +3478,193 @@ function observarJugada(f, fenAntes = null) {
   } catch (e) { return vacio; }
 }
 
+/* ============ el nombre de la apertura, en castellano (v0.130) ============
+   `aperturas.json` trae los nombres en inglés ("C54 Italian Game: Giuoco Piano,
+   Therkatz-Herzog Variation") y la app habla en castellano. Lavado de cara del
+   revisor (v0.123), resuelto con la B de cuatro variantes: el subtítulo de la
+   Partida dice FAMILIA Y PRIMERA VARIANTE, separadas por dos puntos
+   ("Apertura italiana: Giuoco Piano"), y si no entra en el renglón, solo la
+   familia —nunca "…", que era la queja de Juan (10-nov)—. Eso último lo
+   decide el DOM, midiendo, en `ajustarApertura`.
+
+   NO SE TRADUCE TODO, y es a propósito. Las 149 familias salen limpias con una
+   regla y tres diccionarios chicos. Las ~1.060 primeras variantes son casi todas
+   nombres propios ("Najdorf", "Giuoco Piano") y se traducen solo cuando cada
+   palabra es un nombre propio o una que sabemos decir ("Classical" → clásica);
+   si queda UNA palabra en inglés que no conocemos, la variante no se muestra y
+   va la familia sola. Un castellano a medias ("variante Fried Liver Attack") es
+   peor que no decirla (revisor). La prueba de unidad recorre los 3.329 nombres y
+   falla si a la salida queda una palabra de `AP_INGLES`. */
+const AP_TIPO = {
+  Defense: ["Defensa", "f"], Opening: ["Apertura", "f"], Game: ["Apertura", "f"],
+  Gambit: ["Gambito", "m"], Countergambit: ["Contragambito", "m"], Attack: ["Ataque", "m"],
+  System: ["Sistema", "m"], Formation: ["Formación", "f"], Variation: ["Variante", "f"],
+  Line: ["Línea", "f"], Counterattack: ["Contraataque", "m"], Trap: ["Trampa", "f"],
+};
+/* adjetivos: [femenino, masculino] */
+const AP_ADJ = {
+  Australian: ["australiana", "australiano"], Basque: ["vasca", "vasco"],
+  Czech: ["checa", "checo"], Dutch: ["holandesa", "holandés"], English: ["inglesa", "inglés"],
+  French: ["francesa", "francés"], Hungarian: ["húngara", "húngaro"], Indian: ["india", "indio"],
+  Italian: ["italiana", "italiano"], Mexican: ["mexicana", "mexicano"],
+  Modern: ["moderna", "moderno"], Polish: ["polaca", "polaco"],
+  Portuguese: ["portuguesa", "portugués"], Scandinavian: ["escandinava", "escandinavo"],
+  Scotch: ["escocesa", "escocés"], Sicilian: ["siciliana", "siciliano"], Slav: ["eslava", "eslavo"],
+  "Semi-Slav": ["semieslava", "semieslavo"], Catalan: ["catalana", "catalán"],
+  Vienna: ["vienesa", "vienés"], Danish: ["danesa", "danés"], Irish: ["irlandesa", "irlandés"],
+  Latvian: ["letona", "letón"], "Bogo-Indian": ["bogoindia", "bogoindio"],
+  "Nimzo-Indian": ["nimzoindia", "nimzoindio"], "Old Indian": ["india antigua", "indio antiguo"],
+  "East Indian": ["india del este", "indio del este"],
+  "King's Indian": ["india de rey", "indio de rey"], "Queen's Indian": ["india de dama", "indio de dama"],
+  "Pseudo Queen's Indian": ["seudo india de dama", "seudo indio de dama"],
+  Classical: ["clásica", "clásico"], Closed: ["cerrada", "cerrado"], Open: ["abierta", "abierto"],
+  Normal: ["normal", "normal"], Symmetrical: ["simétrica", "simétrico"],
+  Accelerated: ["acelerada", "acelerado"], Hyperaccelerated: ["hiperacelerada", "hiperacelerado"],
+  Delayed: ["retrasada", "retrasado"], Deferred: ["diferida", "diferido"],
+  Reversed: ["invertida", "invertido"], Double: ["doble", "doble"], Quiet: ["tranquila", "tranquilo"],
+  Central: ["central", "central"], Orthodox: ["ortodoxa", "ortodoxo"], Old: ["antigua", "antiguo"],
+  Spanish: ["española", "español"], Russian: ["rusa", "ruso"], Austrian: ["austríaca", "austríaco"],
+  Swedish: ["sueca", "sueco"], Bulgarian: ["búlgara", "búlgaro"], Chinese: ["china", "chino"],
+  Swiss: ["suiza", "suizo"], German: ["alemana", "alemán"], Norwegian: ["noruega", "noruego"],
+  Yugoslav: ["yugoslava", "yugoslavo"], Traditional: ["tradicional", "tradicional"],
+  Standard: ["estándar", "estándar"], Main: ["principal", "principal"],
+  "Neo-Grünfeld": ["neo-Grünfeld", "neo-Grünfeld"],
+};
+/* complementos que van con "de": no cambian con el género */
+const AP_DE = {
+  "King's": "de rey", "Queen's": "de dama", "Bishop's": "de alfil", "King's Pawn": "de peón de rey",
+  "Queen's Pawn": "de peón de dama", "King's Knight": "de caballo de rey",
+  "Two Knights": "de los dos caballos", "Four Knights": "de los cuatro caballos",
+  "Three Knights": "de los tres caballos", Center: "del centro", Elephant: "del elefante",
+  Hippopotamus: "del hipopótamo", Lion: "del león", Rat: "de la rata", Vulture: "del buitre",
+  Exchange: "del cambio", Advance: "del avance", Fianchetto: "del fianchetto",
+  Dragon: "del dragón", "Accelerated Dragon": "del dragón acelerado",
+};
+/* nombres propios con nombre castellano */
+const AP_PROPIO = {
+  Kangaroo: "canguro", Pterodactyl: "pterodáctilo", Amazon: "Amazonas", Saragossa: "Zaragoza",
+  Dresden: "Dresde", "St.": "San", George: "Jorge", Amsterdam: "Ámsterdam", London: "Londres",
+  Leningrad: "Leningrado", Moscow: "Moscú", Paris: "París", Prague: "Praga",
+  Copenhagen: "Copenhague", Warsaw: "Varsovia", Brussels: "Bruselas", Cologne: "Colonia",
+  Venice: "Venecia", Zurich: "Zúrich", Lopez: "López", Petersburg: "Petersburgo",
+};
+const AP_FIJO = {
+  "Ruy Lopez": "Apertura española", "English Orangutan": "Apertura inglesa, orangután",
+  "Slav Indian": "India eslava", "Queen's Indian Accelerated": "India de dama acelerada",
+  "Lasker Simul Special": "Especial de Lasker", Formation: "Formación",
+  "Queen's Pawn, Mengarini Attack": "Peón de dama, ataque Mengarini",
+  "Vienna Gambit, with Max Lange Defense": "Gambito vienés, con defensa Max Lange",
+};
+/* familias que no dicen nada: el nombre está en la variante, que va sola */
+const AP_COMODIN = new Set(["Queen's Pawn Game", "King's Pawn Game", "King's Pawn Opening",
+  "Indian Defense", "King's Knight Opening", "Zukertort Opening"]);
+/* PALABRAS EN INGLÉS que no son nombres propios. No hace falta que esté todo el
+   idioma: es la lista de las que aparecen en las variantes, para que una que no
+   sabemos decir no pase por apellido. La prueba de unidad la usa al revés. */
+const AP_INGLES = new Set(("Variation Variations Gambit Defense Attack Countergambit System " +
+  "Reversed Accepted Declined Knights Knight Knight's Indian Fianchetto King King's Queen " +
+  "Queen's Opening Accelerated Double Modern Invitation Line Two Three Four Six Deferred " +
+  "Counterattack Spike Formation Trap The Pawn Pawns Classical Old Central Exchange " +
+  "Symmetrical Symmetric Advance Wing Quiet Closed Open Mate Queenside Kingside Bishop " +
+  "Bishop's Folly Hybrid Normal Connection Standard Endgame Delayed Hyperaccelerated Clam " +
+  "Corkscrew Halloween with Fool's Shy Beginner's Outflank Rooks Swap Bouncing Crab Meadow " +
+  "Hay Duck Arctic Black Mustang Drunken Cavalry Walrus Potato Penguin Great Snake " +
+  "Porcupine Defensive Drill Main Mosquito Lizard Cormorant Hawk Snail Push Edge Poisoned " +
+  "Raptor Aged Return Storming Fully Walk Tour Storm Kingfisher Second Lion Lion's Jaw Wind " +
+  "Unicorn Squirrel Transfer Hunt Eastern Western Bayonet Apocalypse Offer Alien Martian " +
+  "Big Clamp Brick Extension Mongoose Pin Head Tortoise Wayward Whale Small Center Giraffe " +
+  "Mafia Dodo Tumbleweed Traditional Wasp Lobster Game Goblin Millennium Retreat Noah's Ark " +
+  "Move Order New Counterthrust West Woodchuck Snagglepuss Picklepuss Hillbilly Beefeater " +
+  "Woozle Mediterranean Horsefly Harmonist Dragon Elephant Rat Vulture Hippopotamus Kangaroo Amazon Spanish Italian English " +
+  "French Dutch Russian Austrian Hungarian Swedish Polish Czech Bulgarian Chinese Swiss " +
+  "German Norwegian Mexican Australian Icelandic Lithuanian Finnish Siberian Ukrainian " +
+  "Bavarian Westphalian Valencian Portuguese Scandinavian Baltic Netherlands Sicilian Scotch " +
+  "Vienna Slav Catalan Orthodox Yugoslav Danish Irish Latvian Basque Liver Special Simul " +
+  "Orangutan").split(" "));
+/* y las compuestas con un gentilicio inglés ("Czech-Indian", "Nimzo-Dutch",
+   "Icelandic-Palme") o con números ("System3"), que pasaban por apellido
+   (revisor, v0.130) */
+const AP_PREFIJO_INGLES = /^(Anti|Pseudo|Ultra|Semi|Neo|Franco|Anglo|Double|Icelandic)-|-(Indian|Polish|American|Dutch)$|\d/;
+
+/* una frase de palabras sueltas → castellano, o null si queda inglés adentro */
+function apTraducir(palabras, tipo) {
+  const [cab, g] = AP_TIPO[tipo];
+  const propios = [], adjs = [], des = [];
+  for (let i = 0; i < palabras.length; i++) {
+    const dos = palabras[i] + " " + palabras[i + 1], tres = dos + " " + palabras[i + 2];
+    if (AP_ADJ[tres] || AP_DE[tres]) { (AP_ADJ[tres] ? adjs : des).push(AP_ADJ[tres] ? AP_ADJ[tres][g === "f" ? 0 : 1] : AP_DE[tres]); i += 2; continue; }
+    if (AP_ADJ[dos] || AP_DE[dos]) { (AP_ADJ[dos] ? adjs : des).push(AP_ADJ[dos] ? AP_ADJ[dos][g === "f" ? 0 : 1] : AP_DE[dos]); i++; continue; }
+    const p = palabras[i];
+    if (AP_ADJ[p]) adjs.push(AP_ADJ[p][g === "f" ? 0 : 1]);
+    else if (AP_DE[p]) des.push(AP_DE[p]);
+    else if (AP_PROPIO[p]) propios.push(AP_PROPIO[p]);
+    else if (AP_INGLES.has(p) || AP_PREFIJO_INGLES.test(p) || /^[a-z]/.test(p)) return null;
+    else propios.push(p.replace(/'s?$/, ""));
+  }
+  return [cab, ...propios, ...adjs, ...des].join(" ");
+}
+const AP_PARTE = /^(.*?)\s*\b(Defense|Opening|Game|Gambit|Countergambit|Attack|System|Formation|Variation|Line|Counterattack|Trap)(?: (Accepted|Declined))?$/;
+function apParte(s) {
+  if (s === "Main Line") return "Línea principal";
+  const m = s.match(AP_PARTE);
+  if (!m) return null;
+  const es = apTraducir(m[1] ? m[1].split(/\s+/) : [], m[2]);
+  if (!es) return null;
+  const g = AP_TIPO[m[2]][1];
+  if (!m[3]) return es;
+  return es + (m[3] === "Accepted" ? (g === "f" ? " aceptada" : " aceptado")
+                                   : (g === "f" ? " rehusada" : " rehusado"));
+}
+function apertFamilia(f) {
+  if (AP_FIJO[f]) return AP_FIJO[f];
+  let resto = "";
+  const coma = f.indexOf(", ");
+  if (coma > 0) { resto = f.slice(coma + 2); f = f.slice(0, coma); }
+  const es = AP_FIJO[f] || apParte(f);
+  if (!es) return null;
+  const con = /^with [\w+]+$/.test(resto) ? resto.replace(/^with /, "con ") : "";
+  return con ? es + ", " + con : es;
+}
+/* La variante: si son solo nombres propios, el nombre pelado ("Najdorf",
+   "Giuoco Piano"), que "variante" no agrega nada; si lleva un adjetivo, con su
+   palabra en minúscula ("variante del cambio", "sistema Londres acelerado"). */
+function apertVariante(s) {
+  if (!s) return null;
+  if (!AP_PARTE.test(s) && s !== "Main Line") {
+    /* nombre propio suelto: "Giuoco Piano", "Max Lange"; o solo adjetivos,
+       que son una variante sin decirlo ("Closed" → variante cerrada,
+       "Accelerated Dragon" → variante del dragón acelerado) */
+    const ps = s.split(/\s+/);
+    const comoVar = apTraducir(ps, "Variation");
+    if (comoVar && ps.every(p => AP_ADJ[p] || AP_DE[p] || AP_DE[s] || AP_ADJ[s]))
+      return comoVar[0].toLowerCase() + comoVar.slice(1);
+    if (ps.some(p => AP_INGLES.has(p) || AP_PREFIJO_INGLES.test(p) || /^[a-z]/.test(p))) return null;
+    return ps.map(p => AP_PROPIO[p] || p).join(" ");
+  }
+  const es = apParte(s);
+  if (!es) return null;
+  const m = s.match(AP_PARTE);
+  if (m && m[2] === "Variation" && !m[3]) {
+    const pel = es.replace(/^Variante /, "");
+    if (/^[A-ZÁÉÍÓÚÜ]/.test(pel) && !pel.split(" ").some(w => /^[a-záéíóúü]/.test(w))) return pel;
+  }
+  return es[0].toLowerCase() + es.slice(1);
+}
+/* Devuelve { largo, corto }: lo que se intenta y el respaldo si no entra. */
+function aperturaEs(nombre) {
+  const sinEco = (nombre || "").replace(/^[A-E]\d\d\s+/, "");
+  if (!sinEco) return { largo: "", corto: "" };
+  const [famEn, varEn] = sinEco.split(": ");
+  const fam = apertFamilia(famEn) || famEn;
+  const vari = apertVariante(varEn && varEn.split(", ")[0]);
+  if (!vari) return { largo: fam, corto: fam };
+  if (AP_COMODIN.has(famEn)) {
+    const sola = vari[0].toUpperCase() + vari.slice(1);
+    return { largo: sola, corto: sola.length < fam.length + 12 ? sola : fam };
+  }
+  return { largo: fam + ": " + vari, corto: fam };
+}
+
 /* ===================== fin del bloque de análisis ====================== */
 
 try {
@@ -3643,7 +3830,10 @@ const estado = (t, html) => {
 };
 /* en la Partida el estado va en el subtítulo de la barra de título (v0.123),
    en el lugar de la apertura; en el inicio y el Mes, donde estaba */
-const pintarEstado = h => { $("estado").innerHTML = h; $("revEstado").innerHTML = h; };
+/* y la apertura se vuelve a medir: si la cabecera se pintó con el estado a la
+   vista, se midió el estado, y al vaciarse el renglón no cambia de ancho, así
+   que el observador no salta y volvía el "…" (revisor, v0.130) */
+const pintarEstado = h => { $("estado").innerHTML = h; $("revEstado").innerHTML = h; ajustarApertura(); };
 const avisar = t => {
   AVISO_HASTA = Date.now() + 2500;
   pintarEstado(sinHtml(t));
@@ -6434,8 +6624,25 @@ function pintarCabPartida(rival, elo, fin, ap) {
   $("revFin").textContent = fin || "";
   /* sin el código ECO del principio ("C54 Italian Game…"): para quien lee es
      un glifo que hay que descifrar */
-  $("revAp").textContent = (ap || "").replace(/^[A-E]\d\d\s+/, "");
+  const es = aperturaEs(ap);
+  $("revAp").dataset.largo = es.largo;
+  $("revAp").dataset.corto = es.corto;
+  ajustarApertura();
 }
+/* NUNCA "…" EN LA APERTURA (v0.130): se prueba familia y variante, y si el
+   renglón desborda, va la familia sola. Se mide en píxeles sobre el renglón ya
+   dibujado y no contando letras, así vale a 386, a 412 y en la compu sin
+   calibrar nada. El observador vuelve a medir cuando el renglón cambia de
+   ancho —girar el celu, otra ventana— y cuando aparece, porque la cabecera se
+   pinta con la Partida todavía escondida y ahí todo mide cero. */
+function ajustarApertura() {
+  const ap = $("revAp"), l2 = ap.parentNode;
+  ap.textContent = ap.dataset.largo || "";
+  /* con el estado tapándola no se ve, y no se decide: se mide al volver */
+  if (!ap.getClientRects().length) return;
+  if (l2.clientWidth && l2.scrollWidth > l2.clientWidth) ap.textContent = ap.dataset.corto || "";
+}
+if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => ajustarApertura()).observe($("revAp").parentNode);
 const RESULTADOS = { "1-0": "1-0", "0-1": "0-1", "1/2-1/2": "Tablas" };
 function comoTermino(cab, meta) {
   const res = RESULTADOS[(cab && cab.Result) || ""] || null;
