@@ -257,7 +257,7 @@ lo demás se dibuja contra ella.
       corta ("prec. 89") y un ícono chico delante; a 386 de ancho, que al
       rival no le falte lugar. Con variantes.
 
-- [ ] **Lavado de cara: el idioma de las aperturas** (revisor, v0.123; celu y
+- [x] **Lavado de cara: el idioma de las aperturas** (v0.130, 13-nov: la B, familia y variante en castellano, y si no entra solo la familia, nunca "…"; revisor, v0.123; celu y
       PC). Desde la v0.123 la apertura es el subtítulo de cada partida, y los
       nombres de `aperturas.json` están en inglés ("Italian Game: Giuoco Piano,
       Therkatz-Herzog Variation") en una app que habla en castellano. ¿Nombres
@@ -309,6 +309,12 @@ lo demás se dibuja contra ella.
       cualquier ritmo, mientras las secciones de alrededor siguen al selector
       de ritmo y al de fuente (la ayuda lo dice; ¿la lista debería seguir el
       mismo filtro?). Con variantes.
+- [ ] **Lavado de cara: qué dice la tarjeta en una jugada de libro** (revisor,
+      v0.130; celu y PC). En 3. Bc4, jugada de libro, la tarjeta dice "La mejor
+      era Nd4. El rival tiene Rb8.": un "la mejor era" contradice a la
+      categoría. Puede ser cosa del motor de mentira de la partida de prueba;
+      primero ver si pasa con una partida de verdad, y si pasa, qué tiene que
+      decir la tarjeta en el libro. Con variantes si pide forma.
 - [ ] **[PC] Lavado de cara: la fila de la lista como dos islas** (revisor,
       v0.129; inicio y Mes). A 1280, entre el resultado (columna 2) y la
       precisión ("prec. 89", pegada a la fecha) quedan ~200 px y la fila se lee
@@ -413,6 +419,11 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.130):** la apertura sigue de subtítulo de la
+  Partida, ahora en castellano y sin cortarse nunca ("Apertura italiana: Giuoco
+  Piano"; si no entra, "Apertura italiana"). La otra es la barra de un renglón
+  y la apertura solo en el Resumen. Tira de las cuatro variantes en el resumen
+  del 13-nov.
 - **Pendiente de Juan, para cuando quiera (9-nov):** revisar lo que cambió en
   el criterio del revisor el domingo 8-nov (commit `1af4576`, "principios en
   vez de casos"). No lo quiso ver todavía; hasta entonces queda aplicado.
