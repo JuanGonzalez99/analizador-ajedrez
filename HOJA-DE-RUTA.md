@@ -268,7 +268,7 @@ lo demás se dibuja contra ella.
       variantes prueben también el largo: solo la familia, un nombre corto, o
       la apertura en otro lugar.
 
-- [ ] **Lavado de cara: la fila de datos cuando no hay jugada** (revisor,
+- [x] **Lavado de cara: la fila de datos cuando no hay jugada** (v0.131, 14-nov: la C sin caja, Mejor y una leyenda suelta; Pensó sin reloj dice "sin reloj"; revisor,
       v0.124; celu). En la posición inicial Pérdida, Caída y Pensó dicen "—" y
       solo Mejor dice algo: tres cuadritos vacíos con protagonismo. ¿Qué
       muestra la fila cuando no hay jugada que juzgar: los cuatro en "—", solo

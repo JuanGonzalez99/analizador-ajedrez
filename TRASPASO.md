@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.130**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.131**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,28 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.131, la fila de datos cuando no hay jugada** (lavado de cara del
+revisor, v0.124; celu y PC, es la misma fila). En la posición inicial Pérdida,
+Caída y Pensó decían "—": tres cajas vacías con el mismo peso que Mejor, la
+única que sirve ahí. Se dibujaron cinco sobre la app a 412×760, todas sin
+cambiar el alto de la fila: A, los "—" de hoy; B, solo Mejor (tres cuartos
+vacíos bajo una curva de todo el ancho: "armada con pedazos"); C, una franja de
+tres columnas con una leyenda; D, huecos punteados sin valor (parecen campos
+para llenar); E, nada (se pierde tocar Mejor justo al arrancar). El revisor
+eligió **C sin la caja**: un cuadro con borde que solo aclara se lee como un
+campo más; suelto se lee como leyenda de Mejor. Lo que queda:
+- `#mLeyenda` (`.leyInicio`) en `.metricas`, escondido salvo con la clase
+  `enInicio` en la fila, que también esconde los tres cuadritos. Tenue,
+  12,5 px (el tamaño de la leyenda, §1.4), interlineado 1,35, desde la 2.ª columna, centrado con Mejor a 0,9 px (medido
+  con `Range`). La fila sigue en 51,5: no salta nada al ir a la jugada 1.
+- El texto: "Pérdida, caída y lo que pensó, desde la primera jugada." (dos
+  renglones a 386 y a 412), y si la partida no trae ningún reloj "Pérdida y
+  caída, desde la primera jugada." (uno): no promete un dato que no va a llegar.
+- **Pensó sin reloj dice "sin reloj"**, en tenue y peso normal (`.sinDato`), y
+  no el "·" de `tiempoCorto`, que era un glifo para descifrar; "—" tampoco,
+  porque dice "todavía no". Entra a 386 a 15 px. Las tablas siguen con el "·".
+- Chequeo estático 7ter.
 
 **v0.130, la apertura en castellano, y nunca cortada** (lavado de cara del
 revisor, v0.123; Juan, 10-nov: no sabe si le copa de subtítulo, *"sobre todo

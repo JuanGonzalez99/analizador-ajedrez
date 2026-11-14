@@ -597,6 +597,14 @@
   /* el cuadrito de la mejor jugada se toca para verla en el tablero, y se nota
      que está encendido: si no, la flecha aparece sin que se sepa de dónde */
   .metricas .tocable { cursor: pointer; user-select: none; }
+  /* la leyenda del arranque (v0.131): sin caja, en tenue, desde la 2.ª columna */
+  .metricas > .leyInicio { display: none; grid-column: span 3; background: none; border: 0;
+                           border-radius: 0; padding: 0; color: var(--tenue); font-size: 12.5px;
+                           line-height: 1.35; align-items: center; }
+  .metricas.enInicio > div:not(.tocable):not(.leyInicio) { display: none; }
+  .metricas.enInicio > .leyInicio { display: flex; }
+  /* "sin reloj": dice qué falta, en vez del "·" que había que descifrar */
+  .metricas .va.sinDato { color: var(--tenue); font-weight: 400; }
   /* Grisado (la jugada ya era la mejor) solo el VALOR: el cuadrito sigue
      respondiendo desde la v0.117, así que el borde, el rótulo y el estado
      prendido se tienen que seguir leyendo (revisor, v0.117). */
@@ -1269,7 +1277,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.130 · 13-11";
+  window.VERSION = "v0.131 · 14-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1704,6 +1712,15 @@
          pérdida y la caída, y su lugar es esta fila: no cuesta un solo píxel,
          no tapa nada, y el renglón ya existía. §4duotrigies. -->
     <div><div class="et">Pensó</div><div class="va" id="mPenso"></div></div>
+    <!-- LA FILA ANTES DE LA PRIMERA JUGADA (v0.131). En la posición inicial no
+         hay jugada que juzgar, y los tres cuadritos decían "—": tres cajas
+         vacías con el mismo peso que la que sí sirve. Se dibujaron cinco (los
+         "—", solo Mejor, esta leyenda, huecos punteados y nada); el revisor
+         eligió la leyenda, SIN caja: suelta se lee como aclaración de Mejor y
+         no como un campo más, y enseña los nombres de lo que aparece en la
+         jugada 1. Ocupa las tres columnas, así que el alto no cambia y no salta
+         nada al avanzar. Traspaso §7, v0.131. -->
+    <div class="leyInicio" id="mLeyenda"></div>
   </div>
   <div class="senales" id="senales"></div>
   <div class="acciones">
@@ -7412,7 +7429,19 @@ function pintarRevision() {
      las tablas. `tiempoCorto` pone el "·" cuando la partida no trae relojes
      —correspondencia, o un PGN pegado a mano—, así que el cuadrito no cambia de
      forma entre partidas. */
-  $("mPenso").textContent = enInicio ? "\u2014" : tiempoCorto(f.seg);
+  /* SIN RELOJ SE DICE (v0.131): el "·" de `tiempoCorto` era un glifo para
+     descifrar, y "—" dice "todavía no", que es otra cosa. Las tablas siguen
+     con el "·", que ahí tiene su leyenda. */
+  const sinReloj = !enInicio && f.seg == null;
+  $("mPenso").textContent = enInicio ? "\u2014" : sinReloj ? "sin reloj" : tiempoCorto(f.seg);
+  $("mPenso").classList.toggle("sinDato", sinReloj);
+  /* En la inicial la fila es Mejor y una leyenda: no promete el tiempo si la
+     partida no trae relojes, porque ese dato no va a llegar nunca. */
+  $("mLeyenda").closest(".metricas").classList.toggle("enInicio", enInicio);
+  if (enInicio)
+    $("mLeyenda").textContent = R.filas.some(x => x.seg != null)
+      ? "Pérdida, caída y lo que pensó, desde la primera jugada."
+      : "Pérdida y caída, desde la primera jugada.";
   /* Cuando la jugada jugada YA era la mejor no hay nada distinto que mostrar.
      El cuadrito se grisa y deja de responder: sin eso parecia que tocarlo no
      hacia nada, o sea un bug. */

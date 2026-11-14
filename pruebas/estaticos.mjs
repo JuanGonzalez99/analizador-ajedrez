@@ -121,6 +121,14 @@ chequear("el traspaso está al día",
   ]);
 }
 
+/* 7ter. La fila sin jugada no pone glifos mudos (v0.131): en la inicial va la
+   leyenda en vez de tres "—", y sin reloj Pensó dice "sin reloj" y no "·". */
+chequear("la fila sin jugada dice qué pasa", [
+  ...(/id="mLeyenda"/.test(html) ? [] : ["falta la leyenda del arranque (#mLeyenda)"]),
+  ...(/toggle\("enInicio", enInicio\)/.test(html) ? [] : ["la fila no se entera de la posición inicial"]),
+  ...(/sinReloj \? "sin reloj"/.test(html) ? [] : ["Pensó vuelve al \"·\" sin reloj"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden
