@@ -129,6 +129,14 @@ chequear("la fila sin jugada dice qué pasa", [
   ...(/sinReloj \? "sin reloj"/.test(html) ? [] : ["Pensó vuelve al \"·\" sin reloj"]),
 ]);
 
+/* 7quater. [PC] Las comidas van arriba y abajo del tablero (v0.132), no en
+   una columna al costado que en la apertura quedaba vacía. */
+chequear("las comidas no vuelven a la columna", [
+  ...(/flex: 0 0 64px; padding: var\(--mTab\) 0/.test(html) ? ["volvió la columna de 64"] : []),
+  ...(/\.comidas \{ position: absolute;/.test(html) ? [] : [".comidas no se superpone al tablero"]),
+  ...(/b\.style\.top = \(s\.bottom - r\.top \+ 4\)/.test(html) ? [] : ["Girar no va en el renglón de abajo"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

@@ -276,7 +276,7 @@ lo demás se dibuja contra ella.
       Pensó dice "·" y no "—" (puede ser que esa partida no traiga relojes).
       Con variantes.
 
-- [ ] **[PC] Lavado de cara: dónde van las piezas comidas** (revisor, v0.125).
+- [x] **[PC] Lavado de cara: dónde van las piezas comidas** (v0.132, 14-nov: la B, arriba y abajo del tablero como chess.com, Girar de 32 abajo a la derecha; revisor, v0.125).
       Con la partida recién empezada la columna de las comidas está vacía y
       queda una calle de ~120 px entre el tablero y el panel, con Girar solo en
       el medio. ¿Reservan su columna desde la jugada 1, o viven en otro lado
@@ -284,8 +284,14 @@ lo demás se dibuja contra ella.
       variantes.
 - [ ] **[PC] La Partida en ventanas angostas y altas** (revisor, v0.125). De
       1000 a 1100 de ancho con 900 de alto el tablero lo manda el ancho y
-      quedan ~390 px vacíos abajo. ¿Otra disposición en ese rango (curva o
+      quedan ~390 px vacíos abajo. **Remedido en la v0.132** (las casillas
+      pasaron de ~437 a 496 sin la columna de las comidas): 258 px a
+      1000×900 y 194 a 1100×900, con la barra vertical. Mejoró, pero sigue. ¿Otra disposición en ese rango (curva o
       cuadritos debajo del tablero)? Con variantes.
+- [ ] **[PC] La barra horizontal no se alinea con el tablero** (revisor,
+      v0.132; leve, ya estaba). A 1280 va de x 113 a 1167 y las casillas
+      arrancan en 139 (los números de fila en ~127). ¿La barra mide el ancho de
+      la página o el del tablero? Con la vertical, la de fábrica, no pasa.
 - [ ] **[PC] El Resumen al ancho del grupo** (revisor, v0.125; leve). Debajo
       de la Partida el Resumen mide 1082 centrado y el grupo de arriba otra
       cosa: dos cajas centradas de anchos distintos (a 1600, 27 px corrido).

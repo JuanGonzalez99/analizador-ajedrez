@@ -679,7 +679,10 @@
      apertura como en el celu, porque en la compu no hay otro Girar. */
   @media (width >= 1000px) {
     .acciones { display: none !important; }
-    #btnGirarTab { width: 44px; }
+    /* v0.132: chico, abajo a la derecha del tablero, en el renglón de las
+       comidas del que juega abajo (§1.7: 32 con puntero fino) */
+    #btnGirarTab { width: 32px; height: 32px; }
+    #btnGirarTab > svg { width: 20px; height: 20px; }
   }
   /* CON ÍCONO Y TEXTO (v0.113). El lavado de "dónde viven las preferencias
      del tablero" dibujó cuatro: esta fila con íconos (A), una fila de
@@ -940,12 +943,20 @@
     #zonaRevision { --panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 380px); --mTab: calc(var(--ladoTab) * 15 / 366);
                     display: grid; grid-template-columns: max-content var(--panel);
                     grid-template-rows: auto auto auto auto minmax(0, 1fr);
-                    justify-content: center; column-gap: 24px; row-gap: 0; align-items: start;
+                    justify-content: center; row-gap: 0; align-items: start;
+                    /* 32 de la casilla h al panel (§1.5): el SVG ya trae su margen */
+                    column-gap: max(4px, calc(32px - var(--mTab)));
                     /* el Resumen arranca debajo de la primera pantalla y no asoma
                        cortado (revisor): 68 son la cabecera y los márgenes del
                        tablero. Relleno y no `min-height`, que estiraría la fila
                        de la lista. */
-                    padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 20px - var(--ladoTab))); }
+                    padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab))); }
+    /* el renglón de las comidas de abajo y Girar (v0.132) */
+    .revtab { padding-bottom: 36px; }
+    /* con la barra horizontal arriba, las comidas del de arriba necesitan 8 +
+       20 + 8 entre la barra y la fila 8: el margen del SVG solo alcanza con el
+       tablero grande */
+    #zonaRevision:not(.sinEvalH) .revtab { margin-top: max(10px, calc(36px - var(--mTab))); }
     /* EL PANEL ARRANCA Y TERMINA CON LAS CASILLAS, no con la caja del SVG, que
        lleva 15 unidades de margen para las coordenadas (`--mTab` en pantalla):
        un solo renglón arriba y otro abajo para barra, tablero y panel. La lista
@@ -961,7 +972,7 @@
     #zonaRevision > .pabajo   { grid-column: 2; grid-row: 3; }
     #zonaRevision > .curva    { grid-column: 2; grid-row: 4; }
     #zonaRevision > .colLista { grid-column: 2; grid-row: 5; align-self: stretch;
-                                height: 0; min-height: max(calc(100% - 10px - var(--mTab)), 300px); }
+                                height: 0; min-height: max(calc(100% - 10px - var(--mTab) - 36px), 300px); }
     /* MÍNIMO CUATRO RENGLONES de lista (300 son las alternativas, cuatro
        renglones, "‹ ›" y sus márgenes): con el tablero limitado por el ancho
        —de 950 a ~1000— quedaban dos. Ahí el panel se pasa del pie de las
@@ -1001,14 +1012,17 @@
        se ven, y esa fila de controles ya viene cargada. */
     .soloAncho { display: flex; }
     /* EL LADO DEL TABLERO: lo manda el alto —la pantalla menos la cabecera y
-       los márgenes— y, si la ventana es angosta, el ancho que dejan el panel,
-       la barra y las comidas (164, 16 de la barra de scroll y 4 de aire: con
-       184 justos la tuerca, al ras del panel, desbordaba 2 px). Con la barra
+       los márgenes— y, si la ventana es angosta, el ancho que dejan el panel
+       y la barra (120 desde la v0.132, que sacó los 64 de la columna de las
+       comidas; antes 184, con 16 de la barra de scroll y 4 de aire).
+       v0.132: el alto suma el renglón de abajo (comidas propias y Girar, 4 +
+       32) y 8 de aire: medido a 1280×720, Girar termina a 8 del borde con las
+       dos barras. Con la barra
        vertical, la de fábrica, 52 de alto: 8 arriba, 10 y 10 de márgenes del
        tablero y 24 de aire abajo; la horizontal suma 26. El piso de 360 es el
        del celu: en una ventana baja nunca queda más chico. */
-    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 78px), calc(100vw - var(--panel) - 184px)), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 52px), calc(100vw - var(--panel) - 184px)), 680px); }
+    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 80px), calc(100vw - var(--panel) - 120px)), 680px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 64px), calc(100vw - var(--panel) - 120px)), 680px); }
     svg.tab { max-width: var(--ladoTab); }
     /* con la columna en `max-content` la caja necesita su ancho escrito: si no,
        la columna se mide con los 300 de fábrica de un SVG y el tablero queda en
@@ -1028,8 +1042,22 @@
     /* 64 (v0.125): dos piezas por renglón. Con 132 la columna era un agujero
        al costado del tablero en la apertura; angosta, el tablero gana el ancho.
        Va de borde a borde de las casillas, como la barra. */
-    .comidas { display: flex; flex-direction: column; justify-content: space-between;
-               flex: 0 0 64px; padding: var(--mTab) 0; position: relative; }
+    /* ARRIBA Y ABAJO DEL TABLERO, como chess.com (v0.132, lavado de cara del
+       revisor, v0.125). La columna de 64 al costado quedaba vacía en la
+       apertura: una calle de ~120 px entre el tablero y el panel con Girar
+       solo en el medio. Se dibujaron cuatro: la columna de hoy, esta, una fila
+       en el panel (lejos del tablero, y un código izquierda/derecha para
+       aprender) y la columna a la izquierda (la misma calle, mudada). El
+       revisor eligió esta: cada tanda junto al jugador que la perdió, y el
+       ancho que era de la columna vuelve al tablero. `.comidas` cubre las
+       casillas (la ubica `ubicarGirar()`, que ya sabe la escala del SVG) y no
+       ocupa lugar: las del de arriba quedan 8 encima de la fila 8, en el margen
+       del SVG; las del de abajo, debajo de las letras, en un renglón fijo de 32
+       que comparte con Girar —así no salta nada con la primera comida—. */
+    .comidas { position: absolute; display: block; pointer-events: none; }
+    .comidas > .cGrupo { position: absolute; left: 0; right: 0; }
+    .comidas > #cArriba { bottom: calc(100% + 8px); min-height: 0; }
+    .comidas > #cAbajo { top: calc(100% + var(--mTab) + 4px); height: 32px; padding-right: 40px; }
     /* EL PANEL DE ALTERNATIVAS EXISTE SOLO ACÁ, como todo lo de esta tanda. Va
        arriba de la lista y no abajo: abajo se iría del pliegue. */
     .alts { display: block; background: var(--superficie); border: 1px solid var(--linea);
@@ -1277,7 +1305,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.131 · 14-11";
+  window.VERSION = "v0.132 · 14-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -7233,13 +7261,20 @@ function ubicarGirar(f) {
   /* EN LA COMPU (v0.125) va en la columna de las comidas, a media altura —las
      del rival crecen desde arriba y las propias desde abajo, así que el medio
      queda libre— y siempre a la vista: ahí no hay otro Girar. */
+  /* Desde la v0.132 va abajo a la derecha, en el renglón de las comidas del
+     que juega abajo —que es lo que cambia Girar—, y las comidas se ubican acá
+     también, sobre las casillas: las dos cosas dependen de la escala. */
   if (window.matchMedia(CORTE_ANCHO).matches) {
-    const c = document.querySelector(".revtab .comidas").getBoundingClientRect();
+    const c = document.querySelector(".revtab .comidas");
+    const km = s.width / (TAB_S * 8 + TAB_M * 2), m = TAB_M * km, lado = TAB_S * 8 * km;
+    c.style.left = (s.left - r.left + m) + "px";
+    c.style.top = (s.top - r.top + m) + "px";
+    c.style.width = c.style.height = lado + "px";
     document.body.classList.remove("girarEnFila");
     b.classList.remove("oculto", "pestana");
     b.style.width = "";
-    b.style.left = (c.left - r.left + (c.width - 44) / 2) + "px";
-    b.style.top = (s.top - r.top + s.height / 2 - 22) + "px";
+    b.style.left = (s.left - r.left + m + lado - 32) + "px";
+    b.style.top = (s.bottom - r.top + 4) + "px";
     return;
   }
   const k = s.width / (TAB_S * 8 + TAB_M * 2), borde = (TAB_M + TAB_S * 8) * k;

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.131**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.132**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4673,6 +4673,36 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.132 [PC], las piezas comidas arriba y abajo del tablero** (lavado de
+cara del revisor, v0.125). La columna de 64 entre el tablero y el panel
+quedaba vacía en la apertura: una calle de ~120 px con Girar solo en el medio.
+Se dibujaron cuatro a 1280×800 y 1000×700, en la inicial y en la jugada 14: A,
+la columna de hoy; B, arriba y abajo del tablero como chess.com; C, una fila
+en el panel (lejos del tablero, un código izquierda/derecha para aprender, le
+roba un renglón a la lista y alarga la página a 1000×700); D, la columna a la
+izquierda (la misma calle, mudada). El revisor eligió **B con ajustes**:
+- `.comidas` ya no ocupa lugar: es absoluta y cubre las casillas (la ubica
+  `ubicarGirar()`, que tiene la escala del SVG). `#cArriba` queda 8 encima de
+  la fila 8, en el margen del SVG; `#cAbajo`, 4 debajo de la caja del SVG
+  (~7-8 debajo de las letras a-h), en un renglón fijo de 32: no salta nada con
+  la primera comida. Con el tablero girado cambian de renglón con el jugador
+  (lo hacía ya `pintarComidas`).
+- **Girar va abajo a la derecha**, 32×32 con ícono de 20 (§1.7, puntero fino),
+  alineado al borde de la columna h, en el renglón del que juega abajo —que es
+  lo que cambia—. Arriba sobre h8 se pegaba a la barra horizontal (0,4 px).
+- 32 de la casilla h al panel (§1.5): `column-gap: max(4px, 32px - --mTab)`.
+- `--ladoTab`: el ancho deja de reservar los 64 (184 → 120) y el alto suma el
+  renglón (78 → 80 con la barra horizontal, 52 → 64 con la vertical, medido:
+  Girar termina a ≥8 del borde a 1280×720 con las dos). Con la horizontal la
+  fila 8 se aparta 36 de la barra (`.revtab` con `margin-top: max(10px, 36px -
+  --mTab)`) para que entre la pastilla de arriba con 8 de cada lado.
+  `.revtab` lleva `padding-bottom: 36px`, y la lista y el relleno del Resumen
+  lo descuentan: el panel sigue terminando con las casillas (0 px, medido).
+- Medido: a 1000×700 las casillas pasan de ~437 a 496; a 1280×800 casi igual
+  (617 con la horizontal, 624 con la vertical, que es el tope). Sin scroll de
+  costado en 1000, 1280, 1500 y 1600. Celu: idéntico al byte.
+- Chequeo estático 7quater; la prueba de `--ladoTab` con los números nuevos.
 
 **v0.131, la fila de datos cuando no hay jugada** (lavado de cara del
 revisor, v0.124; celu y PC, es la misma fila). En la posición inicial Pérdida,

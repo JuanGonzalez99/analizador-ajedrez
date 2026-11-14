@@ -2769,13 +2769,13 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      son la navegación— se van abajo del pliegue. Lo que manda es el alto. */
   /* desde la v0.123.1 lo de arriba del tablero sale de --altoCab */
   assert.ok(html.includes("#zonaRevision { --altoCab: 48px; }"), "el alto de la cabecera, en una variable");
-  assert.ok(html.includes("--ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 78px), calc(100vw - var(--panel) - 184px)), 680px)"),
-    "el tablero se queda con lo que sobra de alto, o de ancho si la ventana es angosta (v0.125)");
+  assert.ok(html.includes("--ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 80px), calc(100vw - var(--panel) - 120px)), 680px)"),
+    "el tablero se queda con lo que sobra de alto, o de ancho si la ventana es angosta (v0.125; v0.132 sin la columna de las comidas y con su renglón abajo)");
   /* Y CON LA BARRA VERTICAL SOBRAN 26 px MÁS (v0.86): la horizontal se suma al
      alto —16 de barra y 10 de margen— y la vertical lo comparte. Medido en el
      arnés a 1280x800: el lado pasa de 470 a 496. */
-  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 52px),"),
-    "sin la barra horizontal el presupuesto baja 26");
+  assert.ok(html.includes("#zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 64px),"),
+    "sin la barra horizontal el presupuesto baja (16 desde la v0.132: con la horizontal la fila 8 se aparta 36 de la barra para las comidas del de arriba)");
   assert.ok(html.includes('classList.toggle("sinEvalH"'),
     "y alguien prende la clase según la forma que esté puesta");
   /* LA BARRA TIENE QUE QUEDAR PEGADA AL TABLERO. Con `flex: 1` la caja se
