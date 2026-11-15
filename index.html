@@ -484,7 +484,7 @@
      partida anterior. */
   #zonaRevision.cargando > :not(.parriba),
   #zonaRevision.cargando > .parriba > :not(.cabvista):not(.revcab) { display: none !important; }
-  body:has(#zonaRevision.cargando:not(.oculto)) .credito { display: none; }
+  body:has(#zonaRevision.cargando:not(.oculto)) .pie { display: none; }
   /* EL PASO DE PANTALLA ES SECO (v0.111). La v0.110 tenía un fundido de
      120 ms y a Juan no le copó: *"brusco, medio violento"*, y la pantalla
      nueva "seguía haciendo algo" —la barra de la evaluación y la de progreso
@@ -493,6 +493,8 @@
      La transición buena de verdad va en la etapa 3 ("que se sienta bien"). */
   body.quieto *, body.quieto *::before, body.quieto *::after { transition: none !important; }
   .ajVersion { margin: var(--e-4) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
+  .ajCredito { margin: var(--e-1) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
+  .ajCredito a { color: inherit; }
   /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
      agrega las perillas de medición. Se marca en <html> para que baste CSS y
      no haya que esconder cada cosa a mano desde JS. */
@@ -966,7 +968,7 @@
       width: var(--resAncho, min(1082px, 100%)); margin-left: var(--resIzq, auto); margin-right: auto; }
     /* y el pie con él (revisor, v0.137): toda la Partida ancha arranca en la
        columna a, y el pie se quedaba solo en el borde de la página */
-    body.enVista:has(#zonaRevision:not(.oculto)) .credito { margin-left: var(--resIzq, 0); }
+    body.enVista:has(#zonaRevision:not(.oculto)) .pie { margin-left: var(--resIzq, 0); }
     /* LA TABLA DEL RESUMEN, TRASPUESTA (v0.137, lavado de cara del revisor
        sobre el ancho del grupo). Al medir ~1000 de ancho, el armado del celu
        —dos tarjetas partidas al medio y una tabla de tres columnas— dejaba
@@ -1323,8 +1325,7 @@
     .seccion > summary:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
   }
   .resAncho { display: none; }
-  .credito { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-6) 0 0; }
-  .credito a { color: inherit; }
+  .pie { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-6) 0 0; }
   /* LA BARRA DE TÍTULO DE LA PARTIDA (v0.123; lavado de cara del revisor,
      v0.111). Hasta acá: "‹ Partidas" arriba, y abajo, chico, "vs MewoneX
      (601)" con "1-0" en la otra punta y un hueco en el medio; la apertura no
@@ -1409,7 +1410,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.142 · 15-11";
+  window.VERSION = "v0.143 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1438,7 +1439,7 @@
      arranca, la versión se ve lo mismo. */
   document.addEventListener("DOMContentLoaded", function () {
     var pie = document.getElementById("verPie");
-    if (pie) pie.textContent = window.VERSION.split(" ")[0] + " · ";
+    if (pie) pie.textContent = window.VERSION.split(" ")[0];
     /* también en la hoja: para saber si llegó el deploy sin salir de la partida */
     var enHoja = document.getElementById("verAjustes");
     if (enHoja) enHoja.textContent = "Versión " + window.VERSION;
@@ -1931,11 +1932,27 @@
       <option value="99">cualquiera</option>
     </select></label>
   <p class="ajVersion" id="verAjustes"></p>
+  <!-- LA ATRIBUCIÓN VIVE ACÁ DESDE LA v0.143 (antes al pie de la página). Va
+       pegada a la versión a propósito: las dos son la ficha técnica de la app y
+       se leen como un bloque al final de la hoja. El `nowrap` del enlace es de
+       la v0.126 y sigue valiendo: sin él, "CC BY-SA 3.0" se corta en dos. -->
+  <p class="ajCredito">Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
+    rel="noopener">Cburnett</a> de Colin M.L. Burnett,
+    <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener" style="white-space:nowrap">CC BY-SA 3.0</a>.</p>
 </div>
 
-<p class="credito"><span id="verPie"></span>Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
-  rel="noopener">Cburnett</a> de Colin M.L. Burnett,
-  <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener" style="white-space:nowrap">CC BY-SA 3.0</a>.</p>
+<!-- EL PIE ES SOLO LA VERSIÓN (v0.143, Juan: la versión "se pierde con todo el
+     texto de los créditos"). Eran siete caracteres al principio de noventa, sin
+     nada que los separara, y la versión es lo que él busca para saber si le
+     llegó el deploy. La atribución de las piezas se mudó al pie de la hoja de
+     Ajustes, donde ya vivía la versión completa: es una obligación de la
+     licencia que no lee nadie, y acá le comía el renglón a una coordenada de
+     depuración. De paso le saca dos renglones al pie de TODAS las pantallas,
+     porque el pie cuelga del body y no de una vista. A un toque sigue siendo
+     atribución razonable para el medio (CC BY-SA 3.0, §4bis). Juan lo pensaba
+     como pantalla propia de "Acerca de", que queda anotada para cuando haya
+     más que poner: ver HOJA-DE-RUTA.md. -->
+<p class="pie" id="verPie"></p>
 
 <script type="module">
 let Chess;

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.142**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.143**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -281,9 +281,11 @@ lo que hay que mirar.
 | interfaz | tablero SVG (geometría `TAB_S`/`sqX`, `dibujar`, `svgMarcas`), mes, banco de pruebas, revisión, resúmenes |
 
 El **menú de ajustes** (v0.91, §4untrigies) es la excepción a "todo cuelga de su
-vista": la hoja vive al final del `<body>`, después de la atribución de las
-piezas, porque es `position: fixed`. Ahí adentro están los seis `<select>` de
-preferencias, que antes vivían sueltos en la fila del pie.
+vista": la hoja vive al final del `<body>`, justo antes del pie, porque es
+`position: fixed`. Ahí adentro están los seis `<select>` de preferencias, que
+antes vivían sueltos en la fila del pie, y **desde la v0.143 la atribución de
+las piezas**, que estaba en el pie. El pie (`.pie`, `.credito` hasta la v0.143)
+es la versión sola.
 
 **Desde la v0.125 la Partida de la compu es otra** (§7, v0.125): de **1000**
 para arriba (el inicio y el Mes siguen partiéndose en 950), tablero a la izquierda y un panel a la derecha (tarjeta, cuadritos,
@@ -419,6 +421,11 @@ de 7,3 MB.
 Wikimedia Commons. La share-alike alcanza a las imágenes, no a la aplicación
 —son obras agregadas, no derivadas—. Si alguna vez se **modifican** los paths,
 lo modificado sigue bajo CC BY-SA 3.0.
+
+**Desde la v0.143 vive al pie de la hoja de Ajustes**, no al pie de la página
+(§7, v0.143): a un toque, que es atribución razonable para el medio. Tiene una
+prueba que la fija a propósito —es lo que una limpieza del pie se llevaría
+puesto sin que nada avise—.
 
 Esto reemplazó una regla de la v26 que decía *"misma silueta para los dos
 bandos: el bando se distingue por el relleno"*. Esa regla existía solo porque los
@@ -665,7 +672,7 @@ Son **tres cosas distintas**, a propósito:
 
 | Qué | Dónde | Cuándo |
 |---|---|---|
-| La versión sola | al pie, junto a la atribución de las piezas | siempre, en los dos modos |
+| La versión sola | al pie, **sola** desde la v0.143 (la atribución se fue a Ajustes) | siempre, en los dos modos |
 | La línea de diagnóstico | arriba, con la configuración y el registro a un toque | en modo dev |
 | La misma línea | ídem | en modo simple, **solo si hubo un error** |
 
@@ -4731,6 +4738,36 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.143, el pie es la versión sola** (Juan, 15-nov). El pie decía
+`v0.142 · Piezas Cburnett de Colin M.L. Burnett, CC BY-SA 3.0.` en un solo
+párrafo, todo en `--tenue` y `--t-leyenda`: *"siento que pierde fuerza la
+versión, se pierde con todo el texto de los créditos"*. No estaba chica —son
+siete caracteres al principio de noventa—, estaba **adentro** de un bloque de
+texto, y la versión es la coordenada que él busca para saber si le llegó el
+deploy (§4quater, §10). Las dos cosas pesan distinto y compartían renglón: una
+se lee seguido, la otra es una obligación de la licencia que no lee nadie.
+**La atribución se mudó al pie de la hoja de Ajustes**, pegada a la versión
+completa que ya vivía ahí (`.ajCredito`, margen `--e-1`: las dos se leen como
+un bloque, la ficha técnica al final de la hoja). El pie queda con la versión
+sola, sin el ` · ` del final, que era el separador contra los créditos.
+Tres cosas que vale saber:
+- **La atribución sigue cumpliendo.** CC BY-SA 3.0 pide que sea razonable para
+  el medio, y a un toque, en lo que hace de "Acerca de", es lo normal; lo que
+  no se puede es enterrarla tres toques adentro (§4bis). Tiene **prueba
+  propia**, y es la mitad que importa: una limpieza del pie se la llevaría
+  puesta y nada lo gritaría. El `white-space: nowrap` del enlace viaja con
+  ella (v0.126): sin él "CC BY-SA 3.0" se corta en dos.
+- **El pie cuelga del `body`, no de una vista**, así que esos dos renglones
+  estaban abajo de las tres pantallas, siempre. Se los ganó la página entera.
+- **`.credito` pasó a llamarse `.pie`** en las tres reglas que lo nombraban
+  (el `display: none` mientras carga la Partida, el `margin-left` del Resumen
+  ancho de la v0.137, y la suya). Con los créditos afuera el nombre mentía. Y
+  `.credito a { color: inherit }` se fue: en el pie ya no hay enlaces.
+
+Juan lo pensaba como **pantalla propia de "Acerca de"**, "más a futuro", y
+aceptó Ajustes por ahora: queda en la hoja de ruta. Una pantalla para tres
+líneas que no se leen nunca es más máquina que lo que paga; cuando haya qué
+poner (ayuda, licencias de los puzzles de lichess, el link del profe) se hace.
 **v0.142 [PC], la previa se cierra si el mouse se queda en los segundos.**
 Juan sobre la v0.141: *"no sé si me copa lo de los segundos… si se queda
 también un rato sobre los segundos, cierre el preview"*. Mismo rato para
@@ -4799,7 +4836,7 @@ chequeo estático 7octies. Las otras capturas del celu, idénticas al byte salvo
 Debajo de la Partida el Resumen medía 1082 fijo y centrado, y el grupo de
 arriba otra cosa según la escala (1029 a 1280, de la columna a al panel): dos
 cajas centradas de anchos distintos. Ahora va **de la columna a al borde del
-panel**, como la barra, el título y la curva, y el pie (`.credito`) con él. Los
+panel**, como la barra, el título y la curva, y el pie (`.credito`, `.pie` desde la v0.143) con él. Los
 dos números (`--resIzq`, `--resAncho`, sobre el `body` porque el pie también
 los usa) los pone `ubicarResumen()`, que llama `ubicarGirar()` y también el
 `resize` de la ventana: van en píxeles de la página, y con el tablero en su

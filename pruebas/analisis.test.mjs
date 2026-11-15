@@ -2614,7 +2614,7 @@ test("el menú de ajustes se lleva los select y tiene por dónde salir", () => {
      las tres salidas. Una hoja que tapa media pantalla sin forma de cerrarse es
      el peor modo de falla de este cambio. */
   const hoja = html.slice(html.indexOf('<div id="hojaAjustes"'),
-                          html.indexOf('<p class="credito"'));
+                          html.indexOf('<p class="pie"'));
   for (const id of ["tema", "verEval", "marcasCurva", "largoExp", "formaPrueba", "formaJugadas"])
     assert.ok(hoja.includes(`<select id="${id}"`), `${id} vive adentro de la hoja`);
   const pie = html.slice(html.indexOf('<div class="principal pabajo">'),
@@ -2631,6 +2631,34 @@ test("el menú de ajustes se lleva los select y tiene por dónde salir", () => {
   for (const id of ["tema", "verEval", "marcasCurva", "largoExp", "formaPrueba", "formaJugadas"])
     assert.equal((html.match(new RegExp(`<select id="${id}"`, "g")) || []).length, 1,
       `${id} está una sola vez en todo el archivo`);
+});
+
+test("el pie es solo la versión y la atribución vive en la hoja de ajustes", () => {
+  /* v0.143. Juan: la versión "se pierde con todo el texto de los créditos". Lo
+     que esta prueba fija son las dos mitades del cambio, y la segunda es la que
+     no se puede romper en silencio: la atribución de Cburnett es OBLIGATORIA
+     (§4bis), así que si alguien limpia el pie y se la lleva puesta, el archivo
+     queda sin licencia y nada lo grita. Tiene que estar, y adentro de la hoja,
+     que es lo que la deja a un toque. */
+  const licencia = 'href="https://creativecommons.org/licenses/by-sa/3.0/"';
+  assert.equal(html.split(licencia).length - 1, 1, "la licencia se enlaza una sola vez");
+  const hoja = html.slice(html.indexOf('<div id="hojaAjustes"'),
+                          html.indexOf('<p class="pie"'));
+  assert.ok(hoja.includes('<p class="ajCredito">') &&
+            hoja.includes("Cburnett</a> de Colin M.L. Burnett"),
+    "la atribución de las piezas está adentro de la hoja");
+  assert.ok(hoja.includes(licencia), "y el enlace a la licencia con ella");
+  assert.ok(hoja.includes('id="verAjustes"'), "pegada a la versión completa, que ya vivía ahí");
+  assert.ok(hoja.includes('style="white-space:nowrap"'),
+    'y "CC BY-SA 3.0" sigue sin cortarse en dos renglones (v0.126)');
+
+  /* El pie: la versión sola, sin el separador que la pegaba a los créditos. */
+  assert.ok(html.includes('<p class="pie" id="verPie"></p>'),
+    "el pie es un párrafo vacío que llena el script temprano");
+  assert.ok(html.includes('pie.textContent = window.VERSION.split(" ")[0];'),
+    'sin el " · " del final, que era contra los créditos');
+  assert.ok(!html.includes('class="credito"'),
+    "y .credito no quedó dando vueltas: el pie ya no son créditos");
 });
 
 test("la lista lateral no le saca lugar al celular", () => {

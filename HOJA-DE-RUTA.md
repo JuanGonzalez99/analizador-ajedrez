@@ -342,6 +342,12 @@ lo demás se dibuja contra ella.
       pregunta es qué otra cosa de la partida va a la vista —¿las tres
       mejores desplegadas en vez del botón?—, no estirar lo que ya está.
 
+- [ ] **Pantalla propia de "Acerca de"** (Juan, 15-nov, al mudar los créditos
+      a Ajustes en la v0.143: la pensaba así, "más a futuro"). Hoy la
+      atribución de las piezas vive al pie de la hoja de Ajustes y alcanza.
+      Se hace cuando haya qué poner al lado: la ayuda, las licencias de lo
+      que se sume (los puzzles de lichess de la etapa 5), el link del profe.
+      Antes de eso es una pantalla para tres líneas que no se leen nunca.
 - [ ] **[PC] Lavado de cara: ¿la barra horizontal es de la cabecera o del
       tablero?** (revisor, v0.136; leve, venía de antes). Queda a 12 px del
       subtítulo y a 36 de las casillas y del panel: se agrupa con el título

@@ -4,3 +4,4 @@ node_modules/
 !.claude/agents/
 capturas/
 pruebas/maqueta-*.mjs
+viejas/
