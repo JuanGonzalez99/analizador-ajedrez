@@ -309,16 +309,6 @@ lo demás se dibuja contra ella.
       Repasar con esa sospecha: rueda (tablero y tira), previa, arrastre de
       piezas, marcas con clic derecho, `n`/`p` y flechas, los `:hover`, y qué
       pasa con cada uno con la variante abierta.
-- [ ] **Lavado de cara: la "variante vacía"** (revisor, v0.144; celu y PC).
-      Un toque suelto en el tablero ya es un modo: tarjeta "Probá otra
-      jugada" o "Elegiste a8", "‹ ›" grisados, y hay que tocar "Volver" para
-      seguir pasando jugadas. ¿Elegir una pieza tiene que abrir un modo, o la
-      variante empieza recién al jugar la primera jugada? Con variantes.
-- [ ] **[PC] Lavado de cara: el teclado fuera de la Partida** (revisor,
-      v0.144). En el inicio Tab no llega a las filas de partidas; con Ajustes
-      abierto se escapa de la hoja a los botones de atrás; la lista de jugadas
-      no es enfocable, y ↑/↓ e Inicio/Fin no hacen nada. ¿La app entera se
-      puede usar sin mouse, o el teclado es solo para pasar jugadas?
 - [ ] **[PC] La tuerca sola arriba a la derecha del inicio** (revisor, v0.126).
       A 1280 la fila del campo termina en 399 y la tuerca queda sola en 1071,
       sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una
@@ -365,6 +355,16 @@ lo demás se dibuja contra ella.
       nota más. Mover solo ese valor no alcanza: el panel arranca con la
       primera fila de casillas y se movería todo. De paso: a 1000 de ancho el
       panel arranca 4 px arriba de las casillas (104 contra 108). Con variantes.
+- [ ] **Lavado de cara: la "variante vacía"** (revisor, v0.144; celu y PC).
+      Un toque suelto en el tablero ya es un modo: tarjeta "Probá otra
+      jugada" o "Elegiste a8", "‹ ›" grisados, y hay que tocar "Volver" para
+      seguir pasando jugadas. ¿Elegir una pieza tiene que abrir un modo, o la
+      variante empieza recién al jugar la primera jugada? Con variantes.
+- [ ] **[PC] Lavado de cara: el teclado fuera de la Partida** (revisor,
+      v0.144). En el inicio Tab no llega a las filas de partidas; con Ajustes
+      abierto se escapa de la hoja a los botones de atrás; la lista de jugadas
+      no es enfocable, y ↑/↓ e Inicio/Fin no hacen nada. ¿La app entera se
+      puede usar sin mouse, o el teclado es solo para pasar jugadas?
 
 ## Etapa 2 · Partir `index.html`
 
@@ -485,6 +485,11 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.144, compu):** con una variante abierta (probaste
+  una jugada), las flechas del teclado y la rueda sobre el tablero ahora la
+  recorren, igual que los botones "‹ ›", y Escape sale. Antes las flechas la
+  cerraban sin avisar y pasaban de jugada en la partida, y la rueda no hacía
+  nada. La otra: que flechas y rueda sigan siendo siempre "la partida".
 - **No sé si esto te copa (v0.138):** en el inicio, "cambiar" ahora deja la
   cabecera donde está, pasa a decir "cancelar" y el campo aparece debajo.
   Antes el renglón con tu nombre se iba y la tuerca saltaba a la fila del
