@@ -957,5 +957,28 @@ const defaultEval = async w => {
 console.log("eval de fábrica:", JSON.stringify(
   { compu: await defaultEval(1280), celu: await defaultEval(412) }));
 
+/* EL INICIO PLEGADO Y CON "cambiar" ABIERTO (v0.138). La última recarga de
+   arriba deja la app a 412 con el usuario guardado, o sea plegada: es como
+   arranca para Juan. Abrir "cambiar" no tiene que mover la tuerca ni el
+   renglón del usuario, el enlace pasa a "cancelar", y cancelar vuelve a
+   plegar con el usuario guardado en el campo aunque se haya escrito otro. */
+await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+await pg.waitForTimeout(300);
+await foto("inicio");
+const cab = () => pg.evaluate(() => {
+  const r = s => Math.round(document.querySelector(s).getBoundingClientRect().top);
+  return { tuerca: r("#btnAjustesInicio"), usuario: r("#yaUsuario"), enlace: document.getElementById("cambiarUsuario").textContent,
+           campo: document.querySelector(".cabInicio > .campo").offsetParent ? r(".cabInicio > .campo") : null, valor: document.getElementById("usuario").value };
+});
+const plegada = await cab();
+await pg.click("#cambiarUsuario");
+await pg.fill("#usuario", "otro");
+await pg.evaluate(() => document.activeElement.blur());
+await foto("inicio-cambiar");
+const abierta = await cab();
+await pg.click("#cambiarUsuario");
+console.log("inicio, cambiar:", JSON.stringify({ plegada, abierta, cancelada: await cab() }),
+            "(la tuerca y el usuario quietos; cancelar vuelve a plegar con el guardado)");
+
 console.log("listo: capturas/");
 await cerrar();

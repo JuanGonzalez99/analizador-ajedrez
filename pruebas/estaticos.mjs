@@ -175,6 +175,15 @@ chequear("el resumen va al ancho del grupo", [
   ...(/\n  \.resAncho \{ display: none; \}/.test(html) ? [] : ["la tabla traspuesta no arranca escondida"]),
 ]);
 
+/* 7octies. "cambiar" no cambia la cabecera (v0.138): el renglón del usuario
+   se queda con la tuerca, el enlace pasa a "cancelar" y vuelve a plegar, y
+   el renglón se achica en vez de tirar la tuerca abajo con un nombre largo. */
+chequear("cambiar no cambia la cabecera", [
+  ...(/body\.cambiando #yaUsuario \{ display: none/.test(html) ? ["el renglón del usuario se esconde al cambiar"] : []),
+  ...(/function cambiando\(si\)/.test(html) ? [] : ["falta cambiando()"]),
+  ...(/#yaUsuario \{[^}]*flex: 1 1 0; min-width: 0;/.test(html) ? [] : ["el renglón del usuario no se achica"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

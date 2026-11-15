@@ -295,7 +295,7 @@ lo demás se dibuja contra ella.
 - [x] **[PC] El Resumen al ancho del grupo** (v0.137, 15-nov: de la columna a al borde del panel, como la barra y la curva, y adentro la tabla traspuesta —una fila por jugador—, la D entre cuatro del lavado de cara que pidió el revisor al ver el marco; revisor, v0.125; leve). Debajo
       de la Partida el Resumen mide 1082 centrado y el grupo de arriba otra
       cosa: dos cajas centradas de anchos distintos (a 1600, 27 px corrido).
-- [ ] **Lavado de cara: la cabecera del inicio con "cambiar"** (revisor,
+- [x] **Lavado de cara: la cabecera del inicio con "cambiar"** (v0.138, 15-nov: la B entre cuatro — la cabecera se queda, "cambiar" pasa a "cancelar" y el campo va debajo; revisor,
       v0.126; celu). Con la entrada abierta por "cambiar" no hay cómo volver
       sin buscar (Nielsen 3: falta un "cancelar"), y la cabecera es otra que la
       de la primera vez: el título se va y la tuerca se mete en la fila del

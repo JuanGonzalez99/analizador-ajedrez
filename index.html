@@ -376,9 +376,19 @@
   .cabInicio { flex-wrap: wrap; }
   .cabInicio > p.n { order: 2; flex-basis: 100%; margin-top: 2px; }
   .cabInicio > .campo { order: 3; flex-basis: 100%; }
-  body.entradaCerrada.cambiando .campo { display: flex !important; order: 0; flex: 1 1 0; min-width: 0; }
+  /* LA CABECERA NO CAMBIA AL ABRIR "cambiar" (v0.138, lavado de cara del
+     revisor sobre la v0.126: la B entre cuatro). El renglón "Santico26 ·
+     cambiar" se queda con la tuerca donde estaba, "cambiar" pasa a decir
+     "cancelar" y vuelve a plegar (Nielsen 3: antes no había cómo salir sin
+     buscar), y el campo aparece debajo. Así la tuerca vive arriba a la
+     derecha en los tres estados del inicio. Las otras: A, "o pegar un PGN ·
+     cancelar" abajo (la salida lejos de donde se abrió, y la tuerca saltaba
+     igual); C, un "‹" al lado del campo (en la app "‹" es volver a otra
+     pantalla); D, B con el título de la primera vez (el h1 vuelve a competir
+     con el mes, lo que se sacó en la v0.120). 4 de margen + 12 de `gap` = 16,
+     el ritmo de la pantalla plegada. */
+  body.entradaCerrada.cambiando .campo { display: flex !important; margin-top: 4px; }
   body.entradaCerrada.cambiando #zonaPegar:not(.oculto) { display: block !important; }
-  body.cambiando #yaUsuario { display: none; }
   /* con "cambiar" va el campo y Buscar en un renglón, y "o pegar un PGN" en
      el de abajo, a 8: con usuario guardado es la única puerta al PGN (revisor,
      v0.120). El margen del 100% es lo que lo manda solo a su renglón. */
@@ -400,20 +410,26 @@
      400 y 640 eran tres bordes derechos que no coincidían con nada). Por
      debajo de 1000 la fila llena la columna hasta la tuerca, como en el celu,
      y termina con todo lo de abajo. */
+  /* con el tope de 300 la base del 100% no alcanza para mandar el campo
+     abierto por "cancelar" a su renglón: subía al de la tuerca (v0.138) */
   @media (min-width: 1000px) { .cabInicio > .campo { max-width: 300px; }
+                              body.entradaCerrada.cambiando .campo { margin-right: calc(100% - 300px); }
                               body:not(.enVista) #zonaPegar { max-width: calc(300px + var(--e-8) + 640px); } }
   #zonaPegar { margin-top: var(--e-4); }
   /* el placeholder en la letra de la app; lo pegado sigue en mono */
   #pgn::placeholder { font: var(--t-secundario)/1.4 system-ui, sans-serif; }
-  /* la tuerca, a la altura del campo (44) y no centrada en los dos renglones */
-  body.cambiando #btnAjustesInicio { align-self: flex-start; margin-top: 5px; }
-  #yaUsuario { margin: 0; display: flex; align-items: baseline; min-width: 0; }
-  #yaUsuarioNombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* el renglón se achica en vez de irse de renglón (revisor, v0.138): con un
+     nombre largo —chess.com deja 25 letras— la tuerca se caía abajo y el mes
+     bajaba 36. Ahora el nombre corta con "…" y "cambiar" queda entero. */
+  #yaUsuario { margin: 0; display: flex; align-items: baseline; flex: 1 1 0; min-width: 0; }
+  #yaUsuarioNombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
   #yaUsuario .sep { color: var(--tenue); margin: 0 var(--e-2); }
   /* "cambiar" es un enlace, no un botón: 24 a la vista y 48 de toque (§1.7) */
   #cambiarUsuario { background: none; border: 0; padding: 0; font: inherit; color: var(--acento);
                     position: relative; border-radius: 0; flex: none; }
-  #cambiarUsuario::before { content: ""; position: absolute; inset: -12px -10px; }
+  /* a la derecha 4 y no 10 (revisor, v0.138): con un nombre largo
+     "cancelar" queda al lado de la tuerca y las dos áreas se pisaban 5 px */
+  #cambiarUsuario::before { content: ""; position: absolute; inset: -12px -4px -12px -10px; }
   #btnAjustesInicio { padding: 0; flex: none; display: grid; place-items: center;
                       width: 34px; height: 34px; margin-left: auto; order: 1;
                       border: 1px solid var(--linea); border-radius: 50%; }
@@ -1361,7 +1377,7 @@
      la misma hoja de ajustes que la de la Partida (una sola hoja). -->
 <div class="cabInicio soloInicio">
   <h1 class="deEntrada">Analizador de partidas</h1>
-  <p id="yaUsuario" class="oculto"><span id="yaUsuarioNombre"></span><span class="sep" aria-hidden="true">&middot;</span><button type="button" id="cambiarUsuario">cambiar</button></p>
+  <p id="yaUsuario" class="oculto"><span id="yaUsuarioNombre"></span><span class="sep" aria-hidden="true">&middot;</span><button type="button" id="cambiarUsuario" aria-expanded="false">cambiar</button></p>
   <p class="n deEntrada">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
   <div class="fila deEntrada campo">
     <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
@@ -1390,7 +1406,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.137 · 15-11";
+  window.VERSION = "v0.138 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5743,16 +5759,34 @@ $("buscar").onclick = seguro("buscar", async () => {
    como siempre. */
 function entrada(abierta) {
   document.body.classList.toggle("entradaCerrada", !abierta);
-  document.body.classList.remove("cambiando");
+  cambiando(false);
   ver("yaUsuario", !abierta);
 }
 /* "cambiar" despliega solo el campo, no el título de la primera vez (revisor,
-   v0.120: el h1 reaparecía en el medio del uso y empujaba todo 98 px) */
+   v0.120: el h1 reaparecía en el medio del uso y empujaba todo 98 px), y
+   debajo del renglón, que se queda (v0.138). El mismo enlace pasa a decir
+   "cancelar" y vuelve a plegar: el campo recupera el usuario guardado, para
+   que un nombre a medio escribir no aparezca la próxima vez. */
+function cambiando(si) {
+  const antes = document.body.classList.contains("cambiando");
+  document.body.classList.toggle("cambiando", si);
+  $("cambiarUsuario").textContent = si ? "cancelar" : "cambiar";
+  $("cambiarUsuario").setAttribute("aria-expanded", si ? "true" : "false");
+  if (antes && !si) {
+    let u = null; try { u = localStorage.getItem("usuario"); } catch (e) { /* incógnito */ }
+    if (u) $("usuario").value = u;
+  }
+}
 $("cambiarUsuario").onclick = () => {
-  document.body.classList.add("cambiando");
+  const abrir = !document.body.classList.contains("cambiando");
+  cambiando(abrir);
   verPgn(false);
-  $("usuario").focus(); $("usuario").select();
+  if (abrir) { $("usuario").focus(); $("usuario").select(); }
 };
+/* en la compu, Escape en el campo es "cancelar" */
+$("usuario").addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.body.classList.contains("cambiando")) { e.preventDefault(); $("cambiarUsuario").click(); }
+});
 
 $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
 

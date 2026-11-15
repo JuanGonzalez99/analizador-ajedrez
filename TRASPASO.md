@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.137**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.138**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4675,6 +4675,36 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.138, "cambiar" ya no cambia la cabecera del inicio** (lavado de cara
+del revisor sobre la v0.126; celu y PC). Con la entrada abierta por
+"cambiar" no había cómo salir sin buscar (Nielsen 3), y la cabecera era otra:
+el renglón "Santico26 · cambiar" se iba y la tuerca se metía en la fila del
+campo. Se dibujaron cuatro a 412×760 (`pruebas/maqueta-cambiar.mjs`, no se
+commitea): A, "o pegar un PGN · cancelar" en el renglón del enlace; **B, la
+cabecera se queda** y "cambiar" pasa a decir "cancelar", con el campo debajo;
+C, un "‹" a la izquierda del campo; D, B con el título de la primera vez. Ganó
+**B**: la salida está donde estaba la entrada y la tuerca vive arriba a la
+derecha en los tres estados del inicio. A dejaba la salida lejos y la tuerca
+saltando; en C el "‹" dice "volver a otra pantalla" en toda la app; D traía de
+vuelta el h1 en medio del uso (lo que se sacó en la v0.120).
+`cambiando(si)` (al lado de `entrada()`) pone o saca `body.cambiando`, el texto
+y el `aria-expanded` del enlace; al cancelar, el campo recupera el usuario
+guardado, para que un nombre a medio escribir no aparezca la próxima vez. En
+la compu, Escape en el campo es cancelar. Ajustes del revisor: el campo a 16
+del renglón (4 de margen + 12 de `gap`, el ritmo de la pantalla plegada); el
+renglón del usuario con `flex: 1 1 0; min-width: 0` —**con un nombre largo
+(chess.com deja 25 letras) la tuerca se caía a otro renglón y el mes bajaba
+36**, ya pasaba plegada—, y ahora el nombre corta con "…"; y desde 1000 el
+campo lleva `margin-right: calc(100% - 300px)`, porque con su tope de 300 la
+base del 100 % no alcanzaba para mandarlo a su renglón y subía al de la tuerca. Y el área
+de toque de "cambiar"/"cancelar" va con 4 a la derecha y no 10: con el nombre
+largo queda al lado de la tuerca y las dos áreas se pisaban 5 px (§1.7).
+Medido a 386 (corto y largo), 412, 1000 y 1280: tuerca y renglón quietos al
+abrir y al cancelar. `mirar` saca dos capturas nuevas, `inicio` (plegada,
+como arranca para Juan) e `inicio-cambiar`, e imprime "inicio, cambiar:";
+chequeo estático 7octies. Las otras capturas del celu, idénticas al byte salvo
+`mes-seccion` por el número de versión.
 
 **v0.137 [PC], el Resumen al ancho del grupo, y su tabla traspuesta**
 (revisor, v0.125; y lavado de cara del revisor sobre la primera versión).
