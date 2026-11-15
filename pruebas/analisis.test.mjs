@@ -2692,6 +2692,9 @@ test("con mouse: previa, rueda y salto al error", () => {
     "la previa espera antes de aparecer: cruzar la lista no la dispara");
   assert.ok(html.includes("if (TABLERO_PREVIO !== null) previsualizar(i);"),
     "pero con una ya abierta el renglón de al lado no vuelve a esperar");
+  assert.ok(html.includes('const cont = sp.closest(".jugadas, .tira");') &&
+    html.includes("sp.onmouseleave = () => { if (TABLERO_PREVIO === null) clearTimeout(PREVIA_T); };"),
+    "y la cierra salir de la LISTA, no de la jugada: entre dos jugadas del renglón están los segundos");
   assert.ok(html.includes('const MALAS = new Set(["imprecision", "error", "omision", "grave"]);'),
     "y `n` salta entre las categorías malas");
 });

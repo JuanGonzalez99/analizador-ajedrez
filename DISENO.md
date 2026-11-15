@@ -478,7 +478,7 @@ hay. Las primeras salen del historial del traspaso.
 - **Que el tablero cambie con solo pasar el mouse por encima de la lista**:
   *"se dibuja enseguida esa posición. Quizás debería tener un pequeño delay"*
   (15-nov-2026, v0.139). Lo que responde al mouse sin clic espera un momento
-  (300 ms) para no dispararse de pasada. Con 120, la duración corta de §1.8,
+  (500 ms) para no dispararse de pasada. Con 300 pidió más (v0.141), y con 120, la duración corta de §1.8,
   dijo *"me sigue pareciendo muy corto"* (v0.140): esas duraciones son para
   lo que se mueve, no para cuánto se espera antes de reaccionar al mouse.
 

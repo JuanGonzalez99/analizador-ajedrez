@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.140**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.141**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2898,8 +2898,12 @@ una página a escala 1), y por eso la versión vieja ahí pasaba una sola con 12
 y el error no se veía. Ahora mide los pasos de a uno: 100, 120, 100, -100, y
 tres de 30 que son el trackpad.
 
-**La previa espera 300 ms antes de aparecer (v0.139 con 120; v0.140 con 300,
-porque a Juan los 120 le siguieron pareciendo *"muy corto"*)**, y 60 antes de irse.
+**La previa espera 500 ms antes de aparecer (v0.139 con 120, v0.140 con 300,
+v0.141 con 500: a Juan las dos primeras le parecieron cortas)**, y 60 antes de
+irse. **Y desde la v0.141 la cierra salir de la LISTA, no de la jugada**: entre
+las dos jugadas de un renglón están los segundos, y cruzarlos tardaba más que
+los 60, así que para el costado la previa se iba (para arriba y abajo no, y por
+eso pasó). Lo que sigue describe la v0.139.
 Sin la espera se disparaba con solo cruzar la lista yendo a otro lado
 (reportado por Juan). La de la salida es por otro motivo: entre un renglón y el
 de al lado el mouse sale de uno antes de entrar al otro, y sin ese margen el
@@ -4722,6 +4726,13 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.141 [PC], la previa espera 500 ms y no se va al cruzar los segundos.**
+Juan, usando la v0.140: subir la espera, y *"cuando quiero pasar al de al
+lado, desaparece el preview, sospecho que por el texto de los segundos"*. Era
+eso (§4trevicies): ahora la previa abierta queda hasta entrar a otra jugada o
+salir de la lista (`.jugadas` o `.tira`). El arnés mide `sigueSobreLosSegundos`.
+No se ve en una foto.
 
 **v0.140 [PC], la previa espera 300 ms y no 120.** Juan, al usar la v0.139:
 *"el delay del mouse por arriba me sigue pareciendo muy corto"*. Es una

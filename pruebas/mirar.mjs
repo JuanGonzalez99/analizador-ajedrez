@@ -565,12 +565,12 @@ const elegida = () => pg.evaluate(() =>
   ((document.querySelector("#jugadas .jg.sel") || {}).textContent || "").trim());
 const t0 = await tablero(), e0 = await elegida();
 await pg.locator("#jugadas .jg").nth(12).hover();
-/* v0.139: la previa espera (300 ms desde la v0.140) antes de aparecer, así que recién entrado el
+/* v0.139: la previa espera (500 ms desde la v0.141) antes de aparecer, así que recién entrado el
    mouse el tablero tiene que seguir igual. Es lo que evita que parpadee al
    cruzar la lista. */
-await pg.waitForTimeout(150);
+await pg.waitForTimeout(300);
 const tPronto = await tablero();
-await pg.waitForTimeout(350);
+await pg.waitForTimeout(400);
 const t1 = await tablero();
 /* y con la previa ya abierta, el renglón de al lado no vuelve a esperar ni pasa
    por la posición real: a los 40 ms ya es OTRA previa */
@@ -579,12 +579,18 @@ await pg.waitForTimeout(40);
 const tVecino = await tablero();
 await pg.locator("#jugadas .jg").nth(12).hover();
 await pg.waitForTimeout(150);
+/* v0.141: pararse en los segundos, entre las dos jugadas del renglón, no
+   cierra la previa. Es lo que dejaba pasar a la de al lado sin que se fuera. */
+await pg.locator("#jugadas .se").nth(12).hover();
+await pg.waitForTimeout(250);
+const tSegundos = await tablero();
 await pg.screenshot({ path: path.join(SALIDA, "previa" + SUFIJO + ".png") });
 await pg.mouse.move(5, 5);
 await pg.waitForTimeout(250);
 console.log("previa:        ", JSON.stringify(
   { esperaAntesDeAparecer: tPronto === t0, cambioElTablero: t0 !== t1,
     elVecinoNoEspera: tVecino !== t0 && tVecino !== t1,
+    sigueSobreLosSegundos: tSegundos === t1,
     volvioIgual: t0 === (await tablero()),
     yNoNavego: e0 === (await elegida()) }));
 
