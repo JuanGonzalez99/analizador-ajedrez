@@ -282,7 +282,7 @@ lo demás se dibuja contra ella.
       el medio. ¿Reservan su columna desde la jugada 1, o viven en otro lado
       —arriba y abajo del tablero, junto a cada jugador, como chess.com—? Con
       variantes.
-- [ ] **[PC] La Partida en ventanas angostas y altas** (revisor, v0.125). De
+- [x] **[PC] La Partida en ventanas angostas y altas** (v0.135, 15-nov: la E del revisor, una quinta: solo la curva baja debajo del tablero cuando sobra alto, y la lista se estira; revisor, v0.125). De
       1000 a 1100 de ancho con 900 de alto el tablero lo manda el ancho y
       quedan ~390 px vacíos abajo. **Remedido en la v0.132** (las casillas
       pasaron de ~437 a 496 sin la columna de las comidas): 258 px a
@@ -328,6 +328,12 @@ lo demás se dibuja contra ella.
       640, o va el renglón del celu (rival · resultado · prec. · fecha)? La
       v0.128.1 ya achicó el hueco una vez: esto pide forma, no otro número. Con
       variantes.
+- [ ] **[PC] Lavado de cara: qué más merece estar a la vista en la compu
+      cuando sobra alto** (revisor, v0.135; leve). Con la curva abajo siguen
+      sobrando ~190 px a 1000×900, con las dos columnas cerradas a la misma
+      altura (no se ve armada con pedazos). Si se quiere usar ese alto, la
+      pregunta es qué otra cosa de la partida va a la vista —¿las tres
+      mejores desplegadas en vez del botón?—, no estirar lo que ya está.
 
 ## Etapa 2 · Partir `index.html`
 

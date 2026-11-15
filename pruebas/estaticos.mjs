@@ -137,6 +137,18 @@ chequear("las comidas no vuelven a la columna", [
   ...(/b\.style\.top = \(s\.bottom - r\.top \+ 4\)/.test(html) ? [] : ["Girar no va en el renglón de abajo"]),
 ]);
 
+/* 7quinquies. [PC] En ventanas angostas y altas la curva baja debajo del
+   tablero (v0.135), y lo decide una cuenta en JS, no un ancho: una media
+   query no puede restar vh de vw. Sin el listener de `resize` no cambiaría al
+   achicar el alto, porque el observador de `.revtab` no se entera (el tablero
+   no cambia de tamaño). */
+chequear("la curva baja cuando sobra alto", [
+  ...(/#zonaRevision\.curvaAbajo > \.curva \{ grid-column: 1; grid-row: 5;/.test(html) ? [] : ["falta el CSS de .curvaAbajo"]),
+  ...(/function ubicarCurva\(\)/.test(html) ? [] : ["falta ubicarCurva()"]),
+  ...(/window\.addEventListener\("resize", ubicarCurva\)/.test(html) ? [] : ["ubicarCurva no escucha el resize"]),
+  ...(/function ubicarGirar\(f\) \{\n  ubicarCurva\(\);/.test(html) ? [] : ["ubicarGirar no llama a ubicarCurva"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

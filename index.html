@@ -973,6 +973,32 @@
     #zonaRevision > .curva    { grid-column: 2; grid-row: 4; }
     #zonaRevision > .colLista { grid-column: 2; grid-row: 5; align-self: stretch;
                                 height: 0; min-height: max(calc(100% - 10px - var(--mTab) - 36px), 300px); }
+    /* LA CURVA BAJA DEBAJO DEL TABLERO CUANDO SOBRA ALTO (v0.135, lavado de
+       cara del revisor, v0.125: en ventanas angostas y altas, de 1000 a 1100
+       con 900 de alto, el tablero lo manda el ancho y quedaban ~250 px vacíos
+       abajo). Se dibujaron cuatro: A, la de hoy; B, cuadritos y curva debajo
+       del tablero (separaba la tarjeta de sus cuadritos por 500 px en
+       diagonal); C, la columna única de 700 a 999 estirada (330 px tirados a
+       los costados y los cuadritos cortados); D, B con el panel en 300 y el
+       tablero más grande (los textos del panel se partían, y a 1100 no gana
+       nada). El revisor eligió una quinta, E: solo la curva baja —es un
+       resumen de la partida entera, una línea de tiempo bajo el tablero, como
+       lichess— y la explicación de la jugada (tarjeta y cuadritos) queda
+       junta. La lista se estira hasta el pie de la curva. NO VA POR ANCHO
+       sino por una condición: el tablero lo topa el ancho y sobra alto para
+       la curva (`ubicarCurva()` pone `.curvaAbajo`; una media query no puede
+       restar vh de vw). En una laptop de 1366×768 no se cumple y queda la de
+       siempre: no se achica el tablero para bajar la curva. */
+    #zonaRevision.curvaAbajo { grid-template-rows: auto auto auto 1fr auto;
+      padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab) - 62px)); }
+    #zonaRevision.curvaAbajo > .pmedio { grid-row: 2 / 5; }
+    /* 16 desde la fila de Girar (§1.5; los 10 que resta son el margen de
+       `.revtab`) y al ancho de las casillas, no de la
+       caja del SVG: `--izqCurva` lo pone `ubicarGirar()`, que tiene la escala */
+    #zonaRevision.curvaAbajo > .curva { grid-column: 1; grid-row: 5; min-width: 0; box-sizing: border-box;
+      margin-top: calc(var(--e-4) - 10px); margin-left: var(--izqCurva, var(--mTab));
+      width: calc(100% - var(--izqCurva, var(--mTab)) - var(--mTab)); }
+    #zonaRevision.curvaAbajo > .colLista { grid-row: 4 / 6; min-height: 100%; }
     /* MÍNIMO CUATRO RENGLONES de lista (300 son las alternativas, cuatro
        renglones, "‹ ›" y sus márgenes): con el tablero limitado por el ancho
        —de 950 a ~1000— quedaban dos. Ahí el panel se pasa del pie de las
@@ -1305,7 +1331,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.134 · 15-11";
+  window.VERSION = "v0.135 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -7383,7 +7409,21 @@ function pintarLista() {
    casillas; el SVG mide 8 casillas más dos márgenes, y la escala sale de su
    ancho en pantalla. */
 const JUGADAS_GIRAR = 4;
+/* ¿Sobra alto para bajar la curva debajo del tablero? (v0.135, ver el CSS de
+   `.curvaAbajo`). Las mismas cuentas que `--ladoTab`: el lado que pide el alto
+   menos los 62 de la curva (16 de aire y 46 de curva) contra el que deja el
+   ancho. `innerWidth` y no `clientWidth`, porque el CSS usa 100vw. */
+function ubicarCurva() {
+  const z = $("zonaRevision");
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const panel = Math.min(380, Math.max(340, 340 + (vw - 1000) * .364));
+  const porAlto = vh - 48 - (z.classList.contains("sinEvalH") ? 64 : 80) - 62;
+  z.classList.toggle("curvaAbajo", window.matchMedia(CORTE_ANCHO).matches &&
+    porAlto >= Math.min(vw - panel - 120, 680));
+}
+window.addEventListener("resize", ubicarCurva);
 function ubicarGirar(f) {
+  ubicarCurva();
   const b = $("btnGirarTab"), svg = $("tablero").querySelector("svg.tab");
   if (!svg) return b.classList.add("oculto");
   const s = svg.getBoundingClientRect(), r = b.parentElement.getBoundingClientRect();
@@ -7397,6 +7437,9 @@ function ubicarGirar(f) {
   if (window.matchMedia(CORTE_ANCHO).matches) {
     const c = document.querySelector(".revtab .comidas");
     const km = s.width / (TAB_S * 8 + TAB_M * 2), m = TAB_M * km, lado = TAB_S * 8 * km;
+    /* la curva de abajo arranca con la columna a (v0.135) */
+    const pm = document.querySelector("#zonaRevision > .pmedio").getBoundingClientRect();
+    $("zonaRevision").style.setProperty("--izqCurva", (s.left - pm.left + m) + "px");
     c.style.left = (s.left - r.left + m) + "px";
     c.style.top = (s.top - r.top + m) + "px";
     c.style.width = c.style.height = lado + "px";
@@ -7817,8 +7860,14 @@ function pintarRevision() {
     if (sel) {
       const fila = sel.parentElement;
       if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
-      else if (fila.offsetTop + fila.offsetHeight > lista.scrollTop + lista.clientHeight)
-        lista.scrollTop = fila.offsetTop + fila.offsetHeight - lista.clientHeight;
+      else if (fila.offsetTop + fila.offsetHeight > lista.scrollTop + lista.clientHeight) {
+        /* y que arriba no quede medio renglón (revisor, v0.135): se baja hasta
+           el borde del renglón siguiente. Medio renglón abajo se acepta, avisa
+           que hay más. */
+        const tope = fila.offsetTop + fila.offsetHeight - lista.clientHeight;
+        const borde = [...lista.children].find(d => d.offsetTop >= tope);
+        lista.scrollTop = borde ? Math.min(borde.offsetTop, fila.offsetTop) : tope;
+      }
     }
     if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
     if (enInicio && !PRUEBA) lista.scrollTop = 0;

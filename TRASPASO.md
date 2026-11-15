@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.134**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.135**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -288,7 +288,9 @@ preferencias, que antes vivían sueltos en la fila del pie.
 **Desde la v0.125 la Partida de la compu es otra** (§7, v0.125): de **1000**
 para arriba (el inicio y el Mes siguen partiéndose en 950), tablero a la izquierda y un panel a la derecha (tarjeta, cuadritos,
 curva, alternativas, lista y "‹ ›"), sin tres columnas y con la tira mudada
-por DOM al pie de la lista. Lo que sigue en este párrafo es la historia.
+por DOM al pie de la lista. Desde la v0.135, si sobra alto (ventanas angostas
+y altas) la curva baja debajo del tablero: `.curvaAbajo`, que pone
+`ubicarCurva()`. Lo que sigue en este párrafo es la historia.
 Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
 **de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
 con `minmax`; de 700 a 949 es una columna con el tablero que crece; §7, v0.118): `.principal` es la de siempre, de 700, y `.lateral` es
@@ -4673,6 +4675,44 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.135 [PC], la curva baja debajo del tablero cuando sobra alto** (lavado
+de cara del revisor, v0.125). De 1000 a ~1100 de ancho con 900 de alto el
+tablero lo manda el ancho y quedaban ~250 px vacíos abajo. Se dibujaron cuatro
+a 1000×900 y 1100×900 con la barra vertical (`pruebas/maqueta-angosta.mjs`, no
+se commitea): A, la de hoy; B, cuadritos y curva debajo del tablero; C, la
+columna de 700 a 999 estirada; D, B con el panel en 300 y el tablero más
+grande. El revisor dijo ninguna tal cual y eligió una quinta, **E**: solo la
+curva baja, los cuadritos quedan con la tarjeta. B separaba la tarjeta de sus
+cuadritos por 500 px en diagonal (debajo del tablero se leen como datos del
+tablero); C tiraba 330 px a los costados y cortaba los cuadritos; D partía en
+dos renglones los textos del panel y a 1100 no ganaba nada.
+- **No va por ancho sino por una condición**: `ubicarCurva()` pone
+  `.curvaAbajo` en `#zonaRevision` cuando el lado que pide el alto, menos 62
+  (16 de aire y 46 de curva), alcanza al que deja el ancho (las mismas cuentas
+  que `--ladoTab`, con el panel de 340 a 380 y 64/80 según la barra). Una media
+  query no puede restar vh de vw. La llaman `ubicarGirar()` y un listener de
+  `resize` propio: el observador de `.revtab` no se entera de un cambio de
+  alto con el tablero topado por el ancho. Medido: se cumple a 1000×900,
+  1100×900 y 1440×900 (ahí el tablero está en el techo de 680); no a 1366×768
+  ni a 1280×800, que quedan como antes, byte a byte en `ancho-*`.
+- Grilla con la clase: filas `auto auto auto 1fr auto`, `.pmedio` en 2/5, la
+  curva en la columna 1 fila 5 y la lista en 4/6 con `min-height: 100%`. La
+  curva va al ancho de las casillas (`--izqCurva`, lo pone `ubicarGirar()`) y
+  a 16 de la fila de Girar (`calc(--e-4 - 10px)`: 10 es el margen de
+  `.revtab`). El relleno del Resumen resta los 62. Medido a 1000×900: Girar
+  termina en 642, la curva 658–704, "‹ ›" termina en 704; la lista muestra 10
+  renglones en vez de 4–5. A 1100: 722–768.
+- **La lista no deja medio renglón arriba** (revisor): al bajar para mostrar
+  la jugada elegida se baja hasta el borde del renglón siguiente; medio
+  renglón abajo se acepta, avisa que hay más. Al llegar a la última jugada
+  sigue bajando del todo, porque el cierre tiene que verse.
+- Lo que deja el revisor: con E siguen sobrando ~190 px abajo a 1000×900, con
+  las dos columnas cerradas a la misma altura. Si algún día se quiere usar, la
+  pregunta es qué otra cosa merece estar a la vista (¿las tres mejores
+  desplegadas?), no estirar lo que hay.
+- Chequeo estático 7quinquies. Celu: idéntico al byte salvo `mes-seccion`,
+  por el número de versión del pie.
 
 **v0.134, tres categorías que decían algo falso** (revisión de las
 evaluaciones, H1, H2 y H4 de §8; aprobadas por Juan el 15-nov). **Mueve los
