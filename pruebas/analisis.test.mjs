@@ -3243,3 +3243,34 @@ test("el rey no defiende una casilla que otra pieza rival también ataca", () =>
   const o = mirar("4rr2/3n1p2/1p1kn1p1/p2p3p/7P/P4P2/BPK1N1P1/3R3R b - - 1 31", "d6e7");
   assert.deepEqual(o.nuevas, [], JSON.stringify(o.nuevas));
 });
+
+/* --- v0.133.1: tres frases chicas que mentían --- */
+test("una captura que corona no es un ataque doble a la misma pieza", () => {
+  /* axb2 ataca la dama de c1 y la torre de a1; cada captura que corona son
+     cuatro jugadas, y salía "la dama de c1 y la dama de c1" */
+  const o = mirar("rn1qk2r/1p3ppb/2p1p2p/3pN1PP/1b1PnB2/p1N1P3/PPP2P2/R1Q1KB1R b KQkq - 0 13", "a3b2");
+  assert.deepEqual(o.amenazadas.map(a => a.sq).sort(), ["a1", "c1"]);
+});
+
+test("después de coronar, ataca la dama y no el peón", () => {
+  const antes = "6r1/2pk4/7K/1p1n4/3P1RR1/8/2p5/8 b - - 0 48";
+  const j = new Chess(antes);
+  const m = j.move("c1=Q");
+  const f = { fen: j.fen(), uci: "c2c1q", turno: "b", pieza: "p", san: m.san };
+  const obs = A.observarJugada(f, antes);
+  const txt = A.partesDeLaExplicacion(f, null, true, null, obs, { ranuras: 3 })
+    .map(p => p.txt).join(" ");
+  assert.ok(!/con un peón/.test(txt), txt);
+});
+
+test("sin eco: 'Había Rxd6' no se repite como 'Rxd6 lo cobraba'", () => {
+  const antes = "q4rk1/1p3pp1/r2P3p/2N1p3/8/1P1P1N2/3BBP1P/5RQK b - - 0 29";
+  const f = unaFila(antes, "Qc8",
+    [{ cp: 0, mate: null, mejor: "a6d6", segunda: null },
+     { cp: 250, mate: null, mejor: "d6d7", segunda: null }]);
+  const partes = A.partesDeLaExplicacion(f, "Rxd6", true, null, A.observarJugada(f, antes),
+                                         { ranuras: 3, rivalErro: true });
+  const txt = partes.map(p => p.txt).join(" ");
+  assert.ok(txt.includes("Había Rxd6"), txt);
+  assert.ok(!txt.includes("lo cobraba") && !txt.includes("lo cobraste"), txt);
+});

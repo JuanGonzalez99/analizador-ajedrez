@@ -1305,7 +1305,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.133 · 15-11";
+  window.VERSION = "v0.133.1 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2828,7 +2828,8 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
                marca: "ataque doble", sq: [a.sq, b.sq] };
   } else if (obs && obs.amenazadas.length === 1) {
     const a = obs.amenazadas[0];
-    ataque = { txt: `Ataca ${piezaEn(a.pieza, a.sq)} con ${PIEZA_UN[f.pieza] || "una pieza"}.`,
+    const queda = (f.uci || "").length > 4 ? f.uci[4] : f.pieza;
+    ataque = { txt: `Ataca ${piezaEn(a.pieza, a.sq)} con ${PIEZA_UN[queda] || "una pieza"}.`,
                marca: "Ataca", sq: a.sq };
   }
 
@@ -2933,10 +2934,15 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      movió: mirando una jugada del rival, el que erró antes es el usuario, y
      "el rival acababa de errar" diría exactamente lo contrario de lo que pasó.
      Con el lado desconocido —un PGN pegado— tampoco se dice: no se puede. */
-  const llegada = c.rivalErro && mio && mejorSan
+  /* SIN ECO CON "HABÍA" (v0.133.1): si la frase de lo que había ya nombra la
+     jugada —"Había Rxd6, que se llevaba el peón"—, decir además "el rival
+     acababa de errar: Rxd6 lo cobraba" es la misma jugada dos veces seguidas
+     (23 de 1.075 tarjetas). Queda "Había", que dice además qué se ganaba. */
+  const ecoHabia = !!(habia && mejorSan && habia.txt.includes(mejorSan));
+  const llegada = c.rivalErro && mio && mejorSan && !ecoHabia
       ? { txt: `El rival acababa de errar: ${mejorSan} lo cobraba.`,
           marca: mejorSan, uci: f.mejor }
-    : c.rivalErro && mio
+    : c.rivalErro && mio && !mejorSan
       ? { txt: `El rival erró y lo cobraste.`, marca: "lo cobraste" }
     : c.salioDelLibro
       ? { txt: `Acá se terminó la teoría.`, marca: "la teoría" } : null;
@@ -3404,9 +3410,17 @@ function observarJugada(f, fenAntes = null) {
        turno; el rey se saca de la lista porque atacarlo es dar jaque, que ya lo
        dice el propio SAN con un "+". */
     const j = new Chess(conElTurnoDadoVuelta(f.fen));
+    /* DOS ARREGLOS DE LA CORONACIÓN (v0.133.1). La pieza que ataca es la que
+       QUEDÓ, no la que salió: después de c1=Q ataca una dama, no un peón. Y
+       una captura que corona son cuatro jugadas (=Q, =R, =B, =N) a la misma
+       casilla, así que sin juntar por casilla salía "Es un ataque doble: la
+       dama de c1 y la dama de c1". */
+    const queda = f.uci.length > 4 ? f.uci[4] : f.pieza;
+    const vistas = new Set();
     const amenazadas = j.moves({ verbose: true })
       .filter(m => m.from === donde && m.captured && m.captured !== "k" &&
-                   (VALOR[m.captured] || 0) > (VALOR[f.pieza] || 0))
+                   (VALOR[m.captured] || 0) > (VALOR[queda] || 0))
+      .filter(m => !vistas.has(m.to) && vistas.add(m.to))
       .map(m => ({ sq: m.to, pieza: m.captured }));
 
     /* 2. QUÉ PIEZAS MÍAS QUEDAN COLGADAS, y sobre todo CUÁLES CAMBIARON.

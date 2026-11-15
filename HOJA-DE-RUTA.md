@@ -426,10 +426,9 @@ Lo que salió de la revisión de los veredictos y de las frases de la tarjeta
 El jaque en los detectores y la nueva definición de "a salvo" ya están hechos
 (v0.133). Lo que queda:
 
-- [ ] ⏸ espera a Juan · Las frases chicas que no mueven números: el ataque
-      doble que nombra dos veces la misma pieza (capturas que coronan), "Ataca…
-      con un peón" después de coronar, y el eco "El rival acababa de errar: X lo
-      cobraba. Había X…". Siguen en esta misma sesión.
+- [x] ~~Las frases chicas que no mueven números: el ataque doble que nombra
+      dos veces la misma pieza, "Ataca… con un peón" después de coronar, y el
+      eco "lo cobraba / Había X".~~ Hecho en la v0.133.1.
 - [ ] ⏸ espera a Juan · Las engañosas: "Toma la columna abierta" cuando la
       torre ya estaba ahí, "Tu X queda comible" cuando acaba de comer algo que
       vale lo mismo o más, y una frase de mérito en las tarjetas de error.

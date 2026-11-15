@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.133**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.133.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4674,6 +4674,18 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.133.1, tres frases chicas de la revisión** (parche: solo texto).
+- El ataque doble ya no nombra dos veces la misma pieza: una captura que
+  corona son cuatro jugadas a la misma casilla, y ahora `amenazadas` junta por
+  casilla.
+- Después de coronar ataca la pieza que **quedó**: "con una dama", no "con un
+  peón". Vale también para el corte de "vale más que la que ataca".
+- Sin eco: si "Había X…" ya nombra la jugada, no se dice además "El rival
+  acababa de errar: X lo cobraba" (23 de 1.075 tarjetas). Queda "Había", que
+  dice qué se ganaba. Tampoco cae a "lo cobraste", que ahí sería falso.
+- Medido: de 8 frases visibles falsas a 5, y las 5 son las conocidas (4 del
+  verificador y el Brillante de H2). 3 pruebas nuevas.
+
 **v0.133, el jaque ya no decide qué está clavado, salvado o atrapado** (revisión
 de las evaluaciones, 14 y 15-nov; detalle en §8, "La revisión de las
 evaluaciones"). Lo reportó Juan con capturas: "Clava la torre de a8" en 3.
@@ -5400,9 +5412,9 @@ salvo" con cambio estático (ver §7, v0.133).
 - **Ruido de profundidad** (contexto, no error): de 16 a 18 cambia el 22,6% de
   las categorías y 79 de 356 malas cruzan la línea buena/mala (65 con H4
   arreglado).
-- **Frases que quedan falsas**: ataque doble que nombra dos veces la misma
-  pieza (capturas que coronan, cada una son cuatro jugadas), "con un peón"
-  después de coronar, y el eco "lo cobraba / Había X" (23 tarjetas).
+- ~~**Frases que quedan falsas**: ataque doble con la misma pieza dos veces,
+  "con un peón" después de coronar, y el eco "lo cobraba / Había X".~~
+  **HECHO en la v0.133.1.**
 - **Engañosas** (71 visibles después de la v0.133): "Toma la columna" con la
   torre que ya estaba ahí (55), "Tu X queda comible" después de comer algo de
   igual o más valor (13), y una frase de mérito en un tercio de las tarjetas de
