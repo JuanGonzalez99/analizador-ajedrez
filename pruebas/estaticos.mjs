@@ -48,7 +48,11 @@ chequear("sin comentarios adentro del HTML", enTemplate);
    sola cuando algo se metía en el medio —pasó al agregar el interruptor de la
    v0.48— sin que hubiera nada mal. */
 const tablas = [...html.matchAll(/<table id="([^"]+)"/g)];
+/* La traspuesta (`data-traspuesta`, v0.137) es la MISMA tabla dada vuelta
+   para la compu, y se muestra en lugar de la otra, nunca junto: comparte su
+   leyenda. */
 const sinLeyenda = tablas.filter((m, i) => {
+  if (/^<table id="[^"]+" data-traspuesta=/.test(html.slice(m.index, m.index + 80))) return false;
   const desde = i ? tablas[i - 1].index : 0;
   return !html.slice(desde, m.index).includes('class="cap"');
 }).map(m => m[1]);
@@ -155,6 +159,20 @@ chequear("la curva baja cuando sobra alto", [
    escala del tablero; `mirar` mide el desfasaje ("barra horizontal:"). */
 chequear("la barra horizontal arranca con las casillas", [
   ...(/#zonaRevision > \.parriba > \.evalh \{ margin-left: var\(--izqCurva/.test(html) ? [] : ["falta el margen de la barra horizontal"]),
+]);
+
+/* 7septies. [PC] El Resumen va al ancho del grupo (v0.137): de la columna a
+   al borde del panel, con los números que pone `ubicarResumen()`. Medía 1082
+   fijo y centrado, y eran dos cajas de anchos distintos. `mirar` mide el
+   desfasaje ("resumen al ancho del grupo:"). */
+chequear("el resumen va al ancho del grupo", [
+  ...(/#zonaResumen \{ max-width: none;\s+width: var\(--resAncho/.test(html) ? [] : ["falta el ancho del Resumen"]),
+  ...(/window\.addEventListener\("resize", ubicarResumen\)/.test(html) ? [] : ["ubicarResumen no se recalcula al cambiar el ancho"]),
+  ...(/ubicarResumen\(\);\n/.test(html) ? [] : ["ubicarGirar no llama a ubicarResumen"]),
+  /* y en la compu va la tabla traspuesta, una fila por jugador; en el celu
+     sigue escondida (no entran diez columnas en 386) */
+  ...(/<div class="resAncho"><div class="tw"><table id="resumenAncho"/.test(html) ? [] : ["falta la tabla traspuesta"]),
+  ...(/\n  \.resAncho \{ display: none; \}/.test(html) ? [] : ["la tabla traspuesta no arranca escondida"]),
 ]);
 
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.

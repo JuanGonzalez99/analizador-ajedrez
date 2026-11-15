@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.136**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.137**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4675,6 +4675,50 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.137 [PC], el Resumen al ancho del grupo, y su tabla traspuesta**
+(revisor, v0.125; y lavado de cara del revisor sobre la primera versión).
+Debajo de la Partida el Resumen medía 1082 fijo y centrado, y el grupo de
+arriba otra cosa según la escala (1029 a 1280, de la columna a al panel): dos
+cajas centradas de anchos distintos. Ahora va **de la columna a al borde del
+panel**, como la barra, el título y la curva, y el pie (`.credito`) con él. Los
+dos números (`--resIzq`, `--resAncho`, sobre el `body` porque el pie también
+los usa) los pone `ubicarResumen()`, que llama `ubicarGirar()` y también el
+`resize` de la ventana: van en píxeles de la página, y con el tablero en su
+tope de 680 el `ResizeObserver` del tablero no se entera de que el grupo, que
+va centrado, se corrió. Con la barra vertical arranca en la columna a, no en
+la barra, igual que el título.
+**El revisor frenó eso solo como parche**: con el marco puesto quedaba a la
+vista el armado del celu estirado a ~1030 —las dos tarjetas partidas al medio,
+~700 px entre "Brillante" y su número, cada jugador en dos x distintas—. Se
+dibujaron cuatro (`pruebas/maqueta-resumen.mjs`, no se commitea): A, la de
+hoy; B, cada jugador una columna con su tarjeta arriba (prometía alinear y no
+alineaba, y columnas de 400 para un número); C, tabla bajo el tablero y
+tarjetas apiladas bajo el panel (dos pedazos); **D, la tabla traspuesta**, que
+ganó: una fila por jugador que arranca con nombre, precisión y mediana y sigue
+con los diez recuentos; las categorías de cabecera (ícono en 14/700, nombre en
+leyenda); los ceros en tenue. Misma pregunta —cuántas de cada una tuvo cada
+uno—, dada vuelta. La página se acorta ~220 px. Ajustes del revisor: los
+recuentos en la **línea de base de la precisión** (el nombre va `absolute`
+para que el primer renglón de la celda sea el de la precisión, y la fila
+alinea por `baseline`), cuerpo 16, y la primera columna en
+`clamp(150px, 15 % de --resAncho, 190px)` —**el `clamp()` con % no lo toma una
+tabla fija**: la columna quedaba en ~106 y "mediana" se partía—. Entre
+rótulos de cabecera quedan 21 px a 1000 y 31 a 1280. La cabecera va alineada **arriba**:
+a 1000 "Error grave" se parte en dos y, alineado abajo, su ícono subía.
+`#resumenAncho` lo arma `pintarResumen()` junto con la de siempre; vive en
+`.resAncho` (escondida fuera de la Partida ancha) y lleva
+`data-traspuesta="resumen"`, que el chequeo 2 entiende como "la misma tabla,
+comparte leyenda". **Ojo con `.soloAncho`**: ya existía (una fila de los
+ajustes), y reusarla rompió `mirar`.
+El hueco de arriba del Resumen a 1000 (~170 px desde Girar) **se queda**: es
+el relleno de `#zonaRevision` para que el Resumen no asome cortado en la
+primera pantalla. A 1280 son ~42.
+Medido en las dos formas a 1000, 1280 y 1920: bordes en 0 y 0, sin desbordes.
+`mirar` imprime "resumen al ancho del grupo:" (las tres formas, a 1280, con
+"traspuesta" si se ve la de la compu y no la del celu); chequeo estático
+7septies. Celu: idéntico al byte salvo `mes-seccion`, por el número de versión
+del pie.
 
 **v0.136 [PC], la barra horizontal arranca con la columna a** (revisor,
 v0.132; leve, ya estaba). Medía el ancho del grupo entero (`.parriba` cruza

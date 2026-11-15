@@ -939,7 +939,54 @@
        `max-content` —barra, tablero y comidas abrazados— y el cuerpo se suelta
        solo en la Partida. */
     body.enVista:has(#zonaRevision:not(.oculto)) { max-width: none; }
-    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen { max-width: 1082px; margin-inline: auto; }
+    /* EL RESUMEN VA AL ANCHO DEL GRUPO DE ARRIBA (v0.137, revisor, v0.125):
+       medía 1082 fijo y centrado, y el grupo es otra cosa según la escala —1029
+       a 1280—, así que eran dos cajas centradas de anchos distintos y el
+       Resumen asomaba 40 px antes de las casillas. Ahora va de la columna a al
+       borde del panel, como la barra, el título y la curva: los dos números
+       los pone `ubicarGirar()`, que ya tiene la escala. Sin ellos (antes del
+       primer dibujo) queda el 1082 de antes. */
+    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen { max-width: none;
+      width: var(--resAncho, min(1082px, 100%)); margin-left: var(--resIzq, auto); margin-right: auto; }
+    /* y el pie con él (revisor, v0.137): toda la Partida ancha arranca en la
+       columna a, y el pie se quedaba solo en el borde de la página */
+    body.enVista:has(#zonaRevision:not(.oculto)) .credito { margin-left: var(--resIzq, 0); }
+    /* LA TABLA DEL RESUMEN, TRASPUESTA (v0.137, lavado de cara del revisor
+       sobre el ancho del grupo). Al medir ~1000 de ancho, el armado del celu
+       —dos tarjetas partidas al medio y una tabla de tres columnas— dejaba
+       ~700 px entre "Brillante" y su número, y cada jugador en dos x
+       distintas. Es la D entre cuatro: una FILA POR JUGADOR, que arranca con
+       su nombre, la precisión y la mediana y sigue con los diez recuentos en
+       el renglón de la precisión, números con números; las categorías van de
+       cabecera. Misma pregunta —cuántas de cada una tuvo cada uno—,
+       traspuesta. Las otras: A, la de hoy; B, cada jugador una columna con su
+       tarjeta arriba (prometía alinear y no alineaba, y columnas de 400 para
+       un número); C, tabla bajo el tablero y tarjetas bajo el panel (dos
+       pedazos). En el celu no entran diez columnas: queda lo de antes. */
+    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen #marcador,
+    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen .tw:has(#resumen) { display: none; }
+    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen .resAncho { display: block; margin-top: var(--e-3); }
+    #resumenAncho { table-layout: fixed; width: 100%; }
+    /* arriba y no abajo (revisor): a 1000 "Error grave" se parte en dos y,
+       alineado abajo, su ícono subía; así los diez íconos van en una fila */
+    #resumenAncho th { text-align: center; vertical-align: top; font-weight: 400; padding: 0 4px 8px; white-space: normal; }
+    /* el 15 % sale del ancho del Resumen y no de un porcentaje: la tabla fija
+       no tomaba el `clamp()` con % y la columna quedaba en ~106. 150 es lo
+       que piden "88.5" y "mediana 0.33" en un renglón, con su aire. */
+    #resumenAncho th:first-child { width: clamp(150px, calc(var(--resAncho, 1000px) * .15), 190px); }
+    #resumenAncho .ic { font-size: var(--t-secundario); font-weight: 700; }
+    #resumenAncho .no { font-size: var(--t-leyenda); color: var(--tenue); }
+    /* los recuentos en la línea de base de la precisión (revisor): el nombre
+       va fuera del flujo, así el primer renglón de la celda —el que manda la
+       base de toda la fila— es el de la precisión */
+    #resumenAncho td { text-align: center; vertical-align: baseline; font-size: var(--t-cuerpo);
+                       font-variant-numeric: tabular-nums; }
+    #resumenAncho td.cero { color: var(--tenue); }
+    #resumenAncho td.quien { text-align: left; padding: 28px 12px 6px 0; position: relative; white-space: nowrap; }
+    #resumenAncho .et { position: absolute; top: 8px; left: 0; right: 12px; font-size: var(--t-leyenda);
+                        color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #resumenAncho .gr { font-size: var(--t-titulo); font-weight: 700; font-variant-numeric: tabular-nums; }
+    #resumenAncho .pe { font-size: var(--t-minimo); color: var(--tenue); margin-left: 6px; }
     #zonaRevision { --panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 380px); --mTab: calc(var(--ladoTab) * 15 / 366);
                     display: grid; grid-template-columns: max-content var(--panel);
                     grid-template-rows: auto auto auto auto minmax(0, 1fr);
@@ -1256,6 +1303,7 @@
     .curva:hover, .evalh:hover { border-color: color-mix(in srgb, currentColor 40%, transparent); }
     .seccion > summary:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
   }
+  .resAncho { display: none; }
   .credito { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-6) 0 0; }
   .credito a { color: inherit; }
   /* LA BARRA DE TÍTULO DE LA PARTIDA (v0.123; lavado de cara del revisor,
@@ -1342,7 +1390,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.136 · 15-11";
+  window.VERSION = "v0.137 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1799,6 +1847,7 @@
   <p class="cap" id="capResumen"></p>
   <div class="marcador" id="marcador"></div>
   <div class="tw"><table id="resumen"></table></div>
+  <div class="resAncho"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
 </div>
 
 <!-- LA HOJA DE AJUSTES (v0.91). Vive al final del body y no adentro de la
@@ -7433,6 +7482,24 @@ function ubicarCurva() {
     porAlto >= Math.min(vw - panel - 120, 680));
 }
 window.addEventListener("resize", ubicarCurva);
+/* EL RESUMEN, DE LA COLUMNA a AL BORDE DEL PANEL (v0.137). En píxeles de la
+   página y no relativos al grupo, así que se recalcula también al cambiar el
+   ancho de la ventana: con el tablero en su tope (680) el ResizeObserver del
+   tablero no se entera y el grupo se corre igual, porque va centrado. */
+function ubicarResumen() {
+  const svg = $("tablero").querySelector("svg.tab");
+  if (!svg || !window.matchMedia(CORTE_ANCHO).matches) return;
+  const s = svg.getBoundingClientRect();
+  if (!s.width) return;
+  const m = TAB_M * s.width / (TAB_S * 8 + TAB_M * 2);
+  const zr = $("zonaResumen"), cb = zr.parentElement, cs = getComputedStyle(cb);
+  const base = cb.getBoundingClientRect().left + parseFloat(cs.paddingLeft) + parseFloat(cs.borderLeftWidth);
+  const der = document.querySelector("#zonaRevision > .parriba").getBoundingClientRect().right;
+  /* en el body y no en el Resumen: el pie también los usa */
+  document.body.style.setProperty("--resIzq", (s.left + m - base) + "px");
+  document.body.style.setProperty("--resAncho", (der - s.left - m) + "px");
+}
+window.addEventListener("resize", ubicarResumen);
 function ubicarGirar(f) {
   ubicarCurva();
   const b = $("btnGirarTab"), svg = $("tablero").querySelector("svg.tab");
@@ -7451,6 +7518,7 @@ function ubicarGirar(f) {
     /* la curva de abajo arranca con la columna a (v0.135) */
     const pm = document.querySelector("#zonaRevision > .pmedio").getBoundingClientRect();
     $("zonaRevision").style.setProperty("--izqCurva", (s.left - pm.left + m) + "px");
+    ubicarResumen();
     c.style.left = (s.left - r.left + m) + "px";
     c.style.top = (s.top - r.top + m) + "px";
     c.style.width = c.style.height = lado + "px";
@@ -8348,6 +8416,15 @@ function pintarResumen(prof) {
   $("resumen").innerHTML = `
     <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
     <tbody>${ORDEN.map(filaCat).join("")}</tbody>`;
+
+  /* la misma tabla traspuesta, para la compu (v0.137): una fila por jugador */
+  const filaJug = (nom, fs) => `<tr><td class="quien"><div class="et">${nom}</div>` +
+    `<span class="gr">${prec(fs).toFixed(1)}</span><span class="pe">mediana ${mediana(fs.map(f => f.perdida)).toFixed(2)}</span></td>` +
+    ORDEN.map(k => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; }).join("") + "</tr>";
+  $("resumenAncho").innerHTML = `
+    <thead><tr><th></th>${ORDEN.map(k => `<th><div class="ic" style="color:var(--c-${k})">${CATEGORIAS[k].icono}</div>` +
+      `<div class="no">${CATEGORIAS[k].nombre}</div></th>`).join("")}</tr></thead>
+    <tbody>${filaJug(cab.White || "Blancas", B)}${filaJug(cab.Black || "Negras", N)}</tbody>`;
 
 }
 

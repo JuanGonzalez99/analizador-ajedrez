@@ -704,7 +704,21 @@ for (const f of ["horizontal", "barra", "tarjeta"]) {
              titulo: (() => { const r = document.createRange(); r.selectNodeContents(document.getElementById("revRival"));
                               return Math.round(r.getBoundingClientRect().left - b.left); })() };
   })), "(1280×800; todo en 0)");
+  /* el Resumen, de la columna a al borde del panel (v0.137), en las tres
+     formas: 0 y 0 */
+  porForma[f + "Resumen"] = await pg.evaluate(() => {
+    const z = document.getElementById("zonaResumen").getBoundingClientRect(), s = document.querySelector("svg.tab").getBoundingClientRect();
+    const p = document.querySelector("#zonaRevision > .tarjetas").getBoundingClientRect();
+    /* y adentro, la traspuesta (v0.137): visible, sin la de celu, con los
+       recuentos en la línea de base de la precisión */
+    const g = document.createRange(), n = document.createRange(), fila = document.querySelector("#resumenAncho tbody tr");
+    g.selectNodeContents(fila.querySelector(".gr")); n.selectNodeContents(fila.children[1]);
+    const base = r => r.getBoundingClientRect().bottom - r.getBoundingClientRect().height * .2;
+    return [Math.round(z.left - (s.left + s.width * 15 / 366)), Math.round(z.right - p.right),
+            !!document.getElementById("resumenAncho").offsetParent && !document.getElementById("resumen").offsetParent ? "traspuesta" : "MAL"];
+  });
 }
+console.log("resumen al ancho del grupo:", JSON.stringify(["horizontal", "barra", "tarjeta"].map(f => porForma[f + "Resumen"])), "(1280×800; todo en 0)");
 console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)");
 /* LA BARRA PEGADA AL TABLERO Y EL NÚMERO ENTERO ADENTRO. Las dos fallaron en la
    primera captura de la v0.86 y ninguna de las dos la agarraba una cuenta: la

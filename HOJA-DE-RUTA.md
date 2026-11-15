@@ -292,7 +292,7 @@ lo demás se dibuja contra ella.
       v0.132; leve, ya estaba). A 1280 va de x 113 a 1167 y las casillas
       arrancan en 139 (los números de fila en ~127). ¿La barra mide el ancho de
       la página o el del tablero? Con la vertical, la de fábrica, no pasa.
-- [ ] **[PC] El Resumen al ancho del grupo** (revisor, v0.125; leve). Debajo
+- [x] **[PC] El Resumen al ancho del grupo** (v0.137, 15-nov: de la columna a al borde del panel, como la barra y la curva, y adentro la tabla traspuesta —una fila por jugador—, la D entre cuatro del lavado de cara que pidió el revisor al ver el marco; revisor, v0.125; leve). Debajo
       de la Partida el Resumen mide 1082 centrado y el grupo de arriba otra
       cosa: dos cajas centradas de anchos distintos (a 1600, 27 px corrido).
 - [ ] **Lavado de cara: la cabecera del inicio con "cambiar"** (revisor,
