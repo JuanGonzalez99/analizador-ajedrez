@@ -149,6 +149,14 @@ chequear("la curva baja cuando sobra alto", [
   ...(/function ubicarGirar\(f\) \{\n  ubicarCurva\(\);/.test(html) ? [] : ["ubicarGirar no llama a ubicarCurva"]),
 ]);
 
+/* 7sexies. [PC] La barra horizontal arranca con la columna a (v0.136), no
+   con la caja del SVG: medía el ancho del grupo y empezaba 22 a 28 px antes
+   que las casillas. La pone `--izqCurva`, que calcula `ubicarGirar()` con la
+   escala del tablero; `mirar` mide el desfasaje ("barra horizontal:"). */
+chequear("la barra horizontal arranca con las casillas", [
+  ...(/#zonaRevision > \.parriba > \.evalh \{ margin-left: var\(--izqCurva/.test(html) ? [] : ["falta el margen de la barra horizontal"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

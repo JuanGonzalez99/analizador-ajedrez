@@ -693,6 +693,17 @@ for (const f of ["horizontal", "barra", "tarjeta"]) {
   await elegir("#verEval", f);
   await pg.waitForTimeout(250);
   porForma[f] = await lado();
+  /* la barra horizontal arranca con la columna a y termina con el panel
+     (v0.136): 0 y 0 es lo que tiene que dar */
+  if (f === "horizontal") console.log("barra horizontal:", JSON.stringify(await pg.evaluate(() => {
+    const b = document.getElementById("evalh").getBoundingClientRect(), s = document.querySelector("svg.tab").getBoundingClientRect();
+    const p = document.querySelector("#zonaRevision > .tarjetas").getBoundingClientRect();
+    return { izq: Math.round(b.left - (s.left + s.width * 15 / 366)),
+             der: Math.round(b.right - p.right),
+             /* el renglón del título, con un Range: arranca con la barra (revisor) */
+             titulo: (() => { const r = document.createRange(); r.selectNodeContents(document.getElementById("revRival"));
+                              return Math.round(r.getBoundingClientRect().left - b.left); })() };
+  })), "(1280×800; todo en 0)");
 }
 console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)");
 /* LA BARRA PEGADA AL TABLERO Y EL NÚMERO ENTERO ADENTRO. Las dos fallaron en la

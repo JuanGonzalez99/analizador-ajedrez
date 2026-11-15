@@ -967,6 +967,17 @@
        área: si no, el nombre largo de la apertura estiraba la primera columna
        (`max-content`) y la página desbordaba de 950 a 1110. */
     #zonaRevision > .parriba  { grid-column: 1 / -1; grid-row: 1; width: 0; min-width: 100%; }
+    /* LA BARRA HORIZONTAL VA DE LA COLUMNA a AL BORDE DEL PANEL (v0.136,
+       revisor, v0.132): medía todo el ancho del grupo y arrancaba 22 a 28 px
+       antes que las casillas, sobre los números de fila. El borde derecho ya
+       caía con el del panel; el izquierdo lo pone `--izqCurva`, el mismo que
+       alinea la curva de abajo con la columna a. */
+    #zonaRevision > .parriba > .evalh { margin-left: var(--izqCurva, var(--mTab)); }
+    /* y el título también (revisor, v0.136): quedaba 3 a 8 px corrido según la
+       escala, casi alineado, que se ve peor que corrido del todo. El volver se
+       queda donde está, colgado sobre los números de fila: 26 son lo que ocupa
+       antes del título (22 del chevron, -6 de margen y 10 del `gap`). */
+    #zonaRevision > .parriba > .cabvista .cabTit { margin-left: calc(var(--izqCurva, 30px) - 26px); }
     #zonaRevision > .pmedio   { grid-column: 1; grid-row: 2 / -1; }
     #zonaRevision > .tarjetas { grid-column: 2; grid-row: 2; margin-top: calc(10px + var(--mTab)); }
     #zonaRevision > .pabajo   { grid-column: 2; grid-row: 3; }
@@ -1331,7 +1342,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.135 · 15-11";
+  window.VERSION = "v0.136 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

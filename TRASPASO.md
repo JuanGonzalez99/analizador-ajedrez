@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.135**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.136**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4675,6 +4675,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.136 [PC], la barra horizontal arranca con la columna a** (revisor,
+v0.132; leve, ya estaba). Medía el ancho del grupo entero (`.parriba` cruza
+las dos columnas) y arrancaba 22 a 28 px antes que las casillas, sobre los
+números de fila; el borde derecho ya caía con el del panel. Ahora
+`#zonaRevision > .parriba > .evalh` lleva `margin-left: var(--izqCurva)`, el
+mismo que alinea la curva de abajo con la columna a (lo calcula
+`ubicarGirar()` con la escala del tablero). Medido a 1000×700, 1000×900,
+1280×800, 1600×900 y 1920×1080: barra y casillas arrancan en el mismo píxel, y
+la barra termina con el panel. Se eligió "de la columna a al borde del panel"
+y no "solo sobre el tablero": es el renglón de las casillas que ya siguen el
+panel y la curva, y la barra es el estado de toda la vista, no del tablero.
+**El título va con ellas** (lo pidió el revisor): quedaba 3 a 8 px corrido
+según la escala, casi alineado, que se ve peor que corrido del todo.
+`.cabTit` lleva `margin-left: calc(var(--izqCurva) - 26px)` —26 es lo que
+ocupa el volver: 22 de chevron, −6 de margen y 10 de `gap`— y el volver queda
+colgado sobre los números de fila, como estaba. Vale también con la barra
+vertical, la de fábrica: el título arranca con la columna a.
+`mirar` imprime "barra horizontal:" (izquierda, derecha y título, todo en 0,
+medido el título con un `Range`); chequeo estático 7sexies. Celu: idéntico al byte salvo `mes-seccion`, por el número de versión
+del pie.
 
 **v0.135 [PC], la curva baja debajo del tablero cuando sobra alto** (lavado
 de cara del revisor, v0.125). De 1000 a ~1100 de ancho con 900 de alto el

@@ -288,7 +288,7 @@ lo demás se dibuja contra ella.
       pasaron de ~437 a 496 sin la columna de las comidas): 258 px a
       1000×900 y 194 a 1100×900, con la barra vertical. Mejoró, pero sigue. ¿Otra disposición en ese rango (curva o
       cuadritos debajo del tablero)? Con variantes.
-- [ ] **[PC] La barra horizontal no se alinea con el tablero** (revisor,
+- [x] **[PC] La barra horizontal no se alinea con el tablero** (v0.136, 15-nov: de la columna a al borde del panel, y el título de la cabecera con ellas; revisor,
       v0.132; leve, ya estaba). A 1280 va de x 113 a 1167 y las casillas
       arrancan en 139 (los números de fila en ~127). ¿La barra mide el ancho de
       la página o el del tablero? Con la vertical, la de fábrica, no pasa.
@@ -334,6 +334,14 @@ lo demás se dibuja contra ella.
       altura (no se ve armada con pedazos). Si se quiere usar ese alto, la
       pregunta es qué otra cosa de la partida va a la vista —¿las tres
       mejores desplegadas en vez del botón?—, no estirar lo que ya está.
+
+- [ ] **[PC] Lavado de cara: ¿la barra horizontal es de la cabecera o del
+      tablero?** (revisor, v0.136; leve, venía de antes). Queda a 12 px del
+      subtítulo y a 36 de las casillas y del panel: se agrupa con el título
+      pero habla del tablero, y ahora que comparte bordes con lo de abajo se
+      nota más. Mover solo ese valor no alcanza: el panel arranca con la
+      primera fila de casillas y se movería todo. De paso: a 1000 de ancho el
+      panel arranca 4 px arriba de las casillas (104 contra 108). Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
