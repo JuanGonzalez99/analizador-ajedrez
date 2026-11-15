@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.143.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.144**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2924,6 +2924,11 @@ renglón vecino no vuelve a esperar. Un solo temporizador (`PREVIA_T`), que
 tablero nuevo. No es una animación: es cuándo se dispara; el fundido, si va,
 es de la Etapa 3.
 
+**Desde la v0.144 la previa la pide el mouse al moverse**, no el `mouseenter`
+que manda el navegador cuando la lista se mueve debajo del puntero quieto
+(§7, v0.144); la jugada elegida no tiene previa; **la rueda con una variante
+abierta la recorre**, y las flechas del teclado también.
+
 **La tecla `n` salta al próximo error** (`p` al anterior), entre las jugadas
 propias y usando las categorías que ya están calculadas. Una partida se revisa
 por los errores, no jugada por jugada.
@@ -3017,6 +3022,9 @@ tablero de internet. Medido: la tarjeta queda diciendo "Elegiste a8".
 
 **La manito abierta se dibuja solo donde hay una pieza.** Sobre una casilla vacía
 prometería algo que no se puede hacer.
+
+**Desde la v0.144 el arrastre captura el puntero** (§7, v0.144): soltar
+afuera del tablero llega igual, y la casilla se busca por coordenadas.
 
 El arnés arrastra con el mouse de verdad y mide las tres cosas: que la pieza se
 corra mientras está en el aire, que quede sorda al mouse, y que al soltar la
@@ -4737,6 +4745,59 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.144 [PC], la revisión de todo lo que responde al mouse y al teclado**
+(Juan, 15-nov, después de la v0.139: *"quizás valga la pena una revisión a
+fondo"*). Se repasó con la sospecha de la v0.139 —cosas medidas en el arnés y
+nunca con un mouse de verdad— haciendo lo que el arnés no hacía: **dejar el
+mouse quieto**, **soltar afuera** y **usar el teclado con algo abierto**.
+Salieron seis fallas, todas reproducidas a escala 1 antes de tocar nada:
+
+1. **La previa aparecía sola.** Cuando la lista se repinta o scrollea, el
+   navegador le manda `mouseenter` al renglón que quedó debajo del puntero
+   aunque el mouse no se mueva. Pasar jugadas con las flechas con el mouse
+   apoyado en la lista hacía que a los 500 ms el tablero saltara a otra
+   jugada; y un clic en una jugada, con "Mejor" prendida, borraba la flecha
+   verde medio segundo después (la previa de la jugada en la que ya se está
+   es el mismo tablero sin flechas). Ahora la previa la pide el mouse al
+   moverse: se guarda dónde estuvo la última vez (`MOUSE_X`, `MOUSE_Y`) y un
+   aviso con esas mismas coordenadas no cuenta; `PREVIA_I` es la jugada a la
+   que apunta. Y la jugada elegida no tiene previa: es el tablero de verdad.
+2. **La pieza quedaba pegada al mouse.** Soltándola afuera del tablero el
+   `pointerup` no llegaba: quedaba en el aire y al volver seguía al puntero
+   sin botón apretado, y el clic siguiente jugaba. El arrastre ahora captura
+   el puntero (`setPointerCapture`) y busca la casilla de llegada por
+   coordenadas (`casillaEn`), porque la captura le cambia el `target`.
+3. **Arrastrar desde el tablero pintaba de azul** las coordenadas y el número
+   de la barra: `#tablero { user-select: none }`.
+4. **Alt+← y Cmd+← se los comía la app** (son "atrás" del navegador) y encima
+   pasaban una jugada. Las flechas ahora van sin Ctrl, Alt ni Meta, como `n`
+   y `p`.
+5. **Las flechas cerraban la variante sin avisar** y se llevaban la línea
+   probada, mientras los botones "‹ ›" y el deslizamiento la recorren. Ahora
+   usan `atras` y `adelante`, los de los botones. **La rueda también** (hasta
+   acá con una variante abierta no hacía nada, o sea que la página se iba
+   para abajo) y **Escape sale de la variante**. `n` y `p` siguen saltando
+   por la partida y la cierran, igual que un clic en la lista: ahí no hay
+   ambigüedad. **Una variante sin jugadas no cuenta** (`pasarConVariante`; lo
+   agarró el revisor): cualquier clic en el tablero abre una —"Elegiste a8"—
+   y ahí flechas y rueda quedaban muertas; pasan por la partida, que la
+   cierra. No va en `atras`/`adelante`, que son los del celu.
+6. **Arrastrar la tira se cortaba** al salirse 15 px para arriba o abajo (de
+   700 a 999, donde la tira existe): también captura el puntero, recién al
+   pasar el umbral, así un clic sigue siendo un clic.
+
+**Lo que se repasó y está bien:** las marcas con el botón derecho (soltar
+afuera cancela, y el `desde` viejo lo pisa el apretón siguiente), `n`/`p`, la
+rueda en la tira, y los `:hover` y cursores —todo lo que responde en la
+Partida tiene `cursor: pointer` o `grab`—. **Lo que queda anotado y no se
+tocó:** con Tab no se llega a las jugadas de la lista (no son enfocables);
+↑/↓ e Inicio/Fin no hacen nada de ajedrez (chess.com: principio y final).
+`mirar` imprime "mouse de verdad:" con doce medidas; chequeo estático
+7nonies. No se ve en una foto. Capturas del celu idénticas al byte salvo
+`inicio`, `inicio-cambiar`, `mes-seccion` y `ajustes-fondo`, por el número de
+versión; de las de PC cambian `ancho-curva` y `tres-barra`, solo en dónde
+quedó scrolleada la lista (el arnés pasa por otras jugadas antes).
 
 **v0.143.1, el toque de los dos enlaces de la atribución** (revisor, sobre la
 v0.143). Al pie de la página los enlaces tenían ~60 px de página debajo; al

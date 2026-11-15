@@ -537,6 +537,9 @@
             justify-content: center; }
   .comidas, .alts { display: none; }
   .revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }
+  /* arrastrar con el mouse desde el tablero pintaba de azul las coordenadas y el
+     número de la barra (v0.144) */
+  #tablero { user-select: none; -webkit-user-select: none; }
   /* el tablero trae margen propio para cuando va suelto; al lado de la barra
      sobra, y desalinea las dos por 10 px */
   .revtab svg.tab { margin: 0 auto; }
@@ -1424,7 +1427,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.143.1 · 15-11";
+  window.VERSION = "v0.144 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4994,10 +4997,38 @@ const MQ_MOUSE = window.matchMedia("(hover: hover)");
    pisaría el tablero nuevo. */
 const DEMORA_PREVIA = 500, DEMORA_VUELTA = 60;
 let PREVIA_T = null;
+/* LA PREVIA LA PIDE EL MOUSE AL MOVERSE, NO LA LISTA AL MOVERSE DEBAJO DE ÉL
+   (v0.144). Cuando la lista se repinta o scrollea, el navegador le avisa
+   `mouseenter` al renglón que quedó debajo del puntero aunque el mouse no se
+   haya movido. Con eso, pasar jugadas con las flechas del teclado dejando el
+   mouse apoyado en la lista hacía que a los 500 ms el tablero saltara SOLO a
+   la jugada de debajo del puntero; y hacerle clic a una jugada le borraba la
+   flecha verde medio segundo después, porque la previa de la jugada en la que
+   ya se está es el mismo tablero sin flechas. El arnés no lo veía: siempre
+   mueve el mouse antes de medir.
+   Se guarda dónde estuvo el mouse la última vez que se movió de verdad, y un
+   aviso que llega con esas mismas coordenadas no cuenta. `PREVIA_I` es la
+   jugada a la que apunta la previa —esperando o ya abierta—, para que moverse
+   ADENTRO del mismo renglón no reinicie la espera. */
+let MOUSE_X = -1, MOUSE_Y = -1, MOUSE_MOVIO = false, PREVIA_I = null;
+document.addEventListener("mousemove", ev => {
+  MOUSE_MOVIO = ev.clientX !== MOUSE_X || ev.clientY !== MOUSE_Y;
+  MOUSE_X = ev.clientX; MOUSE_Y = ev.clientY;
+}, true);
 function previaEn(sp, i) {
   if (!MQ_MOUSE.matches) return;
-  sp.onmouseenter = () => {
+  sp.onmouseenter = sp.onmousemove = ev => {
+    /* `mouseenter` llega ANTES que el `mousemove` que lo causó, así que se
+       compara contra lo guardado; el `mousemove` llega después de guardarlo,
+       y por eso pregunta si ese se movió */
+    if (ev.type === "mousemove" ? !MOUSE_MOVIO
+                                : ev.clientX === MOUSE_X && ev.clientY === MOUSE_Y) return;
+    if (PREVIA_I === i) return;
+    PREVIA_I = i;
     clearTimeout(PREVIA_T);
+    /* la jugada en la que ya se está no tiene previa: es el tablero de verdad,
+       con sus flechas. Si había otra abierta, se vuelve a él. */
+    if (i === IDX && !PRUEBA) return volverDeLaPrevia();
     if (TABLERO_PREVIO !== null) previsualizar(i);
     else PREVIA_T = setTimeout(() => previsualizar(i), DEMORA_PREVIA);
   };
@@ -5012,11 +5043,13 @@ function previaEn(sp, i) {
      mientras no se saliera de la lista, y a Juan no le copó). Si todavía no
      había aparecido, salir la corta. */
   sp.onmouseleave = () => {
+    PREVIA_I = null;
     clearTimeout(PREVIA_T);
     if (TABLERO_PREVIO !== null) PREVIA_T = setTimeout(volverDeLaPrevia, DEMORA_PREVIA);
   };
   const cont = sp.closest(".jugadas, .tira");
   if (cont) cont.onmouseleave = () => {
+    PREVIA_I = null;
     clearTimeout(PREVIA_T);
     PREVIA_T = setTimeout(volverDeLaPrevia, DEMORA_VUELTA);
   };
@@ -7950,6 +7983,7 @@ function pintarRevision() {
      la que estuviera esperando para aparecer se corta: llegaría tarde y lo
      pisaría */
   TABLERO_PREVIO = null;
+  PREVIA_I = null;
   clearTimeout(PREVIA_T);
   /* EL CUADRITO NOMBRA LO QUE DIBUJA LA FLECHA, así que sigue a la misma
      posición que ella: si dijera la mejor de la partida mientras la verde
@@ -8290,13 +8324,15 @@ $("curva").addEventListener("click", seguro("curva", ev => {
    manda la rueda en renglones y no en píxeles (`deltaMode` 1): se pasa a píxeles
    para que un clic de tres renglones también llegue al umbral.
 
-   Mientras hay una variante abierta no hace nada: ahí pasar de jugada querría
-   decir dos cosas distintas —la partida o la variante— y adivinar cuál es peor
-   que no hacer nada. */
+   Con una variante abierta la rueda RECORRE LA VARIANTE (v0.144), igual que
+   los botones, el deslizamiento y las flechas del teclado. Hasta la v0.143 no
+   hacía nada, y "nada" con un mouse de verdad era que la página se iba para
+   abajo: el mismo gesto pasaba jugadas o scrolleaba según hubiera una prueba
+   abierta. */
 (function ruedaEnElTablero() {
   let junta = 0;
   $("tablero").addEventListener("wheel", ev => {
-    if (!R || PRUEBA || $("zonaRevision").classList.contains("oculto")) return;
+    if (!R || $("zonaRevision").classList.contains("oculto")) return;
     if (!ev.deltaY || ev.ctrlKey) return;
     ev.preventDefault();
     const d = ev.deltaY * (ev.deltaMode === 1 ? 40 : ev.deltaMode === 2 ? 400 : 1);
@@ -8305,7 +8341,7 @@ $("curva").addEventListener("click", seguro("curva", ev => {
     if (Math.sign(d) !== Math.sign(junta)) junta = 0;
     junta += d;
     if (Math.abs(junta) >= 40) {
-      irA(junta > 0 ? IDX + 1 : IDX - 1);
+      pasarConVariante(junta > 0 ? 1 : -1);
       junta = 0;
     }
   }, { passive: false });
@@ -8340,6 +8376,18 @@ $("curva").addEventListener("click", seguro("curva", ev => {
     if (!sq || !cont.querySelector(`[data-pz="${sq}"]`)) return;
     desde = sq; x0 = ev.clientX; y0 = ev.clientY; arrastro = false;
   }));
+  /* SOLTAR AFUERA DEL TABLERO TAMBIÉN ES SOLTAR (v0.144). Hasta la v0.143 el
+     `pointerup` se escuchaba en el tablero, así que soltando afuera no llegaba
+     nunca: la pieza quedaba en el aire y, al volver, seguía al mouse sin
+     ningún botón apretado. Con el puntero capturado mientras dura el arrastre,
+     el tablero recibe el final pase donde pase —también afuera de la ventana—.
+     La captura le cambia el `target` al evento, así que la casilla de llegada
+     se busca por coordenadas. */
+  const casillaEn = ev => {
+    const t = document.elementFromPoint(ev.clientX, ev.clientY);
+    const c = t && cont.contains(t) && t.closest("[data-sq]");
+    return c ? c.getAttribute("data-sq") : null;
+  };
   cont.addEventListener("pointermove", seguro("arrastrar", ev => {
     if (!desde) return;
     const dx = ev.clientX - x0, dy = ev.clientY - y0;
@@ -8359,6 +8407,7 @@ $("curva").addEventListener("click", seguro("curva", ev => {
          mouse para no taparle el `pointerup` a las casillas, que están encima */
       pieza.style.pointerEvents = "none";
       pieza.parentNode.appendChild(pieza);
+      try { cont.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura, como antes */ }
     }
     if (!pieza) return;
     /* las transformaciones se aplican de izquierda a derecha, así que el
@@ -8368,8 +8417,8 @@ $("curva").addEventListener("click", seguro("curva", ev => {
   }));
   cont.addEventListener("pointerup", seguro("soltar", ev => {
     if (!desde) return;
-    const hasta = casillaDe(ev);
     const hubo = arrastro, origen = desde;
+    const hasta = hubo ? casillaEn(ev) : null;
     soltarTodo();
     if (!hubo) return;                     /* fue un clic: lo atiende el click */
     /* Soltar en la misma casilla, o fuera del tablero, devuelve la pieza a su
@@ -8449,18 +8498,40 @@ document.addEventListener("keydown", seguro("teclas", ev => {
     if (tecla === "Escape") { ev.preventDefault(); verAjustes(false); }
     return;
   }
-  const nave = tecla === "ArrowLeft" || tecla === "ArrowRight";
+  /* SIN Ctrl, Alt NI Meta TAMPOCO LAS FLECHAS (v0.144): Alt+← es "atrás" del
+     navegador y Cmd+← en una Mac también, y hasta la v0.143 la app se los
+     comía y encima pasaba una jugada. */
+  const sola = !ev.ctrlKey && !ev.altKey && !ev.metaKey;
+  const nave = sola && (tecla === "ArrowLeft" || tecla === "ArrowRight");
+  /* Escape sale de la variante: es el botón "volver", en el teclado */
+  if (tecla === "Escape" && PRUEBA && !$("zonaRevision").classList.contains("oculto")) {
+    ev.preventDefault(); salirDePrueba(); return;
+  }
   /* `n` y `p` de próximo y previo error. Sin Ctrl ni Alt: si no, se comen los
      atajos del navegador. */
-  const salto = (tecla === "n" || tecla === "p") && !ev.ctrlKey && !ev.altKey && !ev.metaKey;
+  const salto = (tecla === "n" || tecla === "p") && sola;
   if (!nave && !salto) return;
   if (!R || $("zonaRevision").classList.contains("oculto")) return;
   const t = ev.target.tagName;
   if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
   ev.preventDefault();
   if (salto) saltarAMala(tecla === "n" ? 1 : -1);
-  else irA(tecla === "ArrowRight" ? IDX + 1 : IDX - 1);
+  /* por `atras` y `adelante`, los de los botones: con una variante abierta la
+     recorren a ella. Hasta la v0.143 las flechas llamaban a `irA`, que la
+     cerraba sin avisar y se llevaba la línea probada. */
+  else pasarConVariante(tecla === "ArrowRight" ? 1 : -1);
 }));
+/* Flechas y rueda. UNA VARIANTE SIN JUGADAS NO CUENTA COMO VARIANTE: cualquier
+   clic en el tablero abre una —"Elegiste a8", "Probá otra jugada"— aunque no
+   se juegue nada, y ahí no hay línea que recorrer. Si se la tratara como
+   abierta, un clic suelto (el que borra las marcas, o soltar una pieza afuera)
+   dejaba muertas las flechas y la rueda. Se pasa de jugada por la partida, que
+   la cierra, y no se pierde nada. Va acá y no en `atras`/`adelante`, que son
+   los de los botones y el deslizamiento del celu: esos no cambian. */
+function pasarConVariante(dir) {
+  if (PRUEBA && !PRUEBA.linea.length) return irA(IDX + dir);
+  if (dir > 0) adelante(); else atras();
+}
 
 $("volverDeLaPartida").onclick = seguro("volver", volver);
 $("volverDelMes").onclick = seguro("volver", volver);
@@ -8499,6 +8570,9 @@ try { VER_MEJOR = localStorage.getItem("siempreMejor") === "si"; } catch (e) { /
        de la mano al apretar contaba como arrastre y tocar una jugada dejaba de
        llevarte a esa jugada. */
     if (!arrastro && Math.abs(d) < 4) return;
+    /* capturado mientras dura (v0.144): la tira mide 30 px de alto y la mano se
+       sale para arriba o para abajo; sin esto el arrastre se cortaba ahí */
+    if (!arrastro) { try { sc.setPointerCapture(e.pointerId); } catch (x) { /* sin captura, como antes */ } }
     arrastro = true;
     sc.classList.add("arrastrando");
     sc.scrollLeft = s0 - d;

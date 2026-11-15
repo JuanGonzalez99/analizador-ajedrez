@@ -184,6 +184,22 @@ chequear("cambiar no cambia la cabecera", [
   ...(/#yaUsuario \{[^}]*flex: 1 1 0; min-width: 0;/.test(html) ? [] : ["el renglón del usuario no se achica"]),
 ]);
 
+/* 7nonies. Lo que hace un mouse de verdad (v0.144): la previa no se arma con
+   el aviso que manda el navegador cuando la lista se mueve debajo del puntero,
+   el arrastre de la pieza y el de la tira capturan el puntero para enterarse
+   de que se soltó afuera, las flechas recorren la variante y no se comen los
+   atajos del navegador. `mirar` lo mide con el mouse ("mouse de verdad:"). */
+chequear("el mouse quieto no pide la previa", [
+  ...(/ev\.clientX === MOUSE_X && ev\.clientY === MOUSE_Y\) return;/.test(html) ? [] : ["la previa no descarta el aviso sin movimiento"]),
+  ...(/if \(i === IDX && !PRUEBA\) return volverDeLaPrevia\(\);/.test(html) ? [] : ["la jugada elegida tiene previa"]),
+  ...(/cont\.setPointerCapture\(ev\.pointerId\)/.test(html) ? [] : ["el arrastre de la pieza no captura el puntero"]),
+  ...(/sc\.setPointerCapture\(e\.pointerId\)/.test(html) ? [] : ["el arrastre de la tira no captura el puntero"]),
+  ...(/const sola = !ev\.ctrlKey && !ev\.altKey && !ev\.metaKey;\n\s+const nave = sola &&/.test(html) ? [] : ["las flechas se comen Alt+← del navegador"]),
+  ...(/else pasarConVariante\(tecla === "ArrowRight" \? 1 : -1\);/.test(html) ? [] : ["las flechas no recorren la variante"]),
+  ...(/pasarConVariante\(junta > 0 \? 1 : -1\);/.test(html) ? [] : ["la rueda no recorre la variante"]),
+  ...(/if \(PRUEBA && !PRUEBA\.linea\.length\) return irA\(IDX \+ dir\);/.test(html) ? [] : ["una variante sin jugadas deja muertas las flechas"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

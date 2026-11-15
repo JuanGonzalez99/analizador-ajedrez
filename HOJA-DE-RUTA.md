@@ -302,13 +302,23 @@ lo demás se dibuja contra ella.
       campo. ¿El renglón del enlace junta las salidas ("o pegar un PGN ·
       cancelar")? ¿La tuerca vive siempre en el mismo lugar del inicio, con
       usuario o sin él? Con variantes.
-- [ ] **[PC] Revisión de todo lo que responde al mouse y al teclado** (Juan,
+- [x] **[PC] Revisión de todo lo que responde al mouse y al teclado** (v0.144, 15-nov: seis fallas arregladas — la previa que aparecía sola, la pieza pegada al mouse, el texto pintado de azul, Alt+← comido, las flechas y la rueda con la variante abierta, y el arrastre de la tira; Juan,
       15-nov, después de la v0.139: *"quizás valga la pena una revisión a
       fondo"*). La rueda y las tres mejores estaban mal desde la v0.82 y la
       v0.89 y pasaban el arnés: se midieron ahí y nunca con un mouse de verdad.
       Repasar con esa sospecha: rueda (tablero y tira), previa, arrastre de
       piezas, marcas con clic derecho, `n`/`p` y flechas, los `:hover`, y qué
       pasa con cada uno con la variante abierta.
+- [ ] **Lavado de cara: la "variante vacía"** (revisor, v0.144; celu y PC).
+      Un toque suelto en el tablero ya es un modo: tarjeta "Probá otra
+      jugada" o "Elegiste a8", "‹ ›" grisados, y hay que tocar "Volver" para
+      seguir pasando jugadas. ¿Elegir una pieza tiene que abrir un modo, o la
+      variante empieza recién al jugar la primera jugada? Con variantes.
+- [ ] **[PC] Lavado de cara: el teclado fuera de la Partida** (revisor,
+      v0.144). En el inicio Tab no llega a las filas de partidas; con Ajustes
+      abierto se escapa de la hoja a los botones de atrás; la lista de jugadas
+      no es enfocable, y ↑/↓ e Inicio/Fin no hacen nada. ¿La app entera se
+      puede usar sin mouse, o el teclado es solo para pasar jugadas?
 - [ ] **[PC] La tuerca sola arriba a la derecha del inicio** (revisor, v0.126).
       A 1280 la fila del campo termina en 399 y la tuerca queda sola en 1071,
       sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una

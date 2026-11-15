@@ -684,6 +684,87 @@ console.log("arrastre pieza:", JSON.stringify(
   { jugada: mv.from + "->" + mv.to, enElAire,
     quedo: (await pg.locator("#pTit").textContent()).trim() }));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
+
+/* LO QUE UN MOUSE DE VERDAD HACE Y EL ARNÉS NO HACÍA (v0.144): dejar el mouse
+   QUIETO sobre la lista mientras se pasa con el teclado, soltar una pieza
+   AFUERA del tablero, y usar las flechas con una variante abierta. Las cuatro
+   fallas pasaban todas las medidas de arriba, que siempre mueven el mouse
+   antes de mirar. */
+{
+  const sel = () => pg.evaluate(() => +(document.querySelector("#jugadas .jg.sel") || { dataset: {} }).dataset.i);
+  const enElAireAhora = () => pg.evaluate(() =>
+    [...document.querySelectorAll("#tablero [data-pz]")].some(p => p.style.pointerEvents === "none"));
+  /* 1. el mouse apoyado en la lista y doce flechas: la lista scrollea debajo
+     del puntero, y el tablero NO tiene que irse a la jugada que quedó ahí */
+  const cj = await pg.locator("#jugadas .jg").nth(9).boundingBox();
+  await pg.mouse.move(cj.x + cj.width / 2, cj.y + cj.height / 2);
+  for (let i = 0; i < 12; i++) { await pg.keyboard.press("ArrowRight"); await pg.waitForTimeout(30); }
+  const q0 = await tablero();
+  await pg.waitForTimeout(800);
+  const quietoNoPrevisualiza = q0 === (await tablero());
+  /* y moverlo de verdad adentro del mismo renglón sí la pide */
+  await pg.mouse.move(cj.x + cj.width / 2 + 3, cj.y + cj.height / 2 + 1);
+  await pg.waitForTimeout(700);
+  const sobre = await pg.evaluate(([x, y]) => {
+    const e = document.elementFromPoint(x, y), j = e && e.closest(".jg");
+    return j ? +j.dataset.i : null; }, [cj.x + cj.width / 2 + 3, cj.y + cj.height / 2 + 1]);
+  const moverSiLaPide = sobre === null || sobre === (await sel()) || q0 !== (await tablero());
+  await pg.mouse.move(5, 5); await pg.waitForTimeout(250);
+  /* 2. Alt+← es del navegador: ni se lo come ni pasa jugada */
+  const s0 = await sel();
+  const altComido = await pg.evaluate(() => {
+    const e = new KeyboardEvent("keydown", { key: "ArrowLeft", altKey: true, bubbles: true, cancelable: true });
+    document.body.dispatchEvent(e); return e.defaultPrevented; });
+  const altNoNavega = s0 === (await sel());
+  /* 3. soltar la pieza afuera del tablero: vuelve a su casilla y no sigue al mouse */
+  const mv2 = new Chess(fens[(await sel()) + 1]).moves({ verbose: true })[0];
+  const o = await medio(mv2.from), ct = await pg.locator("#tablero").boundingBox();
+  await pg.mouse.move(o.x, o.y); await pg.mouse.down();
+  await pg.mouse.move(o.x + 12, o.y + 12);
+  await pg.mouse.move(ct.x - 50, o.y, { steps: 4 });
+  await pg.mouse.up();
+  await pg.waitForTimeout(100);
+  const sueltaAfuera = !(await enElAireAhora());
+  await pg.mouse.move(o.x + 60, o.y - 30, { steps: 3 });
+  const noSigueAlMouse = !(await enElAireAhora());
+  const sinTextoPintado = (await pg.evaluate(() => getSelection().toString())) === "";
+  /* 4. con una variante abierta, las flechas y la rueda la recorren (no la
+     cierran) y Escape sale */
+  const h = await medio(mv2.to);
+  await pg.mouse.click(h.x, h.y);
+  await pg.waitForFunction(() => !/^Probando/.test(document.getElementById("pTit").textContent || ""), null, { timeout: 30000 });
+  const veo = () => pg.evaluate(() => ({ abierta: !document.getElementById("prueba").classList.contains("oculto"),
+                                         ant: document.getElementById("ant").disabled, sig: document.getElementById("sig").disabled }));
+  const v0 = await veo();
+  await pg.keyboard.press("ArrowLeft"); await pg.waitForTimeout(80);
+  const v1 = await veo();
+  await pg.mouse.move(ct.x + ct.width / 2, ct.y + ct.height / 2);
+  await pg.mouse.wheel(0, 120); await pg.waitForTimeout(150);
+  const v2 = await veo();
+  await pg.keyboard.press("Escape"); await pg.waitForTimeout(80);
+  const v3 = await veo();
+  const sigueEnLaJugada = s0 === (await sel());
+  /* 5. un clic suelto en una pieza abre una variante SIN jugadas ("Elegiste…"):
+     ahí las flechas y la rueda tienen que seguir pasando jugadas de la partida */
+  await pg.mouse.click(o.x, o.y); await pg.waitForTimeout(80);
+  const elegidaSinJugar = (await veo()).abierta;
+  await pg.keyboard.press("ArrowRight"); await pg.waitForTimeout(80);
+  const s1 = await sel();
+  await pg.mouse.click(o.x, o.y); await pg.waitForTimeout(80);
+  await pg.mouse.move(ct.x + ct.width / 2, ct.y + ct.height / 2);
+  await pg.mouse.wheel(0, -120); await pg.waitForTimeout(150);
+  const unClicNoLasMata = elegidaSinJugar && s1 === s0 + 1 && (await sel()) === s0;
+  await pg.mouse.move(5, 5);
+  /* y se vuelve a la jugada de antes: lo que sigue mide y fotografía desde ahí */
+  for (let i = 0; i < 12; i++) await pg.keyboard.press("ArrowLeft");
+  await pg.waitForTimeout(200);
+  console.log("mouse de verdad:", JSON.stringify({
+    quietoNoPrevisualiza, moverSiLaPide, altComido, altNoNavega,
+    sueltaAfuera, noSigueAlMouse, sinTextoPintado,
+    flechaRecorreLaVariante: v0.abierta && v0.sig && v1.abierta && v1.ant && !v1.sig,
+    ruedaTambien: v2.abierta && v2.sig && !v2.ant,
+    escapeSale: !v3.abierta, sigueEnLaJugada, unClicNoLasMata }));
+}
 await elegir("#formaJugadas", "planilla");
 
 /* LA CURVA ANCHA NO SE PUEDE IR ABAJO DEL PLIEGUE (v0.88). Se prueba con la
