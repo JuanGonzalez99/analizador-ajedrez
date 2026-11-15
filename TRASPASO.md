@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.133.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.134**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -3844,7 +3844,7 @@ desglose calculado que dice a dónde fue cada jugada mala:
 | Destino | Cuándo |
 |---|---|
 | Error grave | el caso normal |
-| Omisión | además dejó pasar mate o material |
+| Omisión | además dejó pasar mate o material (desde la v0.134, el material solo si la pérdida no llega a grave) |
 | Libro | es jugada de apertura |
 | otra etiqueta | solo en modo amigable, donde la categoría se decide por puntos de victoria |
 
@@ -4674,6 +4674,29 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.134, tres categorías que decían algo falso** (revisión de las
+evaluaciones, H1, H2 y H4 de §8; aprobadas por Juan el 15-nov). **Mueve los
+conteos de las tablas**; la precisión no cambia.
+- **H4: la mejor del motor nunca es mala.** El bloque de `esMejor` (con
+  Brillante y Genial adentro, Genial ahora en `esGenial(d)`) pasó arriba de los
+  cortes, como proponía §8 desde la v0.95. El 17. Bxe2 de Juan salía
+  Imprecisión con pérdida 0,67.
+- **H1: el Error grave va antes que la Omisión de material.** Con pérdida ≥ el
+  corte de grave, es Grave aunque hubiera una captura para hacer; la frase
+  "Había X…" se sigue diciendo. El **mate soltado sigue siendo Omisión** valga
+  lo que valga, porque ahí la pérdida está saturada por el tope de 1000. La
+  tabla del desglose de las malas (§4, "Destino") sigue cerrando sola: Omisión
+  ahora solo recibe mates soltados.
+- **H2: el sacrificio se mide con `enPeligro`**: la pieza que movió queda en
+  peligro de verdad y lo que comió vale menos que ella. Una recaptura no es
+  sacrificio. **Un peón sí puede ser Brillante** (Juan, 15-nov).
+  `entregaMaterial` queda definida pero ya no la usa la categoría.
+- Medido en 1.075 jugadas, modo crítico: omisión → grave 20, imprecisión →
+  mejor 13, error → mejor 3, imprecisión → genial 6 (eran mejores con hueco que
+  la imprecisión tapaba), brillante → mejor 1 (15… Bxd6). En amigable, omisión
+  → grave 19 y casi nada más. Cuatro pruebas viejas fijaban el orden anterior
+  y se actualizaron; tres nuevas.
+
 **v0.133.1, tres frases chicas de la revisión** (parche: solo texto).
 - El ataque doble ya no nombra dos veces la misma pieza: una captura que
   corona son cuatro jugadas a la misma casilla, y ahora `amenazadas` junta por
@@ -5395,6 +5418,8 @@ convención de FEN de chess.js, el mate 0 y el ahogado.
 salvo" con cambio estático (ver §7, v0.133).
 
 **Pendiente, con números** (también en `HOJA-DE-RUTA.md`, todo `⏸`):
+- ~~**H1, H2 y H4**~~ **HECHOS en la v0.134** (ver §7). Queda H3. Lo que
+  sigue es el diagnóstico con el que se arreglaron.
 - **H1. La Omisión tapa al Error grave.** `categorizar` pregunta por la
   omisión antes que por el corte de grave: 20 de 42 omisiones tienen pérdida
   ≥ 3 ("h5", pérdida 5,92 → "había Qxg3, que ganaba un peón").
@@ -5556,7 +5581,7 @@ rama de `omision` no se pierde: `oportunidad` **no puede existir junto con
 `esMejor`**, porque las dos formas de armarla lo excluyen (`tomoBuena` es
 `esMejor && capB`, y el mate soltado pide que el mate ya no esté).
 
-**Por qué no se aplicó todavía, y qué habría que medir antes.** Cambia la
+**APLICADO EN LA v0.134** (22 de 373 mejores salían malas a profundidad 16; ver §7). Lo que sigue es por qué esperó. **Por qué no se aplicó todavía, y qué habría que medir antes.** Cambia la
 etiqueta de jugadas que hoy se cuentan como malas, o sea las tablas, los
 desgloses y las leyendas. **La precisión NO cambia** —sale de `caida` por
 `precisionJugada` y no mira la categoría— pero los conteos sí. Lo que hace falta

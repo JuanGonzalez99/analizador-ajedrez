@@ -50,10 +50,14 @@ test("categorizar: libro gana a todo lo demás", () => {
   assert.equal(A.categorizar({ esLibro: true, perdida: 9, oportunidad: true }), "libro");
 });
 
-test("categorizar: una pérdida grande con oportunidad va a omisión, no a grave", () => {
-  const d = { perdida: 5, caida: 40, oportunidad: true };
-  assert.equal(A.categorizar(d, "critico"), "omision");
-  assert.equal(A.categorizar({ ...d, oportunidad: false }, "critico"), "grave");
+test("categorizar: una pérdida grande es Grave aunque hubiera material para tomar (v0.134)", () => {
+  /* Hasta la v0.133 era al revés y salía "Omisión: había Qxg3, que ganaba un
+     peón" sobre una jugada que perdía 5,92 (H1 de la revisión). El mate
+     soltado sigue siendo Omisión: ahí la pérdida está saturada. */
+  const d = { perdida: 5, caida: 40, oportunidad: { tipo: "material" } };
+  assert.equal(A.categorizar(d, "critico"), "grave");
+  assert.equal(A.categorizar({ ...d, perdida: 1.5 }, "critico"), "omision");
+  assert.equal(A.categorizar({ ...d, oportunidad: { tipo: "mate", n: 2 } }, "critico"), "omision");
 });
 
 test("los dos modos usan los mismos datos y solo cambian la etiqueta", () => {
@@ -1056,7 +1060,7 @@ test("el filtro tapa las dos mitades de la regla, no solo unicaBuena", () => {
   /* Una recaptura tampoco es un hallazgo cuando cambia de banda: la ibas a
      jugar igual. La condición va sobre el `if` entero. */
   assert.ok(html.includes(
-    'if (d.esMejor && (d.unicaBuena || cruce) && d.legales >= 2 && !d.esRecaptura)'));
+    'return (d.unicaBuena || cruce) && d.legales >= 2 && !d.esRecaptura;'));
 });
 
 test("la segunda opinión recibe la jugada anterior", () => {
@@ -1186,7 +1190,7 @@ test("el dial arranca en 3 y el bloque de análisis no lo lee del DOM", () => {
   assert.ok(html.includes("const MATE_A_LA_VISTA = 3;"), "cambió el valor inicial");
   assert.ok(html.includes('const MATE_VISTA = () => +$("mateVista").value || MATE_A_LA_VISTA;'));
   assert.ok(html.includes(
-    'if (d.oportunidad && (d.oportunidad.tipo === "mate" || x >= c.error)) return "omision";'));
+    'if (omiteMate || (d.oportunidad && x >= c.error && x < c.grave)) return "omision";'));
   const ini = html.indexOf("/* ============ evaluación ============ */");
   const fin = html.indexOf("/* ===================== fin del bloque de análisis");
   assert.ok(!html.slice(ini, fin).includes("mateVista"),
@@ -1258,10 +1262,10 @@ test("capturar otra cosa ya no tapa la omisión", () => {
   assert.ok(!html.includes("!j.captured && cap"));
 });
 
-test("una jugada que deja pasar material y pierde >= 3 cae en Omisión", () => {
+test("una jugada que deja pasar material y pierde >= 3 cae en Grave (v0.134)", () => {
   const base = { perdida: 5, caida: 40, esMejor: false, esLibro: false, entrega: false,
                  unicaBuena: false, legales: 20, antesMio: 0, despuesMio: 0 };
-  assert.equal(A.categorizar({ ...base, oportunidad: { tipo: "material" } }), "omision");
+  assert.equal(A.categorizar({ ...base, oportunidad: { tipo: "material" } }), "grave");
   assert.equal(A.categorizar({ ...base, oportunidad: null }), "grave");
 });
 
@@ -3273,4 +3277,31 @@ test("sin eco: 'Había Rxd6' no se repite como 'Rxd6 lo cobraba'", () => {
   const txt = partes.map(p => p.txt).join(" ");
   assert.ok(txt.includes("Había Rxd6"), txt);
   assert.ok(!txt.includes("lo cobraba") && !txt.includes("lo cobraste"), txt);
+});
+
+/* --- v0.134: tres categorías que decían algo falso --- */
+test("la mejor del motor nunca es mala, aunque la pérdida medida no dé cero (17. Bxe2)", () => {
+  /* el 17. Bxe2 de Juan salía Imprecisión con pérdida 0,67 */
+  const d = { perdida: 0.67, caida: 1.3, esMejor: true, esLibro: false, entrega: false,
+              unicaBuena: false, legales: 3, antesMio: 7.4, despuesMio: 6.7, esRecaptura: true };
+  assert.equal(A.categorizar(d, "critico"), "mejor");
+  assert.equal(A.categorizar({ ...d, perdida: 2.5, caida: 25 }, "amigable"), "mejor");
+});
+
+test("15… Bxd6 no es Brillante: si Rxd6, Qxd6", () => {
+  /* el alfil come un peón; la torre lo puede comer, pero la dama recaptura */
+  const antes = "r1b1r1k1/1pq1bppp/2pP4/p7/1nP4P/P1N1PNPB/1P2P3/2QRK2R b K - 0 15";
+  const f = unaFila(antes, "Bxd6",
+    [{ cp: 0, mate: null, mejor: "e7d6", segunda: { cp: -150, mate: null } },
+     { cp: 0, mate: null, mejor: "a1a1", segunda: null }]);
+  assert.notEqual(f.cat, "brillante");
+});
+
+test("un sacrificio de verdad sigue siendo Brillante", () => {
+  /* el alfil va a h7 con jaque y el rey lo come: entregado de verdad */
+  const antes = "r1bq1rk1/pppn1ppp/4p3/3pP3/1b1P4/2NB1N2/PPP2PPP/R2QK2R w KQ - 0 8";
+  const f = unaFila(antes, "Bxh7+",
+    [{ cp: 50, mate: null, mejor: "d3h7", segunda: { cp: 0, mate: null } },
+     { cp: -80, mate: null, mejor: "g8h7", segunda: null }]);
+  assert.equal(f.cat, "brillante");
 });

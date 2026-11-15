@@ -432,10 +432,9 @@ El jaque en los detectores y la nueva definición de "a salvo" ya están hechos
 - [ ] ⏸ espera a Juan · Las engañosas: "Toma la columna abierta" cuando la
       torre ya estaba ahí, "Tu X queda comible" cuando acaba de comer algo que
       vale lo mismo o más, y una frase de mérito en las tarjetas de error.
-- [ ] ⏸ espera a Juan · Los que mueven las tablas: la Omisión que tapa al
-      Error grave (H1), los Brillantes que no son sacrificio (H2), "Genial, era
-      la única" con la segunda ganando igual (H3), y la mejor del motor marcada
-      como mala (H4, el 17. Bxe2 de Juan).
+- [x] ~~Los que mueven las tablas: H1, H2 y H4.~~ Hechos en la v0.134.
+- [ ] ⏸ espera a Juan · H3: "Genial, era la única" con la segunda ganando igual
+      (medir el hueco en probabilidad de ganar y no en centipeones).
 - [ ] ⏸ espera a Juan · **Que la tarjeta cuente ideas e intenciones**, no solo
       lo que pasó: "amenaza mate", qué amenaza el rival, como las amenazas de
       chess.com. Pedido de Juan (15-nov): es un trabajo aparte, se anota y no se

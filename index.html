@@ -1305,7 +1305,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.133.1 · 15-11";
+  window.VERSION = "v0.134 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2102,29 +2102,8 @@ const MATE_A_LA_VISTA = 3;
 /* bandas de la posición, en peones y desde el lado del que mueve */
 const banda = x => x <= -2 ? "perdiendo" : x >= 2 ? "ganando" : "parejo";
 
-function categorizar(d, modo = "critico") {
-  const c = CORTES[modo] || CORTES.critico;
-  const x = c.medida(d);
-
-  if (d.esLibro) return "libro";
-  /* Un mate forzado soltado es Omisión valga lo que valga en centipeones.
-     El corte de pérdida está SATURADO justo donde la omisión más importa: si
-     vas ganando por mate y lo soltás, la evaluación casi no se mueve —en la
-     partida que lo destapó, 0,20 peones— así que nunca llegaba al corte de 1 y
-     la omisión no se disparaba NUNCA. La app veía el mate y hasta lo escribía
-     en la señal; lo que fallaba era la etiqueta.
-     CUÁL mate cuenta como oportunidad lo decide MATE_A_LA_VISTA, arriba, no
-     esta línea: acá ya llega decidido. */
-  if (d.oportunidad && (d.oportunidad.tipo === "mate" || x >= c.error)) return "omision";
-  if (x >= c.grave) return "grave";
-  if (x >= c.error) return "error";
-  if (x >= c.imprecision) return "imprecision";
-
-  /* Brillante: un sacrificio bueno. Las dos condiciones son de chess.com y a la
-     nuestra le faltaban: no quedar peor después, y no venir ya ganando de todos
-     modos — entregar material en +10 no tiene mérito. */
-  if (d.esMejor && d.entrega && d.despuesMio >= -0.5 && d.antesMio < 3) return "brillante";
-
+/* ¿Es Genial? Solo se pregunta para la mejor del motor (lo filtra `categorizar`). */
+function esGenial(d) {
   /* Genial: la única jugada que sostiene la posición, O la que cambia de banda.
      La segunda mitad venía de chess.com y nos faltaba, y es justo el momento
      que el apéndice marca como más peligroso: el cruce a posición ganada. */
@@ -2146,10 +2125,54 @@ function categorizar(d, modo = "critico") {
      Se aplica a las DOS mitades de la regla. La evidencia es sobre `unicaBuena`,
      porque es por donde entró, pero una recaptura tampoco es un hallazgo cuando
      cambia de banda: la ibas a jugar igual. */
-  if (d.esMejor && (d.unicaBuena || cruce) && d.legales >= 2 && !d.esRecaptura)
-    return "genial";
+  return (d.unicaBuena || cruce) && d.legales >= 2 && !d.esRecaptura;
+}
 
-  if (d.esMejor) return "mejor";
+function categorizar(d, modo = "critico") {
+  const c = CORTES[modo] || CORTES.critico;
+  const x = c.medida(d);
+
+  if (d.esLibro) return "libro";
+  /* Un mate forzado soltado es Omisión valga lo que valga en centipeones.
+     El corte de pérdida está SATURADO justo donde la omisión más importa: si
+     vas ganando por mate y lo soltás, la evaluación casi no se mueve —en la
+     partida que lo destapó, 0,20 peones— así que nunca llegaba al corte de 1 y
+     la omisión no se disparaba NUNCA. La app veía el mate y hasta lo escribía
+     en la señal; lo que fallaba era la etiqueta.
+     CUÁL mate cuenta como oportunidad lo decide MATE_A_LA_VISTA, arriba, no
+     esta línea: acá ya llega decidido. */
+  /* LA MEJOR DEL MOTOR NO PUEDE SER MALA (v0.134, H4 de la revisión; el 17.
+     Bxe2 de Juan salía Imprecisión). "Mejor" es "jugaste la que el motor
+     eligió" y "Error" es "perdiste contra lo que el motor eligió": las dos no
+     pueden ser ciertas a la vez. La pérdida que aparece igual es ruido entre dos
+     búsquedas separadas (la de antes y la de después), y la de antes ya tiene
+     adentro lo que la posición costaba. Medido: 22 de 373 mejores salían
+     Imprecisión o Error a profundidad 16.
+     Por eso el bloque de `esMejor` va arriba de los cortes. La Omisión no se
+     pierde: `oportunidad` no puede existir junto con `esMejor` (las dos formas
+     de armarla lo excluyen). */
+  if (d.esMejor) {
+    /* Brillante: un sacrificio bueno. Las dos condiciones son de chess.com y a
+       la nuestra le faltaban: no quedar peor después, y no venir ya ganando de
+       todos modos — entregar material en +10 no tiene mérito. */
+    if (d.entrega && d.despuesMio >= -0.5 && d.antesMio < 3) return "brillante";
+    if (esGenial(d)) return "genial";
+    return "mejor";
+  }
+
+  /* EL ERROR GRAVE VA ANTES QUE LA OMISIÓN DE MATERIAL (v0.134, H1). Si la
+     jugada perdió 6 peones, lo que pasó es eso, y no que había una captura que
+     ganaba uno: salía "Omisión: había Qxg3, que ganaba un peón" sobre una
+     jugada que perdía 5,92 (20 de 42 omisiones medidas tenían pérdida >= 3).
+     La frase de lo que había se sigue diciendo en la tarjeta.
+     El mate soltado sigue siendo Omisión valga lo que valga: con el tope de
+     1000, soltar un mate y quedar +6 "pierde 4" de pura saturación. */
+  const omiteMate = d.oportunidad && d.oportunidad.tipo === "mate";
+  if (omiteMate || (d.oportunidad && x >= c.error && x < c.grave)) return "omision";
+  if (x >= c.grave) return "grave";
+  if (x >= c.error) return "error";
+  if (x >= c.imprecision) return "imprecision";
+
   if (x < c.excelente) return "excelente";
   return "bien";
 }
@@ -2434,9 +2457,21 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       oportunidad = { tipo: "material", san: capB.san, gana: capB.gana,
                       comida: capB.comida };
 
-    const entrega = esMejor
-      ? entregaMaterial(fens[i], { from: j.from, to: j.to, promotion: j.promotion })
-      : false;
+    /* EL SACRIFICIO SE MIDE CON `enPeligro` (v0.134, H2). `entregaMaterial`
+       miraba un solo ply: si lo que comía se podía recapturar, daba la pieza
+       por perdida aunque la recuperaras. 15… Bxd6 —un peón comido con el
+       alfil, y si Rxd6, Qxd6— salía Brillante con "Entrega material".
+       Ahora: la pieza que movió queda en peligro de verdad (sin defensa, o a
+       tiro de algo que vale menos), y lo que comió vale menos que ella. Una
+       RECAPTURA no es sacrificio, igual que no es Genial: el material ya
+       estaba perdido. Un peón sí puede ser Brillante (Juan, 15-nov). */
+    let entrega = false;
+    if (esMejor && !esRecaptura) {
+      const tras = new Chess(fens[i + 1]).board();
+      const queda = j.promotion || j.piece;
+      entrega = !!enPeligro(tras, j.to) &&
+                (VALOR[j.captured] || 0) < (VALOR[queda] || 0);
+    }
     /* la posición vista desde el que mueve, en peones */
     const antesMio = (turno === "w" ? antes : -antes) / 100;
     const despuesMio = (turno === "w" ? despues : -despues) / 100;
