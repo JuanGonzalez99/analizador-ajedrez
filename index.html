@@ -181,7 +181,11 @@
                  background: var(--superficie); color: var(--texto);
                  border-top: 1px solid var(--linea);
                  border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0;
-                 padding: var(--e-2) var(--e-4) var(--e-4); box-shadow: var(--sombra-flota);
+                 /* ABAJO 24 Y NO 16 (v0.143.1, revisor): con la atribución al final de la
+                    hoja, los dos enlaces quedaban con la tinta a 17 px del borde de la
+                    pantalla, que en Android es donde vive la barra de gestos. En el pie de
+                    la página el problema no existía: ahí tenían ~60 px de página debajo. */
+                 padding: var(--e-2) var(--e-4) var(--e-6); box-shadow: var(--sombra-flota);
                  max-height: 80vh; overflow-y: auto; }
   /* `--borde-campo` y no `--linea`: sobre la superficie la línea da 1,2:1 y el
      tirador, que es lo que dice "esto se baja", no se veía */
@@ -494,7 +498,17 @@
   body.quieto *, body.quieto *::before, body.quieto *::after { transition: none !important; }
   .ajVersion { margin: var(--e-4) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
   .ajCredito { margin: var(--e-1) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
-  .ajCredito a { color: inherit; }
+  /* ÁREA DE TOQUE DE LOS DOS ENLACES (v0.143.1, revisor; §1.7 de DISENO). A 12,5 px
+     la tinta mide 15 de alto y en esta hoja todo lo demás mide de 44 a 56. Es el
+     mismo recurso que ya usan los otros dos enlaces de texto de la app
+     (`#cambiarUsuario::before`, `#verPegar::before`): un `::before` absoluto que
+     agranda el toque sin agrandar el renglón. Medido a 386: 64×47 y 94×47,
+     separados 123 entre sí, 24 de aire hasta "Mate a la vista" y 11 hasta el borde.
+     Los enlaces NO van en `--acento` como los otros dos: el verde pondría la letra
+     más chica como lo más vivo del final de la hoja. Con `color: inherit` el
+     subrayado es la única señal de que son enlaces, así que tampoco se saca. */
+  .ajCredito a { color: inherit; position: relative; }
+  .ajCredito a::before { content: ""; position: absolute; inset: -16px -6px; }
   /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
      agrega las perillas de medición. Se marca en <html> para que baste CSS y
      no haya que esconder cada cosa a mano desde JS. */
@@ -1410,7 +1424,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.143 · 15-11";
+  window.VERSION = "v0.143.1 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

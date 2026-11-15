@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.143**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.143.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4737,6 +4737,33 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.143.1, el toque de los dos enlaces de la atribución** (revisor, sobre la
+v0.143). Al pie de la página los enlaces tenían ~60 px de página debajo; al
+final de la hoja de Ajustes quedaron con la tinta **a 17 px del borde de la
+pantalla**, que en Android es donde vive la barra de gestos, y con un área de
+toque de 15 px de alto cuando todo lo demás en esa hoja mide de 44 a 56. Dos
+valores: el relleno de abajo de `#hojaAjustes` pasa de 16 a 24 (`--e-6`), y los
+enlaces se agrandan con un `::before` absoluto (`inset: -16px -6px`), que es el
+mismo recurso de `#cambiarUsuario` y `#verPegar` (§1.7 de `DISENO.md`). Medido
+por el arnés a 386: **47×64 y 47×94**, separados 123 entre sí, 24 de aire hasta
+"Mate a la vista" y la atribución a 24,5 del borde de la hoja. Visualmente no
+cambia nada salvo 8 px más de aire abajo, y la hoja ya scrolleaba.
+
+Y una captura nueva, `ajustes-fondo`: la de `ajustes` muestra la hoja **sin
+scrollear**, así que desde la v0.143 la atribución no quedaba registrada en
+ninguna captura y la comparación byte a byte de cada tanda no la cubría. El
+arnés además imprime los dos toques y la luz hasta el borde, que es lo que hay
+que mirar ahí.
+
+Lo que el revisor decidió **no** tocar, y por qué: el pie se queda en `--tenue`
+a 12,5 con 24 de margen —contraste medido 6,41:1, y subirle peso la haría lo
+más luminoso del fondo de todas las pantallas cuando es una coordenada de
+depuración—; el bloque de la hoja se queda en 16 arriba y 4 entre renglones,
+que es el mismo aire que la hoja le da a cada grupo, y sin rótulo, porque el
+rótulo trae su raya y anunciaría con la voz de "El análisis" lo menos
+importante de la hoja; y los enlaces no van en `--acento` como los otros dos de
+la app, porque el verde pondría la letra más chica como lo más vivo del final.
 
 **v0.143, el pie es la versión sola** (Juan, 15-nov). El pie decía
 `v0.142 · Piezas Cburnett de Colin M.L. Burnett, CC BY-SA 3.0.` en un solo

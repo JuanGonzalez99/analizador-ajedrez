@@ -446,6 +446,24 @@ console.log("cierre:  ", await cierreEl.count() ? JSON.stringify((await cierreEl
     alto: await pg.evaluate(() => Math.round(document.getElementById("hojaAjustes").getBoundingClientRect().height)),
   }));
   await foto("ajustes");
+  /* Y LA HOJA SCROLLEADA HASTA EL FINAL (v0.143.1). La de arriba la muestra sin
+     scrollear, así que desde la v0.143 —que mudó la atribución de las piezas al
+     pie de la hoja— había una parte de la app que ninguna captura registraba, y
+     la comparación byte a byte de cada tanda no la cubría. Lo notó el revisor. */
+  await pg.evaluate(() => { const h = document.getElementById("hojaAjustes"); h.scrollTop = h.scrollHeight; });
+  await pg.waitForTimeout(150);
+  console.log("hoja de ajustes, al fondo:", JSON.stringify(await pg.evaluate(() => {
+    const h = document.getElementById("hojaAjustes"), c = document.querySelector(".ajCredito");
+    const rc = c.getBoundingClientRect(), rh = h.getBoundingClientRect();
+    const toque = [...c.querySelectorAll("a")].map(a => {
+      const r = a.getBoundingClientRect(), cs = getComputedStyle(a, "::before");
+      const dy = parseFloat(cs.top) || 0, dx = parseFloat(cs.left) || 0;
+      return Math.round(r.height - 2 * dy) + "x" + Math.round(r.width - 2 * dx);
+    });
+    return { renglones: c.getClientRects().length, alBorde: +(rh.bottom - rc.bottom).toFixed(1), toque };
+  })));
+  await foto("ajustes-fondo");
+  await pg.evaluate(() => { document.getElementById("hojaAjustes").scrollTop = 0; });
   await pg.click("#cerrarAjustes");
   await pg.evaluate(y => window.scrollTo(0, y), y);
   await pg.waitForTimeout(120);
