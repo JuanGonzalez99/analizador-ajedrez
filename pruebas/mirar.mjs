@@ -565,12 +565,12 @@ const elegida = () => pg.evaluate(() =>
   ((document.querySelector("#jugadas .jg.sel") || {}).textContent || "").trim());
 const t0 = await tablero(), e0 = await elegida();
 await pg.locator("#jugadas .jg").nth(12).hover();
-/* v0.139: la previa espera 120 ms antes de aparecer, así que recién entrado el
+/* v0.139: la previa espera (300 ms desde la v0.140) antes de aparecer, así que recién entrado el
    mouse el tablero tiene que seguir igual. Es lo que evita que parpadee al
    cruzar la lista. */
-await pg.waitForTimeout(40);
+await pg.waitForTimeout(150);
 const tPronto = await tablero();
-await pg.waitForTimeout(250);
+await pg.waitForTimeout(350);
 const t1 = await tablero();
 /* y con la previa ya abierta, el renglón de al lado no vuelve a esperar ni pasa
    por la posición real: a los 40 ms ya es OTRA previa */

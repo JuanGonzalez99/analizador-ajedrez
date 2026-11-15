@@ -1409,7 +1409,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.139 · 15-11";
+  window.VERSION = "v0.140 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4950,7 +4950,8 @@ function volverDeLaPrevia() {
 const MQ_MOUSE = window.matchMedia("(hover: hover)");
 /* LA PREVIA ESPERA UN MOMENTO ANTES DE APARECER (v0.139). Sin espera se
    disparaba con solo CRUZAR la lista yendo a otro lado, y el tablero parpadeaba
-   posiciones que nadie pidió —reportado por Juan—. Con 120 ms, pasar de largo no
+   posiciones que nadie pidió —reportado por Juan—. Con 300 ms (v0.140: los 120 de la
+   v0.139 le siguieron pareciendo "muy corto" a Juan), pasar de largo no
    hace nada y frenarse la muestra casi al toque.
    La salida también espera, pero menos (60 ms), y por otro motivo: entre un
    renglón y el de al lado el mouse sale de uno antes de entrar al otro, y sin
@@ -4960,7 +4961,7 @@ const MQ_MOUSE = window.matchMedia("(hover: hover)");
    Un solo temporizador para las dos cosas: lo último que hizo el mouse manda.
    `pintarRevision` lo corta, porque una previa que llega después de navegar
    pisaría el tablero nuevo. */
-const DEMORA_PREVIA = 120, DEMORA_VUELTA = 60;
+const DEMORA_PREVIA = 300, DEMORA_VUELTA = 60;
 let PREVIA_T = null;
 function previaEn(sp, i) {
   if (!MQ_MOUSE.matches) return;

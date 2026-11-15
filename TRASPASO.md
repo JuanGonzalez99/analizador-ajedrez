@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.139**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.140**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2898,7 +2898,8 @@ una página a escala 1), y por eso la versión vieja ahí pasaba una sola con 12
 y el error no se veía. Ahora mide los pasos de a uno: 100, 120, 100, -100, y
 tres de 30 que son el trackpad.
 
-**La previa espera 120 ms antes de aparecer (v0.139)**, y 60 antes de irse.
+**La previa espera 300 ms antes de aparecer (v0.139 con 120; v0.140 con 300,
+porque a Juan los 120 le siguieron pareciendo *"muy corto"*)**, y 60 antes de irse.
 Sin la espera se disparaba con solo cruzar la lista yendo a otro lado
 (reportado por Juan). La de la salida es por otro motivo: entre un renglón y el
 de al lado el mouse sale de uno antes de entrar al otro, y sin ese margen el
@@ -4721,6 +4722,11 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.140 [PC], la previa espera 300 ms y no 120.** Juan, al usar la v0.139:
+*"el delay del mouse por arriba me sigue pareciendo muy corto"*. Es una
+constante (`DEMORA_PREVIA`); la salida sigue en 60. El arnés mide que a los
+150 ms el tablero todavía no cambió. No se ve en una foto.
 
 **v0.139 [PC], tres cosas del mouse reportadas por Juan usando la app.**
 (1) **"Las mejores de acá" eran las respuestas del otro**: ahora son las que
