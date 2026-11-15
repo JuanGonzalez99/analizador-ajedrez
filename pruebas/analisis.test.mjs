@@ -2307,7 +2307,7 @@ test("observarJugada ve la pieza que ESTA jugada dejó sin defender", () => {
     [{ cp: 100, mate: null, mejor: "e1e2", segunda: { cp: 80, mate: null } },
      { cp: 100, mate: null, mejor: "f6e4", segunda: null }]);
   const obs = A.observarJugada(f, antes);
-  assert.deepEqual(obs.nuevas, [{ sq: "e4", pieza: "p" }]);
+  assert.deepEqual(obs.nuevas, [{ sq: "e4", pieza: "p", motivo: "sinDefensa", por: "n" }]);
   assert.ok(A.explicarJugada(f, null, true, null, obs)
     .startsWith("Tu peón de e4 queda sin defender."),
     A.explicarJugada(f, null, true, null, obs));
@@ -2324,7 +2324,7 @@ test("una pieza que YA venía colgada no se le echa a esta jugada", () => {
     [{ cp: 100, mate: null, mejor: "h5h8", segunda: { cp: 80, mate: null } },
      { cp: 400, mate: null, mejor: "h8h5", segunda: null }]);
   const obs = A.observarJugada(f, antes);
-  assert.deepEqual(obs.colgadas, [{ sq: "h5", pieza: "r" }], "colgada sí está");
+  assert.deepEqual(obs.colgadas, [{ sq: "h5", pieza: "r", motivo: "sinDefensa", por: "r" }], "colgada sí está");
   assert.deepEqual(obs.nuevas, [], "pero no es nueva, y por eso no se dice");
 });
 
@@ -2337,7 +2337,7 @@ test("lo que la jugada SALVA es el espejo, y es lo que faltaba para el rival", (
     [{ cp: 100, mate: null, mejor: "d2d3", segunda: { cp: 80, mate: null } },
      { cp: -100, mate: null, mejor: "f6d5", segunda: null }]);
   const obs = A.observarJugada(f, antes);
-  assert.deepEqual(obs.salvadas, [{ sq: "e4", pieza: "p", seFue: false }]);
+  assert.deepEqual(obs.salvadas, [{ sq: "e4", pieza: "p", motivo: "sinDefensa", por: "n", seFue: false }]);
   assert.equal(A.explicarJugada(f, null, true, null, obs),
     "Salva tu peón de e4, que estaba sin defender.");
 });
@@ -2994,7 +2994,7 @@ test("el filtro geométrico no se come la captura que corona", () => {
      una captura que no se parece a las otras. La torre de b8 se la lleva axb8,
      y nadie recaptura. */
   assert.deepEqual(A.colgadasDe("1r2k3/P7/8/8/8/8/8/4K3 w - - 0 1", "b"),
-                   [{ sq: "b8", pieza: "r" }]);
+                   [{ sq: "b8", pieza: "r", motivo: "menor", por: "p" }]);
 });
 
 test("atrapada: está comible y no tiene adónde ir", () => {
@@ -3007,7 +3007,7 @@ test("atrapada: está comible y no tiene adónde ir", () => {
 test("atrapada: solo si la atrapó ESTA jugada", () => {
   /* Rhc1 le tapa la última salida: antes tenía c7 */
   assert.deepEqual(mirar("n3k3/1P6/8/8/8/6K1/8/1R5R w - - 0 1", "h1c1").atrapada,
-                   { sq: "a8", pieza: "n" });
+                   { sq: "a8", pieza: "n", motivo: "menor", por: "p" });
   /* y una jugada cualquiera con el caballo ya atrapado no se lo atribuye */
   assert.equal(mirar("n3k3/1P6/8/8/8/8/8/1RR1K3 w - - 0 1", "e1f1").atrapada, null);
 });
@@ -3162,4 +3162,84 @@ test("aperturaEs: ninguno de los nombres del libro sale con una palabra en ingl�
       malas.push(n + " → " + r.largo);
   }
   assert.deepEqual(malas.slice(0, 5), []);
+});
+
+/* --- v0.133: el jaque no decide qué está clavado, salvado o atrapado ---
+   Las seis posiciones son de una partida real de Juan (capturas del 14 y 15-nov),
+   armadas desde la pantalla. `mirar` las pasa por chess.js, así que si un FEN
+   estuviera mal la jugada no sería legal y la prueba lo diría. */
+const ANTES_QXE5 = "rnbqkbnr/pppp1p1p/6p1/4p2Q/4P3/8/PPPP1PPP/RNB1KBNR w KQkq - 0 3";
+
+test("dar jaque no clava todo lo que está en línea con el rey (3. Qxe5+)", () => {
+  /* Decía "Clava la torre de a8": con el rey ya en jaque, sacar cualquier pieza
+     de la fila 8 dejaba "al rey en jaque" y salían diez clavadas. */
+  const o = mirar(ANTES_QXE5, "h5e5");
+  assert.deepEqual(o.clavadas, []);
+  /* Lo que SÍ pasa, y antes lo tapaba la clavada falsa: la torre de h8 está a
+     tiro de la dama por f6-g7, nadie la defiende y no tiene adónde ir —la
+     encierran su caballo y su peón—. La jugada siguiente fue 4. Qxh8. */
+  assert.deepEqual(o.atrapada, { sq: "h8", pieza: "r", motivo: "sinDefensa", por: "q" });
+});
+
+test("una clavada de verdad se sigue viendo aunque el rey esté en jaque", () => {
+  /* el caballo de d7 tapa al rey del alfil de b5, y la torre de e1 da jaque */
+  const f = "4k3/3n4/8/1B6/8/8/8/4R2K b - - 0 1";
+  assert.equal(A.estaClavada(f, "d7", "e8"), true);
+  assert.equal(A.estaClavada(ANTES_QXE5.replace("4p2Q", "4Q3").replace(" w ", " b "), "a8", "e8"), false);
+});
+
+test("4… Qxe4+: ni salva el caballo de g8 ni clava el peón de d2", () => {
+  const c = new Chess();
+  for (const m of ["e4", "e5", "Qh5", "g6", "Qxe5+", "Qe7", "Qxh8"]) c.move(m);
+  const o = mirar(c.fen(), "e7e4");
+  assert.deepEqual(o.salvadas, [], JSON.stringify(o.salvadas));
+  assert.deepEqual(o.clavadas, [], JSON.stringify(o.clavadas));
+});
+
+test("9… f5: defender con un peón un alfil atacado por un peón no lo salva", () => {
+  const o = mirar("rn2kbQ1/ppp2p1p/3p2p1/q7/6b1/2NP1P2/PPP1N1PP/R1B1KB1R b KQq - 0 9", "f7f5");
+  assert.deepEqual(o.salvadas, [], JSON.stringify(o.salvadas));
+});
+
+test("salir del jaque no 'salva' lo que el jaque hacía parecer colgado (10… Be7, 11… Kd7)", () => {
+  /* Con el rey en jaque la recaptura en g4 era ilegal, así que el alfil le
+     aparecía colgado; al salir del jaque, "salvado". Y encima sigue a tiro del
+     peón de f3: la propia tarjeta decía "El rival tiene fxg4". */
+  const be7 = mirar("rn2kb2/ppp4p/3pQ1p1/q4p2/6b1/2NP1P2/PPP1N1PP/R1B1KB1R b KQq - 1 10", "f8e7");
+  assert.deepEqual(be7.salvadas, [], JSON.stringify(be7.salvadas));
+  const kd7 = mirar("rn2k1Q1/ppp1b2p/3p2p1/q4p2/6b1/2NP1P2/PPP1N1PP/R1B1KB1R b KQq - 3 11", "e8d7");
+  assert.deepEqual(kd7.salvadas, [], JSON.stringify(kd7.salvadas));
+});
+
+test("17. Bxe2: comerse la dama no se cuenta como 'salvar el peón de c2'", () => {
+  const o = mirar("rn6/pppkbQ1p/3p2p1/5p2/5B2/2NP1bP1/PPP1q2P/R3KB1R w - - 0 17", "f1e2");
+  assert.deepEqual(o.salvadas, [], JSON.stringify(o.salvadas));
+});
+
+test("una pieza defendida pero a tiro de una menor se dice 'a tiro', no 'sin defender'", () => {
+  /* el alfil de d4 lo defiende el peón de e3, pero lo ataca el peón de c5:
+     al sacarlo de ahí, la tarjeta dice por qué estaba en peligro */
+  const antes = "4k3/8/8/2p5/3B4/4P3/8/4K3 w - - 0 1";
+  const o = mirar(antes, "d4f6");
+  assert.deepEqual(o.salvadas, [{ sq: "d4", pieza: "b", motivo: "menor", por: "p", seFue: true }]);
+});
+
+test("sacar una pieza en peligro a otra casilla en peligro no es sacarla", () => {
+  /* el alfil de d4, atacado por el peón de c5, se va a e5, donde lo come el peón de f6 */
+  const o = mirar("4k3/8/5p2/2p5/3B4/8/8/4K3 w - - 0 1", "d4e5");
+  assert.deepEqual(o.salvadas, []);
+});
+
+test("una pieza clavada no defiende: 7. Nc3 no salva el peón de e4", () => {
+  /* el caballo de c3 queda clavado por el alfil de b4 contra el rey de e1 */
+  const o = mirar("r1bqk2r/pppp1ppp/2n2n2/8/1bBPP3/5N2/PP3PPP/RNBQK2R w KQkq - 1 7", "b1c3");
+  assert.deepEqual(o.salvadas, [], JSON.stringify(o.salvadas));
+});
+
+test("el rey no defiende una casilla que otra pieza rival también ataca", () => {
+  /* el peón de d5 lo "defiende" el rey de d6, pero la torre de d1 también mira
+     d5: Bxd5 y el rey no puede recapturar. O sea que ya estaba colgado, y al
+     irse el rey no es "nuevo". */
+  const o = mirar("4rr2/3n1p2/1p1kn1p1/p2p3p/7P/P4P2/BPK1N1P1/3R3R b - - 1 31", "d6e7");
+  assert.deepEqual(o.nuevas, [], JSON.stringify(o.nuevas));
 });

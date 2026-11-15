@@ -1305,7 +1305,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.132 · 14-11";
+  window.VERSION = "v0.133 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2750,8 +2750,13 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      pero ahora está indefenso". */
   else if (obs && obs.nuevas && obs.nuevas.length && f.perdida >= 0.5) {
     const c = obs.nuevas[0];
-    mecanismo = { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda sin defender.`,
-                  marca: "sin defender", sq: c.sq };
+    /* "Sin defender" solo cuando es eso: una pieza defendida que ataca algo
+       que vale menos está en peligro por otro motivo, y se dice cuál (v0.133). */
+    mecanismo = c.motivo === "menor"
+      ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`,
+          marca: "a tiro", sq: c.sq }
+      : { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda sin defender.`,
+          marca: "sin defender", sq: c.sq };
   }
 
   /* 2. LO QUE LA JUGADA SALVA, que es el espejo del anterior y lo que faltaba
@@ -2761,8 +2766,11 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   if (obs && obs.salvadas && obs.salvadas.length) {
     const s = obs.salvadas[0];
     salvada = { txt: `${s.seFue ? "Saca" : "Salva"} ${suya(s.pieza)} de ${s.sq}, ` +
-                     `que estaba sin defender.`,
-                marca: "sin defender", sq: s.seFue ? donde : s.sq };
+                     (s.motivo === "menor"
+                       ? `que estaba a tiro de ${PIEZA_UN[s.por] || "una pieza"}.`
+                       : `que estaba sin defender.`),
+                marca: s.motivo === "menor" ? "a tiro" : "sin defender",
+                sq: s.seFue ? donde : s.sq };
   }
 
   /* 3. QUÉ HABÍA en su lugar. */
@@ -3039,58 +3047,116 @@ const conElTurnoDadoVuelta = fen => {
   return p.join(" ");
 };
 
-/* Qué piezas de `color` quedan comibles en esa posición. El turno se acomoda
-   solo: `quedaComible` mira las jugadas del que mueve, así que para preguntar
-   por MIS piezas tiene que mover el rival. */
+/* EN PELIGRO, SIN TURNO Y SIN JAQUE (v0.133). Una pieza está en peligro cuando
+   el rival la ataca y, o nadie la defiende, o la ataca algo que vale MENOS que
+   ella. Devuelve por qué —`sinDefensa` o `menor`— y con qué pieza, o null.
+
+   ANTES ESTO SE PREGUNTABA CON LAS JUGADAS LEGALES, y el jaque lo rompía en
+   las dos puntas. Si la jugada da jaque, el rival no puede comer NADA en esta
+   jugada, así que toda pieza colgada aparecía "salvada" (3. Qxe5+, 4… Qxe4+ de
+   Juan). Y si el que mueve ESTABA en jaque, su recaptura era ilegal, así que
+   sus piezas defendidas aparecían colgadas y al salir del jaque "las salvaba"
+   (10… Be7 y 11… Kd7). El jaque se contesta en una jugada y la amenaza sigue
+   ahí: por eso esto es geometría y no mira de quién es el turno.
+
+   Y "TIENE UN DEFENSOR" NO ALCANZA: un alfil atacado por un peón no se salva
+   porque lo defienda otro peón —fxg4 fxg4 y se perdió un alfil por un peón—.
+   Era el 9… f5 de Juan: "Salva el alfil de g4". Es un cambio estático de una
+   sola vuelta, a propósito: alcanza para no mentir y no promete más.
+
+   El rey del rival solo come lo que nadie defiende, y por eso no cuenta como
+   atacante "menor". */
+function enPeligro(tablero, sq) {
+  const c = "abcdefgh".indexOf(sq[0]), r = 8 - +sq[1];
+  const p = tablero[r] && tablero[r][c];
+  if (!p || p.type === "k") return null;
+  const contra = p.color === "w" ? "b" : "w";
+  const atk = atacantesDe(tablero, sq, contra);
+  if (!atk.length) return null;
+  const menor = atk.filter(a => a.pieza !== "k")
+    .sort((a, b) => (VALOR[a.pieza] || 0) - (VALOR[b.pieza] || 0))[0];
+  if (menor && (VALOR[menor.pieza] || 0) < (VALOR[p.type] || 0))
+    return { motivo: "menor", por: menor.pieza };
+  /* El rey defiende solo si nadie más ataca la casilla: si la ataca otra
+     pieza del rival, recapturar con el rey es meterse en jaque. */
+  const def = atacantesDe(tablero, sq, p.color)
+    .filter(d => d.pieza !== "k" || atk.length < 2);
+  if (!def.length)
+    return { motivo: "sinDefensa", por: (menor || atk[0]).pieza };
+  return null;
+}
+
+/* Las piezas de `color` que atacan una casilla, con el tablero como está.
+   UNA PIEZA CLAVADA CONTRA SU REY NO CUENTA, salvo que la casilla quede en la
+   misma línea de la clavada (comer al que la clava, o moverse entre los dos).
+   Lo destapó el verificador independiente: 7. Nc3 "salvaba" el peón de e4 con
+   un caballo clavado por el alfil de b4, y una dama clavada "atacaba" un peón. */
+function atacantesDe(tablero, casilla, color) {
+  const out = [];
+  const rey = casillaDelRey(tablero, color);
+  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+    const q = tablero[r][c];
+    const sq = "abcdefgh"[c] + (8 - r);
+    if (!q || q.color !== color || !ataca(tablero, sq, casilla)) continue;
+    const clavador = rey && q.type !== "k" ? quienLaClava(tablero, sq, rey) : null;
+    if (clavador && casilla !== clavador && !enElMedio(rey, casilla, clavador)) continue;
+    out.push({ sq, pieza: q.type });
+  }
+  return out;
+}
+
+/* Qué piezas de `color` están en peligro en esa posición (ver `enPeligro`).
+   No importa de quién sea el turno. */
 function colgadasDe(fen, color) {
-  const mueve = fen.split(" ")[1];
-  const f = mueve === color ? conElTurnoDadoVuelta(fen) : fen;
   const tablero = new Chess(fen).board();
-  const contra = color === "w" ? "b" : "w";
   const out = [];
   for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
     const p = tablero[r][c];
     /* el rey no: no se puede capturar, y "el rey queda comible" es jaque mate */
     if (!p || p.color !== color || p.type === "k") continue;
     const sq = "abcdefgh"[c] + (8 - r);
-    /* FILTRO GEOMÉTRICO ANTES DE CARGAR FENs (v0.78). `quedaComible` carga
-       varios FEN por casilla y esto se llama por CADA pieza del color: era, de
-       lejos, lo más caro de la tarjeta. Una pieza que NO ataca nadie no puede
-       ser comible, y eso se contesta con geometría pura.
-
-       Nunca se puede escapar un caso por acá: toda captura que chess.js genera
-       —incluidas las de peón que coronan— cumple `ataca`. Al revés sí sobra
-       alguno (la captura al paso apunta a otra casilla), y sobrar no importa:
-       lo que pasa el filtro lo decide igual `quedaComible`. */
-    if (!atacadaPor(tablero, sq, contra)) continue;
-    if (quedaComible(f, sq)) out.push({ sq, pieza: p.type });
+    const e = enPeligro(tablero, sq);
+    if (e) out.push({ sq, pieza: p.type, motivo: e.motivo, por: e.por });
   }
   /* la más cara primero: si hay dos, la que duele es esa */
   return out.sort((a, b) => (VALOR[b.pieza] || 0) - (VALOR[a.pieza] || 0));
 }
 
 /* ¿La pieza de `sq` está tapando a su propio rey de una pieza que lo ataca por
-   una línea? Es la clavada absoluta, y se contesta SACÁNDOLA del tablero: si al
-   sacarla el rey queda en jaque, estaba tapando.
+   una línea? Es la clavada absoluta.
 
-   La comprobación es cara —carga un FEN— así que antes hay un filtro
-   geométrico: solo puede estar clavada una pieza que esté en la misma fila,
-   columna o diagonal que su rey. Deja tres o cuatro candidatas en vez de
-   quince. */
+   SE BUSCA CON GEOMETRÍA DESDE LA v0.133, y no sacando la pieza para ver si el
+   rey queda en jaque. Eso fallaba con el rey YA en jaque: cualquier pieza en
+   línea con él daba positivo. En el 3. Qxe5+ de Juan salían diez piezas
+   "clavadas" y la tarjeta decía "Clava la torre de a8". Ahora: del rey a la
+   pieza no hay nada en el medio, y pasando la pieza, lo primero que aparece es
+   una dama, o una torre si la línea es recta, o un alfil si es diagonal, del
+   otro color. */
 function estaClavada(fen, sq, rey) {
-  if (!rey) return false;
-  const dc = "abcdefgh".indexOf(sq[0]) - "abcdefgh".indexOf(rey[0]);
-  const df = +sq[1] - +rey[1];
-  if (dc !== 0 && df !== 0 && Math.abs(dc) !== Math.abs(df)) return false;
-  const j = new Chess(fen);
-  const p = j.get(sq);
-  if (!p || p.type === "k") return false;
-  j.remove(sq);
-  const partes = j.fen().split(" ");
-  partes[1] = p.color;
-  partes[3] = "-";
-  const j2 = new Chess();
-  return j2.load(partes.join(" ")) && j2.in_check();
+  return !!(rey && quienLaClava(new Chess(fen).board(), sq, rey));
+}
+
+/* La casilla de la pieza que clava a la de `sq` contra su rey, o null. Es la
+   geometría de `estaClavada`, sobre el tablero y no sobre un FEN, porque la usa
+   también `atacantesDe`, que se llama muchas veces por tarjeta. */
+function quienLaClava(tablero, sq, rey) {
+  const col = t => "abcdefgh".indexOf(t[0]), fil = t => 8 - +t[1];
+  const dc = col(sq) - col(rey), df = fil(sq) - fil(rey);
+  if ((dc === 0 && df === 0) || (dc !== 0 && df !== 0 && Math.abs(dc) !== Math.abs(df)))
+    return null;
+  const p = tablero[fil(sq)][col(sq)];
+  if (!p || p.type === "k") return null;
+  const pc = Math.sign(dc), pf = Math.sign(df);
+  let c = col(rey) + pc, f = fil(rey) + pf;
+  for (; c !== col(sq) || f !== fil(sq); c += pc, f += pf) if (tablero[f][c]) return null;
+  const recta = dc === 0 || df === 0;
+  for (c += pc, f += pf; c >= 0 && c < 8 && f >= 0 && f < 8; c += pc, f += pf) {
+    const q = tablero[f][c];
+    if (!q) continue;
+    return q.color !== p.color && (q.type === "q" || q.type === (recta ? "r" : "b"))
+      ? "abcdefgh"[c] + (8 - f) : null;
+  }
+  return null;
 }
 
 /* ¿Un peón sin ningún peón rival que lo pueda frenar? Ni en su columna ni en
@@ -3172,35 +3238,36 @@ function enElMedio(desde, medio, hasta) {
 }
 
 /* ¿La pieza de `sq` está atrapada? Dos condiciones, y las dos hacen falta:
-   está comible DONDE ESTÁ, y no tiene ninguna casilla adonde ir donde deje de
-   estarlo. Eso es exactamente lo que dice la frase —"no tiene salida"— y no
+   está en peligro DONDE ESTÁ, y no tiene ninguna casilla adonde ir donde deje
+   de estarlo. Eso es exactamente lo que dice la frase —"no tiene salida"— y no
    más: no promete que no haya OTRA forma de salvarla (defenderla, contraatacar,
    tapar), solo que la pieza sola no se salva moviéndose.
 
-   Cada salida cuesta un FEN cargado, así que se pregunta por UNA sola pieza
-   —la más cara de las que ya están comibles— y nunca por peones ni por el rey.
-   `quedaComible` es el que sabe que una casilla defendida no es lo mismo que
-   una casilla atacada, que es donde esto se equivoca fácil. */
+   LAS SALIDAS SE CUENTAN SIN MIRAR EL JAQUE (v0.133). Con las jugadas legales,
+   una jugada que daba jaque dejaba sin salidas a TODAS las piezas del rival —
+   tenía que atender el jaque— y salía "Atrapa el alfil de b8" en 26 de 27
+   casos medidos. El jaque se contesta y la pieza se va igual.
+
+   Comer algo que vale lo mismo o más TAMBIÉN es una salida: cambiarse no es
+   quedar atrapada (Rg7+ con la torre de g8 que come en g7).
+
+   Se pregunta por UNA sola pieza —la más cara de las que ya están en peligro—
+   y nunca por peones ni por el rey. */
 function estaAtrapada(fen, sq) {
   const j = new Chess(fen);
   const p = j.get(sq);
   if (!p || p.type === "p" || p.type === "k") return false;
   if (j.turn() !== p.color) return false;
-  const salidas = j.moves({ verbose: true }).filter(m => m.from === sq);
-  if (!salidas.length) return true;
-  /* El mismo filtro barato que `colgadasDe`: una casilla que no ataca nadie es
-     una salida, y eso es geometría. Mira el tablero de ANTES de la salida, y
-     por eso puede fallar para el lado seguro: si la pieza al moverse le DESTAPA
-     la línea a quien la ataca, acá figura como libre y la frase no se dice.
-     Callarse de más es el error que se banca; decir "no tiene salida" cuando sí
-     la tiene, no. */
   const tablero = j.board();
-  const contra = p.color === "w" ? "b" : "w";
-  for (const m of salidas) if (!atacadaPor(tablero, m.to, contra)) return false;
+  if (!enPeligro(tablero, sq)) return false;
+  const c0 = "abcdefgh".indexOf(sq[0]), f0 = 8 - +sq[1];
+  const salidas = j.moves({ verbose: true, legal: false }).filter(m => m.from === sq);
   for (const m of salidas) {
-    const j2 = new Chess(fen);
-    j2.move(m);
-    if (!quedaComible(j2.fen(), m.to)) return false;
+    if (m.captured && (VALOR[m.captured] || 0) >= (VALOR[p.type] || 0)) return false;
+    const t2 = tablero.map(fila => fila.slice());
+    t2[f0][c0] = null;
+    t2[8 - +m.to[1]]["abcdefgh".indexOf(m.to[0])] = p;
+    if (!enPeligro(t2, m.to)) return false;
   }
   return true;
 }
@@ -3351,7 +3418,8 @@ function observarJugada(f, fenAntes = null) {
 
        Sin `fenAntes` no hay comparación posible, y ahí `nuevas` y `salvadas`
        quedan vacías en vez de adivinar. */
-    const colgadas = colgadasDe(f.fen, mio).filter(c => c.sq !== donde);
+    const todasMias = colgadasDe(f.fen, mio);
+    const colgadas = todasMias.filter(c => c.sq !== donde);
     const antes = fenAntes ? colgadasDe(fenAntes, mio) : null;
     let nuevas = [], salvadas = [];
     if (antes) {
@@ -3361,8 +3429,21 @@ function observarJugada(f, fenAntes = null) {
       /* Salvada: estaba colgada y ya no. Son dos cosas distintas y la frase
          cambia: si la casilla es la de donde salió la jugada, la pieza SE FUE;
          si no, se quedó y ahora está defendida. */
-      salvadas = antes.filter(c => !son.has(c.sq) && c.sq !== donde)
-                      .map(c => ({ ...c, seFue: c.sq === deDonde }));
+      /* TRES CASOS DONDE "SALVA" MIENTE O NO VIENE AL CASO (v0.133):
+         - SE FUE, PERO A OTRA CASILLA EN PELIGRO: no la salvaste, la mudaste
+           (23 casos medidos, 9 de ellos cambios).
+         - LA JUGADA COMIÓ ALGO QUE VALE LO MISMO O MÁS: lo que pasó es la
+           captura, y salvar el peón es un efecto de costado. Es el 17. Bxe2 de
+           Juan: se comió una dama y la tarjeta decía "Salva tu peón de c2".
+         - LA JUGADA DA MATE: no hay nada más que salvar. */
+      const llegaEnPeligro = todasMias.some(c => c.sq === donde);
+      const comida = new Chess(fenAntes).get(donde);
+      const valeComida = comida && comida.color !== mio ? (VALOR[comida.type] || 0) : 0;
+      salvadas = /#$/.test(f.san || "") ? [] :
+        antes.filter(c => !son.has(c.sq) && c.sq !== donde)
+             .map(c => ({ ...c, seFue: c.sq === deDonde }))
+             .filter(c => !(c.seFue && llegaEnPeligro))
+             .filter(c => valeComida < (VALOR[c.pieza] || 0));
     }
     /* 3. LO QUE SE VE EN LA POSICIÓN, y que no es ni material ni amenaza.
        Los tres se comparan contra ANTES por el mismo motivo que las colgadas:

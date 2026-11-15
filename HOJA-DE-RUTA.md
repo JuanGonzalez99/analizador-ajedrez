@@ -419,6 +419,31 @@ stack; la app nativa queda como proyecto aparte.
 
 ---
 
+## Revisión de las evaluaciones (14 y 15-nov-2026)
+
+Lo que salió de la revisión de los veredictos y de las frases de la tarjeta
+(detalle y números en `TRASPASO.md` §8, "La revisión de las evaluaciones").
+El jaque en los detectores y la nueva definición de "a salvo" ya están hechos
+(v0.133). Lo que queda:
+
+- [ ] ⏸ espera a Juan · Las frases chicas que no mueven números: el ataque
+      doble que nombra dos veces la misma pieza (capturas que coronan), "Ataca…
+      con un peón" después de coronar, y el eco "El rival acababa de errar: X lo
+      cobraba. Había X…". Siguen en esta misma sesión.
+- [ ] ⏸ espera a Juan · Las engañosas: "Toma la columna abierta" cuando la
+      torre ya estaba ahí, "Tu X queda comible" cuando acaba de comer algo que
+      vale lo mismo o más, y una frase de mérito en las tarjetas de error.
+- [ ] ⏸ espera a Juan · Los que mueven las tablas: la Omisión que tapa al
+      Error grave (H1), los Brillantes que no son sacrificio (H2), "Genial, era
+      la única" con la segunda ganando igual (H3), y la mejor del motor marcada
+      como mala (H4, el 17. Bxe2 de Juan).
+- [ ] ⏸ espera a Juan · **Que la tarjeta cuente ideas e intenciones**, no solo
+      lo que pasó: "amenaza mate", qué amenaza el rival, como las amenazas de
+      chess.com. Pedido de Juan (15-nov): es un trabajo aparte, se anota y no se
+      empieza.
+
+---
+
 ## Dudas abiertas para Juan
 
 Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Juan

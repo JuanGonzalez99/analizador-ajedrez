@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.132**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.133**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4674,6 +4674,43 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.133, el jaque ya no decide qué está clavado, salvado o atrapado** (revisión
+de las evaluaciones, 14 y 15-nov; detalle en §8, "La revisión de las
+evaluaciones"). Lo reportó Juan con capturas: "Clava la torre de a8" en 3.
+Qxe5+, "Salva el caballo" y "Clava el peón de d2" en 4… Qxe4+, "Salva el alfil
+de g4" en 9… f5, 10… Be7 y 11… Kd7. Medido sobre 1.075 tarjetas: **143 frases
+visibles falsas antes, 8 después** (y 4 de esas 8 eran errores del
+verificador; ver §8).
+- **`enPeligro(tablero, sq)`** reemplaza a "queda comible con las jugadas
+  legales" en `colgadasDe`. Es geometría, no mira el turno ni el jaque: el
+  rival ataca la pieza y, o nadie la defiende (`sinDefensa`), o la ataca algo
+  que vale menos (`menor`). Devuelve el motivo y con qué pieza. Antes el jaque
+  rompía las dos puntas: dando jaque, toda pieza colgada salía "salvada"; en
+  jaque, la recaptura era ilegal y al salir del jaque "se salvaba" lo que
+  estaba bien.
+- **`atacantesDe`** no cuenta una pieza clavada contra su rey que tendría que
+  salir de la línea (7. Nc3 "salvaba" e4 con un caballo clavado), y **el rey
+  defiende solo si nadie más ataca la casilla**. Los dos huecos los encontró el
+  verificador independiente sobre la primera versión del arreglo.
+- **`estaClavada`** es geometría (`quienLaClava`): del rey a la pieza nada en
+  medio, y pasando la pieza, un deslizador rival del tipo de la línea. Antes
+  sacaba la pieza y miraba si el rey quedaba en jaque: con el rey ya en jaque,
+  todo lo alineado daba positivo (diez "clavadas" en 3. Qxe5+).
+- **`estaAtrapada`** cuenta las salidas sin mirar el jaque (`legal: false`) y
+  acepta como salida comer algo que vale lo mismo o más. Antes, 26 de 27
+  "Atrapa" eran falsas, todas en jugadas con jaque. En 3. Qxe5+, ahora la
+  tarjeta dice "Atrapa la torre de h8: no tiene salida", que es cierto (y la
+  jugada siguiente fue 4. Qxh8).
+- **"Salva/Saca" se calla** si la pieza se fue a otra casilla en peligro, si
+  la jugada comió algo que vale lo mismo o más (el "Salva tu peón de c2" del 17.
+  Bxe2, que se comió la dama) y si la jugada da mate.
+- **Frase nueva para el motivo `menor`**: "Salva/Saca tu X de Y, que estaba a
+  tiro de un peón" y "Tu X de Y queda a tiro de un caballo", con la marca "a
+  tiro". "Sin defender" queda para lo que es eso. Sin género a propósito (lo/la).
+- 10 pruebas nuevas, seis con las posiciones reales de Juan. Las capturas del
+  celu cambian porque `mirar` muestra la jugada con la explicación más larga, y
+  "a tiro de un caballo" alarga otra: verificado, no hay filtración de PC.
+
 **v0.132 [PC], las piezas comidas arriba y abajo del tablero** (lavado de
 cara del revisor, v0.125). La columna de 64 entre el tablero y el panel
 quedaba vacía en la apertura: una calle de ~120 px con Girar solo en el medio.
@@ -5323,6 +5360,60 @@ el juego de piezas se eligió mirándolo en lichess, no renderizándolo acá.
    de pruebas, o sea modo dev.)*
 
 ## 8. Pendientes de fondo, sin resolver
+
+### La revisión de las evaluaciones (14 y 15-nov-2026)
+
+Pedida por Juan. **Cómo se midió**: Stockfish 18 real (el mismo wasm) corriendo
+en node con la misma lectura que `Motor.analizar`, sobre 15 partidas y 1.090
+posiciones a profundidad 16 y 18 (10 generadas con "Skill Level" bajo, porque el
+contenedor no tiene red para bajar partidas, más las cinco de `pruebas/`), y
+`derivarFilas` real encima. Las frases se verificaron con un agente aparte que
+escribió sus propios verificadores sin leer el código de la app. Los scripts no
+se commitearon (andamio): lo que queda es esto. **Juan pasó sus casos recién
+después de escrito el informe**, para usarlos como prueba de la revisión: el
+17. Bxe2 lo explicaba H4; las frases de la tarjeta no las cubría, y por eso
+hubo una segunda vuelta sobre ellas.
+
+**Lo que está bien:** la lectura del motor (ningún renglón provisorio ni de
+otra profundidad en 1.090 posiciones; `bestmove` siempre igual a la primera de
+la línea), la segunda solo falta con 0 o 1 jugadas legales, el libro usa la
+convención de FEN de chess.js, el mate 0 y el ahogado.
+
+**Arreglado en la v0.133**: el jaque en clavadas, salvadas y atrapadas, y "a
+salvo" con cambio estático (ver §7, v0.133).
+
+**Pendiente, con números** (también en `HOJA-DE-RUTA.md`, todo `⏸`):
+- **H1. La Omisión tapa al Error grave.** `categorizar` pregunta por la
+  omisión antes que por el corte de grave: 20 de 42 omisiones tienen pérdida
+  ≥ 3 ("h5", pérdida 5,92 → "había Qxg3, que ganaba un peón").
+- **H2. Brillantes que no son sacrificio.** `entregaMaterial` usa
+  `gananciaDeCaptura`, que mira un solo ply: si lo que come se puede
+  recapturar, da la pieza por perdida aunque se recupere (15… Bxd6, recaptura,
+  sale Brillante con "Entrega material"). 3 de 7 brillantes son de peón, y
+  Brillante no excluye recapturas.
+- **H3. "Genial, era la única" con la segunda ganando igual.** El hueco va en
+  centipeones: con +10 (mate) y la segunda en +7 dice "Era la única" (4 de 31).
+  Es más angosto que "venir ganando", que §8 ya descartó: medirlo en
+  probabilidad de ganar.
+- **H4. La mejor del motor marcada como mala** (ya estaba acá desde la v0.95):
+  22 de 373 a profundidad 16, 12 a 18. El 17. Bxe2 de Juan.
+- **Ruido de profundidad** (contexto, no error): de 16 a 18 cambia el 22,6% de
+  las categorías y 79 de 356 malas cruzan la línea buena/mala (65 con H4
+  arreglado).
+- **Frases que quedan falsas**: ataque doble que nombra dos veces la misma
+  pieza (capturas que coronan, cada una son cuatro jugadas), "con un peón"
+  después de coronar, y el eco "lo cobraba / Había X" (23 tarjetas).
+- **Engañosas** (71 visibles después de la v0.133): "Toma la columna" con la
+  torre que ya estaba ahí (55), "Tu X queda comible" después de comer algo de
+  igual o más valor (13), y una frase de mérito en un tercio de las tarjetas de
+  error.
+- **El verificador también se equivoca**, y conviene saberlo si se lo vuelve a
+  usar: no mira las clavadas de los defensores ni la amenaza que sigue después
+  del jaque. De las 8 falsas que deja la v0.133, cuatro son aciertos de la app
+  (46. Bd4 tapa una clavada y así defiende h7). Y una definición mal pasada al
+  agente ("o no tiene jugadas") le hizo dar por ciertas 26 "Atrapa" falsas: a un
+  verificador se le pasan definiciones que no dependan del turno.
+
 
 ### Tres fallas reportadas y MEDIDAS, todavía sin arreglar (v0.84)
 
