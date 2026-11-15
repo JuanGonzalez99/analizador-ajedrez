@@ -462,6 +462,16 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.138):** en el inicio, "cambiar" ahora deja la
+  cabecera donde está, pasa a decir "cancelar" y el campo aparece debajo.
+  Antes el renglón con tu nombre se iba y la tuerca saltaba a la fila del
+  campo, y no había cómo salir sin buscar. Ganó la B de cuatro (las otras:
+  "cancelar" abajo junto a "o pegar un PGN", un "‹" al lado del campo, o con
+  el título de la primera vez arriba).
+- **No sé si esto te copa (v0.137, compu):** el Resumen debajo de la Partida
+  es ahora una tabla dada vuelta: una fila por jugador (nombre, precisión,
+  mediana y los diez recuentos al lado) y las categorías de cabecera. En el
+  celu sigue como siempre. Ganó la D de cuatro.
 - **No sé si esto te copa (v0.130):** la apertura sigue de subtítulo de la
   Partida, ahora en castellano y sin cortarse nunca ("Apertura italiana: Giuoco
   Piano"; si no entra, "Apertura italiana"). La otra es la barra de un renglón
