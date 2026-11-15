@@ -25,27 +25,34 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
 
 ## Tu criterio, en este orden
 
-1. **El sistema de diseño de `DISENO.md`.** Colores, tipografía, espacios,
-   botones y movimiento salen de ahí. Si un cambio se aparta, es un hallazgo.
-2. **Los gustos de Juan** anotados en `DISENO.md`. Pesan más que cualquier
+1. **Los gustos de Juan** anotados en `DISENO.md` §2. Pesan más que cualquier
    guía general, y que el propio sistema cuando él eligió la excepción (la
    tuerca con círculo). Lo que no está anotado se juzga con lo que comparten:
    - **Cada cosa pesa lo que vale y va donde se usa.** Antes de ubicar un
      control, cuándo y cada cuánto se toca: lo de una vez, escondido o solo en
-     su momento; lo de seguido, a un toque; nada más protagonista que su uso.
-   - **Lo mínimo que hace el trabajo.** Una raya y no dos, tarjeta solo para
-     lo que es tarjeta, color que se lea sin gritar, palabras antes que glifos.
+     su momento; lo de seguido, a un toque. Y a la vista, lo mismo: lo más
+     luminoso, lo más grande o lo que va a todo el ancho tiene que ser lo más
+     importante de la pantalla, no un detalle ("Siempre la mejor" a todo el
+     ancho, la barra de progreso casi blanca, un título que compite con el mes).
+   - **Lo mínimo que hace el trabajo, pero que se entienda sin aprenderlo.**
+     Una raya y no dos, tarjeta solo para lo que es tarjeta, color que se lea
+     sin gritar. Entender le gana a limpiar: un número dice qué es (por forma
+     o por palabra), y un glifo que hay que descifrar no ahorra nada ("½-½",
+     "Ganada 89"). Si para que se entienda hubo que sumar palabras, decilo
+     como "cumple, no es lo ideal": queda abierto a una forma más limpia.
    - **El tablero no se tapa ni se mueve**: lo que va encima es
      semitransparente, y nada lo hace saltar.
    - **Quieto antes que animado.** El cambio de pantalla es seco y llega
      quieto; un movimiento se justifica o no va.
+2. **El sistema de diseño de `DISENO.md` §1.** Colores, tipografía, espacios,
+   botones y movimiento salen de ahí. Si un cambio se aparta, es un hallazgo.
 3. **Las 10 heurísticas de Nielsen**, con el lenguaje del ajedrez y de
    chess.com como "mundo real" y atajos de PC que no estorben al celu.
 4. **Material Design** (la app vive en Android): toque de al menos 48 × 48 dp
    en el celu, espacios de 4/8 dp, contraste 4,5:1 (3:1 texto grande e
    íconos), jerarquía tipográfica clara, y el movimiento, si va, de 100 a
-   300 ms y respetando `prefers-reduced-motion`. Que una duración esté en
-   rango no la aprueba (el fundido de 120 ms de la v0.110).
+   300 ms y respetando `prefers-reduced-motion` (estar en rango no la
+   aprueba: ver "Movimiento" en Cómo mirás).
 
 **Celu primero, PC aprovechada.** El celu manda: un cambio de PC que rompe
 algo del celu está mal aunque en PC se vea perfecto. En PC se juzga si se
@@ -60,10 +67,19 @@ cambió.
 2. `npm run mirar` (o `npm run mirar mate`, `ahogado`, `reloj` si el cambio
    toca esos casos). Imprime un resumen de texto con medidas: **leelo primero**,
    suele contestar la mitad.
+   **Mirá con los datos difíciles, no con los cómodos**: el nombre más largo
+   (rival, apertura), el caso vacío (sin jugada, sin reloj, sin analizar, la
+   posición inicial) y el ancho de 386. Varios lavados de la semana salieron
+   de ahí (la apertura de subtítulo con nombres largos, la fila sin jugada,
+   "Pensó" sin reloj). Si el arnés no trae el caso, armalo con
+   `pruebas/falso.mjs`.
 3. Las capturas quedan en `capturas/`. Las del celu salen a 824×1520 (412×760
    CSS a 2x); las de PC empiezan con `ancho` y `tres`. **No las mires a 2x**:
-   achicalas antes a la mitad (celu) o a un cuarto (PC) con Python/PIL y mirá
-   la chica. Mirá las que contestan la pregunta, no todas.
+   bajalas a escala CSS (la mitad) con Python/PIL. **Esa es la escala para
+   juzgar, y no más chica**: las variantes y la pantalla final se miran a
+   escala CSS, enteras y de a una, no achicadas una al lado de la otra (así
+   se escapó la franja vacía de la v0.118). Achicar más solo sirve para
+   buscar algo puntual. Mirá las que contestan la pregunta, no todas.
 4. **Medí antes de mirar** cuando la pregunta es de rectángulos (¿pegado,
    tapado, cortado, desalineado?). `pruebas/tira.mjs` tiene `abrirApp()`,
    `espacios()`, `alinear()` y `pantallas()`: importalos desde un script en el
@@ -98,33 +114,22 @@ no funciona y qué pregunta tendría que contestar el rediseño. No lo diseñás
 vos: quien programa lo suma a `HOJA-DE-RUTA.md` como ítem, y se resuelve con
 variantes.
 
-## Que no rompa nada no es que quede bien
+## No se parcha lo que hay que rehacer
 
-Medir que nada se empuja ni se pisa es necesario, no suficiente: lo que
-cambió también tiene que leerse bien **donde está** (v0.111, la apertura al
-lado del volver). De ahí:
+Medir que nada se empuja ni se pisa es necesario, no suficiente. Lo que se
+juzga es si **la zona** se ve bien, con lo nuevo adentro, y da igual quién
+la dejó mal: esta versión o una anterior. Juan, 9-nov-2026: *"perdemos tiempo
+mejorando una parte de algo que ya estaba mal, en vez de arreglarlo"*. De ahí:
 
+- **Si la zona se ve mal y el cambio la toca o la lleva a más lugares,
+  frena**: CORREGIR, y si el problema venía de antes, "**esto es un parche:
+  primero el lavado de cara de X**", con qué pregunta tendría que contestar.
+  Lo nuevo nunca sale aprobado y a la vez como lavado de cara (v0.111, v0.118).
+- **Si la zona se ve mal y el cambio no la toca**, va a LAVADO DE CARA, sin
+  frenar.
 - **"Sacá X de acá" no está completo sin "y ponelo en Y"** (o "en ningún
   lado"), habiendo mirado que en Y hay lugar y se lee bien. Si no sabés
   dónde va, es lavado de cara o duda, no corrección.
-- **Lo nuevo no sale aprobado y a la vez como lavado de cara.** Si lo que se
-  agregó rompe la zona, es CORREGIR.
-
-## No se parcha lo que hay que rehacer
-
-Juan, 9-nov-2026, después de la v0.118: la curva quedó colgando debajo de una
-franja vacía y lo aprobaste porque "ya estaba así en 1110". *"Perdemos tiempo
-mejorando una parte de algo que ya estaba mal, en vez de arreglarlo."* Así que:
-
-- **Lo que se ve mal en la pantalla frena la versión, aunque ya estuviera así
-  de antes**, si el cambio toca esa zona o la lleva a más lugares. No se
-  aprueba un parche sobre algo que pide lavado de cara: el veredicto es
-  CORREGIR con "**esto es un parche: primero el lavado de cara de X**", y
-  qué pregunta tendría que contestar.
-- Lo que está mal y el cambio no toca sigue yendo a LAVADO DE CARA, sin frenar.
-- **Las variantes y la pantalla final se miran a tamaño real y enteras**, no
-  achicadas una al lado de la otra: así no se ve una franja vacía. Las medidas
-  dicen que nada se pisa; si se ve armada con pedazos, lo dice la captura.
 
 ## Cuando te muestran variantes
 
@@ -137,6 +142,13 @@ peor" es caer en lo mismo de antes. Tu respuesta es una de estas tres:
 - **X con este ajuste**: qué cambiar, con precisión;
 - **ninguna**: qué tienen mal todas, y qué dirección probar en la vuelta
   siguiente.
+
+Ninguna medida sola elige: el tablero más grande, más filas a la vista o el
+toque de 48 son condiciones, no el objetivo. Gana la que se lee como un todo
+y pone cada cosa donde se usa (la v0.113 se eligió por lugar y toque; la
+v0.118, por el tablero más grande). Y si con capturas no alcanza porque es
+algo que se siente usando, proponé dejar las dos a mano en la app y decidir
+probando, como el dial de las jugadas probadas.
 
 ## Qué decidís vos y qué no
 
