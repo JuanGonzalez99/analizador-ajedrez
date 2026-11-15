@@ -2686,10 +2686,26 @@ test("con mouse: previa, rueda y salto al error", () => {
     "en una pantalla táctil no se arma: el toque dispara mouseenter");
   assert.ok(html.includes("if (!MQ_MOUSE.matches) return;"),
     "y se lee viva, no una vez al cargar: con teclado enchufado la respuesta cambia");
-  assert.ok(html.includes("while (Math.abs(junta) >= 40)"),
-    "la rueda acumula: un trackpad manda docenas de eventos por gesto");
+  assert.ok(html.includes("if (Math.abs(junta) >= 40) {") && !html.includes("while (Math.abs(junta)"),
+    "la rueda acumula, y un evento pasa UNA jugada: un clic de mouse manda 100 o 120, no 40");
+  assert.ok(html.includes("PREVIA_T = setTimeout(() => previsualizar(i), DEMORA_PREVIA);"),
+    "la previa espera antes de aparecer: cruzar la lista no la dispara");
+  assert.ok(html.includes("if (TABLERO_PREVIO !== null) previsualizar(i);"),
+    "pero con una ya abierta el renglón de al lado no vuelve a esperar");
   assert.ok(html.includes('const MALAS = new Set(["imprecision", "error", "omision", "grave"]);'),
     "y `n` salta entre las categorías malas");
+});
+
+test("las tres mejores son las que había EN LUGAR de la jugada", () => {
+  /* v0.139, reportado por Juan: salían de la posición que se ve, o sea las
+     respuestas del otro. Tienen que salir de la de antes de la jugada. */
+  const f = html.slice(html.indexOf("function baseDeAlternativas()"), html.indexOf("async function pedirAlternativas()"));
+  assert.ok(f.includes("fenDeLaJugada(i)"), "en la partida, de la posición de antes de la jugada");
+  assert.ok(f.includes("posicionAntesDe(p.ver - 1)"), "y en la variante, de antes de la última probada");
+  const g = html.slice(html.indexOf("function jugarAlternativa(uci)"), html.indexOf("/* LA TIRA DE PIEZAS COMIDAS"));
+  assert.ok(g.includes("abrirPrueba(Math.max(IDX, 0))"), "tocar una la prueba desde esa misma posición");
+  assert.ok(!html.slice(html.indexOf("async function pedirAlternativas()"), html.indexOf("function jugarAlternativa(uci)"))
+    .includes("FEN_VISTO"), "y nada del panel lee la posición dibujada");
 });
 
 test("arrastrar la pieza no es un camino nuevo para mover", () => {

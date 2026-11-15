@@ -1175,6 +1175,9 @@
     /* la primera ES la mejor jugada, la misma que ya pinta el cuadrito "Mejor":
        se marca con el verde de siempre y no con uno nuevo */
     .alt.primera .as { color: var(--c-mejor); }
+    /* la que se jugó, si está entre las tres: una etiqueta tenue al lado, sin
+       color propio —el verde ya dice cuál era la mejor— */
+    .alt .aj { margin-left: 6px; color: var(--tenue); font-size: var(--t-leyenda); }
     .altNota { font-size: 12.5px; color: var(--tenue); }
     /* los 22 de abajo la alinean con el tablero y no con su caja: el SVG lleva
        un margen propio de 15 unidades para las coordenadas, y sin esto el grupo
@@ -1406,7 +1409,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.138 · 15-11";
+  window.VERSION = "v0.139 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1813,12 +1816,12 @@
          No se calculan solas: son una corrida de motor por posición y correrla
          al pasar de jugada sería pelear con la variante por el mismo grupo. -->
     <div class="alts" id="alts">
-      <!-- "DE ACÁ" no sobra: el tablero muestra la posición DESPUÉS de la
-           jugada, así que estas tres son las mejores de esa posición —"¿y ahora
-           qué?"—, que es la misma pregunta que contesta la variante. Alternativas
-           a la jugada que se jugó serían las de la posición ANTERIOR, o sea otro
-           tablero, y el panel estaría hablando de algo que no se está viendo. -->
-      <div class="altCab"><span>Las mejores de acá</span>
+      <!-- SON LAS MEJORES EN LUGAR DE LA JUGADA QUE SE ESTÁ MIRANDO (v0.139), o
+           sea las de la posición ANTERIOR. Hasta la v0.138 eran las de la
+           posición que se ve —"¿y ahora qué?"— y Juan lo leyó como un error:
+           parado en una jugada, lo que se pregunta es qué había en vez de esa.
+           El título nombra la jugada para que no haya que adivinarlo. -->
+      <div class="altCab"><span id="altTit">Las mejores de acá</span>
         <button class="chico" id="btnAlts">Ver las tres mejores</button></div>
       <div class="altLista" id="altLista"></div>
     </div>
@@ -4945,10 +4948,31 @@ function volverDeLaPrevia() {
    tablet a la que le enchufan un teclado con trackpad cambia de respuesta sin
    recargar la página, y con el booleano congelado la previa no aparecía nunca. */
 const MQ_MOUSE = window.matchMedia("(hover: hover)");
+/* LA PREVIA ESPERA UN MOMENTO ANTES DE APARECER (v0.139). Sin espera se
+   disparaba con solo CRUZAR la lista yendo a otro lado, y el tablero parpadeaba
+   posiciones que nadie pidió —reportado por Juan—. Con 120 ms, pasar de largo no
+   hace nada y frenarse la muestra casi al toque.
+   La salida también espera, pero menos (60 ms), y por otro motivo: entre un
+   renglón y el de al lado el mouse sale de uno antes de entrar al otro, y sin
+   ese margen el tablero volvía a la posición real y había que esperar de nuevo.
+   Así, con una previa ya abierta, recorrer la lista cambia de posición sin
+   demora y sin parpadeo.
+   Un solo temporizador para las dos cosas: lo último que hizo el mouse manda.
+   `pintarRevision` lo corta, porque una previa que llega después de navegar
+   pisaría el tablero nuevo. */
+const DEMORA_PREVIA = 120, DEMORA_VUELTA = 60;
+let PREVIA_T = null;
 function previaEn(sp, i) {
   if (!MQ_MOUSE.matches) return;
-  sp.onmouseenter = () => previsualizar(i);
-  sp.onmouseleave = volverDeLaPrevia;
+  sp.onmouseenter = () => {
+    clearTimeout(PREVIA_T);
+    if (TABLERO_PREVIO !== null) previsualizar(i);
+    else PREVIA_T = setTimeout(() => previsualizar(i), DEMORA_PREVIA);
+  };
+  sp.onmouseleave = () => {
+    clearTimeout(PREVIA_T);
+    PREVIA_T = setTimeout(volverDeLaPrevia, DEMORA_VUELTA);
+  };
 }
 /* `prueba` es lo que agrega la v0.65 y va en null en el camino normal:
    { desde, destinos, uci }. Cuando viene, el tablero deja de ser un dibujo y
@@ -4976,10 +5000,41 @@ function previaEn(sp, i) {
 const ALTERNATIVAS = new Map();
 let ALT_PIDIENDO = null;
 const claveAlt = fen => fen + "|" + ((R && R.profBase) || +$("prof").value || 16);
+/* DE QUÉ POSICIÓN SALEN (v0.139): de la de ANTES de la última jugada que se ve,
+   no de la que está dibujada. Parado en una jugada lo que uno pregunta es "¿qué
+   había en lugar de esta?", y el panel contestaba "¿qué le conviene ahora al
+   otro?" —reportado por Juan como un error—. Así la primera coincide con el
+   cuadrito "Mejor", que siempre habló de esa misma posición.
+
+   La regla es una sola para la partida y para la variante: la última jugada
+   que muestra el tablero. En la variante es la última probada, y si todavía no
+   se probó ninguna, la de la partida de la que arranca. Solo cuando no hay
+   jugada anterior —la posición inicial— quedan las de la posición que se ve.
+   Devuelve también esa jugada, para marcarla en la lista y nombrarla arriba. */
+function baseDeAlternativas() {
+  if (!R) return null;
+  const deLaPartida = i => i >= 0 && R.filas[i]
+    ? { fen: fenDeLaJugada(i) || new Chess().fen(), uci: R.filas[i].uci, san: R.filas[i].san }
+    : (FEN_VISTO ? { fen: FEN_VISTO, uci: null, san: null } : null);
+  if (!PRUEBA) return deLaPartida(IDX);
+  const p = PRUEBA;
+  if (p.ver > 0) {
+    const j = p.linea[p.ver - 1];
+    /* La primera de la variante sale de una posición de la PARTIDA, y ahí el
+       título sigue nombrando la jugada de la partida: la lista es la misma que
+       antes de probar, así que el título no puede cambiar (revisor, v0.139:
+       decía "En lugar de Qe7" con Qe7 en la lista). La probada se marca aparte. */
+    const real = p.ver === 1 && R.filas[p.desde0];
+    return { fen: posicionAntesDe(p.ver - 1).fen || new Chess().fen(), uci: j.uci,
+             san: real ? real.san : j.san, probada: true, real: real ? real.uci : null };
+  }
+  return deLaPartida(p.desde0 - 1);
+}
 async function pedirAlternativas() {
   /* con el barrido en curso no: ese usa el mismo grupo y ni el tablero responde */
-  if (!R || TRABAJANDO || !FEN_VISTO) return;
-  const clave = claveAlt(FEN_VISTO), fen = FEN_VISTO;
+  const base = baseDeAlternativas();
+  if (!base || TRABAJANDO) return;
+  const fen = base.fen, clave = claveAlt(fen);
   if (ALTERNATIVAS.has(clave) || ALT_PIDIENDO) return;
   ALT_PIDIENDO = clave;
   pintarAlternativas();
@@ -4998,41 +5053,54 @@ async function pedirAlternativas() {
 }
 function pintarAlternativas() {
   const lista = $("altLista"), bot = $("btnAlts");
-  if (!R || !FEN_VISTO) { lista.innerHTML = ""; return; }
-  const clave = claveAlt(FEN_VISTO);
+  const base = baseDeAlternativas();
+  $("altTit").textContent = base && base.san ? "En lugar de " + base.san : "Las mejores de acá";
+  if (!base) { lista.innerHTML = ""; return; }
+  const fen = base.fen, clave = claveAlt(fen);
   const ev = ALTERNATIVAS.get(clave);
   const pensando = ALT_PIDIENDO === clave;
   ver("btnAlts", !ev && !pensando);
   bot.disabled = TRABAJANDO;
-  if (pensando) { lista.innerHTML = `<div class="altNota">Pensando\u2026</div>`; return; }
+  if (pensando) { lista.innerHTML = `<div class="altNota">Pensando…</div>`; return; }
   if (!ev) { lista.innerHTML = ""; return; }
   if (ev.error) { lista.innerHTML = `<div class="altNota">No se pudo: ${ev.error}</div>`; return; }
-  const turno = FEN_VISTO.split(" ")[1];
+  const turno = fen.split(" ")[1];
   /* la primera sale de `mejor`, que es la del `bestmove`; las otras dos de las
      líneas de MultiPV. Una posición con una o dos jugadas legales devuelve menos
      de tres, y entonces se muestran las que hay. */
   const filas = [{ uci: ev.mejor, cp: ev.cp, mate: ev.mate }]
     .concat([ev.segunda, ev.tercera].filter(Boolean).map(l => ({ uci: l.mov, cp: l.cp, mate: l.mate })))
-    .filter(x => x.uci && sanDeUci(FEN_VISTO, x.uci))
+    .filter(x => x.uci && sanDeUci(fen, x.uci))
     /* sin repetidas: un motor que manda la misma jugada en dos líneas dejaría el
        panel diciendo dos veces lo mismo, y eso se lee como un error de la app */
     .filter((x, i, a) => a.findIndex(y => y.uci === x.uci) === i);
   if (!filas.length) { lista.innerHTML = `<div class="altNota">No hay jugadas.</div>`; return; }
+  /* "probada" y no "la jugada" en la variante: la tarjeta ya llama "en la
+     partida" a la otra, y dos cosas distintas con el mismo nombre confunden */
+  const marca = u => u === base.uci ? (base.probada ? "probada" : "la jugada")
+    : (u === base.real ? "la jugada" : "");
   lista.innerHTML = filas.map((x, i) =>
-    `<div class="alt${i === 0 ? " primera" : ""}"><span class="an">${i + 1}</span>` +
-    `<span class="as" data-uci="${x.uci}" role="button" tabindex="0">${sanDeUci(FEN_VISTO, x.uci)}</span>` +
+    `<div class="alt${i === 0 ? " primera" : ""}${marca(x.uci) ? " jugada" : ""}">` +
+    `<span class="an">${i + 1}</span>` +
+    `<span><span class="as" data-uci="${x.uci}" role="button" tabindex="0">${sanDeUci(fen, x.uci)}</span>` +
+    (marca(x.uci) ? `<span class="aj">${marca(x.uci)}</span>` : "") + `</span>` +
     `<span class="ae">${textoEval({ cp: x.cp, mate: x.mate }, turno)}</span></div>`).join("");
   lista.querySelectorAll("[data-uci]").forEach(sp => {
     sp.onclick = seguro("probar alternativa", () => jugarAlternativa(sp.dataset.uci));
   });
 }
-/* Tocar una alternativa la PRUEBA, o sea el mismo camino que tocar el tablero:
-   abre la variante desde la posición que se está viendo y juega ahí. Sin esto el
-   panel sería un cartel; con esto, la lista de alternativas es navegable. */
+/* Tocar una alternativa la PRUEBA EN LUGAR de la jugada: abre la variante desde
+   la posición de ANTES —la misma de la que salen las tres— y juega ahí. En la
+   variante reemplaza a la última probada, así que se pueden tocar las tres una
+   atrás de la otra y la lista no cambia: siguen siendo alternativas entre sí.
+   Tocar la que ya se jugó no hace nada: es lo que el tablero ya muestra. */
 $("btnAlts").onclick = seguro("alternativas", pedirAlternativas);
 function jugarAlternativa(uci) {
-  if (TRABAJANDO) return;
-  if (!PRUEBA) abrirPrueba(IDX + 1);
+  const base = baseDeAlternativas();
+  if (TRABAJANDO || !base || uci === base.uci) return;
+  if (!PRUEBA) abrirPrueba(Math.max(IDX, 0));
+  else if (PRUEBA.ver > 0) PRUEBA.ver--;
+  else if (PRUEBA.desde0 > 0) abrirPrueba(PRUEBA.desde0 - 1);
   const m = new Chess(posicionVista().fen).moves({ verbose: true })
     .find(x => x.from + x.to + (x.promotion || "") === uci);
   if (m) probarJugada(m);
@@ -7831,8 +7899,11 @@ function pintarRevision() {
     dibujar(fenVisto, uciAzul, verMejor ? mejorVista : null, capa);
   pintarComidas(fenVisto);
   pintarAlternativas();
-  /* lo que había guardado la previa ya no existe: este es el tablero nuevo */
+  /* lo que había guardado la previa ya no existe: este es el tablero nuevo. Y
+     la que estuviera esperando para aparecer se corta: llegaría tarde y lo
+     pisaría */
   TABLERO_PREVIO = null;
+  clearTimeout(PREVIA_T);
   /* EL CUADRITO NOMBRA LO QUE DIBUJA LA FLECHA, así que sigue a la misma
      posición que ella: si dijera la mejor de la partida mientras la verde
      muestra la de la variante, serían dos jugadas distintas a un dedo de
@@ -8158,8 +8229,19 @@ $("curva").addEventListener("click", seguro("curva", ev => {
 
    SE ACUMULA EL DESPLAZAMIENTO Y RECIÉN AHÍ SE PASA DE JUGADA: un trackpad manda
    docenas de eventos chiquitos por gesto, y una jugada por evento hacía volar la
-   partida entera de un manotazo. El umbral de 40 es un "clic" de rueda de mouse
-   y un empujón corto de trackpad.
+   partida entera de un manotazo. El umbral de 40 es un empujón corto de trackpad.
+
+   Y UN EVENTO PASA UNA SOLA JUGADA, POR GRANDE QUE SEA (v0.139). Hasta la v0.138
+   pasaba una cada 40 y guardaba el resto, pensando que un clic de rueda eran 40.
+   No lo son: Chrome manda 100 por clic y otros 120, así que salían 2 y medio
+   —"a veces mueve 2, a veces 3", reportado por Juan con un mouse de verdad—. El
+   arnés no lo agarraba porque corre a escala 2 y ahí Chromium manda la mitad:
+   su clic de 120 llegaba como 60 y pasaba una sola. O sea que el número
+   tampoco es fijo entre pantallas, y por eso no se puede contar con él.
+   Ahora lo que sobra del umbral se tira: un clic de rueda es un evento y es una
+   jugada, mande lo que mande, y el trackpad sigue juntando de a poquito. Firefox
+   manda la rueda en renglones y no en píxeles (`deltaMode` 1): se pasa a píxeles
+   para que un clic de tres renglones también llegue al umbral.
 
    Mientras hay una variante abierta no hace nada: ahí pasar de jugada querría
    decir dos cosas distintas —la partida o la variante— y adivinar cuál es peor
@@ -8170,10 +8252,14 @@ $("curva").addEventListener("click", seguro("curva", ev => {
     if (!R || PRUEBA || $("zonaRevision").classList.contains("oculto")) return;
     if (!ev.deltaY || ev.ctrlKey) return;
     ev.preventDefault();
-    junta += ev.deltaY;
-    while (Math.abs(junta) >= 40) {
+    const d = ev.deltaY * (ev.deltaMode === 1 ? 40 : ev.deltaMode === 2 ? 400 : 1);
+    /* cambiar de sentido arranca de cero: lo juntado para un lado no se le
+       descuenta al otro */
+    if (Math.sign(d) !== Math.sign(junta)) junta = 0;
+    junta += d;
+    if (Math.abs(junta) >= 40) {
       irA(junta > 0 ? IDX + 1 : IDX - 1);
-      junta -= Math.sign(junta) * 40;
+      junta = 0;
     }
   }, { passive: false });
 })();

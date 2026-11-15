@@ -466,8 +466,19 @@ hay. Las primeras salen del historial del traspaso.
 - **Decidir usando la app** cuando mirando capturas no alcanza: las jugadas
   probadas quedaron en un dial porque *"no me decido, y creo que esta va a ser
   mejor probando la app"*.
+- **La rueda del mouse sobre el tablero pasa de a UNA jugada**, siempre:
+  *"según yo debería mover siempre de a 1"* (15-nov-2026, v0.139; pasaba 2 o
+  3). Un gesto, un paso: nada que avance una cantidad que no se pueda prever.
+- **Las tres mejores son las que había en lugar de la jugada que se mira**, no
+  las respuestas del otro (15-nov-2026, v0.139). Parado en una jugada, lo que
+  se pregunta es por ESA jugada; todo lo que la pantalla diga al lado habla de
+  ella.
 
 ### No le copa
+- **Que el tablero cambie con solo pasar el mouse por encima de la lista**:
+  *"se dibuja enseguida esa posición. Quizás debería tener un pequeño delay"*
+  (15-nov-2026, v0.139). Lo que responde al mouse sin clic espera un momento
+  (120 ms, la duración corta de §1.8) para no dispararse de pasada.
 
 - **Cómo se ve hoy la app en conjunto**: *"medio baqueteada, medio feucha"*;
   le falta una visión global (`NORTE.md`).

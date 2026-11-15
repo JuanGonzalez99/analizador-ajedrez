@@ -565,22 +565,49 @@ const elegida = () => pg.evaluate(() =>
   ((document.querySelector("#jugadas .jg.sel") || {}).textContent || "").trim());
 const t0 = await tablero(), e0 = await elegida();
 await pg.locator("#jugadas .jg").nth(12).hover();
+/* v0.139: la previa espera 120 ms antes de aparecer, así que recién entrado el
+   mouse el tablero tiene que seguir igual. Es lo que evita que parpadee al
+   cruzar la lista. */
+await pg.waitForTimeout(40);
+const tPronto = await tablero();
 await pg.waitForTimeout(250);
 const t1 = await tablero();
+/* y con la previa ya abierta, el renglón de al lado no vuelve a esperar ni pasa
+   por la posición real: a los 40 ms ya es OTRA previa */
+await pg.locator("#jugadas .jg").nth(14).hover();
+await pg.waitForTimeout(40);
+const tVecino = await tablero();
+await pg.locator("#jugadas .jg").nth(12).hover();
+await pg.waitForTimeout(150);
 await pg.screenshot({ path: path.join(SALIDA, "previa" + SUFIJO + ".png") });
 await pg.mouse.move(5, 5);
 await pg.waitForTimeout(250);
 console.log("previa:        ", JSON.stringify(
-  { cambioElTablero: t0 !== t1, volvioIgual: t0 === (await tablero()),
+  { esperaAntesDeAparecer: tPronto === t0, cambioElTablero: t0 !== t1,
+    elVecinoNoEspera: tVecino !== t0 && tVecino !== t1,
+    volvioIgual: t0 === (await tablero()),
     yNoNavego: e0 === (await elegida()) }));
 
 /* LA RUEDA SOBRE EL TABLERO pasa de jugada. */
 const cajaTab = await pg.locator("#tablero").boundingBox();
 const antesRueda = await elegida();
+/* UN CLIC DE RUEDA ES UNA JUGADA, mande lo que mande (v0.139). Se mide con los
+   dos valores que manda un mouse de verdad —100 y 120— y contando jugadas.
+   OJO: a escala 2 Chromium entrega LA MITAD de lo que se le pide (medido: en una
+   página a escala 1 llegan enteros), y por eso la versión vieja acá pasaba una
+   sola con 120 mientras que en la compu de Juan pasaba 2 o 3. Los tres de 30 del
+   final son el trackpad: llegan como 15 y recién el tercero junta los 40. */
+const cualElegida = () => pg.evaluate(() =>
+  [...document.querySelectorAll("#jugadas .jg")].findIndex(e => e.classList.contains("sel")));
 await pg.mouse.move(cajaTab.x + cajaTab.width / 2, cajaTab.y + cajaTab.height / 2);
-await pg.mouse.wheel(0, 120);
-await pg.waitForTimeout(400);
-console.log("rueda tablero: ", JSON.stringify({ de: antesRueda, a: await elegida() }));
+const pasos = [];
+for (const d of [100, 120, 100, -100, 30, 30, 30, 400]) {
+  const a = await cualElegida();
+  await pg.mouse.wheel(0, d);
+  await pg.waitForTimeout(250);
+  pasos.push(d + ":" + ((await cualElegida()) - a));
+}
+console.log("rueda tablero: ", JSON.stringify({ de: antesRueda, a: await elegida(), pasos }));
 
 /* LA TECLA `n` SALTA AL PRÓXIMO ERROR, y el símbolo dice si acertó. */
 await pg.keyboard.press("n");
@@ -800,11 +827,17 @@ await pg.waitForFunction(() => document.querySelectorAll("#altLista .alt").lengt
 await pg.waitForTimeout(200);
 alt.filas = await pg.evaluate(() => [...document.querySelectorAll("#altLista .alt")]
   .map(e => e.querySelector(".as").textContent + " " + e.querySelector(".ae").textContent));
-/* Las tres son de la posición QUE SE VE, así que las tres tienen que ser legales
-   ahí. No se compara contra el cuadrito "Mejor": ese habla de la posición
-   ANTERIOR, la de antes de la jugada, y son dos tableros distintos. */
-alt.lasTresSonLegales = await pg.evaluate(() =>
+/* Desde la v0.139 las tres son de la posición ANTERIOR —las que había en lugar
+   de la jugada que se mira—, o sea la misma de la que habla el cuadrito
+   "Mejor": la primera tiene que ser esa. */
+alt.titulo = await pg.locator("#altTit").textContent();
+alt.jugadaMirada = ((await pg.locator("#jugadas .jg.sel .sa").textContent()) || "").trim();
+alt.mejorDelCuadrito = await pg.evaluate(() =>
+  (document.getElementById("tileMejor").textContent || "").replace(/\s+/g, " ").trim());
+alt.lasTres = await pg.evaluate(() =>
   [...document.querySelectorAll("#altLista .alt .as")].map(e => e.dataset.uci));
+alt.marcada = await pg.evaluate(() =>
+  [...document.querySelectorAll("#altLista .alt.jugada .as")].map(e => e.textContent));
 alt.botonEscondido = await pg.locator("#btnAlts").isHidden();
 await foto("ancho-alternativas");
 /* tocar la segunda abre la variante CON ESA jugada */
@@ -813,7 +846,13 @@ await pg.locator("#altLista .alt").nth(1).locator(".as").click();
 await pg.waitForFunction(() => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
   null, { timeout: 30000 });
 await pg.waitForTimeout(250);
-alt.alTocarLaSegunda = { pedida: san2, quedo: (await pg.locator("#pTit").textContent()).trim() };
+alt.alTocarLaSegunda = { pedida: san2, quedo: (await pg.locator("#pTit").textContent()).trim(),
+  /* la variante reemplaza a la jugada: la lista sigue siendo la misma y ahora
+     la marcada es la que se acaba de probar */
+  titulo: await pg.locator("#altTit").textContent(),
+  marcada: await pg.evaluate(() =>
+    [...document.querySelectorAll("#altLista .alt.jugada .as")].map(e => e.textContent)) };
+await foto("ancho-alternativas-probada");
 console.log("alternativas:  ", JSON.stringify(alt));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 await pg.waitForTimeout(300);

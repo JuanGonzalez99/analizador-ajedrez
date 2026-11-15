@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.138**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.139**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2886,7 +2886,27 @@ tablero **entero** antes y después.
 
 **La rueda sobre el tablero pasa jugadas.** Con acumulador: un trackpad manda
 docenas de eventos chiquitos por gesto, y una jugada por evento hacía volar la
-partida de un manotazo. Se pasa de jugada cada 40 de desplazamiento juntado.
+partida de un manotazo. Se pasa de jugada al juntar 40 de desplazamiento.
+**Y un evento pasa UNA sola, por grande que sea (v0.139):** hasta la v0.138 era
+una cada 40 guardando el resto, y un clic de rueda de mouse no manda 40 sino
+100 o 120, así que pasaba 2 y 3 alternadas (reportado por Juan). Lo que sobra
+del umbral ahora se tira, y cambiar de sentido arranca de cero. **El número que
+manda un clic no es fijo** —depende del navegador, del sistema y de la escala
+de la pantalla—, así que no se cuenta con él. **Trampa del arnés:** a escala 2
+Chromium entrega la mitad de lo que se le pide a `mouse.wheel` (medido contra
+una página a escala 1), y por eso la versión vieja ahí pasaba una sola con 120
+y el error no se veía. Ahora mide los pasos de a uno: 100, 120, 100, -100, y
+tres de 30 que son el trackpad.
+
+**La previa espera 120 ms antes de aparecer (v0.139)**, y 60 antes de irse.
+Sin la espera se disparaba con solo cruzar la lista yendo a otro lado
+(reportado por Juan). La de la salida es por otro motivo: entre un renglón y el
+de al lado el mouse sale de uno antes de entrar al otro, y sin ese margen el
+tablero volvía a la posición real en el medio. Con una previa ya abierta el
+renglón vecino no vuelve a esperar. Un solo temporizador (`PREVIA_T`), que
+`pintarRevision` corta: una previa que llega después de navegar pisaría el
+tablero nuevo. No es una animación: es cuándo se dispara; el fundido, si va,
+es de la Etapa 3.
 
 **La tecla `n` salta al próximo error** (`p` al anterior), entre las jugadas
 propias y usando las categorías que ya están calculadas. Una partida se revisa
@@ -3255,14 +3275,38 @@ corrida por flecha del teclado, peleando con la variante por el mismo grupo de
 motores. Se piden con un botón y **se guardan por posición y profundidad**, así
 que ir y volver por la partida no vuelve a pagar.
 
-**SON LAS MEJORES DE LA POSICIÓN QUE SE VE, y por eso se llaman "de acá".** El
-tablero muestra la posición DESPUÉS de la jugada, así que estas tres contestan
-"¿y ahora qué?", que es la misma pregunta que contesta la variante y por eso
-tocar una **abre la variante con esa jugada**: el panel no es un cartel. Ojo con
-la tentación de compararlas contra el cuadrito "Mejor": ese habla de la posición
-ANTERIOR, la de antes de la jugada, y son dos tableros distintos. Alternativas a
-la jugada jugada serían las de ese otro tablero, y el panel estaría hablando de
-algo que no se está viendo.
+**SON LAS QUE HABÍA EN LUGAR DE LA JUGADA QUE SE MIRA (v0.139), y esto dio
+vuelta la decisión original.** Hasta la v0.138 eran las de la posición que se
+ve —la de DESPUÉS de la jugada, "¿y ahora qué?"— con el argumento de que el
+panel no tenía que hablar de un tablero que no se está viendo. Juan lo usó y lo
+reportó como un error: *"muestra las 3 mejores jugadas de respuesta, no las 3
+mejores posibles de la jugada actual"*. Parado en una jugada, la pregunta es
+qué había en vez de esa. Ahora salen de la posición ANTERIOR
+(`baseDeAlternativas`), y con eso:
+
+- **la primera coincide con el cuadrito "Mejor"**, que siempre habló de esa
+  posición —antes eran dos "mejores" distintas en la misma pantalla—;
+- **el título nombra la jugada** ("En lugar de Bc5"), para que no haya que
+  adivinar de qué tablero habla; en la posición inicial, donde no hay jugada,
+  queda "Las mejores de acá" y son las de la posición que se ve;
+- **si la jugada que se jugó está entre las tres, va marcada** ("la jugada",
+  tenue, sin color: el verde ya dice cuál era la mejor);
+- **tocar una la prueba EN LUGAR de la jugada**: la variante se abre desde la
+  posición de antes (`abrirPrueba(IDX)`, no `IDX + 1`), así que la tarjeta la
+  compara contra la que se jugó de verdad, que es lo que uno quiere saber;
+- **en la variante la regla es la misma**: las que había en lugar de la última
+  jugada probada. Tocar otra la reemplaza (`PRUEBA.ver--` y `probarJugada`, que
+  corta la línea), así que se pueden tocar las tres una atrás de la otra y la
+  lista no cambia. Tocar la que ya está jugada no hace nada. **La primera de
+  la variante sale de una posición de la partida, y ahí el título sigue
+  nombrando la jugada de la PARTIDA** y la probada va marcada "probada", no "la
+  jugada" (revisor: el título decía "En lugar de Qe7" con Qe7 en la lista, y
+  la tarjeta ya llama "en la partida" a la otra).
+
+**Lo que queda distinto, a propósito:** en la variante el cuadrito "Mejor" y la
+flecha verde siguen siendo los de la posición QUE SE VE (v0.94, §4tretrigies) y
+el panel habla de la anterior. No se tocó: la flecha verde sobre el tablero
+tiene que ser legal en el tablero.
 
 **La primera de las tres ES la mejor jugada de esa posición**, y se deja: sacarla
 dejaría al panel diciendo "las otras dos", que no es una lista de las mejores. Va
@@ -3289,9 +3333,11 @@ el toque en el tablero.
   15. El margen se lee del CSS con `getComputedStyle` en vez de repetirlo en el
   código, que es lo que evita que se despeguen.
 
-El arnés pide las tres, mide que antes de pedirlas el panel esté vacío, que las
-tres jugadas sean legales en la posición que se ve, que el botón desaparezca al
-llegar la respuesta y que tocar la segunda abra la variante con esa jugada.
+El arnés pide las tres, mide que antes de pedirlas el panel esté vacío, imprime
+el título, la jugada que se mira y lo que dice el cuadrito "Mejor" —la primera
+tiene que ser esa—, que el botón desaparezca al llegar la respuesta, y que tocar
+la segunda abra la variante con esa jugada y la deje marcada
+(`ancho-alternativas-probada`).
 
 ---
 
@@ -4675,6 +4721,22 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.139 [PC], tres cosas del mouse reportadas por Juan usando la app.**
+(1) **"Las mejores de acá" eran las respuestas del otro**: ahora son las que
+había en lugar de la jugada que se mira, con el título que la nombra ("En
+lugar de Bc5") y la jugada marcada si está entre las tres (§4novovicies, donde
+está el porqué y lo que cambió al tocar una). (2) **La rueda sobre el tablero
+pasaba 2 o 3 jugadas**: un evento ahora pasa una sola (§4trevicies). (3) **La
+previa al pasar el mouse aparecía al instante**: espera 120 ms, y con una ya
+abierta el renglón vecino no espera (§4trevicies). Prueba nueva para las
+alternativas y la de mouse actualizada; `mirar` imprime los pasos de la rueda
+de a uno, `esperaAntesDeAparecer` y `elVecinoNoEspera` en la previa, y saca
+`ancho-alternativas-probada`. Capturas del celu idénticas al byte salvo
+`inicio`, `inicio-cambiar` y `mes-seccion`, por el número de versión. Las dos
+primeras salieron del mismo lugar: cosas de mouse de la v0.82 y la v0.89
+medidas en el arnés y nunca con un mouse de verdad. Queda anotada en la hoja
+de ruta una revisión de todo lo de mouse y teclado.
 
 **v0.138, "cambiar" ya no cambia la cabecera del inicio** (lavado de cara
 del revisor sobre la v0.126; celu y PC). Con la entrada abierta por
