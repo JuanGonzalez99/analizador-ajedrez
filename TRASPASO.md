@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.141**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.142**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2903,7 +2903,11 @@ v0.141 con 500: a Juan las dos primeras le parecieron cortas)**, y 60 antes de
 irse. **Y desde la v0.141 la cierra salir de la LISTA, no de la jugada**: entre
 las dos jugadas de un renglón están los segundos, y cruzarlos tardaba más que
 los 60, así que para el costado la previa se iba (para arriba y abajo no, y por
-eso pasó). Lo que sigue describe la v0.139.
+eso pasó). **Desde la v0.142, salir de una jugada con la previa abierta le da
+los mismos 500 ms**: alcanza para cruzar a la de al lado, y si el mouse se
+queda sobre los segundos se cierra (en la v0.141 quedaba abierta y a Juan no le
+copó). Salir de la lista entera sigue siendo 60. Lo que sigue describe la
+v0.139.
 Sin la espera se disparaba con solo cruzar la lista yendo a otro lado
 (reportado por Juan). La de la salida es por otro motivo: entre un renglón y el
 de al lado el mouse sale de uno antes de entrar al otro, y sin ese margen el
@@ -4726,6 +4730,11 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.142 [PC], la previa se cierra si el mouse se queda en los segundos.**
+Juan sobre la v0.141: *"no sé si me copa lo de los segundos… si se queda
+también un rato sobre los segundos, cierre el preview"*. Mismo rato para
+aparecer que para irse (§4trevicies). El arnés mide `ySeCierraSiSeQueda`.
 
 **v0.141 [PC], la previa espera 500 ms y no se va al cruzar los segundos.**
 Juan, usando la v0.140: subir la espera, y *"cuando quiero pasar al de al

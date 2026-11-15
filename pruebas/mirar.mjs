@@ -584,13 +584,16 @@ await pg.waitForTimeout(150);
 await pg.locator("#jugadas .se").nth(12).hover();
 await pg.waitForTimeout(250);
 const tSegundos = await tablero();
+/* v0.142: pero si el mouse se QUEDA ahí, a los 500 ms se cierra */
+await pg.waitForTimeout(450);
+const tQuieto = await tablero();
 await pg.screenshot({ path: path.join(SALIDA, "previa" + SUFIJO + ".png") });
 await pg.mouse.move(5, 5);
 await pg.waitForTimeout(250);
 console.log("previa:        ", JSON.stringify(
   { esperaAntesDeAparecer: tPronto === t0, cambioElTablero: t0 !== t1,
     elVecinoNoEspera: tVecino !== t0 && tVecino !== t1,
-    sigueSobreLosSegundos: tSegundos === t1,
+    sigueSobreLosSegundos: tSegundos === t1, ySeCierraSiSeQueda: tQuieto === t0,
     volvioIgual: t0 === (await tablero()),
     yNoNavego: e0 === (await elegida()) }));
 

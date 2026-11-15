@@ -1409,7 +1409,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.141 · 15-11";
+  window.VERSION = "v0.142 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4975,9 +4975,15 @@ function previaEn(sp, i) {
      renglón está el texto de los segundos, y cruzarlo tarda más que el margen
      de la vuelta: la previa se iba y había que esperar de nuevo —reportado por
      Juan: para arriba y abajo andaba, para el costado no—. Ahora, con una
-     abierta, queda la última hasta entrar a otra jugada o salir de la lista.
-     Salir de la jugada solo corta la que todavía estaba esperando. */
-  sp.onmouseleave = () => { if (TABLERO_PREVIO === null) clearTimeout(PREVIA_T); };
+     abierta, salir de la jugada le da el MISMO rato que tarda en aparecer:
+     alcanza de sobra para cruzar a la de al lado, y si el mouse se queda sobre
+     los segundos o el número, se cierra (v0.142: en la v0.141 quedaba abierta
+     mientras no se saliera de la lista, y a Juan no le copó). Si todavía no
+     había aparecido, salir la corta. */
+  sp.onmouseleave = () => {
+    clearTimeout(PREVIA_T);
+    if (TABLERO_PREVIO !== null) PREVIA_T = setTimeout(volverDeLaPrevia, DEMORA_PREVIA);
+  };
   const cont = sp.closest(".jugadas, .tira");
   if (cont) cont.onmouseleave = () => {
     clearTimeout(PREVIA_T);
