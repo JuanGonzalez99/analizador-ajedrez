@@ -1411,7 +1411,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.147 · 15-11";
+  window.VERSION = "v0.148 · 16-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3204,6 +3204,29 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   const respuesta = (sanRival && !f.remate)
     ? { txt: `El rival tiene ${sanRival}.`, marca: sanRival, uci: f.mejorRival,
         deDespues: true } : null;
+
+  /* EN UNA JUGADA DE LIBRO NO HABLA EL MOTOR (v0.148, lavado de cara que
+     pidió el revisor en la v0.130). La categoría dice "esto es teoría", y
+     abajo la tarjeta decía "La mejor era Nd4. El rival tiene Rb8.": con un
+     motor de verdad la jugada de libro muchas veces no es su primera, y
+     ninguna rama miraba la categoría. Así que en libro se callan todas las
+     frases que salen de una evaluación —el mecanismo, "había", el mérito, el
+     rumbo, la alternativa, la respuesta del rival, el error del rival y el
+     aviso de ahogado— y queda SOLO lo que se ve en el tablero: qué ataca, qué
+     salva, que enroca. Una sola frase, y si no hay ninguna, "" y la tarjeta
+     pone la frase fija de la categoría.
+     Dos de las que se ven también se callan: los peones doblados y el
+     aislado, que en la apertura son ciertos POR UNA JUGADA, en el medio de un
+     cambio (5… exd4 de la italiana, 3… cxd4 de la siciliana), hasta que
+     recapturan. Y la recaptura ya quedó afuera con el mérito: "el material ya
+     estaba perdido" suena a que algo salió mal, y en libro es un cambio de
+     teoría.
+     Va por la CATEGORÍA y no por si el motor coincide: es la misma pregunta
+     que hace `salioDelLibro`, y vale en los dos modos. */
+  if (f.cat === "libro") {
+    const seVe = p => p && !["doblados", "aislado", "el ahogado"].includes(p.marca);
+    return [salvada, ataque, ...fuertes, ...menores].filter(seVe).slice(0, 1);
+  }
 
   /* Como mucho DOS. Es una tarjeta de celular y compite con el tablero por la
      pantalla; este orden es el que decide cuáles dos sobreviven. */

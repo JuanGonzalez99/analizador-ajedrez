@@ -3352,3 +3352,56 @@ test("un sacrificio de verdad sigue siendo Brillante", () => {
      { cp: -80, mate: null, mejor: "g8h7", segunda: null }]);
   assert.equal(f.cat, "brillante");
 });
+
+/* --- v0.148: en una jugada de libro no habla el motor --- */
+{
+  const d = JSON.parse(fs.readFileSync(new URL("../aperturas.json", import.meta.url), "utf8"));
+  const LIBRO = { pos: new Set(d.posiciones), nombres: d.nombres };
+  /* un motor que NUNCA coincide con el libro y que se queja de cada jugada: la
+     evaluación se cae 2 peones para el que mueve, así que sin la regla la
+     tarjeta diría "la mejor era", el rumbo y lo que haya */
+  const tarjetas = pgn => {
+    const { jugadas, fens } = A.prepararPartida(pgn);
+    const evs = fens.map((_, i) => ({ cp: i % 2 ? -200 : 0, mate: null, mejor: "a2a3", segunda: null }));
+    const { filas } = A.derivarFilas(jugadas, fens, evs, LIBRO, 0, "critico");
+    return filas.map((f, i) => ({
+      san: f.san, cat: f.cat,
+      partes: A.partesDeLaExplicacion(f, "a3", i % 2 === 0, "a6",
+                                      A.observarJugada(f, fens[i]), { ranuras: 3, rivalErro: true }) }));
+  };
+
+  test("libro: la tarjeta no dice la mejor, ni la respuesta, ni el rumbo, y como mucho una frase", () => {
+    for (const pgn of ["1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7",
+                       "1. e4 c5 2. Nf3 d6 3. d4 cxd4 4. Nxd4 Nf6 5. Nc3 a6",
+                       "1. e4 e5 2. f4 exf4 3. Nf3 g5",
+                       "1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. c3 Nf6 5. d4 exd4 6. cxd4 Bb4+"]) {
+      const ts = tarjetas(pgn);
+      assert.ok(ts.every(t => t.cat === "libro"), pgn);
+      for (const t of ts) {
+        const txt = t.partes.map(p => p.txt).join(" ");
+        assert.ok(t.partes.length <= 1, `${t.san}: ${txt}`);
+        for (const no of ["mejor era", "El rival", "La posición pasa", "Había", "comible",
+                          "doblados", "aislado", "recaptura", "captura que había"])
+          assert.ok(!txt.includes(no), `${t.san}: ${txt}`);
+      }
+    }
+  });
+
+  test("libro: lo que se ve en el tablero se sigue diciendo, y señala", () => {
+    const ts = tarjetas("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7");
+    const de = san => ts.find(t => t.san === san).partes;
+    assert.equal(de("a6")[0].txt, "Ataca el alfil de b5 con un peón.");
+    assert.equal(de("a6")[0].sq, "b5");
+    assert.equal(de("Ba4")[0].txt, "Saca tu alfil de b5, que estaba a tiro de un peón.");
+    assert.equal(de("O-O")[0].txt, "Enrocás y el rey se pone a salvo.");
+    assert.deepEqual(de("Bb5"), []);
+  });
+
+  test("fuera del libro la tarjeta sigue diciendo la mejor", () => {
+    const { jugadas, fens } = A.prepararPartida("1. e4 e5 2. Nf3 Nc6 3. Bb5 a6");
+    const evs = fens.map((_, i) => ({ cp: i % 2 ? -200 : 0, mate: null, mejor: "a2a3", segunda: null }));
+    const { filas } = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} }, 0, "critico");
+    const txt = A.explicarJugada(filas[4], "a3", true, "a6", A.observarJugada(filas[4], fens[4]), { ranuras: 3 });
+    assert.ok(txt.includes("La mejor era a3"), txt);
+  });
+}

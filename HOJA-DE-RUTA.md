@@ -322,7 +322,7 @@ lo demás se dibuja contra ella.
       cualquier ritmo, mientras las secciones de alrededor siguen al selector
       de ritmo y al de fuente (la ayuda lo dice; ¿la lista debería seguir el
       mismo filtro?). Con variantes.
-- [ ] **Lavado de cara: qué dice la tarjeta en una jugada de libro** (revisor,
+- [x] **Lavado de cara: qué dice la tarjeta en una jugada de libro** (v0.148, 16-nov: la B entre cuatro — en libro no habla el motor: una frase de lo que se ve en el tablero, o la frase fija; pasaba con partidas de verdad; revisor,
       v0.130; celu y PC). En 3. Bc4, jugada de libro, la tarjeta dice "La mejor
       era Nd4. El rival tiene Rb8.": un "la mejor era" contradice a la
       categoría. Puede ser cosa del motor de mentira de la partida de prueba;
@@ -380,6 +380,14 @@ lo demás se dibuja contra ella.
       (la C de las variantes de la v0.146; revisor: sirve, pero es otro ítem).
       Un titular por tabla bajo el título ("viste 3 de 4"), para leer la pila
       sin abrirla. Hay que definir qué dice cada una. Con variantes.
+- [ ] **Lavado de cara: el nombre de la apertura "hasta acá"** (revisor,
+      v0.148; celu y PC). Ver que con 3. Bc4 ya es la Italiana y con 3… Bc5 el
+      Giuoco Piano enseña, pero el dato no tiene dónde vivir: en la tarjeta no
+      entra (un renglón, ~45 caracteres a 386) y en la cabecera ya está el
+      nombre final. ¿Hace falta ver cómo se afina jugada a jugada, o alcanza el
+      final? Si hace falta, ¿dónde, sin tocar el alto de la tarjeta ni la
+      cabecera? ¿Qué se muestra en las posiciones sin nombre y con "Variante
+      normal" (2… Nc6)? Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -500,6 +508,13 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.148):** en una jugada de libro la tarjeta ya no
+  dice "La mejor era…" ni "El rival tiene…": dice lo que hace la jugada
+  ("Ataca el alfil de b5 con un peón.", "Enrocás y el rey se pone a salvo.") o,
+  si no hay nada, "Jugada de apertura conocida.". La otra (la C): que además
+  diga el nombre de la apertura cuando aparece ("Apertura italiana."), sabiendo
+  que los nombres largos no entran en el renglón. Tira de las cuatro en el
+  resumen del 16-nov.
 - **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
   segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
   ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su

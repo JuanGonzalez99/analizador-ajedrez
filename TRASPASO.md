@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.147**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.148**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4750,6 +4750,46 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.148, en una jugada de libro no habla el motor** (lavado del revisor sobre
+la v0.130: "qué dice la tarjeta en una jugada de libro"; la B entre cuatro,
+16-nov; celu y compu). En 3. Bc4, de libro, la tarjeta decía "La mejor era Nd4.
+El rival tiene Rb8.": un "la mejor era" debajo de "Libro". **No era cosa del
+motor de mentira**: `pintarRevision` le pasa a `partesDeLaExplicacion` la mejor
+del motor siempre que no coincida con la jugada, y ninguna rama miraba la
+categoría; con Stockfish de verdad una jugada de libro muchas veces no es su
+primera. Se dibujaron cuatro sobre la tarjeta: A, siempre la frase fija gris
+(limpia pero muda: tira "Enrocás…" y "Ataca el alfil…", que enseñan); **B, lo
+que hace la jugada, sin motor**; C, el nombre de la apertura cuando cambia más
+lo que hace; D, siempre el nombre hasta acá en gris. C y D cayeron por el
+nombre: no entra en un renglón (los de `aperturas.json` tienen mediana de 59
+caracteres y el renglón da para ~45 a 386), pone dos nombres distintos en
+pantalla (el final está en la cabecera) y arrastra "Variante normal" (2… Nc6,
+familia comodín) y las posiciones sin nombre. Antes de dibujar se descartó "la
+teoría sigue con…": son hasta 20 continuaciones por posición.
+- **La regla vive en `partesDeLaExplicacion`**, justo antes del `return`, y va
+  por `f.cat === "libro"`, no por si el motor coincide. En libro se callan
+  todas las frases que salen de una evaluación (mecanismo, "había", mérito
+  —la recaptura incluida: "el material ya estaba perdido" suena a error—,
+  rumbo, alternativa, respuesta del rival, error del rival, ahogado) y queda
+  **una sola** de las que se ven en el tablero: salva/saca, ataca, las
+  fuertes y las menores, en ese orden. Si no hay, `[]` y la tarjeta pone la
+  frase fija de siempre, "Jugada de apertura conocida.".
+- **Dos de las que se ven también se callan**: peones doblados (decisión del
+  revisor) y peón aislado (mía, por el mismo motivo): en la apertura son
+  ciertos por una jugada, en el medio de un cambio, hasta que recapturan.
+- Medido en node sobre seis aperturas (62 jugadas de libro): 38 quedan con la
+  frase fija y el resto con una observación. Como la regla está en la función,
+  vale también para el `exp` de las tablas (`explicarJugada`).
+- **El alto, medido** en las 27 jugadas de libro de la partida de prueba: a
+  412 todas dan un renglón y la tarjeta mide 61,1 siempre. **A 386 no**: las
+  de "Saca/Salva …, que estaba a tiro de un peón." (50 caracteres) hacen dos
+  renglones y la tarjeta pasa a 79,9 —el tablero baja 19— en 4 de las 27. No
+  lo trajo esta versión (antes esas mismas jugadas llevaban esa frase MÁS "La
+  mejor era…", también en dos renglones) y pasa igual fuera del libro: es el
+  pendiente de la etapa 3, "la tarjeta cambia de alto".
+- Quedó como lavado aparte, en la hoja de ruta: dónde vive el nombre de la
+  apertura "hasta acá", que enseña pero en la tarjeta no entra.
 
 **v0.147, el rótulo del Mes dice "Jugada por jugada"** (Juan, 15-nov, al ver
 la v0.146: *"Mejor 'JUGADA POR JUGADA'"*). Decía "Las jugadas malas": exacto,
