@@ -184,6 +184,15 @@ chequear("cambiar no cambia la cabecera", [
   ...(/#yaUsuario \{[^}]*flex: 1 1 0; min-width: 0;/.test(html) ? [] : ["el renglón del usuario no se achica"]),
 ]);
 
+/* 7octies-b. [PC] La cabecera del inicio vive adentro de la columna izquierda
+   (v0.145): la tuerca quedaba sola arriba a la derecha, sobre la lista. Si la
+   cabecera o el PGN vuelven a ser hijos del body, vuelve el problema. */
+chequear("la cabecera del inicio va en la columna del mes", [
+  ...(/<div class="iniGrid"><div class="iniIzq">\n(<!--[\s\S]*?-->\n)*<div class="cabInicio soloInicio">/.test(html) ? [] : ["la cabecera no es lo primero de .iniIzq"]),
+  ...(/<div id="zonaPegar"[^>]*>[\s\S]*?<div id="zonaMeses"[\s\S]*?<\/div><div class="iniDer">/.test(html) ? [] : ["el PGN no está en la columna izquierda"]),
+  ...(/> \.cabInicio \{ max-width/.test(html) ? ["quedó el tope viejo de la cabecera"] : []),
+]);
+
 /* 7nonies. Lo que hace un mouse de verdad (v0.144): la previa no se arma con
    el aviso que manda el navegador cuando la lista se mueve debajo del puntero,
    el arrastre de la pieza y el de la tira capturan el puntero para enterarse

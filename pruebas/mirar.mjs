@@ -1127,5 +1127,24 @@ await pg.click("#cambiarUsuario");
 console.log("inicio, cambiar:", JSON.stringify({ plegada, abierta, cancelada: await cab() }),
             "(la tuerca y el usuario quietos; cancelar vuelve a plegar con el guardado)");
 
+/* [PC] EL INICIO EN LA COMPU (v0.145): la cabecera vive en la columna del
+   mes. La tuerca termina en el borde del select, la lista arranca al ras de
+   su techo, y abrir "cambiar" no mueve ni la tuerca ni la lista. */
+await pg.setViewportSize({ width: 1280, height: 800 });
+await pg.waitForTimeout(200);
+const iniPc = () => pg.evaluate(() => {
+  const b = s => document.querySelector(s).getBoundingClientRect();
+  return { tuercaAlBordeDelMes: Math.round(b("#btnAjustesInicio").right - b("#meses").right),
+           listaAlTechoDeLaTuerca: Math.round(b("#partidas").top - b("#btnAjustesInicio").top),
+           tuerca: [Math.round(b("#btnAjustesInicio").left), Math.round(b("#btnAjustesInicio").top)] };
+});
+const iniCerrado = await iniPc();
+await pg.click("#cambiarUsuario");
+const iniAbierto = await iniPc();
+await pg.click("#cambiarUsuario");
+console.log("inicio en la compu:", JSON.stringify({ cerrado: iniCerrado, conCambiar: iniAbierto }),
+            "(los dos primeros en 0, y la tuerca quieta)");
+await pg.setViewportSize({ width: 412, height: 760 });
+
 console.log("listo: capturas/");
 await cerrar();

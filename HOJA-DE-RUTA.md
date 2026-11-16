@@ -309,7 +309,7 @@ lo demás se dibuja contra ella.
       Repasar con esa sospecha: rueda (tablero y tira), previa, arrastre de
       piezas, marcas con clic derecho, `n`/`p` y flechas, los `:hover`, y qué
       pasa con cada uno con la variante abierta.
-- [ ] **[PC] La tuerca sola arriba a la derecha del inicio** (revisor, v0.126).
+- [x] **[PC] La tuerca sola arriba a la derecha del inicio** (v0.145, 15-nov: la A entre cuatro — la cabecera entra a la columna del mes, la tuerca termina en el borde del select y la lista sube; revisor, v0.126).
       A 1280 la fila del campo termina en 399 y la tuerca queda sola en 1071,
       sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una
       cabecera propia? Pariente del lavado de arriba.
@@ -365,6 +365,13 @@ lo demás se dibuja contra ella.
       abierto se escapa de la hoja a los botones de atrás; la lista de jugadas
       no es enfocable, y ↑/↓ e Inicio/Fin no hacen nada. ¿La app entera se
       puede usar sin mouse, o el teclado es solo para pasar jugadas?
+- [ ] **[PC] Lavado de cara: el inicio corrido a la izquierda** (revisor,
+      v0.145; ya estaba). A 1280 el bloque va de 99 a 1071: 99 de aire a la
+      izquierda y 209 a la derecha (209 y 319 a 1500), y la Partida llega
+      hasta 1167. Se nota más desde que la tuerca no marca el borde derecho.
+      ¿La lista crece hasta el borde de la página, o el bloque se centra?
+      Centrarlo mueve el borde izquierdo respecto del Mes, que es lo que se
+      descartó en la v0.122. Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 

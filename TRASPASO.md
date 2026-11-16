@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.144**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.145**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -286,6 +286,10 @@ vista": la hoja vive al final del `<body>`, justo antes del pie, porque es
 antes vivían sueltos en la fila del pie, y **desde la v0.143 la atribución de
 las piezas**, que estaba en el pie. El pie (`.pie`, `.credito` hasta la v0.143)
 es la versión sola.
+
+**Desde la v0.145 la cabecera del inicio (`.cabInicio`) y el PGN (`#zonaPegar`)
+viven adentro de `.iniIzq`**, la columna izquierda de `.iniGrid`, y no sueltos
+arriba de la grilla (§7, v0.145). En el celu `.iniGrid` es `display: contents`.
 
 **Desde la v0.125 la Partida de la compu es otra** (§7, v0.125): de **1000**
 para arriba (el inicio y el Mes siguen partiéndose en 950), tablero a la izquierda y un panel a la derecha (tarjeta, cuadritos,
@@ -4745,6 +4749,47 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.145 [PC], la cabecera del inicio entra a la columna del mes** (lavado
+del revisor sobre la v0.126: "la tuerca sola arriba a la derecha"; la A entre
+cuatro, 15-nov). A 1280 el renglón "Santico26 · cambiar" terminaba en 259 y la
+tuerca quedaba sola en x 1037–1071, sobre la lista. Se dibujaron cuatro a
+1280×800 con un mes de 30 filas: **A, esta**; B, una barra de app con
+"Analizador de partidas" a la izquierda y usuario + tuerca a la derecha
+(relleno que compite con el mes, que es el título); C, la tuerca pegada a
+"cambiar" (se lee como ajustes de la cuenta, y termina en 313, un borde que no
+coincide con nada); D, "⚙ Ajustes" con texto al pie de la columna (otro control
+distinto al de la Partida y al del celu).
+- **Cómo está hecho: se mudó el HTML, no se parchó con CSS.** `.cabInicio` y
+  `#zonaPegar` eran hijos del `body`, arriba de `.iniGrid`; ahora son lo
+  primero de `.iniIzq`. En el celu (y hasta 999) el armazón es
+  `display: contents`, así que no cambia nada: las capturas del celu dan
+  idénticas al byte, y a 999 también (plegada y con "cambiar" + PGN), comparadas
+  contra la v0.144 con el número del pie tapado.
+- Se fueron tres reglas que imitaban la columna desde afuera: el tope de 300
+  del campo, el `margin-right: calc(100% - 300px)` que lo mandaba a su renglón
+  y el tope de 972 de la cabecera y del PGN. `.iniGrid` ya no lleva margen
+  arriba y `#zonaMeses` conserva sus 16 contra la cabecera.
+- **Medido a 1280×800**: tuerca en x 365–399, y 16–50, en los cinco estados
+  (plegada, "cambiar", PGN abierto, primera vez sin usuario, nombre de 25
+  letras, que corta con "…" en 271 y deja 12 hasta la tuerca); select y
+  Estadísticas terminan en 399; la lista arranca en y=16 y **no se mueve** al
+  abrir "cambiar" ni el PGN (antes bajaba). A 1000 la columna va de 14 a 314 y
+  a 1500 de 209 a 509, sin desborde. El PGN en la columna mide 300×160
+  (`min-height`, pedido del revisor: a 80 era una ranura).
+- La columna es `sticky` desde 720 de alto: usuario y tuerca quedan a mano al
+  bajar por la lista. Con "cambiar" y el PGN abiertos mide 545 de alto, entra.
+- **Efecto de costado, a sabiendas**: la primera vez, sin usuario, el texto
+  "Analiza con Stockfish…" pasa de un renglón a tres (ahora vive en 300). Y
+  `#errores` y el panel del registro quedan en el DOM antes que la cabecera:
+  si aparece un error, sale arriba del título y no debajo, **también en el
+  celu** (el revisor lo aceptó: es la caja de excepciones, no la de mensajes).
+- El revisor aprobó sin correcciones y retiró sus 8 entre el renglón y el
+  campo: con los 16 del celu el campo cae en y 66, donde está el select con la
+  entrada plegada, y al tocar "cambiar" el primer control no cambia de lugar.
+- `mirar` mide la línea "inicio en la compu:" (la tuerca al borde del mes, la
+  lista al techo de la tuerca, las dos quietas con "cambiar"), y el chequeo
+  estático 7octies-b falla si la cabecera vuelve a ser hija del `body`.
 
 **v0.144 [PC], la revisión de todo lo que responde al mouse y al teclado**
 (Juan, 15-nov, después de la v0.139: *"quizás valga la pena una revisión a

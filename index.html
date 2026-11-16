@@ -416,9 +416,8 @@
      y termina con todo lo de abajo. */
   /* con el tope de 300 la base del 100% no alcanza para mandar el campo
      abierto por "cancelar" a su renglón: subía al de la tuerca (v0.138) */
-  @media (min-width: 1000px) { .cabInicio > .campo { max-width: 300px; }
-                              body.entradaCerrada.cambiando .campo { margin-right: calc(100% - 300px); }
-                              body:not(.enVista) #zonaPegar { max-width: calc(300px + var(--e-8) + 640px); } }
+  /* (v0.145) desde 1000 la cabecera y el PGN están adentro de la columna de
+     300: el tope sale de la columna y las tres reglas que lo imitaban se fueron */
   #zonaPegar { margin-top: var(--e-4); }
   /* el placeholder en la letra de la app; lo pegado sigue en mono */
   #pgn::placeholder { font: var(--t-secundario)/1.4 system-ui, sans-serif; }
@@ -1281,11 +1280,13 @@
      lleva no llena 400, y estirar la tarjeta aleja el "›" del título. Ajuste
      suyo: 16 entre la cabecera y el cuerpo (con 0 la tuerca tocaba la lista). */
   @media (min-width: 1000px) {
-    body:not(.enVista) > .cabInicio { max-width: calc(300px + var(--e-8) + 640px); }
     body:not(.enVista) .iniGrid { display: grid; grid-template-columns: 300px minmax(0, 640px);
-               column-gap: var(--e-8); align-items: start; margin-top: var(--e-4); }
+               column-gap: var(--e-8); align-items: start; }
     body:not(.enVista) :is(.iniIzq, .iniDer) { display: block; min-width: 0; }
-    body:not(.enVista) .iniGrid #zonaMeses { margin-top: 0; }
+    /* (v0.145) la cabecera es lo primero de la columna: el mes conserva sus 16
+       contra ella, la lista arranca al ras del techo de la tuerca, y el PGN
+       pegado no baja de 160 de alto en los 300 de la columna */
+    body:not(.enVista) .iniGrid #pgn { min-height: 160px; }
     body:not(.enVista) .iniGrid #partidas.lista { margin-top: 0; }
     /* un borde derecho y no tres (revisor): el select medía 224, el botón 232 y
        la tarjeta 300; los tres al ancho de la columna */
@@ -1391,23 +1392,6 @@
   }
 </style>
 
-<!-- LA CABECERA DEL INICIO (v0.120, lavado de cara del inicio, la C del
-     revisor). Con la entrada abierta es el título; después de la primera
-     búsqueda la entrada se pliega a "santico26 · cambiar" y el mes pasa a ser
-     el título: así entran 12 partidas a la vista en vez de 8. La tuerca abre
-     la misma hoja de ajustes que la de la Partida (una sola hoja). -->
-<div class="cabInicio soloInicio">
-  <h1 class="deEntrada">Analizador de partidas</h1>
-  <p id="yaUsuario" class="oculto"><span id="yaUsuarioNombre"></span><span class="sep" aria-hidden="true">&middot;</span><button type="button" id="cambiarUsuario" aria-expanded="false">cambiar</button></p>
-  <p class="n deEntrada">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
-  <div class="fila deEntrada campo">
-    <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
-    <button id="buscar">Buscar</button>
-    <button id="verPegar" aria-expanded="false" aria-controls="zonaPegar">o pegar un PGN</button>
-  </div>
-  <button id="btnAjustesInicio" class="tuerca" aria-label="Ajustes" aria-expanded="false"
-          aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuercaI"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuercaI)"/></svg></button>
-</div>
 
 
 <!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
@@ -1427,7 +1411,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.144 · 15-11";
+  window.VERSION = "v0.145 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1590,10 +1574,6 @@
 </script>
 
 
-<div id="zonaPegar" class="oculto soloInicio deEntrada">
-  <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
-  <div class="fila" style="margin-top:8px"><button id="usarPgn">Usar este PGN</button></div>
-</div>
 
 <!-- EL MES HACE DE TÍTULO (v0.120), como en el Mes desde la v0.108: el
      select dice "Octubre 2026" con la letra del h2, y abajo un solo renglón
@@ -1601,6 +1581,33 @@
 <!-- [PC] EL MES A LA IZQUIERDA Y LA LISTA A LA DERECHA desde 950 (v0.122): en
      el celu el armazón es display: contents y no cambia nada. -->
 <div class="iniGrid"><div class="iniIzq">
+<!-- [PC] LA CABECERA Y EL PGN VIVEN ADENTRO DE LA COLUMNA IZQUIERDA (v0.145,
+     lavado del revisor sobre la v0.126: la A entre cuatro). Antes eran hijos
+     del body, arriba de la grilla, y a 1280 la tuerca quedaba sola en x 1037
+     sobre la lista. Acá adentro la columna es "quién, qué mes, qué hago con el
+     mes", con un solo borde derecho, y la lista arranca arriba de todo. En el
+     celu el armazón es display: contents: no cambia nada. -->
+<!-- LA CABECERA DEL INICIO (v0.120, lavado de cara del inicio, la C del
+     revisor). Con la entrada abierta es el título; después de la primera
+     búsqueda la entrada se pliega a "santico26 · cambiar" y el mes pasa a ser
+     el título: así entran 12 partidas a la vista en vez de 8. La tuerca abre
+     la misma hoja de ajustes que la de la Partida (una sola hoja). -->
+<div class="cabInicio soloInicio">
+  <h1 class="deEntrada">Analizador de partidas</h1>
+  <p id="yaUsuario" class="oculto"><span id="yaUsuarioNombre"></span><span class="sep" aria-hidden="true">&middot;</span><button type="button" id="cambiarUsuario" aria-expanded="false">cambiar</button></p>
+  <p class="n deEntrada">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
+  <div class="fila deEntrada campo">
+    <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
+    <button id="buscar">Buscar</button>
+    <button id="verPegar" aria-expanded="false" aria-controls="zonaPegar">o pegar un PGN</button>
+  </div>
+  <button id="btnAjustesInicio" class="tuerca" aria-label="Ajustes" aria-expanded="false"
+          aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuercaI"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuercaI)"/></svg></button>
+</div>
+<div id="zonaPegar" class="oculto soloInicio deEntrada">
+  <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
+  <div class="fila" style="margin-top:8px"><button id="usarPgn">Usar este PGN</button></div>
+</div>
 <div id="zonaMeses" class="oculto soloInicio"><select id="meses" aria-label="Mes"></select>
   <p class="resumenInicio oculto" id="partidasMarcador"></p></div>
 
