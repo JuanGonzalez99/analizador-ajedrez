@@ -203,7 +203,7 @@ chequear("el Mes va en dos grupos", (() => {
   return [
     ...(tits[0] === "Cómo terminaron" && tits[1] === "Partida por partida" ? [] : ["el orden de las secciones cambió: " + tits.slice(0, 2).join(", ")]),
     ...(/<details class="seccion" open>\s*<summary><span class="tit">Cómo terminaron/.test(html) ? [] : ["Cómo terminaron no arranca abierta"]),
-    ...(/<h2 class="rotulo">Las jugadas malas<\/h2>\s*<details class="seccion">\s*<summary><span class="tit">Riesgo por franja/.test(html) ? [] : ["falta el rótulo sobre las cinco tablas"]),
+    ...(/<h2 class="rotulo">Jugada por jugada<\/h2>\s*<details class="seccion">\s*<summary><span class="tit">Riesgo por franja/.test(html) ? [] : ["falta el rótulo sobre las cinco tablas"]),
     ...(/delRitmo\(r\)/.test(lista) && !/de cualquier ritmo/.test(html) ? [] : ["la lista del Mes no sigue al ritmo"]),
   ];
 })());

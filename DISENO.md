@@ -473,6 +473,12 @@ hay. Las primeras salen del historial del traspaso.
   las respuestas del otro (15-nov-2026, v0.139). Parado en una jugada, lo que
   se pregunta es por ESA jugada; todo lo que la pantalla diga al lado habla de
   ella.
+- **Los rótulos, neutros: "JUGADA POR JUGADA" y no "LAS JUGADAS MALAS"**
+  (15-nov-2026, v0.147, el rótulo de las cinco tablas de abajo del Mes). Entre
+  los dos eligió el neutro sin decir por qué. *Interpretación mía:* va con que
+  la app no gira alrededor de sus errores (`NORTE.md`), y hace pareja con
+  "Partida por partida". Para títulos y rótulos nuevos: nombrar de qué habla
+  la zona, no lo que salió mal.
 
 ### No le copa
 - **Que el tablero cambie con solo pasar el mouse por encima de la lista**:

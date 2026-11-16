@@ -314,7 +314,7 @@ lo demás se dibuja contra ella.
       sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una
       cabecera propia? Pariente del lavado de arriba.
 - [x] **Lavado de cara: el Mes como pila de siete secciones iguales**
-      (v0.146, 15-nov: la A entre cinco con un ajuste del revisor — arriba lo de partidas, "Cómo terminaron" abierta y "Partida por partida" segunda; abajo, bajo el rótulo "Las jugadas malas", las cinco de consulta; la lista sigue al ritmo; revisor, v0.128; celu). Todas pesan lo mismo, de "Cómo terminaron" a
+      (v0.146, 15-nov: la A entre cinco con un ajuste del revisor — arriba lo de partidas, "Cómo terminaron" abierta y "Partida por partida" segunda; abajo, bajo el rótulo "Jugada por jugada" (v0.147, Juan; nació como "Las jugadas malas"), las cinco de consulta; la lista sigue al ritmo; revisor, v0.128; celu). Todas pesan lo mismo, de "Cómo terminaron" a
       "Partida por partida", y la única abierta es la tabla de categorías.
       ¿Cuáles se miran cada vez que uno entra al Mes y cuáles son de consulta?
       Las primeras, a la vista o arriba; las otras, juntas y más abajo. De
@@ -500,11 +500,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.146):** en Estadísticas, las cinco tablas de
-  abajo van juntas bajo un rótulo chico que dice "LAS JUGADAS MALAS". Es exacto
-  (las cinco cuentan malas), pero pone la palabra en un rótulo y vos no querés
-  una app centrada en los errores. La otra: uno neutro, "JUGADA POR JUGADA",
-  que hace pareja con "Partida por partida".
 - **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
   segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
   ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.146**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.147**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4750,6 +4750,16 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.147, el rótulo del Mes dice "Jugada por jugada"** (Juan, 15-nov, al ver
+la v0.146: *"Mejor 'JUGADA POR JUGADA'"*). Decía "Las jugadas malas": exacto,
+pero ponía la palabra en un rótulo de una app que no gira alrededor de los
+errores. El nuevo hace pareja con "Partida por partida". Lo de abajo, donde
+dice "Las jugadas malas", es la historia de la v0.146.
+**Ojo, pasó acá:** el commit `57675a0` salió con el chequeo estático en rojo.
+El script de edición abortó a la mitad y la cadena era `npm test | tail -1 &&
+git commit`: el `&&` mira la salida de `tail`, no la de las pruebas. Para
+encadenar un commit a las pruebas, `npm test` va solo, sin tubería.
 
 **v0.146, el Mes en dos grupos** (lavado del revisor sobre la v0.128: "el Mes
 como pila de siete secciones iguales"; la A con un ajuste suyo, 15-nov; celu y
