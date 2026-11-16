@@ -1303,16 +1303,19 @@
      ~110: se dibuja aparte antes de decidir). */
   @media (min-width: 700px) {
     /* v0.128.1 (revisor): el rival con tope de 15em y el resultado pegado a
-       él, que es lo que se lee junto ("contra quién y cómo salió"); el aire
-       pasa a la columna del medio, antes de los datos tenues. Con 1fr en el
-       rival quedaban 281 px entre el nombre y "Ganada" a 1280. */
+       él, que es lo que se lee junto ("contra quién y cómo salió"). Con 1fr en
+       el rival quedaban 281 px entre el nombre y "Ganada" a 1280.
+       v0.148.1 (revisor, "la fila como dos islas"): la precisión también se
+       pega —"contra quién, cómo salió, qué tan bien"—, alineada a la
+       izquierda en su columna, y el aire pasa a estar antes de la fecha, que
+       queda sola al borde derecho como dato de archivo. Antes el aire (229 px)
+       partía la fila entre el resultado y la precisión. Es el renglón del
+       celu, con columnas. */
     :is(#partidas, #mesLista) > div[data-i] { display: grid;
-                              grid-template-columns: minmax(0, 15em) 5.2em minmax(0, 1fr) 5.5em 3.6em;
+                              grid-template-columns: minmax(0, 15em) 5.2em 6.5em minmax(0, 1fr);
                               column-gap: var(--e-3); align-items: baseline; }
-    :is(#partidas, #mesLista) :is(.prec, .fecha) { text-align: right; }
-    :is(#partidas, #mesLista) .prec { grid-column: 4; }
-    :is(#partidas, #mesLista) .fecha { grid-column: 5; }
-    :is(#partidas, #mesLista) .fecha { margin-left: 0; padding-left: 0; }
+    :is(#partidas, #mesLista) .prec { grid-column: 3; text-align: left; }
+    :is(#partidas, #mesLista) .fecha { grid-column: 4; text-align: right; margin-left: 0; padding-left: 0; }
   }
   /* QUE ALGO PASE AL PASAR EL MOUSE (v0.82). Hasta acá el archivo no tenía NI
      UNA regla `:hover` —cero, contadas— y en una compu eso se siente muerto:
@@ -1411,7 +1414,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.148 · 16-11";
+  window.VERSION = "v0.148.1 · 16-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

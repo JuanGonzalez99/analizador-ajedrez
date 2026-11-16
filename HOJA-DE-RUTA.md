@@ -328,7 +328,7 @@ lo demás se dibuja contra ella.
       categoría. Puede ser cosa del motor de mentira de la partida de prueba;
       primero ver si pasa con una partida de verdad, y si pasa, qué tiene que
       decir la tarjeta en el libro. Con variantes si pide forma.
-- [ ] **[PC] Lavado de cara: la fila de la lista como dos islas** (revisor,
+- [x] **[PC] Lavado de cara: la fila de la lista como dos islas** (v0.148.1, 16-nov: la C entre cuatro — rival, resultado y prec. en columnas pegadas, la fecha sola al borde; revisor,
       v0.129; inicio y Mes). A 1280, entre el resultado (columna 2) y la
       precisión ("prec. 89", pegada a la fecha) quedan ~200 px y la fila se lee
       como dos islas. ¿A ≥700 la lista necesita cinco columnas repartidas en

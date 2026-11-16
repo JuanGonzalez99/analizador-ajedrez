@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.148**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.148.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4750,6 +4750,28 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.148.1, [PC] la fila de la lista: la precisión pegada al resultado**
+(lavado del revisor sobre la v0.129, "la fila como dos islas"; la C entre
+cuatro, 16-nov; inicio y Mes). A 1280 quedaban 229 px entre "Ganada" y "prec.
+89", y la fila se leía como dos islas. Cuatro variantes sobre el inicio a
+1280×900 con 12 filas inventadas (`pruebas/maqueta-islas.mjs`, no se
+commitea): A, el renglón del celu en flex (resultado y precisión bailan con el
+largo del nombre, de 99 a 241: zigzag); **C, columnas pegadas rival |
+resultado | prec. y la fecha sola al borde**; E, la fecha primero como un
+registro (le da el primer lugar al dato menos importante y deja ~200 px
+muertos al final, y en el Mes las tablas vecinas cierran con números a la
+derecha); G, cuatro columnas repartidas (vuelve el hueco rival → resultado de
+la v0.128.1). **Desde 700 la grilla es `minmax(0, 15em) 5.2em 6.5em
+minmax(0, 1fr)`**, con `.prec` a la izquierda en la columna 3 y `.fecha` a la
+derecha en la 4. El aire (220) no desaparece: cambia de lugar, y ahora separa
+la partida de su fecha en vez de partir un dato del otro. Medido por el
+revisor: mismas posiciones a 700, 1000, 1280 y 1500 (res 234–285, prec. desde
+319, fecha hasta 626 en una fila de 638); "sin analizar" llega a 385 y entra
+en su columna; con la precisión vacía la fecha no se mueve. **El tope del
+rival sigue en 15em**: con 17 entra el nombre de 25 caracteres, pero corre
+todo 28 px para todas las filas. El Mes no pide regla aparte. Celu: igual al
+byte salvo la versión.
 
 **v0.148, en una jugada de libro no habla el motor** (lavado del revisor sobre
 la v0.130: "qué dice la tarjeta en una jugada de libro"; la B entre cuatro,
