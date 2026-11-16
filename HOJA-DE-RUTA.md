@@ -313,8 +313,8 @@ lo demás se dibuja contra ella.
       A 1280 la fila del campo termina en 399 y la tuerca queda sola en 1071,
       sobre la lista. ¿Qué ocupa el ancho de arriba, o la tuerca va en una
       cabecera propia? Pariente del lavado de arriba.
-- [ ] **Lavado de cara: el Mes como pila de siete secciones iguales**
-      (revisor, v0.128; celu). Todas pesan lo mismo, de "Cómo terminaron" a
+- [x] **Lavado de cara: el Mes como pila de siete secciones iguales**
+      (v0.146, 15-nov: la A entre cinco con un ajuste del revisor — arriba lo de partidas, "Cómo terminaron" abierta y "Partida por partida" segunda; abajo, bajo el rótulo "Las jugadas malas", las cinco de consulta; la lista sigue al ritmo; revisor, v0.128; celu). Todas pesan lo mismo, de "Cómo terminaron" a
       "Partida por partida", y la única abierta es la tabla de categorías.
       ¿Cuáles se miran cada vez que uno entra al Mes y cuáles son de consulta?
       Las primeras, a la vista o arriba; las otras, juntas y más abajo. De
@@ -372,6 +372,14 @@ lo demás se dibuja contra ella.
       ¿La lista crece hasta el borde de la página, o el bloque se centra?
       Centrarlo mueve el borde izquierdo respecto del Mes, que es lo que se
       descartó en la v0.122. Con variantes.
+- [ ] **[PC] Lavado de cara: el hover de los títulos de sección del Mes**
+      (revisor, v0.146; leve, ya estaba). La banda va de borde a borde de la
+      columna y el texto arranca al ras de su borde izquierdo, sin aire.
+      ¿El hover necesita banda, o alcanza con el cursor y la flecha?
+- [ ] **Lavado de cara: que cada sección cerrada del Mes adelante su dato**
+      (la C de las variantes de la v0.146; revisor: sirve, pero es otro ítem).
+      Un titular por tabla bajo el título ("viste 3 de 4"), para leer la pila
+      sin abrirla. Hay que definir qué dice cada una. Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -492,6 +500,15 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.146):** en Estadísticas, las cinco tablas de
+  abajo van juntas bajo un rótulo chico que dice "LAS JUGADAS MALAS". Es exacto
+  (las cinco cuentan malas), pero pone la palabra en un rótulo y vos no querés
+  una app centrada en los errores. La otra: uno neutro, "JUGADA POR JUGADA",
+  que hace pareja con "Partida por partida".
+- **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
+  segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
+  ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su
+  rótulo "LAS PARTIDAS".
 - **No sé si esto te copa (v0.144, compu):** con una variante abierta (probaste
   una jugada), las flechas del teclado y la rueda sobre el tablero ahora la
   recorren, igual que los botones "‹ ›", y Escape sale. Antes las flechas la

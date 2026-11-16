@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.145**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.146**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -3887,6 +3887,7 @@ desplome desde posición ganada. Eso podría ser un filtro y no está aprovechad
 | Tabla | Tipo | Pregunta |
 |---|---|---|
 | Resumen | recuento | cuántas jugadas de cada categoría, y el desglose que concilia con "Malas" |
+| Cómo terminaron | reparto | por dónde se van las partidas; **abierta de fábrica desde la v0.146**, y con "Partida por partida" es el grupo de arriba, el que habla de partidas. Las de abajo van bajo el rótulo "Las jugadas malas" |
 | Franjas de ventaja | tasa | desde cada nivel de ventaja, qué parte salió mal |
 | Capturas | **reparto** | de las veces que había material a la vista, cuántas se vio |
 | Mecanismos | **contraste** | cada mecanismo contra la tasa del resto de las jugadas |
@@ -4749,6 +4750,49 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.146, el Mes en dos grupos** (lavado del revisor sobre la v0.128: "el Mes
+como pila de siete secciones iguales"; la A con un ajuste suyo, 15-nov; celu y
+compu). Las siete secciones pesaban lo mismo y la única abierta era la tabla
+de categorías. La pregunta era cuáles se miran cada vez y cuáles son de
+consulta. Se dibujaron cinco sobre la app, a 412 y página entera: **A, grupos
+con rótulo**; B, tres pestañas "Resumen · Jugadas malas · Partidas" (esconde
+el producto atrás de un toque, compite con los dos selectores y va a chocar
+con la barra de módulos); C, cada sección cerrada adelanta su dato en un
+renglón tenue (no contesta la pregunta, y "0 de 4 malas" cuatro veces es
+ruido; la idea sirve, pero es otro ítem); D, solo abrir "Cómo terminaron" y 24
+de aire antes de la lista (se lee como error de espaciado).
+- **Lo que quedó: arriba lo que habla de PARTIDAS, abajo lo que habla de
+  JUGADAS.** Resumen · "Cómo terminaron" **abierta de fábrica** · "Partida por
+  partida" (cerrada, **subió de última a segunda**: ajuste del revisor, la A
+  original la dejaba al fondo con un rótulo "LAS PARTIDAS" que repetía el
+  título) · rótulo **"Las jugadas malas"** (el `h2.rotulo` de "ESTADÍSTICAS",
+  sin tocar: 24 arriba, 8 abajo) · las cinco tablas que tienen columna
+  "Malas", cerradas. Los nombres de las tablas no se tocaron.
+- "Cómo terminaron" lleva "?" y chevron como las demás y se puede cerrar;
+  **ninguna sección recuerda nada** (una sola con memoria sería una regla
+  aparte). Cambiar de ritmo o de fuente no cierra ni reabre nada: el `open`
+  está en el HTML y `pintarMes` no lo toca (medido: "0101000" antes y después).
+- **"Partida por partida" sigue al selector de ritmo** (`pintarLista(cad)`):
+  el recuento de arriba decía "16 partidas" y la lista mostraba 24. La leyenda
+  nombra el ritmo ("Las partidas analizadas de Octubre 2026 a 10 min."). Sigue
+  siendo siempre del mes cargado aunque la fuente sea "Todo lo analizado".
+  Las de ritmo sin reloj (daily) solo aparecen si no hay ritmo elegido.
+- **Medido con un mes de mentira de 24 partidas y tres ritmos** (16 a 10 min,
+  6 a 3, 2 a 1; la maqueta no se commitea): a 412 y a 386 la página mide 1450
+  con "Cómo terminaron" en sus 9 filas, sin desborde; con la lista abierta,
+  2255, y el rótulo queda a 24 de la última fila. En la compu (1280 y 1000)
+  todo cae en `.mesDer` y `.mesDer > .seccion:first-child` sigue siendo "Cómo
+  terminaron".
+- Sin jugadas del usuario (la rama vacía de `pintarMes`) ahora se limpia
+  también `mesDesenlaces`: con la sección abierta de fábrica quedaba a la
+  vista la tabla del mes anterior. **No se vio en pantalla** (el arnés no arma
+  ese caso): queda la sección abierta con su título y sin tabla.
+- El revisor aprobó sin correcciones. Dejó una duda para Juan (el rótulo:
+  "Las jugadas malas" o uno neutro, "Jugada por jugada") y un lavado leve de
+  compu (la banda del hover de los títulos de sección, sin aire a la izquierda).
+- Chequeo estático 7octies-c. Las capturas `mes.png` y `mes-seccion.png` del
+  celu cambian, como tienen que cambiar; el resto, idénticas al byte.
 
 **v0.145 [PC], la cabecera del inicio entra a la columna del mes** (lavado
 del revisor sobre la v0.126: "la tuerca sola arriba a la derecha"; la A entre

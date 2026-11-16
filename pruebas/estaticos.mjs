@@ -193,6 +193,21 @@ chequear("la cabecera del inicio va en la columna del mes", [
   ...(/> \.cabInicio \{ max-width/.test(html) ? ["quedó el tope viejo de la cabecera"] : []),
 ]);
 
+/* 7octies-c. El Mes ya no es una pila de siete iguales (v0.146): arriba lo
+   de partidas ("Cómo terminaron" abierta, "Partida por partida" segunda) y
+   abajo, bajo un rótulo, las cinco que cuentan jugadas malas. Y la lista
+   sigue al selector de ritmo. */
+chequear("el Mes va en dos grupos", (() => {
+  const tits = [...html.matchAll(/<summary><span class="tit">([^<]+)<\/span>/g)].map(m => m[1]);
+  const lista = (html.match(/function pintarLista[\s\S]*?\n\}/) || [""])[0];
+  return [
+    ...(tits[0] === "Cómo terminaron" && tits[1] === "Partida por partida" ? [] : ["el orden de las secciones cambió: " + tits.slice(0, 2).join(", ")]),
+    ...(/<details class="seccion" open>\s*<summary><span class="tit">Cómo terminaron/.test(html) ? [] : ["Cómo terminaron no arranca abierta"]),
+    ...(/<h2 class="rotulo">Las jugadas malas<\/h2>\s*<details class="seccion">\s*<summary><span class="tit">Riesgo por franja/.test(html) ? [] : ["falta el rótulo sobre las cinco tablas"]),
+    ...(/delRitmo\(r\)/.test(lista) && !/de cualquier ritmo/.test(html) ? [] : ["la lista del Mes no sigue al ritmo"]),
+  ];
+})());
+
 /* 7nonies. Lo que hace un mouse de verdad (v0.144): la previa no se arma con
    el aviso que manda el navegador cuando la lista se mueve debajo del puntero,
    el arrastre de la pieza y el de la tira capturan el puntero para enterarse

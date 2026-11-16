@@ -1411,7 +1411,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.145 · 15-11";
+  window.VERSION = "v0.146 · 15-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1702,11 +1702,30 @@
   <div class="tw"><table id="mesResumen"></table></div>
   </div><div class="mesDer">
 
-  <details class="seccion">
+  <!-- ARRIBA LO QUE HABLA DE PARTIDAS, ABAJO LO QUE HABLA DE JUGADAS (v0.146,
+       lavado del Mes como pila de siete secciones iguales: la A del revisor
+       con su ajuste). "Cómo terminaron" va abierta de fábrica —es cómo fue el
+       mes, se mira cada vez— y "Partida por partida" segunda; las cinco tablas
+       que cuentan jugadas malas son de consulta: juntas, cerradas y bajo un
+       rótulo. Ninguna recuerda si se la cerró. -->
+  <details class="seccion" open>
     <summary><span class="tit">Cómo terminaron</span><button type="button" class="ayuda" data-ayuda="capDesenlaces" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capDesenlaces"></p>
     <div class="tw"><table id="mesDesenlaces"></table></div>
   </details>
+  <!-- PARTIDA POR PARTIDA (v0.128, lavado de la lista del Mes, la A del
+       revisor). Era un h2 de 18 al fondo —el título más grande de la pantalla—
+       que decía "Partidas", igual que el volver de arriba. Es un apéndice: para
+       abrir partidas está el inicio, a un toque del volver. Así que va como
+       una sección más, cerrada, con las filas del inicio. "Seguir" queda afuera:
+       adentro de una sección cerrada no se vería nunca.
+       Desde la v0.146 sigue al selector de ritmo, como todo lo demás. -->
+  <details class="seccion">
+    <summary><span class="tit">Partida por partida</span><button type="button" class="ayuda" data-ayuda="capLista" aria-expanded="false" aria-label="Qué muestra esta lista">?</button></summary>
+    <p class="cap" id="capLista"></p>
+    <div id="mesLista" class="lista"></div>
+  </details>
+  <h2 class="rotulo">Las jugadas malas</h2>
   <details class="seccion">
     <summary><span class="tit">Riesgo por franja de ventaja</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMesFranja"></p>
@@ -1733,17 +1752,6 @@
     <div class="tw"><table id="mesTramo"></table></div>
   </details>
 
-  <!-- PARTIDA POR PARTIDA (v0.128, lavado de la lista del Mes, la A del
-       revisor). Era un h2 de 18 al fondo —el título más grande de la pantalla—
-       que decía "Partidas", igual que el volver de arriba. Es un apéndice: para
-       abrir partidas está el inicio, a un toque del volver. Así que va como
-       una sección más, cerrada, con las filas del inicio. "Seguir" queda afuera:
-       adentro de una sección cerrada no se vería nunca. -->
-  <details class="seccion">
-    <summary><span class="tit">Partida por partida</span><button type="button" class="ayuda" data-ayuda="capLista" aria-expanded="false" aria-label="Qué muestra esta lista">?</button></summary>
-    <p class="cap" id="capLista"></p>
-    <div id="mesLista" class="lista"></div>
-  </details>
   <div class="fila filaSeguir"><button id="seguirMes" class="chico oculto"></button></div>
   </div></div>
 </div>
@@ -7552,8 +7560,10 @@ function pintarMes(prof) {
     $("mesResumen").innerHTML = ""; $("mesFranja").innerHTML = "";
     $("mesCabecera").innerHTML = ""; $("capMesDetalle").textContent = "";
     ver("mesMarcador", false);
-    ["mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => $(t).innerHTML = "");
-    pintarLista();
+    /* "mesDesenlaces" también (v0.146): la sección va abierta de fábrica, y sin
+       esto mostraba la tabla del mes anterior */
+    ["mesDesenlaces", "mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => $(t).innerHTML = "");
+    pintarLista(d.tiempo && d.tiempo.cadencia);
     return;
   }
   const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
@@ -7614,24 +7624,29 @@ function pintarMes(prof) {
     "Ventaja antes de mover", d.tiempo);
 
   pintarDetalle(todas, porPartida, d.tiempo);
-  pintarLista();
+  pintarLista(d.tiempo && d.tiempo.cadencia);
 }
 
 /* Siempre del mes elegido, pase lo que pase con el interruptor: es para abrir
-   una partida y revisarla, y eso solo tiene sentido sobre el mes cargado. */
-function pintarLista() {
+   una partida y revisarla, y eso solo tiene sentido sobre el mes cargado.
+   Del RITMO elegido sí (v0.146, revisor): un selector gobierna toda la
+   pantalla, y el recuento de arriba decía "12 partidas" con 40 en la lista. */
+function pintarLista(cad) {
   if (!MES) { $("mesLista").innerHTML = ""; return; }
   /* "asistida" en el lugar de la precisión, como "sin analizar" en el inicio:
      esa precisión no mide juego propio, y lo de que no entra en los números
      lo dice el "?" (v0.128) */
+  const delRitmo = r => !cad || ((r.cadencia || leerCadencia(r.cab)) || {}).clave === cad.clave;
   $("mesLista").innerHTML = MES.resultados.map((r, i) => {
+    if (!delRitmo(r)) return "";
     const g = r.meta && r.meta.white ? r.meta
       : { white: { username: r.cab.White || "" }, black: { username: r.cab.Black || "" } };
     const p = precisionDe(r);
     return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? "" : Math.round(p),
                          false, r.cab);
   }).join("");
-  pintarLeyenda("capLista", [], [`Todas las partidas analizadas de ${nombreMes($("meses").value)}, de cualquier ritmo.`,
+  pintarLeyenda("capLista", [], [cad ? `Las partidas analizadas de ${nombreMes($("meses").value)} a ${cad.nombre}.`
+                                        : `Todas las partidas analizadas de ${nombreMes($("meses").value)}.`,
     "Tocá una para abrirla.", "Las asistidas van marcadas y no entran en los números."]);
   $("mesLista").querySelectorAll("div[data-i]").forEach(d => {
     d.onclick = () => {
