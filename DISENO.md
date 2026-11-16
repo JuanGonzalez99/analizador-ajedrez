@@ -479,8 +479,18 @@ hay. Las primeras salen del historial del traspaso.
   la app no gira alrededor de sus errores (`NORTE.md`), y hace pareja con
   "Partida por partida". Para títulos y rótulos nuevos: nombrar de qué habla
   la zona, no lo que salió mal.
+- **La tarjeta de una jugada de libro sin el motor** (16-nov-2026, v0.148):
+  *"quedó bien el celu"*. Una frase de lo que hace la jugada ("Ataca el alfil
+  de c5 con un peón.") o la frase gris, y nunca "La mejor era…" debajo de
+  "Libro". No pidió el nombre de la apertura en la tarjeta. *Interpretación
+  mía:* lo que la pantalla dice al lado de una categoría no la puede
+  contradecir.
 
 ### No le copa
+- **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no
+  entra en un renglón: *"es medio molesto"* (16-nov-2026, sobre la v0.148; a
+  su ancho, 386, el tablero baja 19 px). Va con "que el tablero salte", de más
+  abajo: no se arregla animándolo, sino con que el tablero no se mueva.
 - **Que el tablero cambie con solo pasar el mouse por encima de la lista**:
   *"se dibuja enseguida esa posición. Quizás debería tener un pequeño delay"*
   (15-nov-2026, v0.139). Lo que responde al mouse sin clic espera un momento

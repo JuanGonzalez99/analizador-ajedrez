@@ -335,6 +335,17 @@ lo demás se dibuja contra ella.
       640, o va el renglón del celu (rival · resultado · prec. · fecha)? La
       v0.128.1 ya achicó el hueco una vez: esto pide forma, no otro número. Con
       variantes.
+- [ ] **Lavado de cara: el alto de la tarjeta del veredicto** (revisor,
+      v0.148; celu, y PC en menor medida). A 386, el ancho de Juan, la tarjeta
+      pasa de 61 a 80 y el tablero baja 19 px cada vez que la frase no entra en
+      un renglón: en libro, 4 jugadas de 27 (eran 16 antes de la v0.148), con
+      una palabra viuda en el segundo renglón; fuera del libro, con cualquier
+      par de frases (14… Kxh7 también a 412). En PC el tablero no se mueve
+      pero el panel baja 19. El ítem de la etapa 3 lo planteaba como animación
+      ("cambia de alto sin parpadeo") y la pregunta es otra: **¿cómo dice la
+      tarjeta una o dos frases sin que cambie la posición del tablero?** Con
+      variantes, a 386 y con la frase más larga, sin perder "todo lo de la
+      jugada sin scrollear". **Juan (16-nov): *"es medio molesto"*; por eso va primero.**
 - [ ] **[PC] Lavado de cara: qué más merece estar a la vista en la compu
       cuando sobra alto** (revisor, v0.135; leve). Con la curva abajo siguen
       sobrando ~190 px a 1000×900, con las dos columnas cerradas a la misma
@@ -388,17 +399,6 @@ lo demás se dibuja contra ella.
       final? Si hace falta, ¿dónde, sin tocar el alto de la tarjeta ni la
       cabecera? ¿Qué se muestra en las posiciones sin nombre y con "Variante
       normal" (2… Nc6)? Con variantes.
-- [ ] **Lavado de cara: el alto de la tarjeta del veredicto** (revisor,
-      v0.148; celu, y PC en menor medida). A 386, el ancho de Juan, la tarjeta
-      pasa de 61 a 80 y el tablero baja 19 px cada vez que la frase no entra en
-      un renglón: en libro, 4 jugadas de 27 (eran 16 antes de la v0.148), con
-      una palabra viuda en el segundo renglón; fuera del libro, con cualquier
-      par de frases (14… Kxh7 también a 412). En PC el tablero no se mueve
-      pero el panel baja 19. El ítem de la etapa 3 lo planteaba como animación
-      ("cambia de alto sin parpadeo") y la pregunta es otra: **¿cómo dice la
-      tarjeta una o dos frases sin que cambie la posición del tablero?** Con
-      variantes, a 386 y con la frase más larga, sin perder "todo lo de la
-      jugada sin scrollear". El revisor sugiere subirlo de prioridad.
 - [ ] **Lavado de cara: los cuadritos en una jugada de libro** (revisor,
       v0.148; celu y PC). La tarjeta dice "5. d4 — Libro" y ya no habla el
       motor, pero la fila de abajo sigue diciendo Mejor "Bb5 ↗", Pérdida
@@ -526,13 +526,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.148):** en una jugada de libro la tarjeta ya no
-  dice "La mejor era…" ni "El rival tiene…": dice lo que hace la jugada
-  ("Ataca el alfil de b5 con un peón.", "Enrocás y el rey se pone a salvo.") o,
-  si no hay nada, "Jugada de apertura conocida.". La otra (la C): que además
-  diga el nombre de la apertura cuando aparece ("Apertura italiana."), sabiendo
-  que los nombres largos no entran en el renglón. Tira de las cuatro en el
-  resumen del 16-nov.
 - **No sé si esto te copa (v0.148, del revisor):** en una jugada de libro los
   cuadritos de abajo siguen mostrando la mejor del motor y la pérdida. O se
   dejan, porque es dato crudo y a veces interesa ver que el motor prefiere
