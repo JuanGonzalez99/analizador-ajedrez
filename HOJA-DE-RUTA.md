@@ -388,6 +388,23 @@ lo demás se dibuja contra ella.
       final? Si hace falta, ¿dónde, sin tocar el alto de la tarjeta ni la
       cabecera? ¿Qué se muestra en las posiciones sin nombre y con "Variante
       normal" (2… Nc6)? Con variantes.
+- [ ] **Lavado de cara: el alto de la tarjeta del veredicto** (revisor,
+      v0.148; celu, y PC en menor medida). A 386, el ancho de Juan, la tarjeta
+      pasa de 61 a 80 y el tablero baja 19 px cada vez que la frase no entra en
+      un renglón: en libro, 4 jugadas de 27 (eran 16 antes de la v0.148), con
+      una palabra viuda en el segundo renglón; fuera del libro, con cualquier
+      par de frases (14… Kxh7 también a 412). En PC el tablero no se mueve
+      pero el panel baja 19. El ítem de la etapa 3 lo planteaba como animación
+      ("cambia de alto sin parpadeo") y la pregunta es otra: **¿cómo dice la
+      tarjeta una o dos frases sin que cambie la posición del tablero?** Con
+      variantes, a 386 y con la frase más larga, sin perder "todo lo de la
+      jugada sin scrollear". El revisor sugiere subirlo de prioridad.
+- [ ] **Lavado de cara: los cuadritos en una jugada de libro** (revisor,
+      v0.148; celu y PC). La tarjeta dice "5. d4 — Libro" y ya no habla el
+      motor, pero la fila de abajo sigue diciendo Mejor "Bb5 ↗", Pérdida
+      "1.20", Caída "11.0 pt": la misma contradicción, un piso más abajo.
+      ¿Qué contestan los cuatro cuadritos cuando la jugada es de libro? Es
+      duda para Juan (abajo): dato crudo que a veces interesa, o se callan.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -419,8 +436,9 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
 
 - [ ] La pieza que se mueve al pasar de jugada (abre las demás animaciones).
 - [ ] El tablero sigue al dedo al deslizar.
-- [ ] La tira se centra con movimiento; la tarjeta cambia de alto sin
-      parpadeo; la hoja de ajustes sube.
+- [ ] La tira se centra con movimiento; la hoja de ajustes sube. (Lo de la
+      tarjeta que cambia de alto pasó a la etapa 1 como lavado de cara, v0.148:
+      no es animarlo, es que el tablero no se mueva.)
 - [ ] `prefers-reduced-motion` en todas.
 - [ ] La tarjeta que se achica al probar y hace saltar el tablero 78 px (falla
       de la v0.84).
@@ -515,6 +533,10 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   diga el nombre de la apertura cuando aparece ("Apertura italiana."), sabiendo
   que los nombres largos no entran en el renglón. Tira de las cuatro en el
   resumen del 16-nov.
+- **No sé si esto te copa (v0.148, del revisor):** en una jugada de libro los
+  cuadritos de abajo siguen mostrando la mejor del motor y la pérdida. O se
+  dejan, porque es dato crudo y a veces interesa ver que el motor prefiere
+  otra; o en libro se callan igual que la tarjeta.
 - **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
   segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
   ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su

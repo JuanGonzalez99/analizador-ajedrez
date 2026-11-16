@@ -4785,8 +4785,10 @@ teoría sigue con…": son hasta 20 continuaciones por posición.
   412 todas dan un renglón y la tarjeta mide 61,1 siempre. **A 386 no**: las
   de "Saca/Salva …, que estaba a tiro de un peón." (50 caracteres) hacen dos
   renglones y la tarjeta pasa a 79,9 —el tablero baja 19— en 4 de las 27. No
-  lo trajo esta versión (antes esas mismas jugadas llevaban esa frase MÁS "La
-  mejor era…", también en dos renglones) y pasa igual fuera del libro: es el
+  lo trajo esta versión, lo bajó: el revisor midió la v0.147 con el mismo
+  script y eran 16 de 27 en dos renglones a 386 y 12 de 27 a 412 (ahora 4 y
+  0). Acortar la frase solo para libro se descartó por parche (dos
+  redacciones del mismo hecho, y con "caballo" se pasa igual) y pasa igual fuera del libro: es el
   pendiente de la etapa 3, "la tarjeta cambia de alto".
 - Quedó como lavado aparte, en la hoja de ruta: dónde vive el nombre de la
   apertura "hasta acá", que enseña pero en la tarjeta no entra.
