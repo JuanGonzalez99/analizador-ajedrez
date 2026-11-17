@@ -1065,7 +1065,21 @@
     /* con la barra horizontal arriba, las comidas del de arriba necesitan 8 +
        20 + 8 entre la barra y la fila 8: el margen del SVG solo alcanza con el
        tablero grande */
-    #zonaRevision:not(.sinEvalH) .revtab { margin-top: max(10px, calc(36px - var(--mTab))); }
+    #zonaRevision:not(.sinEvalH) .revtab { margin-top: calc(12px - var(--mTab)); }
+    /* LA BARRA VA ARRIBA DEL PANEL, NO DEL TABLERO (v0.151, lavado de cara del
+       revisor, v0.136: a 12 del subtítulo y a 38 de las casillas, cruzando las
+       dos columnas, no era de ninguna). Se dibujaron cuatro: A, más aire
+       arriba (seguía sin ser de nadie); B, al ancho del tablero (el panel
+       arrancaba 54 px más abajo que todo lo demás); C, encima del panel, en el
+       renglón de las comidas del de arriba. Ganó C: dos columnas que arrancan
+       juntas —comidas y tablero a la izquierda, barra y panel a la derecha— y
+       la barra al lado de lo que habla de la evaluación. Los números del
+       revisor: 24 del subtítulo al renglón, renglón de 20 con la barra (16)
+       centrada y las comidas, y 12 hasta las casillas y el panel, los dos a la
+       misma altura. La barra al ancho del panel exacto: la cabecera cruza toda
+       la grilla y el panel es la última columna. */
+    #zonaRevision:not(.sinEvalH) > .tarjetas { margin-top: 12px; }
+    #zonaRevision:not(.sinEvalH) .comidas > #cArriba { bottom: calc(100% + 12px); }
     /* EL PANEL ARRANCA Y TERMINA CON LAS CASILLAS, no con la caja del SVG, que
        lleva 15 unidades de margen para las coordenadas (`--mTab` en pantalla):
        un solo renglón arriba y otro abajo para barra, tablero y panel. La lista
@@ -1081,7 +1095,7 @@
        antes que las casillas, sobre los números de fila. El borde derecho ya
        caía con el del panel; el izquierdo lo pone `--izqCurva`, el mismo que
        alinea la curva de abajo con la columna a. */
-    #zonaRevision > .parriba > .evalh { margin-left: var(--izqCurva, var(--mTab)); }
+    #zonaRevision > .parriba > .evalh { margin: 26px 0 2px calc(100% - var(--panel)); }
     /* y el título también (revisor, v0.136): quedaba 3 a 8 px corrido según la
        escala, casi alineado, que se ve peor que corrido del todo. El volver se
        queda donde está, colgado sobre los números de fila: 26 son lo que ocupa
@@ -1182,9 +1196,10 @@
        32) y 8 de aire: medido a 1280×720, Girar termina a 8 del borde con las
        dos barras. Con la barra
        vertical, la de fábrica, 52 de alto: 8 arriba, 10 y 10 de márgenes del
-       tablero y 24 de aire abajo; la horizontal suma 26. El piso de 360 es el
+       tablero y 24 de aire abajo; la horizontal suma 26 (16 desde la v0.151, que la
+       pasó al renglón de las comidas, arriba del panel). El piso de 360 es el
        del celu: en una ventana baja nunca queda más chico. */
-    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 80px), calc(100vw - var(--panel) - 120px)), 680px); }
+    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 70px), calc(100vw - var(--panel) - 120px)), 680px); }
     #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 64px), calc(100vw - var(--panel) - 120px)), 680px); }
     svg.tab { max-width: var(--ladoTab); }
     /* con la columna en `max-content` la caja necesita su ancho escrito: si no,
@@ -1459,7 +1474,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.150 · 17-11";
+  window.VERSION = "v0.151 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -7756,7 +7771,7 @@ function ubicarCurva() {
   const z = $("zonaRevision");
   const vw = window.innerWidth, vh = window.innerHeight;
   const panel = Math.min(380, Math.max(340, 340 + (vw - 1000) * .364));
-  const porAlto = vh - 48 - (z.classList.contains("sinEvalH") ? 64 : 80) - 62;
+  const porAlto = vh - 48 - (z.classList.contains("sinEvalH") ? 64 : 70) - 62;
   z.classList.toggle("curvaAbajo", window.matchMedia(CORTE_ANCHO).matches &&
     porAlto >= Math.min(vw - panel - 120, 680));
   ubicarAlts();

@@ -153,12 +153,16 @@ chequear("la curva baja cuando sobra alto", [
   ...(/function ubicarGirar\(f\) \{\n  ubicarCurva\(\);/.test(html) ? [] : ["ubicarGirar no llama a ubicarCurva"]),
 ]);
 
-/* 7sexies. [PC] La barra horizontal arranca con la columna a (v0.136), no
-   con la caja del SVG: medía el ancho del grupo y empezaba 22 a 28 px antes
-   que las casillas. La pone `--izqCurva`, que calcula `ubicarGirar()` con la
-   escala del tablero; `mirar` mide el desfasaje ("barra horizontal:"). */
-chequear("la barra horizontal arranca con las casillas", [
-  ...(/#zonaRevision > \.parriba > \.evalh \{ margin-left: var\(--izqCurva/.test(html) ? [] : ["falta el margen de la barra horizontal"]),
+/* 7sexies. [PC] La barra horizontal va arriba del panel, al ancho del panel
+   (v0.151), en el renglón de las comidas del de arriba: 24 del subtítulo, 20
+   de renglón, 12 hasta las casillas y el panel, que arrancan juntos. Hasta la
+   v0.150 iba de la columna a al borde del panel (`--izqCurva`, v0.136) y no
+   era de ninguna de las dos columnas. `mirar` imprime dónde cae. */
+chequear("la barra horizontal va arriba del panel", [
+  ...(/#zonaRevision > \.parriba > \.evalh \{ margin: 26px 0 2px calc\(100% - var\(--panel\)\); \}/.test(html) ? [] : ["falta el margen de la barra horizontal"]),
+  ...(/#zonaRevision:not\(\.sinEvalH\) > \.tarjetas \{ margin-top: 12px; \}/.test(html) ? [] : ["el panel no arranca a 12 del renglón"]),
+  ...(/#zonaRevision:not\(\.sinEvalH\) \.revtab \{ margin-top: calc\(12px - var\(--mTab\)\); \}/.test(html) ? [] : ["las casillas no arrancan a 12 del renglón"]),
+  ...(/#zonaRevision:not\(\.sinEvalH\) \.comidas > #cArriba \{ bottom: calc\(100% \+ 12px\); \}/.test(html) ? [] : ["las comidas de arriba no van en el renglón de la barra"]),
 ]);
 
 /* 7septies. [PC] El Resumen va al ancho del grupo (v0.137): de la columna a

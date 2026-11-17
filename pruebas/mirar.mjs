@@ -828,16 +828,19 @@ for (const f of ["horizontal", "barra", "tarjeta"]) {
   await elegir("#verEval", f);
   await pg.waitForTimeout(250);
   porForma[f] = await lado();
-  /* la barra horizontal arranca con la columna a y termina con el panel
-     (v0.136): 0 y 0 es lo que tiene que dar */
+  /* la barra horizontal va al ancho del panel, arriba de él (v0.151; hasta la
+     v0.150 arrancaba con la columna a), las casillas y el panel arrancan a la
+     misma altura, y el título sigue alineado con la columna a: todo en 0 */
   if (f === "horizontal") console.log("barra horizontal:", JSON.stringify(await pg.evaluate(() => {
     const b = document.getElementById("evalh").getBoundingClientRect(), s = document.querySelector("svg.tab").getBoundingClientRect();
     const p = document.querySelector("#zonaRevision > .tarjetas").getBoundingClientRect();
-    return { izq: Math.round(b.left - (s.left + s.width * 15 / 366)),
+    const m = s.width * 15 / 366;
+    return { izq: Math.round(b.left - p.left),
              der: Math.round(b.right - p.right),
-             /* el renglón del título, con un Range: arranca con la barra (revisor) */
+             arranque: Math.round(s.top + m - p.top),
+             /* el renglón del título, con un Range: arranca con la columna a */
              titulo: (() => { const r = document.createRange(); r.selectNodeContents(document.getElementById("revRival"));
-                              return Math.round(r.getBoundingClientRect().left - b.left); })() };
+                              return Math.round(r.getBoundingClientRect().left - (s.left + m)); })() };
   })), "(1280×800; todo en 0)");
   /* el Resumen, de la columna a al borde del panel (v0.137), en las tres
      formas: 0 y 0 */

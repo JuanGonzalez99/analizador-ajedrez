@@ -359,8 +359,8 @@ lo demás se dibuja contra ella.
       Se hace cuando haya qué poner al lado: la ayuda, las licencias de lo
       que se sume (los puzzles de lichess de la etapa 5), el link del profe.
       Antes de eso es una pantalla para tres líneas que no se leen nunca.
-- [ ] **[PC] Lavado de cara: ¿la barra horizontal es de la cabecera o del
-      tablero?** (revisor, v0.136; leve, venía de antes). Queda a 12 px del
+- [x] **[PC] Lavado de cara: ¿la barra horizontal es de la cabecera o del
+      tablero?** (v0.151, 17-nov: la C entre cuatro con ajuste — la barra arriba del panel, en el renglón de las comidas; casillas y panel arrancan juntos; revisor, v0.136; leve, venía de antes). Queda a 12 px del
       subtítulo y a 36 de las casillas y del panel: se agrupa con el título
       pero habla del tablero, y ahora que comparte bordes con lo de abajo se
       nota más. Mover solo ese valor no alcanza: el panel arranca con la

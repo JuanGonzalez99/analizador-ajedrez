@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.150**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.151**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,37 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.151, [PC] la barra horizontal va arriba del panel** (lavado del revisor
+sobre la v0.136, "¿la barra es de la cabecera o del tablero?"; la C entre
+cuatro con ajuste, 17-nov). Quedaba a 12 del subtítulo y a 38 de las casillas,
+de la columna a al borde del panel: no era de ninguna columna. Cuatro
+variantes con `pantallas()` a 1280×800 y 1000×900 (`pruebas/maqueta-barra.mjs`,
+no se commitea): A, 12 más de aire arriba (sigue sin ser de nadie); B, al
+ancho del tablero (el panel arranca 54 más abajo que todo lo demás); **C,
+encima del panel, en el renglón de las comidas del de arriba**. El revisor
+eligió C: dos columnas que arrancan juntas, y la barra al lado de lo que habla
+de la evaluación (tarjeta, pérdida, curva).
+- Los números del revisor: 24 del subtítulo al renglón (44 → 68), renglón de
+  20 con las comidas (`#cArriba` a 12 de las casillas en vez de 8) y la barra
+  de 16 centrada (`margin: 26px 0 2px`), 12 hasta las casillas
+  (`.revtab` con `margin-top: calc(12px - var(--mTab))`) y hasta el panel
+  (`.tarjetas` a 12). La barra empieza en `calc(100% - var(--panel))`: la
+  cabecera cruza la grilla y el panel es la última columna, así que cae justo
+  sobre él.
+- Medido: barra 70–86, comidas 68–88, casillas y panel en 100, a 1280×800,
+  1000×900, 1000×700, 1366×768, 1600×900 y 1280×720; los bordes de la barra
+  son los del panel. De paso se fue el desfase de 4 px de 1000 (panel en 104,
+  casillas en 108). En la posición inicial, sin comidas, el tablero no se
+  mueve.
+- El presupuesto de alto del tablero con la barra horizontal baja de 80 a 70
+  (`--ladoTab` y `ubicarCurva()`): lo de arriba pasa de 110 a 100. A 1280×800
+  las casillas pasan de 617 a 624. El Resumen sigue arrancando debajo de la
+  primera pantalla (20 a 34 px abajo según el tamaño).
+- Con la barra vertical o sin barra (`.sinEvalH`) no cambia nada.
+- `mirar` mide ahora "barra horizontal:" contra el panel (izq, der), el
+  arranque de casillas contra panel, y el título contra la columna a.
+- Celu igual al byte salvo la versión.
 
 **v0.150, [PC] las tres mejores debajo de la curva cuando sobra alto**
 (lavado del revisor sobre la v0.135; la D entre cuatro con tres ajustes,
