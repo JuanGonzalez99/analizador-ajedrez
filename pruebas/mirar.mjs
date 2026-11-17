@@ -1153,6 +1153,20 @@ const iniAbierto = await iniPc();
 await pg.click("#cambiarUsuario");
 console.log("inicio en la compu:", JSON.stringify({ cerrado: iniCerrado, conCambiar: iniAbierto }),
             "(los dos primeros en 0, y la tuerca quieta)");
+/* LOS BORDES DEL MES (v0.154): 400 + 32 + 640, como el Mes. A 1280 tienen que
+   dar 99–499 y 531–1171, los del Mes en "mes en la compu"; la tarjeta y el
+   select cierran en el borde de la columna, y en 1000 no hay desborde. */
+const bordes = {};
+for (const [w, h] of [[1280, 800], [1500, 900], [1000, 700]]) {
+  await pg.setViewportSize({ width: w, height: h });
+  await pg.waitForTimeout(150);
+  bordes[w] = await pg.evaluate(() => {
+    const b = s => { const r = document.querySelector(s).getBoundingClientRect(); return [Math.round(r.left), Math.round(r.right)]; };
+    return { mes: b("#meses"), tarjeta: b("#tarjetaMes")[1], lista: b("#partidas"),
+             desborde: document.documentElement.scrollWidth > innerWidth };
+  });
+}
+console.log("inicio, bordes:", JSON.stringify(bordes), "(a 1280: 99–499 y 531–1171, como el Mes)");
 await pg.setViewportSize({ width: 412, height: 760 });
 
 console.log("listo: capturas/");

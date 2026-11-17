@@ -1342,9 +1342,16 @@
      izquierda en 300, y la lista a la derecha en 640. Es el esqueleto del Mes
      (v0.119) y entran 15 filas en vez de 10. 300 y no 400 como el Mes: lo que
      lleva no llena 400, y estirar la tarjeta aleja el "›" del título. Ajuste
-     suyo: 16 entre la cabecera y el cuerpo (con 0 la tuerca tocaba la lista). */
+     suyo: 16 entre la cabecera y el cuerpo (con 0 la tuerca tocaba la lista).
+     400 Y NO 300 DESDE LA v0.154 (lavado del revisor, v0.145: "el inicio
+     corrido a la izquierda"): con 300 + 640 el bloque cerraba en 1071 a 1280
+     y quedaban 99 de aire a la izquierda y 209 a la derecha. Es el esqueleto
+     del Mes, con sus mismos bordes (99–499 y 531–1171 a 1280): la lista del
+     inicio y "Partida por partida" caen en la misma columna, y ir y volver no
+     mueve nada. Ganó la C de cuatro (A, la lista a 740; B, centrado, que
+     cambia el borde al ir al Mes; D, la cabecera de borde a borde). */
   @media (min-width: 1000px) {
-    body:not(.enVista) .iniGrid { display: grid; grid-template-columns: 300px minmax(0, 640px);
+    body:not(.enVista) .iniGrid { display: grid; grid-template-columns: 400px minmax(0, 640px);
                column-gap: var(--e-8); align-items: start; }
     body:not(.enVista) :is(.iniIzq, .iniDer) { display: block; min-width: 0; }
     /* (v0.145) la cabecera es lo primero de la columna: el mes conserva sus 16
@@ -1478,7 +1485,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.153 · 17-11";
+  window.VERSION = "v0.154 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

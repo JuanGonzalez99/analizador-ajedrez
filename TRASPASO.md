@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.153**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.154**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,28 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.154, [PC] el inicio con los bordes del Mes** (lavado del revisor sobre
+la v0.145, "el inicio corrido a la izquierda"; la C entre cuatro, 17-nov,
+pedido por Juan con un "seguí"). Con 300 + 32 + 640 el bloque iba de 99 a 1071
+a 1280: 99 de aire a la izquierda y 209 a la derecha, y la Partida llega a
+1172. Cuatro variantes con `pantallas()` a 1280×800 y 1500×900, con 15 filas
+clonadas en el DOM (`pruebas/maqueta-inicio.mjs`, no se commitea): A, la lista
+a 740 (431–1171); B, el bloque centrado (cambia el borde izquierdo al ir al
+Mes, lo descartado en la v0.122); **C, 400 + 32 + 640, el esqueleto del Mes**;
+D, como C con la cabecera de borde a borde y la tuerca en la esquina. El
+revisor eligió C: los mismos bordes que el Mes en cualquier ancho (99–499 y
+531–1171 a 1280), así que la lista del inicio y "Partida por partida" caen en
+la misma columna y la fila no salta al ir y volver. D alejaba la tuerca ~900
+px de lo que configura, se comía una fila y se pasaba 10 px del borde de la
+lista.
+- Un solo número: `.iniGrid` pasa a `400px minmax(0, 640px)`. El select, la
+  tarjeta Estadísticas y la tuerca ya iban al ancho de la columna (v0.122,
+  v0.145), así que cierran en 499 solos.
+- Por debajo de 1072 la lista se achica como la del Mes (`minmax(0, 640px)`):
+  a 1000 queda en ~540, sin desborde.
+- `mirar` mide "inicio, bordes:" a 1280, 1500 y 1000.
+- Celu igual al byte salvo la versión.
 
 **v0.153, [PC] el teclado fuera de la Partida** (lavado del revisor sobre
 la v0.144, "¿la app entera se puede usar sin mouse, o el teclado es solo para

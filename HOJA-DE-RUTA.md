@@ -376,7 +376,7 @@ lo demás se dibuja contra ella.
       abierto se escapa de la hoja a los botones de atrás; la lista de jugadas
       no es enfocable, y ↑/↓ e Inicio/Fin no hacen nada. ¿La app entera se
       puede usar sin mouse, o el teclado es solo para pasar jugadas?
-- [ ] **[PC] Lavado de cara: el inicio corrido a la izquierda** (revisor,
+- [x] **[PC] Lavado de cara: el inicio corrido a la izquierda** (v0.154, 17-nov: la C entre cuatro — 400 + 640, los mismos bordes que el Mes; revisor,
       v0.145; ya estaba). A 1280 el bloque va de 99 a 1071: 99 de aire a la
       izquierda y 209 a la derecha (209 y 319 a 1500), y la Partida llega
       hasta 1167. Se nota más desde que la tuerca no marca el borde derecho.
