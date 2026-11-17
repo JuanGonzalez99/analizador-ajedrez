@@ -236,7 +236,7 @@ else {
        se ancla arriba de la tarjeta que quedó más arriba, que es lo que el
        usuario ve al mirar el celu. Esto se va junto con el dial, cuando el
        usuario elija una forma. */
-    for (const forma of ["sinLista", "adentro", "abajo", "dos"]) {
+    for (const forma of ["sinLista", "abajo"]) {   /* (dos desde la v0.160) */
       await elegir("#formaPrueba", forma);
       await pg.evaluate(() => {
         const p = document.getElementById("prueba");
@@ -253,16 +253,15 @@ else {
           elegidaAbajo: (document.querySelector("#tiraSc .jg.sel") || {}).textContent || null
         }))));
     }
-    /* queda en "adentro", que es la única forma donde la tira de la variante
-       vive en la tarjeta: es lo que mira lo que sigue. El volcado en texto va
-       acá por lo mismo —con la forma de por defecto, esa tira no existe—. */
-    await elegir("#formaPrueba", "adentro");
+    /* queda en "abajo", donde la variante vive en la tira de la partida: es lo
+       que mira lo que sigue ("adentro" se fue en la v0.160). */
+    await elegir("#formaPrueba", "abajo");
     console.log("variante:", JSON.stringify(
-      (await pg.locator("#pLinea").textContent()).replace(/\s+/g, " ").trim()));
+      (await pg.evaluate(() => [...document.querySelectorAll("#tiraSc .jg.inv")].map(x => x.textContent).join(" "))).replace(/\s+/g, " ").trim()));
 
     /* volver a la PRIMERA jugada de la variante tocando su tira. Iba al
        arranque con data-v="0" hasta la v0.71, que le sacó ese eslabón. */
-    await pg.click('#pLinea span[data-v="1"]');
+    await pg.click('#tiraSc .jg.inv[data-v="1"]');
     await foto("prueba-6-volviendo");
   }
   console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
@@ -282,7 +281,7 @@ else {
 
      Y en el medio se juega OTRA sin esperar a la primera, que es lo que antes
      no se podía: el toque volvía sin hacer nada mientras el motor pensaba. */
-  await elegir("#formaPrueba", "adentro");
+  await elegir("#formaPrueba", "abajo");
   /* AL FINAL DE LA LÍNEA PRIMERO: acá arriba el arnés volvió a la primera
      jugada de la variante para mirarla, así que la posición en pantalla no es
      la que `posPrueba` viene siguiendo. Sin esto, las jugadas de abajo son
@@ -318,10 +317,10 @@ else {
       await pg.click(`#tablero [data-sq="${dos.from}"]`);
       await pg.click(`#tablero [data-sq="${dos.to}"]`);
       encadenadas = await pg.evaluate(() =>
-        document.querySelectorAll("#pLinea .vj").length);
+        document.querySelectorAll("#tiraSc .jg.inv").length);
     }
     const pendientes = await pg.evaluate(() =>
-      [...document.querySelectorAll("#pLinea .vj .sm")].filter(x => x.textContent === "\u2026").length);
+      [...document.querySelectorAll("#tiraSc .jg.inv .sm")].filter(x => x.textContent === "\u2026").length);
     await foto("encadenadas");
     await pg.waitForFunction(
       () => !/^Probando/.test(document.getElementById("pTit").textContent || ""),
@@ -357,7 +356,7 @@ await foto("revision-anteultima");
    por la raya del "estás acá", que es la única que nunca puede desaparecer.
    La jugada NO se elige a ojo: se lee la posición de una marca del HTML y se
    toca la curva ahí, que es lo mismo que haría el dedo. */
-await elegir("#marcasCurva", "punto");
+/* (desde la v0.160 la curva usa siempre el punto chico, sin ajuste) */
 await pg.waitForTimeout(200);
 const donde = await pg.evaluate(() => {
   const pt = document.querySelector("#curva .pt");
@@ -369,11 +368,7 @@ else {
   await pg.mouse.click(caja.x + caja.width * donde, caja.y + caja.height / 2);
   await pg.waitForTimeout(250);
   await fotoDe("#curva", "marcas-encima-punto");
-  await elegir("#marcasCurva", "raya");
-  await pg.waitForTimeout(250);
-  await fotoDe("#curva", "marcas-encima-raya");
 }
-await elegir("#marcasCurva", "punto");
 
 /* lo que dice la cabecera y el cierre, en texto: una captura no deja copiar y
    pegar el resultado a una prueba, y esto sí */
@@ -518,8 +513,7 @@ for (const [w, h, n] of [[1280, 800, "ancho"], [1110, 800, "ancho-justo"],
 /* Las dos formas de la lista, una captura cada una: son dos densidades y cuál
    sirve se decide mirándolas. */
 await pg.setViewportSize({ width: 1280, height: 800 });
-for (const f of ["planilla", "renglon"]) {
-  await elegir("#formaJugadas", f);
+for (const f of ["planilla"]) {   /* "una por renglón" se fue en la v0.160 */
   await pg.waitForTimeout(250);
   await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
   await pg.evaluate(() => window.scrollBy(0, -10));
@@ -567,7 +561,6 @@ console.log("rueda:         ", JSON.stringify(
 
 /* LO QUE SOLO EXISTE CON MOUSE (v0.82), medido y no leído del código. */
 await pg.setViewportSize({ width: 1280, height: 860 });
-await elegir("#formaJugadas", "renglon");
 await pg.waitForTimeout(350);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.waitForTimeout(200);
@@ -771,13 +764,11 @@ if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").
     ruedaTambien: v2.abierta && v2.sig && !v2.ant,
     escapeSale: !v3.abierta, sigueEnLaJugada, unClicNoLasMata }));
 }
-await elegir("#formaJugadas", "planilla");
 
 /* LA CURVA ANCHA NO SE PUEDE IR ABAJO DEL PLIEGUE (v0.88). Se prueba con la
    lista en su forma más alta —"una por renglón" gasta el doble— que es donde la
    lista le ganaba a la columna y empujaba la curva para abajo. */
 await pg.setViewportSize({ width: 1280, height: 800 });
-await elegir("#formaJugadas", "renglon");
 await pg.waitForTimeout(350);
 await pg.evaluate(() => document.getElementById("zonaRevision").scrollIntoView({ block: "start" }));
 await pg.evaluate(() => window.scrollBy(0, -10));
@@ -817,9 +808,6 @@ tres.lado = await pg.evaluate(() =>
 await foto("tres-barra");
 console.log("tres columnas: ", JSON.stringify(tres));
 await pg.setViewportSize({ width: 1280, height: 800 });
-await elegir("#formaJugadas", "planilla");
-await pg.waitForTimeout(300);
-await elegir("#formaJugadas", "planilla");
 await pg.waitForTimeout(300);
 
 /* LAS TRES FORMAS DE LA EVALUACIÓN Y CUÁNTO TABLERO CUESTA CADA UNA (v0.86).

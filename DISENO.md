@@ -527,6 +527,13 @@ hay. Las primeras salen del historial del traspaso.
   dice que no se nota, va la C (la banda suave con aire y puntas
   redondeadas). *Lectura mía:* en un estado pasajero de la compu le da igual
   lo sutil; no hace falta insistir con eso.
+- **La hoja de Ajustes, repasada** (17-nov-2026, v0.160): la curva con
+  **punto chico**; la lista de la compu en **planilla** ("no lo uso en la
+  compu"); al probar una jugada, **"la lista abajo"** a prueba contra "sin la
+  lista" (*"las otras dos sí son malas"*: la lista adentro de la tarjeta y
+  las dos tarjetas a la vez). Lo del análisis, como está. *Lectura mía:* le
+  gusta que la hoja tenga pocas cosas; los diales "a prueba" se sacan apenas
+  elige.
 
 ### No le copa
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no

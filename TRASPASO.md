@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.159**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.160**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.160, la hoja de Ajustes repasada con Juan** (17-nov; lavado del
+revisor sobre la v0.159: los diales a prueba se veían igual que los ajustes
+de verdad). Le pasé la lista con una propuesta por ajuste y contestó uno por
+uno. Lo del análisis (Modo, Mate a la vista) queda como está.
+- **Marcas de la curva: se fue**, queda el **punto chico** (Juan: *"dejá punto
+  chico"*). `MARCA_CURVA` es una constante; `dibujarCurva` sigue sabiendo las
+  tres formas.
+- **Las jugadas de al lado (compu): se fue**, queda la **planilla** ("no lo uso
+  en la compu"). Se fue también la forma "una por renglón" y su CSS.
+- **Al probar una jugada: queda, con dos formas**, "sin la lista" y "la lista
+  abajo" (Juan está probando la de abajo; *"las otras dos sí son malas"*).
+  "adentro" y "las dos tarjetas" se fueron de `FORMAS_PRUEBA`; quien las tenía
+  guardadas cae en "sin la lista". Las ramas que las dibujaban quedan
+  mezcladas con las que siguen.
+- **Cuánto habla y Nombre de la apertura: quedan a prueba** (está probando
+  "media" después de "larga").
+- Tema, Evaluación y Jugadas del rival quedan; no dijo nada de ellas.
+- `mirar`: la variante se mira en la tira de abajo (`#tiraSc .jg.inv`) en vez
+  de la de la tarjeta; se fueron las capturas `prueba-forma-adentro`,
+  `prueba-forma-dos`, `marcas-encima-raya` y `ancho-renglon`.
 
 **v0.159, el nombre de la apertura hasta acá, en la tarjeta** (lavado del
 revisor, v0.148; celu y PC; decidido con Juan en la sesión, 17-nov). Ver que

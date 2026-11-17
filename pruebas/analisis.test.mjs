@@ -1542,9 +1542,9 @@ test("las tres formas de marca se guardan, como el tema y el modo de eval", () =
   assert.ok(html.includes('const MARCAS_CURVA = {'));
   for (const k of ["punto", "puntoChico", "raya"])
     assert.ok(new RegExp(`\\b${k}:`).test(html), `falta la forma ${k}`);
-  assert.ok(html.includes('localStorage.setItem("marcaCurva"'), "se guarda");
-  assert.ok(html.includes('localStorage.getItem("marcaCurva")'), "y se lee al arrancar");
-  assert.ok(html.includes('<select id="marcasCurva"'), "y tiene su selector");
+  /* desde la v0.160 el ajuste no está: Juan eligió el punto chico */
+  assert.ok(html.includes('const MARCA_CURVA = "puntoChico";'), "la curva usa el punto chico");
+  assert.ok(!html.includes('<select id="marcasCurva"'), "y el selector se fue");
 });
 
 test("una marca nunca se corta contra el borde de la tira", () => {
@@ -2620,7 +2620,7 @@ test("el menú de ajustes se lleva los select y tiene por dónde salir", () => {
      el peor modo de falla de este cambio. */
   const hoja = html.slice(html.indexOf('<div id="hojaAjustes"'),
                           html.indexOf('<p class="pie"'));
-  for (const id of ["tema", "verEval", "marcasCurva", "largoExp", "formaPrueba", "formaJugadas"])
+  for (const id of ["tema", "verEval", "largoExp", "nombreAp", "formaPrueba"])
     assert.ok(hoja.includes(`<select id="${id}"`), `${id} vive adentro de la hoja`);
   const pie = html.slice(html.indexOf('<div class="principal pabajo">'),
                          html.indexOf('<div id="zonaResumen"'));
@@ -2633,7 +2633,7 @@ test("el menú de ajustes se lleva los select y tiene por dónde salir", () => {
     "tres salidas: el botón Listo, tocar afuera y Escape");
   /* Los <select> son los MISMOS de antes: si alguien los duplicara, habría dos
      fuentes de verdad y una de las dos quedaría muda. */
-  for (const id of ["tema", "verEval", "marcasCurva", "largoExp", "formaPrueba", "formaJugadas"])
+  for (const id of ["tema", "verEval", "largoExp", "nombreAp", "formaPrueba"])
     assert.equal((html.match(new RegExp(`<select id="${id}"`, "g")) || []).length, 1,
       `${id} está una sola vez en todo el archivo`);
 });
@@ -2704,7 +2704,9 @@ test("el tiempo pensado sale en la lista, y null no es cero", () => {
     "la celda va aunque no haya jugada, o la grilla se corre de columna");
   assert.ok(html.includes('if (seg == null) return "\\u00b7";'),
     "y sin reloj dice una raya, no un cero, que sería mentira");
-  assert.ok(html.includes(".jugadas.renglon > div { grid-template-columns: 28px 1fr auto auto; }"),
+  /* (la forma "una por renglón" se fue en la v0.160; en la planilla cada
+     jugada lleva su columna de reloj) */
+  assert.ok(html.includes(".jugadas.planilla > div { grid-template-columns: 28px 1fr auto 1fr auto; }"),
     "con su propia columna, no pegado a la pérdida");
 });
 
@@ -2882,8 +2884,9 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
 
 test("el dial de las jugadas tiene las dos formas y el apagado", () => {
   /* Es un dial temporal, como el de la v0.76: se va cuando el usuario elija. */
-  for (const k of ["planilla:", "renglon:"])
-    assert.ok(html.includes(k), `está la forma ${k}`);
+  /* desde la v0.160 queda solo la planilla, sin ajuste */
+  assert.ok(html.includes("planilla:") && !html.includes("renglon:"), "queda la planilla sola");
+  assert.ok(!html.includes('<select id="formaJugadas"'), "y el selector se fue");
   assert.ok(html.includes("grid-template-columns: 28px 1fr auto 1fr auto"),
     "la planilla es nº | blancas | reloj | negras | reloj, como la de papel");
   assert.ok(html.includes('#zonaRevision.solaTira .colLista { display: none; }') &&
@@ -2895,17 +2898,12 @@ test("el dial de las jugadas tiene las dos formas y el apagado", () => {
    usuario elija una forma, se queda esa y se van el dial, las otras tres y
    estas pruebas con ellas. Mientras exista, lo que no puede pasar en silencio
    es que se pierda una forma o que cambie sola la de por defecto. */
-test("el dial de la prueba: cuatro formas, y una sola deja las dos tarjetas", () => {
+test("el dial de la prueba: dos formas desde la v0.160", () => {
   const cuerpo = html.match(/const FORMAS_PRUEBA = (\{[\s\S]*?\n\});/);
   assert.ok(cuerpo, "está FORMAS_PRUEBA");
   const F = new Function("return " + cuerpo[1])();
-  assert.deepEqual(Object.keys(F), ["sinLista", "adentro", "abajo", "dos"]);
-  /* la única que NO reemplaza la tarjeta real es la que se llama así */
-  assert.deepEqual(Object.entries(F).filter(([, f]) => !f.reemplaza).map(([k]) => k),
-                   ["dos"]);
-  /* y las tres maneras de mostrar las probadas están las tres */
-  assert.deepEqual([...new Set(Object.values(F).map(f => f.lista))].sort(),
-                   ["abajo", "adentro", "no"]);
+  assert.deepEqual(Object.keys(F), ["sinLista", "abajo"], "Juan descartó adentro y dos");
+  assert.ok(Object.values(F).every(f => f.reemplaza), "las dos reemplazan la tarjeta real");
   assert.ok(/let FORMA_PRUEBA = "sinLista";/.test(html), "por defecto, sin la lista");
   assert.ok(html.includes('<select id="formaPrueba"'), "y el dial existe en la pantalla");
 });
@@ -3501,3 +3499,4 @@ test("el nombre de la apertura hasta acá, en las dos formas (v0.159)", () => {
   const ap4 = A.aperturaHastaAca(["x", "a", "n"], { ...N, n: "C44 King's Knight Opening: Normal Variation" });
   assert.equal(ap4.cambia, false);
 });
+

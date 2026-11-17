@@ -353,6 +353,15 @@ lo demás se dibuja contra ella.
       pregunta es qué otra cosa de la partida va a la vista —¿las tres
       mejores desplegadas en vez del botón?—, no estirar lo que ya está.
 
+- [ ] **La tarjeta de la variante cambia de alto y hace saltar el tablero**
+      (Juan, 17-nov, probando "la lista abajo": *"la tarjeta cuando se
+      prueban jugadas no se revisaron, y tienen los saltos de tablero con el
+      cambio de tamaño"*). Es el ítem de la etapa 3 ("La tarjeta que se achica
+      al probar…", con la nota del revisor de la v0.152), subido acá porque lo
+      vio usando la app. La tarjeta del veredicto ya reserva su alto desde la
+      v0.149; la de la variante ("Probando…", "pierde 5.46 · en la partida
+      Qh5+ pierde 4.66", "No se pudo evaluar") no. Mirar las dos formas que
+      quedan ("sin la lista" y "la lista abajo").
 - [ ] **Pantalla propia de "Acerca de"** (Juan, 15-nov, al mudar los créditos
       a Ajustes en la v0.143: la pensaba así, "más a futuro"). Hoy la
       atribución de las piezas vive al pie de la hoja de Ajustes y alcanza.
@@ -435,7 +444,7 @@ lo demás se dibuja contra ella.
       (entero, con espacio) y la tabla, para la misma cifra, "48.0%". Y el
       decimal promete una precisión que el rango desmiente: "100.0%" sobre 3
       jugadas, con rango 21–100. ¿Una sola forma, y cuándo vale el decimal?
-- [ ] **Lavado de cara: los diales de "elegilo usando la app" en Ajustes**
+- [x] **Lavado de cara: los diales de "elegilo usando la app" en Ajustes** (v0.160, 17-nov: repasada con Juan — se fueron Marcas de la curva y Las jugadas de al lado, Al probar queda con dos formas)
       (revisor, v0.159; celu). En La explicación, dos de tres filas son
       diales temporales ("Cuánto habla", marcado "SE VA cuando esté
       elegida", y "Nombre de la apertura"), más "Al probar una jugada" en la

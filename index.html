@@ -939,7 +939,6 @@
      PEGADO a su jugada y no los dos al final, porque al final habría que contar
      cuál es de quién. */
   .jugadas.planilla > div { grid-template-columns: 28px 1fr auto 1fr auto; }
-  .jugadas.renglon > div { grid-template-columns: 28px 1fr auto auto; }
   .jugadas > div:last-child { border-bottom: 0; }
   /* el renglón de la jugada elegida, tenue: la marca fuerte la lleva la jugada
      misma —la misma que en la tira— y dos marcas fuertes en la misma fila se
@@ -1506,7 +1505,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.159 · 17-11";
+  window.VERSION = "v0.160 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2018,8 +2017,8 @@
   <p class="ajGrupo">Cómo se ve la partida</p>
   <label class="ajFila"><span>Evaluación</span>
     <select id="verEval" class="chico"></select></label>
-  <label class="ajFila"><span>Marcas de la curva</span>
-    <select id="marcasCurva" class="chico"></select></label>
+  <!-- (v0.160) "Marcas de la curva" y "Las jugadas de al lado" se fueron:
+       Juan eligió punto chico, y la planilla porque no lo usa en la compu -->
   <!-- "RIVAL" VIVÍA EN LA FILA DE ABAJO hasta la v0.113. Es de las que se ponen
        una vez y se olvidan, y Juan no sabe cuánto le aporta: acá no ocupa la
        pantalla de la jugada, y se guarda como los demás. -->
@@ -2037,17 +2036,11 @@
   <label class="ajFila"><span>Nombre de la apertura</span>
     <select id="nombreAp" class="chico"><option value="cambia">cuando cambia</option><option value="siempre">en cada jugada</option></select></label>
   <!-- DIAL TEMPORAL (v0.76): cómo se ve la pantalla mientras se prueba una
-       jugada. Son cuatro formas dibujadas que el usuario no pudo elegir mirando
-       capturas, así que se ponen las cuatro y se decide usando la app, como el
-       interruptor de margen contra gris de la v0.48. SE VA cuando esté
-       elegida: ver §4sexdecies. -->
+       jugada. Eran cuatro formas; desde la v0.160 quedan dos (Juan descartó
+       "adentro" y "las dos tarjetas"), y elige entre esas usando la app. SE
+       VA cuando esté elegida: ver §4sexdecies. -->
   <label class="ajFila"><span>Al probar una jugada</span>
     <select id="formaPrueba" class="chico"></select></label>
-  <!-- SOLO EN PANTALLA ANCHA (v0.80): elige qué muestra la columna de al lado.
-       En el celular el renglón entero no se dibuja, porque elige entre cosas
-       que ahí no existen. -->
-  <label class="ajFila soloAncho"><span>Las jugadas de al lado</span>
-    <select id="formaJugadas" class="chico"></select></label>
   <!-- MODO Y MATE VIVÍAN EN EL INICIO hasta la v0.120: se ponen una vez y se
        olvidan, y en el inicio empujaban la lista. -->
   <p class="ajGrupo">El análisis</p>
@@ -4784,11 +4777,10 @@ const MARCAS_CURVA = {
   puntoChico: "punto chico",
   raya:       "raya"
 };
-let MARCA_CURVA = "punto";
-function aplicarMarcaCurva(id) {
-  MARCA_CURVA = MARCAS_CURVA[id] ? id : "punto";
-  try { localStorage.setItem("marcaCurva", MARCA_CURVA); } catch (e) { /* incógnito */ }
-}
+/* EL AJUSTE SE FUE EN LA v0.160 (Juan, al repasar la hoja: "dejá punto
+   chico"). Las tres formas siguen dibujándose —`dibujarCurva` las sabe— pero
+   la curva usa siempre el punto chico. */
+const MARCA_CURVA = "puntoChico";
 
 /* Cuánto hay que correr una marca para adentro cuando la curva está pegada al
    borde. Media marca cortada se lee como una marca más chica, y entonces el
@@ -4913,18 +4905,6 @@ function aplicarModoEval(id, guardar = true) {
   MODO_EVAL = MODOS_EVAL[id] ? id : evalPorDefecto();
   if (guardar) try { localStorage.setItem("eval", MODO_EVAL); } catch (e) { /* incógnito */ }
 }
-(function iniciarMarcaCurva() {
-  let guardado = "punto";
-  try { guardado = localStorage.getItem("marcaCurva") || "punto"; } catch (e) { /* incógnito */ }
-  $("marcasCurva").innerHTML = Object.entries(MARCAS_CURVA)
-    .map(([k, t]) => `<option value="${k}">${t}</option>`).join("");
-  aplicarMarcaCurva(guardado);
-  $("marcasCurva").value = MARCA_CURVA;
-  $("marcasCurva").onchange = seguro("marcas de la curva", () => {
-    aplicarMarcaCurva($("marcasCurva").value);
-    if (R) pintarRevision();
-  });
-})();
 
 /* CUÁNTO HABLA LA TARJETA — DIAL TEMPORAL (v0.77).
 
@@ -5007,9 +4987,11 @@ let NOMBRE_AP = "cambia";
    Cuando esté elegida, se queda una y el dial se va. */
 const FORMAS_PRUEBA = {
   sinLista: { nombre: "sin la lista",     reemplaza: true,  lista: "no" },
-  adentro:  { nombre: "la lista adentro", reemplaza: true,  lista: "adentro" },
-  abajo:    { nombre: "la lista abajo",   reemplaza: true,  lista: "abajo" },
-  dos:      { nombre: "las dos tarjetas", reemplaza: false, lista: "abajo" }
+  abajo:    { nombre: "la lista abajo",   reemplaza: true,  lista: "abajo" }
+  /* "la lista adentro" y "las dos tarjetas" se fueron en la v0.160 (Juan:
+     "las otras dos sí son malas"). Quien las tenía guardadas cae en "sin la
+     lista" (`aplicarFormaPrueba`). Las ramas que las dibujaban quedan, porque
+     viven mezcladas con las que siguen (`fp.reemplaza`, `fp.lista`). */
 };
 let FORMA_PRUEBA = "sinLista";
 function formaPrueba() { return FORMAS_PRUEBA[FORMA_PRUEBA] || FORMAS_PRUEBA.sinLista; }
@@ -5042,9 +5024,10 @@ function aplicarFormaPrueba(id) {
    Va con dos puestas y no con una elegida de antemano por la misma razón que el
    margen contra gris de la v0.48: son dos densidades distintas y cuál sirve se
    sabe usándolas, no mirándolas. */
+/* "una por renglón" Y EL AJUSTE SE FUERON EN LA v0.160 (Juan no lo usa en
+   la compu): queda la planilla. */
 const FORMAS_JUGADAS = {
-  planilla: { nombre: "planilla",        clase: "planilla" },
-  renglon:  { nombre: "una por renglón", clase: "renglon" }
+  planilla: { nombre: "planilla",        clase: "planilla" }
   /* "sin la lista" se fue en la v0.125 (revisor): la lista existe solo en la
      compu, y ahí es lo que llena el panel y lo que se recorre con el mouse;
      sin ella el panel terminaba en la curva con 430 px vacíos al lado del
@@ -5053,19 +5036,6 @@ const FORMAS_JUGADAS = {
 };
 let FORMA_JUGADAS = "planilla";
 function formaJugadas() { return FORMAS_JUGADAS[FORMA_JUGADAS] || FORMAS_JUGADAS.planilla; }
-(function iniciarFormaJugadas() {
-  let guardado = "planilla";
-  try { guardado = localStorage.getItem("formaJugadas") || "planilla"; } catch (e) { /* incógnito */ }
-  FORMA_JUGADAS = FORMAS_JUGADAS[guardado] ? guardado : "planilla";
-  $("formaJugadas").innerHTML = Object.entries(FORMAS_JUGADAS)
-    .map(([k, f]) => `<option value="${k}">${f.nombre}</option>`).join("");
-  $("formaJugadas").value = FORMA_JUGADAS;
-  $("formaJugadas").onchange = seguro("forma de las jugadas", () => {
-    FORMA_JUGADAS = FORMAS_JUGADAS[$("formaJugadas").value] ? $("formaJugadas").value : "planilla";
-    try { localStorage.setItem("formaJugadas", FORMA_JUGADAS); } catch (e) { /* incógnito */ }
-    if (R) pintarRevision();
-  });
-})();
 
 /* EL INTERRUPTOR DE "DÓNDE VA LA EXPLICACIÓN" VIVIÓ DE LA v0.64 A LA v0.72 y
    cumplió su función, igual que el de margen contra gris de la v0.48: tenía las
