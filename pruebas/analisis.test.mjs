@@ -171,7 +171,7 @@ test("con pocos casos aparece el margen, no un guion", () => {
   /* 3 de 21: el rango va de 5 a 35. El guion escondia el numero y ademas no
      distinguia una fila de 21 de una de 29. */
   const t = T.textoPct({ malas: 3, total: 21 }, "rango");
-  assert.match(t, /^14\.3%/);
+  assert.match(t, /^14\u00a0%/, "entero, con espacio duro (v0.158)");
   assert.match(t, /\(5\u201335\)/);
   assert.ok(t.includes('class="rango"'));
 });
@@ -198,7 +198,7 @@ test("el margen va en su propio renglon, o se desalinea la columna", () => {
   assert.match(html, /\.rango \{[^}]*display: block;/);
   /* y sin espacio entre el numero y el span: con display:block ese espacio
      abriria el renglon del parentesis con un hueco */
-  assert.ok(html.includes('${p}%<span class="rango">'));
+  assert.ok(html.includes('${enteroPct(+pct(f), f.malas, f.total)}<span class="rango">'));
   assert.ok(!T.textoPct({ malas: 3, total: 21 }, "rango").includes('% <span'));
 });
 
@@ -759,9 +759,9 @@ test("las tablas de reparto no tienen minimo", () => {
   const f = html.slice(html.indexOf("function tablaReparto"));
   const cuerpo = f.slice(0, f.indexOf("\n}"));
   assert.ok(!cuerpo.includes("NMIN"), "volvio el minimo a una tabla de reparto");
-  assert.ok(cuerpo.includes("total ? (100 * f.total / total)"));
-  assert.ok(cuerpo.includes('.toFixed(1) + "%"'),
-    "el signo va igual que en las tablas de tasas, bajo el mismo encabezado");
+  assert.ok(cuerpo.includes("total ? enteroPct(100 * f.total / total"));
+  assert.ok(cuerpo.includes("enteroPct("),
+    "el signo va igual que en las tablas de tasas: la misma función (v0.158)");
 });
 
 test("el universo de tiempo llega a las tablas que lo muestran", () => {
@@ -3466,4 +3466,14 @@ test("el titular de una sección cerrada solo nombra lo que se aparta (v0.156, v
     f("", 40, 800), n => n, true), "B: 50 % de malas, contra tu 5 % (y 1 más)");
   assert.equal(T.rotuloPieza("Torre"), "Con la torre");
   assert.equal(T.rotuloPieza("Caballo"), "Con el caballo");
+});
+
+test("un porcentaje se escribe de una sola forma (v0.158)", () => {
+  const e = (...a) => T.enteroPct(...a).replace(/\u00a0/g, " ");
+  assert.equal(e(25, 1, 4), "25 %");
+  assert.equal(e(0, 0, 30), "0 %", "el 0 de verdad");
+  assert.equal(e(100, 3, 3), "100 %", "el 100 de verdad");
+  assert.equal(e(100 / 300, 1, 300), "<1 %", "pasó y redondea a 0");
+  assert.equal(e(299 / 3, 299, 300), ">99 %", "no siempre y redondea a 100");
+  assert.ok(!/toFixed\(1\)\s*\+\s*"%"/.test(html), "ningún porcentaje con decimal");
 });

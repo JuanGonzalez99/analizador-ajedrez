@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.157**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.158**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,19 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.158, un porcentaje se escribe de una sola forma** (lavado del revisor
+sobre la v0.157; Juan pidió hacerlo en el acto; la A entre dos, 17-nov). Las
+tablas decían "48.0%" (`textoPct`, el reparto y la referencia de Mecanismos)
+y el renglón de la sección "48 %". Ahora **todo entero con espacio duro**,
+por `enteroPct(p, k, n)` en el bloque de tablas: `textoPct`, `porCiento`, la
+celda del reparto y la referencia de `tablaContrastes`. "<1 %" si pasó y
+redondea a 0, ">99 %" si no fue siempre y redondea a 100; el 0 y el 100 de
+verdad quedan. Tira de tres a 386 con la partida de reloj
+(`pruebas/maqueta-pct.mjs`, no se commitea): hoy, A "25 %", B "25%". Ganó A
+por ser la forma que ya tenían el progreso y el renglón, y la grafía en
+castellano. `pct()` sigue devolviendo el decimal crudo: es el número, no el
+texto, y lo usan las comparaciones. La regla queda en `DISENO.md` §1.4.
 
 **v0.157, las tablas de "Jugada por jugada" cuentan también lo que sale
 bien** (Juan, 17-nov, sobre la v0.156: *"me hace ruido que los textos estén

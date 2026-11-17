@@ -179,6 +179,13 @@ relojes y evaluaciones, para que las columnas no bailen.
 **El de 11 no baja más.** El `½-½` a 9,5 px ya fue rechazado por apretado
 (§2, "No le copa"): nada de texto por debajo de 11.
 
+**Un porcentaje es entero, con espacio duro: "25 %"** (v0.158, pedido por
+Juan que se hiciera; la A del revisor). Sin decimal en ningún lado: en las
+tasas el rango mide varios puntos y el decimal promete una precisión que no
+hay, y en el reparto el número de veces está al lado. Las excepciones son
+"<1 %" (pasó y redondea a 0) y ">99 %" (no fue siempre y redondea a 100).
+Todo pasa por `enteroPct` en `index.html`.
+
 ### 1.5 Espacios
 
 **Escala de 4: 4, 8, 12, 16, 24, 32.** Se suma **2** solo adentro de un

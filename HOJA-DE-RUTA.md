@@ -430,7 +430,7 @@ lo demás se dibuja contra ella.
       te va mejor—, sin perder lo que §5 exige (margen, contraste, no
       afirmar lo no medido)? Primero proponer qué mide cada una; después la
       forma. Con variantes.
-- [ ] **Lavado de cara: cómo se escribe una tasa en toda la app** (revisor,
+- [x] **Lavado de cara: cómo se escribe una tasa en toda la app** (v0.158, 17-nov: entero con espacio duro, "25 %"; "<1 %" y ">99 %") (revisor,
       v0.157; ya estaba; celu y PC). El renglón de la sección dice "48 %"
       (entero, con espacio) y la tabla, para la misma cifra, "48.0%". Y el
       decimal promete una precisión que el rango desmiente: "100.0%" sobre 3
