@@ -419,6 +419,17 @@ lo demás se dibuja contra ella.
       botón suelto (lo que propuso el revisor)? ¿una caja que solo reserva
       el alto, sin borde? ¿otra cosa de la jugada mientras no se piden?
       Sin que la lista ni "‹ ›" salten. Con variantes.
+- [ ] **Lavado de cara: las tablas de "Jugada por jugada" solo cuentan
+      malas** (Juan, 17-nov, sobre la v0.156: *"me hace ruido que los textos
+      estén muy centrados en 'jugadas malas'… arrastrado de cómo se armaron
+      las tablas"*). Franja, Capturas, Mecanismos, Pieza y Tramo miden todas
+      "qué parte sale mala" (pierde 3+), y el renglón de la v0.156 lo hereda.
+      Va contra `NORTE.md` ("no gira alrededor de los errores"). Es cambiar
+      qué pregunta contesta cada tabla (grande): ¿qué cuentan también —la
+      precisión por tramo o por pieza, las veces que jugaste la mejor, dónde
+      te va mejor—, sin perder lo que §5 exige (margen, contraste, no
+      afirmar lo no medido)? Primero proponer qué mide cada una; después la
+      forma. Con variantes.
 - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
       la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
       las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que

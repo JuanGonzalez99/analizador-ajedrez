@@ -479,6 +479,15 @@ hay. Las primeras salen del historial del traspaso.
   la app no gira alrededor de sus errores (`NORTE.md`), y hace pareja con
   "Partida por partida". Para títulos y rótulos nuevos: nombrar de qué habla
   la zona, no lo que salió mal.
+- **Los renglones de las secciones del Mes, bien; el foco en "malas", no**
+  (17-nov-2026, v0.156): *"me parece bien. Lo único que me hace ruido es que
+  los textos estén muy centrados en 'jugadas malas'. Quizás es algo
+  arrastrado de antes, de cómo se armaron las tablas"*. Es eso: las cinco
+  tablas de "Jugada por jugada" miden una sola cosa (qué parte sale mala) y
+  el renglón la hereda. *Lectura mía:* lo mismo que con el rótulo, un nivel
+  más abajo: no alcanza con nombrar neutro la zona si cada número sigue
+  contando errores. Lo que se sume a esas tablas, que cuente también lo que
+  sale bien.
 - **La tarjeta de una jugada de libro sin el motor** (16-nov-2026, v0.148):
   *"quedó bien el celu"*. Una frase de lo que hace la jugada ("Ataca el alfil
   de c5 con un peón.") o la frase gris, y nunca "La mejor era…" debajo de
