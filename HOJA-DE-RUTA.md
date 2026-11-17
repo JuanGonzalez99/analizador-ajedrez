@@ -607,6 +607,23 @@ El jaque en los detectores y la nueva definición de "a salvo" ya están hechos
       lo que pasó: "amenaza mate", qué amenaza el rival, como las amenazas de
       chess.com. Pedido de Juan (15-nov): es un trabajo aparte, se anota y no se
       empieza.
+- [ ] ⏸ espera a Juan · **La clavada que no funciona y la idea de la pieza que
+      se pierde** (Juan, 17-nov, sobre la v0.163; va con el ítem de arriba).
+      Dos casos que la v0.163 resolvió callando y que Juan prefiere decir:
+      - **La clavada que no funciona**: la pieza clavada puede comerse a la que
+        clava (torre contra torre). Técnicamente es clavada (Juan: *"¿no es
+        clavada igual?"*); hoy no se dice. Opciones: callarla, o decirla con su
+        matiz ("…pero la torre puede comerse a la que clava").
+      - **La idea detrás de la pieza que se pierde**: hoy, si la pieza movida
+        queda comible, no se dice nada de lo que lograba. Juan: *"está bien
+        que se marque el error primero, pero quizás se puede señalar la
+        idea"* — "Tu torre queda comible en e1. La idea era clavar el caballo
+        contra la dama."
+      **Cómo se hace**: primero el revisor de ajedrez propone el criterio
+      (cuándo decir la idea, cómo sin que suene a elogio, qué hacer con más de
+      una, cuándo la clavada con matiz y cuándo callarla), con casos
+      verificados con chess.js; se le pasa a Juan para que elija, y recién
+      después se programa.
 
 ---
 
