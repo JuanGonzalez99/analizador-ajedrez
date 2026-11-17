@@ -197,7 +197,9 @@ if (!alterna) console.log("OJO: sin alternativa legal, no hay capturas de la var
 else {
   /* La variante se abre TOCANDO una pieza (v0.74): la puerta del botón se fue
      con la fila de botones grandes. Arranca de la posición de DESPUÉS de la
-     jugada, o sea la del rival, así que la alternativa sale de ahí. */
+     jugada, o sea la del rival, así que la alternativa sale de ahí. Desde la
+     v0.152 el primer toque solo marca la pieza —la tarjeta sigue siendo la de
+     la jugada— y la variante se abre con el segundo, al jugar. */
   await pg.click(`#tablero [data-sq="${alterna.from}"]`);
   await foto("prueba-1-eligiendo");
   await foto("prueba-2-elegida");
@@ -744,10 +746,14 @@ if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").
   await pg.keyboard.press("Escape"); await pg.waitForTimeout(80);
   const v3 = await veo();
   const sigueEnLaJugada = s0 === (await sel());
-  /* 5. un clic suelto en una pieza abre una variante SIN jugadas ("Elegiste…"):
-     ahí las flechas y la rueda tienen que seguir pasando jugadas de la partida */
+  /* 5. un clic suelto en una pieza la MARCA y no abre la variante (v0.152;
+     hasta la v0.151 abría una vacía, "Elegiste…"): el tablero no se mueve, la
+     pieza queda marcada, y las flechas y la rueda siguen pasando jugadas */
+  const arriba = () => pg.evaluate(() => document.getElementById("tablero").getBoundingClientRect().top);
+  const t0 = await arriba();
   await pg.mouse.click(o.x, o.y); await pg.waitForTimeout(80);
-  const elegidaSinJugar = (await veo()).abierta;
+  const elegidaSinJugar = !(await veo()).abierta && (await arriba()) === t0 &&
+    (await pg.evaluate(() => document.querySelectorAll('#tablero rect[stroke="#6a1b9a"]').length)) === 1;
   await pg.keyboard.press("ArrowRight"); await pg.waitForTimeout(80);
   const s1 = await sel();
   await pg.mouse.click(o.x, o.y); await pg.waitForTimeout(80);

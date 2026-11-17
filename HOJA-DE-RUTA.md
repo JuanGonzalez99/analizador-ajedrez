@@ -366,7 +366,7 @@ lo demás se dibuja contra ella.
       nota más. Mover solo ese valor no alcanza: el panel arranca con la
       primera fila de casillas y se movería todo. De paso: a 1000 de ancho el
       panel arranca 4 px arriba de las casillas (104 contra 108). Con variantes.
-- [ ] **Lavado de cara: la "variante vacía"** (revisor, v0.144; celu y PC).
+- [x] **Lavado de cara: la "variante vacía"** (v0.152, 17-nov: la B entre cuatro — tocar una pieza solo la marca, la variante arranca al jugar; revisor, v0.144; celu y PC).
       Un toque suelto en el tablero ya es un modo: tarjeta "Probá otra
       jugada" o "Elegiste a8", "‹ ›" grisados, y hay que tocar "Volver" para
       seguir pasando jugadas. ¿Elegir una pieza tiene que abrir un modo, o la
@@ -460,7 +460,12 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
       no es animarlo, es que el tablero no se mueva.)
 - [ ] `prefers-reduced-motion` en todas.
 - [ ] La tarjeta que se achica al probar y hace saltar el tablero 78 px (falla
-      de la v0.84).
+      de la v0.84). **Revisor, v0.152:** desde que tocar solo marca, es lo
+      único que mueve el tablero en todo el camino de probar: al jugar la
+      primera, ~40 px a 412 (la tarjeta violeta con "pierde 5.46 · en la
+      partida Qh5+ pierde 4.66" ocupa dos renglones más). ¿La tarjeta de la
+      variante puede reservar el mismo alto que la del veredicto (v0.149)?
+      Pide subirlo de prioridad.
 - [ ] La jugada que era la mejor y sale marcada Error (falla de la v0.95, ya
       diagnosticada en §8 del traspaso).
 
@@ -545,6 +550,11 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.152):** tocar una pieza ya no cambia la
+  tarjeta ni hace saltar el tablero: solo la marca con los puntos violetas
+  adonde puede ir, como en chess.com, y la variante (tarjeta violeta, Volver)
+  arranca al jugar. La otra, dibujada: que además el renglón de la
+  explicación diga "Elegiste f6: tocá adónde va." mientras está marcada.
 - **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
   línea del título y la frase a todo el ancho) y la A (el símbolo en su
   columna, como antes, con el mismo lugar para dos renglones). Dijo *"por

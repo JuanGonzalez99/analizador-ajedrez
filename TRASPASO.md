@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.151**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.152**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,36 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.152, tocar una pieza la marca y no abre la variante** (lavado del
+revisor sobre la v0.144, "la variante vacía"; celu y PC; la B entre cuatro, tal
+cual, 17-nov). Hasta la v0.151 un toque suelto ya era un modo: la tarjeta se
+volvía la violeta "Elegiste f6 · Volver", "‹ ›" se grisaban y había que tocar
+Volver para seguir pasando jugadas. Medido además: la tarjeta de la variante
+es 21 px más baja que la del veredicto, así que **con solo tocar una pieza el
+tablero saltaba 21 px** para arriba. Cuatro variantes con `pantallas()` a
+386×760 (`pruebas/maqueta-vacia.mjs`, no se commitea): A, hoy; **B, sin modo:
+solo el tablero marca**; C, como B con "Elegiste f6: tocá adónde va." en el
+renglón de la explicación; D, como B con la marca gris. El revisor eligió B:
+tocar no inventa nada, así que no cambia la pantalla, y los puntos son el
+idioma de todos los tableros. C tapa la explicación de la jugada con lo que ya
+dicen los puntos; D pierde la continuidad (la marca y lo que sale de ella,
+violetas) y el gris se pierde contra las piezas negras. El violeta `#6a1b9a`
+da 3,0:1 sobre la casilla oscura: es el piso, no se puede aclarar.
+- `MARCADA = { desde, destinos, fen }` vive afuera de `PRUEBA`. Vale solo
+  mientras `fen` sea la posición que se ve (`marcada()`), así que no hace falta
+  borrarla en cada camino que cambia de partida; igual `irA` y `abrirPrueba` la
+  borran. El tablero la dibuja con la misma capa que la de la variante.
+- `tocarCasilla` sin variante: marca; con marca y destino legal, **recién ahí**
+  `abrirPrueba(IDX + 1)` y `probarJugada`. Volver a tocar la marcada la
+  desmarca (también adentro de la variante); el arrastre pasa `agarrar` para
+  que agarrar la ya marcada no la desmarque. Escape desmarca.
+- La única variante vacía que queda es la de las alternativas ("Probá otra
+  jugada"), que arranca una jugada atrás y por eso sí lo tiene que decir.
+  `pasarConVariante` la sigue tratando como no abierta.
+- `mirar`: "unClicNoLasMata" ahora pide que el clic **no** abra la variante,
+  que el tablero no se mueva y que haya un marco. Celu igual al byte salvo la
+  versión y `prueba-1`/`prueba-2` (la tarjeta sigue siendo la de la jugada).
 
 **v0.151, [PC] la barra horizontal va arriba del panel** (lavado del revisor
 sobre la v0.136, "¿la barra es de la cabecera o del tablero?"; la C entre

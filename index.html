@@ -1474,7 +1474,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.151 · 17-11";
+  window.VERSION = "v0.152 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5634,6 +5634,7 @@ function irA(i) {
      siguiente mostraría una jugada evaluada contra una posición que no es la
      suya. Va acá y no en cada botón porque acá pasan todos los caminos. */
   PRUEBA = null;
+  MARCADA = null;
   pintarRevision();
 }
 /* ============ probar jugadas: la variante (v0.65, rehecha en la v0.66) ============
@@ -5673,6 +5674,21 @@ function irA(i) {
    de arranque, y por eso ir y volver no vuelve a llamar al motor. */
 let PRUEBA = null;
 
+/* LA PIEZA ELEGIDA SIN VARIANTE (v0.152). Hasta la v0.151 tocar una pieza ya
+   abría la variante: la tarjeta se volvía "Elegiste f6 · Volver", "‹ ›" se
+   grisaban y el tablero saltaba 21 px (la tarjeta de la variante es más baja).
+   Un toque suelto ya era un modo del que había que salir. Ahora elegir una
+   pieza solo la marca en el tablero, con sus destinos, y la variante empieza
+   recién al JUGAR: tocar una pieza no inventa nada todavía, así que no tiene
+   por qué cambiar la pantalla. Ganó la B de cuatro (§7, v0.152).
+   { desde, destinos, fen }: el `fen` es la posición donde se eligió, y la
+   marca vale solo mientras sea la que se está viendo. Así no hace falta
+   borrarla en cada camino que cambia de partida o de jugada: si la posición
+   ya no es esa, no existe. */
+let MARCADA = null;
+const marcada = () =>
+  !PRUEBA && MARCADA && R && MARCADA.fen === fenDeLaJugada(IDX + 1) ? MARCADA : null;
+
 /* QUÉ FRASE DE LA EXPLICACIÓN ESTÁ SEÑALANDO EL TABLERO (v0.69), o null.
    Sale de una captura del usuario: cuando chess.com resalta una palabra no te
    la explica, te la MUESTRA en el tablero. Acá la frase entera es el botón —no
@@ -5709,6 +5725,7 @@ function abrirPrueba(desde0) {
      en CADA jugada de la línea —tiene fila, tiene error, o está pensando—, que
      es lo que deja encadenar varias con unas listas y otras no. */
   PRUEBA = { desde0, linea: [], ver: 0, desde: null, destinos: [], corriendo: false };
+  MARCADA = null;
 }
 
 function salirDePrueba() { if (PRUEBA) { PRUEBA = null; pintarRevision(); } }
@@ -5722,14 +5739,28 @@ function verDeLaVariante(k) {
   pintarRevision();
 }
 
-function tocarCasilla(sq) {
+function tocarCasilla(sq, agarrar = false) {
   /* con un análisis en curso el tablero no abre variantes: los dos usan el
      mismo grupo de motores (ver `ocupado`) */
   if (TRABAJANDO) return;
-  /* SIN prueba abierta, tocar una pieza abre una desde la posición que se está
-     viendo, que es la de DESPUÉS de la jugada. Es la puerta del "¿y ahora
-     qué?", y es la que deja probar las del rival: ahí le toca a él. */
-  if (!PRUEBA) abrirPrueba(IDX + 1);
+  /* SIN prueba abierta, tocar una pieza la MARCA y nada más (v0.152, arriba
+     de `MARCADA`). La variante se abre al jugar, desde la posición que se está
+     viendo, que es la de DESPUÉS de la jugada: la puerta del "¿y ahora qué?",
+     y la que deja probar las del rival, porque ahí le toca a él. */
+  if (!PRUEBA) {
+    const fen = fenDeLaJugada(IDX + 1);
+    const salidas = new Chess(fen).moves({ verbose: true });
+    const m0 = marcada();
+    const m = m0 && salidas.find(x => x.from === m0.desde && x.to === sq &&
+                                      (!x.promotion || x.promotion === "q"));
+    if (m) { abrirPrueba(IDX + 1); return void probarJugada(m); }
+    const puede = salidas.filter(x => x.from === sq);
+    /* volver a tocar la marcada la desmarca, como tocar cualquier otra cosa;
+       agarrarla para arrastrar, no (`agarrar`, desde el arrastre) */
+    MARCADA = puede.length && (agarrar || !m0 || m0.desde !== sq)
+      ? { desde: sq, destinos: puede.map(x => x.to), fen } : null;
+    return void pintarRevision();
+  }
   /* YA NO SE BLOQUEA MIENTRAS PIENSA (v0.79). Antes, tocar el tablero con una
      evaluación en curso no hacía nada: había que esperar a que volviera el
      motor para poder seguir. Ahora la jugada entra a la línea al toque y la
@@ -5748,7 +5779,7 @@ function tocarCasilla(sq) {
   /* si no, tocar una pieza que se pueda mover la elige, y tocar cualquier otra
      cosa desmarca: no hay forma de quedarse trabado */
   const puede = salidas.filter(x => x.from === sq);
-  PRUEBA.desde = puede.length ? sq : null;
+  PRUEBA.desde = puede.length && (agarrar || PRUEBA.desde !== sq) ? sq : null;
   PRUEBA.destinos = puede.map(x => x.to);
   pintarRevision();
 }
@@ -8092,8 +8123,8 @@ function pintarRevision() {
   /* La capa va SIEMPRE, porque el resaltado de la explicación existe se esté
      probando o no. Los campos de la variante quedan en null fuera de ella. */
   const capa = {
-    desde: PRUEBA ? PRUEBA.desde : null,
-    destinos: PRUEBA ? PRUEBA.destinos : [],
+    desde: PRUEBA ? PRUEBA.desde : marcada() ? marcada().desde : null,
+    destinos: PRUEBA ? PRUEBA.destinos : marcada() ? marcada().destinos : [],
     uci: PRUEBA && PRUEBA.ver ? PRUEBA.linea[PRUEBA.ver - 1].uci : null,
     resalta: RESALTA,
     /* los galones, con la misma regla que "‹" y "›" (abajo de todo) */
@@ -8528,7 +8559,7 @@ $("curva").addEventListener("click", seguro("curva", ev => {
     if (!arrastro) {
       if (Math.abs(dx) + Math.abs(dy) < 4) return;
       arrastro = true;
-      tocarCasilla(desde);
+      tocarCasilla(desde, true);
       const svg = cont.querySelector("svg.tab");
       if (!svg) return soltarTodo();
       /* de píxeles de pantalla a unidades del SVG: el tablero se dibuja en su
@@ -8559,8 +8590,8 @@ $("curva").addEventListener("click", seguro("curva", ev => {
        lugar —por eso el repintado— pero la deja ELEGIDA, con sus destinos
        encendidos. No es un descuido: agarrar ya fue un `tocarCasilla`, así que
        levantar la pieza y volver a apoyarla termina igual que hacerle un clic,
-       que es lo que pasa en cualquier tablero de internet. Medido: la tarjeta
-       queda diciendo "Elegiste a8". */
+       que es lo que pasa en cualquier tablero de internet. Medido: la pieza
+       queda marcada, sin abrir la variante (v0.152). */
     if (!hasta || hasta === origen) pintarRevision();
     else tocarCasilla(hasta);
   }));
@@ -8641,6 +8672,10 @@ document.addEventListener("keydown", seguro("teclas", ev => {
   if (tecla === "Escape" && PRUEBA && !$("zonaRevision").classList.contains("oculto")) {
     ev.preventDefault(); salirDePrueba(); return;
   }
+  /* y sin variante, desmarca la pieza elegida (v0.152) */
+  if (tecla === "Escape" && marcada() && !$("zonaRevision").classList.contains("oculto")) {
+    ev.preventDefault(); MARCADA = null; pintarRevision(); return;
+  }
   /* `n` y `p` de próximo y previo error. Sin Ctrl ni Alt: si no, se comen los
      atajos del navegador. */
   const salto = (tecla === "n" || tecla === "p") && sola;
@@ -8655,9 +8690,11 @@ document.addEventListener("keydown", seguro("teclas", ev => {
      cerraba sin avisar y se llevaba la línea probada. */
   else pasarConVariante(tecla === "ArrowRight" ? 1 : -1);
 }));
-/* Flechas y rueda. UNA VARIANTE SIN JUGADAS NO CUENTA COMO VARIANTE: cualquier
-   clic en el tablero abre una —"Elegiste a8", "Probá otra jugada"— aunque no
-   se juegue nada, y ahí no hay línea que recorrer. Si se la tratara como
+/* Flechas y rueda. UNA VARIANTE SIN JUGADAS NO CUENTA COMO VARIANTE. Hasta la
+   v0.151 cualquier clic en el tablero abría una —"Elegiste a8"— aunque no se
+   jugara nada; desde la v0.152 el clic solo marca la pieza (`MARCADA`), y la
+   única vacía que queda es la de las alternativas ("Probá otra jugada"), que
+   arranca una jugada atrás. Ahí tampoco hay línea que recorrer. Si se la tratara como
    abierta, un clic suelto (el que borra las marcas, o soltar una pieza afuera)
    dejaba muertas las flechas y la rueda. Se pasa de jugada por la partida, que
    la cierra, y no se pierde nada. Va acá y no en `atras`/`adelante`, que son

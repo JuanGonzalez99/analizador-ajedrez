@@ -2100,7 +2100,9 @@ test("las dos puertas arrancan de posiciones distintas", () => {
      donde no se ve el tablero. Para reemplazar una jugada propia se vuelve una
      con el galón y se toca ahí. */
   assert.ok(!html.includes("abrirPrueba(IDX);"), "la puerta del botón se fue");
-  assert.ok(html.includes("if (!PRUEBA) abrirPrueba(IDX + 1);"),
+  /* Desde la v0.152 tocar la pieza solo la marca; la variante se abre al
+     JUGAR, y desde la posición de después. */
+  assert.ok(html.includes("if (m) { abrirPrueba(IDX + 1); return void probarJugada(m); }"),
     "queda la de tocar una pieza, que arranca de la posición de después");
   assert.ok(html.includes('$("btnProbar").onclick = seguro("volver de la variante", salirDePrueba);'),
     "y el botón que queda solo sirve para salir");
@@ -2739,11 +2741,28 @@ test("las tres mejores son las que había EN LUGAR de la jugada", () => {
     .includes("FEN_VISTO"), "y nada del panel lee la posición dibujada");
 });
 
+test("tocar una pieza la marca y no abre la variante (v0.152)", () => {
+  /* Hasta la v0.151 un toque suelto ya era un modo: tarjeta "Elegiste f6",
+     "‹ ›" grisados y el tablero saltando 21 px. Ahora la marca vive afuera de
+     PRUEBA y la variante arranca recién con la primera jugada. */
+  const f = html.slice(html.indexOf("function tocarCasilla(sq"), html.indexOf("JUGAR NO ESPERA AL MOTOR"));
+  const sin = f.slice(f.indexOf("if (!PRUEBA) {"), f.indexOf("return void pintarRevision();"));
+  assert.ok(sin.includes("MARCADA ="), "sin variante, tocar marca");
+  assert.equal((sin.match(/abrirPrueba\(/g) || []).length, 1, "y abre la variante una sola vez: al jugar");
+  assert.ok(sin.indexOf("abrirPrueba(") < sin.indexOf("probarJugada(m)"), "justo antes de la jugada");
+  assert.ok(html.includes("MARCADA.fen === fenDeLaJugada(IDX + 1)"),
+    "la marca vale solo en la posición donde se eligió");
+  assert.ok(html.includes("desde: PRUEBA ? PRUEBA.desde : marcada() ? marcada().desde : null,"),
+    "y el tablero la dibuja igual que la de la variante");
+  const irA = html.slice(html.indexOf("function irA(i)"), html.indexOf("probar jugadas: la variante (v0.65"));
+  assert.ok(irA.includes("MARCADA = null;"), "pasar de jugada la borra");
+});
+
 test("arrastrar la pieza no es un camino nuevo para mover", () => {
   /* Apretar hace lo que hacía tocar y soltar lo que hacía el segundo toque, así
      que todo lo decidido sobre qué se puede probar y desde dónde vale igual. */
   assert.ok(html.includes("(function arrastrarPiezas()"), "existe el arrastre");
-  assert.ok(html.includes("tocarCasilla(desde);") && html.includes("else tocarCasilla(hasta);"),
+  assert.ok(html.includes("tocarCasilla(desde, true);") && html.includes("else tocarCasilla(hasta);"),
     "y pasa por tocarCasilla, no por un camino paralelo");
   assert.ok(html.includes('if (ev.pointerType !== "mouse" || ev.button !== 0 || TRABAJANDO) return;'),
     "con el dedo no existe, y con el motor ocupado tampoco");
