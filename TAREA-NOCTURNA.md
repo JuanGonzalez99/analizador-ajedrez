@@ -33,7 +33,8 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    un ítem.
    **Y los domingos, también: la pasada del revisor de ajedrez sobre partidas
    reales** (decisión de Juan, 17-nov-2026). Lanzalo con el usuario de
-   chess.com de Juan para que recorra las tarjetas de varias partidas del mes
+   chess.com **Santico26** (no es el de Juan, pero él dijo que se use porque
+   tiene más partidas) para que recorra las tarjetas de varias partidas del mes
    y marque lo que no sea cierto, coherente o útil. Lo que encuentre entra a
    `HOJA-DE-RUTA.md` como ítems y va al resumen en una sección "Lo que vio el
    revisor de ajedrez". No cuenta como ítem de la noche.
