@@ -1505,7 +1505,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.160 · 17-11";
+  window.VERSION = "v0.161 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3323,10 +3323,32 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
 
   /* Como mucho DOS. Es una tarjeta de celular y compite con el tablero por la
      pantalla; este orden es el que decide cuáles dos sobreviven. */
-  return [merito, mecanismo, salvada, ataque, posicional,
+  /* EN UNA OMISIÓN, LO QUE HABÍA VA PRIMERO (v0.161; Juan, con 10… Bb4:
+     "la marca como omisión, pero no dice por qué. Y leyendo sus comentarios
+     hasta parece buena"). "Había" es lo que define la categoría —había mate
+     o material y se dejó pasar—, y estaba séptima en el orden: con dos
+     ranuras ganaban "Ataca la dama" y "Clava la dama", que suenan a elogio. */
+  const primero = f.cat === "omision" && habia ? [habia] : [];
+  const partes = [...primero, merito, mecanismo, salvada, ataque, posicional,
           ranuras >= 2 ? llegada : null,
-          habia, rumbo, alternativa, menor, respuesta]
+          primero.length ? null : habia, rumbo, alternativa, menor, respuesta]
     .filter(Boolean).slice(0, ranuras >= 3 ? 3 : 2);
+  return primero.length ? enCambio(partes) : partes;
+}
+
+/* "EN CAMBIO, " DESPUÉS DE "HABÍA" (v0.161, revisor). "Había exd4, que se
+   llevaba el caballo. Ataca la dama…" se lee como si atacara exd4, y sigue
+   sonando a elogio: la segunda frase habla de la jugada que se hizo, y lo
+   dice. La primera letra baja a minúscula salvo que arranque con una jugada
+   ("Bb4…"); la marca, si era esa palabra, baja con ella. */
+const ARRANCA_CON_JUGADA = /^(O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x?[a-h]?[1-8])/;
+function enCambio(partes) {
+  if (partes.length < 2) return partes;
+  const p = partes[1];
+  const baja = !ARRANCA_CON_JUGADA.test(p.txt);
+  const min = t => baja ? t[0].toLowerCase() + t.slice(1) : t;
+  const marca = p.marca && p.txt.startsWith(p.marca) ? min(p.marca) : p.marca;
+  return [partes[0], { ...p, txt: "En cambio, " + min(p.txt), marca }, ...partes.slice(2)];
 }
 
 /* La misma explicación, en una sola cadena. Es lo que usa todo lo que no
@@ -4996,7 +5018,9 @@ const FORMAS_PRUEBA = {
 let FORMA_PRUEBA = "sinLista";
 function formaPrueba() { return FORMAS_PRUEBA[FORMA_PRUEBA] || FORMAS_PRUEBA.sinLista; }
 function aplicarFormaPrueba(id) {
-  FORMA_PRUEBA = FORMAS_PRUEBA[id] ? id : "sinLista";
+  /* las dos que se fueron en la v0.160 caen en "abajo": "las dos tarjetas"
+     ya tenía la lista abajo, y es la que Juan está probando (revisor) */
+  FORMA_PRUEBA = FORMAS_PRUEBA[id] ? id : (id === "adentro" || id === "dos") ? "abajo" : "sinLista";
   try { localStorage.setItem("formaPrueba", FORMA_PRUEBA); } catch (e) { /* incógnito */ }
 }
 (function iniciarFormaPrueba() {

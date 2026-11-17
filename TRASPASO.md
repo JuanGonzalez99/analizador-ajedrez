@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.160**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.161**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,28 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.161, en una omisión la tarjeta dice primero qué se dejó pasar** (Juan,
+17-nov, con una captura de 10… Bb4: *"la marca como omisión, pero no dice
+por qué. Y leyendo sus comentarios hasta parece buena"*). La tarjeta decía
+"Ataca la dama de d2 con un alfil. Clava la dama de d2." y la mejor, exd4,
+se llevaba el caballo de d4. En `partesDeLaExplicacion` la frase "Había…"
+era la séptima del orden, así que con dos ranuras (y hasta con tres) ganaban
+el ataque y la clavada, que suenan a elogio. Ahora, **con categoría
+"omision", `habia` va primero**; en las demás categorías el orden no cambia.
+Una omisión siempre trae `oportunidad` (`categorizar`), así que "Había" no
+falta nunca. Prueba de unidad y chequeo del orden.
+- Corrección del revisor: la frase que sigue a "Había" arranca con **"En
+  cambio, "** (`enCambio`): "Había exd4, que se llevaba el caballo de d4. En
+  cambio, ataca la dama de d2 con un alfil." Sin eso se leía como si atacara
+  exd4, y sonaba a elogio. Baja la primera letra (y la marca, si era esa
+  palabra) salvo que arranque con una jugada.
+- El alto, medido por el revisor en la tarjeta de verdad: la reserva es de dos
+  renglones EN TOTAL (no uno por frase), y los casos de 85 a 94 caracteres
+  entran a 386 y a 412 sin que la tarjeta crezca. Si alguna vez una omisión
+  hace saltar el tablero, viene de una segunda frase larga.
+- De paso (revisor, sobre la v0.160): quien tenía guardada "la lista adentro" o
+  "las dos tarjetas" cae en **"la lista abajo"** y no en "sin la lista".
 
 **v0.160, la hoja de Ajustes repasada con Juan** (17-nov; lavado del
 revisor sobre la v0.159: los diales a prueba se veían igual que los ajustes

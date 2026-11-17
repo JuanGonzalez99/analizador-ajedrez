@@ -2996,7 +2996,7 @@ test("una frase menor no le puede ganar el lugar a una oportunidad perdida", () 
   /* Lo destapó una prueba de verdad: puesto arriba, "Pierde el enroque corto"
      tapaba a "había Bxd7, que ganaba 9 peones". El peso menor no es solo entre
      los conceptos: es en TODO el orden de la tarjeta. */
-  const orden = html.slice(html.indexOf("  return [merito, mecanismo, salvada, ataque, posicional,"),
+  const orden = html.slice(html.indexOf("  const partes = [...primero, merito, mecanismo, salvada, ataque, posicional,"),
                            html.indexOf("].filter(Boolean).slice(0, ranuras >= 3 ? 3 : 2);"));
   assert.ok(orden.indexOf("menor") > orden.indexOf("habia"), "después de la oportunidad");
   assert.ok(orden.indexOf("menor") > orden.indexOf("alternativa"), "y de la alternativa");
@@ -3500,3 +3500,28 @@ test("el nombre de la apertura hasta acá, en las dos formas (v0.159)", () => {
   assert.equal(ap4.cambia, false);
 });
 
+test("en una omisión, lo que había va primero (v0.161)", () => {
+  /* 10… Bb4 de Juan: "Omisión" con "Ataca la dama. Clava la dama." y nada de
+     lo que se dejó pasar, porque "Había" era la séptima del orden. */
+  const { jugadas, fens } = A.prepararPartida("1. e4 e5");
+  const f = A.derivarFilas(jugadas, fens, [
+    { cp: null, mate: 8, mejor: "d4d5", segunda: null },
+    { cp: -980, mate: null, mejor: "a7a6", segunda: null },
+    { cp: 980, mate: null, mejor: "a2a3", segunda: null }
+  ], SIN_LIBRO_EXP, 0, "critico", null, 99).filas[0];
+  /* en una ranura sola; el orden con las que compiten lo fija el chequeo de abajo */
+  const obs = A.observarJugada(f, fens[0]);
+  const comoOmision = A.partesDeLaExplicacion({ ...f, cat: "omision" }, "Rd5", true, null, obs, { ranuras: 1 });
+  assert.match(comoOmision[0].txt, /^Había mate forzado en 8/, "la primera frase dice qué se dejó pasar");
+  assert.ok(html.includes('const primero = f.cat === "omision" && habia ? [habia] : [];'));
+  /* la tarjeta de Juan, con dos ranuras: la segunda dice de quién habla */
+  const h = { txt: "Había exd4, que se llevaba el caballo de d4.", marca: "exd4" };
+  const at = { txt: "Ataca la dama de d2 con un alfil.", marca: "Ataca" };
+  const dos = A.enCambio([h, at]);
+  assert.equal(dos.map(p => p.txt).join(" "),
+    "Había exd4, que se llevaba el caballo de d4. En cambio, ataca la dama de d2 con un alfil.");
+  assert.equal(dos[1].marca, "ataca", "la marca baja con la palabra");
+  assert.equal(A.enCambio([h, { txt: "Bb4 clava la dama." }])[1].txt, "En cambio, Bb4 clava la dama.",
+    "si arranca con una jugada, no baja");
+  assert.equal(A.enCambio([h]).length, 1, "sola, queda sola");
+});

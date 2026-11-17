@@ -451,6 +451,16 @@ lo demás se dibuja contra ella.
       otra sección. Se ven igual que los ajustes de verdad y la hoja ya pide
       scroll. ¿Dónde viven para no confundirse con lo permanente, y cuándo
       se retiran?
+- [ ] **Lavado de cara: los grupos de la hoja de Ajustes** (revisor, v0.160;
+      celu y PC). "El tablero" tiene un solo renglón, "Cómo se ve la partida"
+      dos, y "La explicación" queda vacía cuando se elijan los diales a prueba.
+      Un título con raya para un renglón pesa más de lo que vale. ¿Grupos, una
+      lista corta sin títulos, o dos grupos como mucho? Cuando se vayan los
+      diales.
+- [ ] **Lavado de cara: cómo empieza y termina la tira de la variante en "la
+      lista abajo"** (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
+      cortado de la jugada anterior y la elegida queda pegada a "›". Ya
+      estaba, pero ahora es la forma que Juan usa.
 - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
       la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
       las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que
