@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.152**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.153**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,39 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.153, [PC] el teclado fuera de la Partida** (lavado del revisor sobre
+la v0.144, "¿la app entera se puede usar sin mouse, o el teclado es solo para
+pasar jugadas?"; 17-nov). Se eligió **la app entera**, sin variantes: es
+comportamiento, y lo único que se ve es el aro de foco, que es el de siempre
+(2 px de `--acento`).
+- **Las filas de partidas** (inicio y Mes, `filaDePartida`) llevan
+  `tabindex="0" role="button"`; Enter o Espacio hacen `click()`, en el mismo
+  `keydown` de siempre. El aro va **adentro** (`outline-offset: -2px`) porque
+  la lista recorta lo que se sale de su caja.
+- **La hoja de ajustes encierra Tab**: es `aria-modal`, así que del último
+  control vuelve al primero (y Shift+Tab al revés) en vez de irse a los
+  botones de atrás. El foco ya iba a "Listo" al abrir y volvía a la tuerca al
+  cerrar (v0.91).
+- **La lista de jugadas es enfocable** (`#jugadas`, `tabindex="0"`) y con el
+  foco ahí ↑ ↓ pasan jugadas (por `pasarConVariante`, así una variante abierta
+  se recorre igual que con ← →) e Inicio/Fin van a la posición inicial y a la
+  última. **Solo con el foco ahí**: sin él, ↑ ↓ e Inicio/Fin mueven la página,
+  que es lo que se espera. Con el clic del mouse no aparece el aro
+  (`:focus-visible`).
+- **Al volver, el foco va a la fila que se abrió** (`enfocarLaFila()`, desde
+  `volver` y `popstate`; corrección del revisor): antes caía en `<body>` y
+  había que tabear desde arriba. `#jugadas` lleva `role="group"` para que el
+  `aria-label` se anuncie (los hijos no son opciones: no es `listbox`).
+- **Queda pendiente el orden de Tab en la Partida** (revisor): salta por la
+  pantalla (volver → tuerca → Girar abajo → las tres mejores → lista → "›" →
+  Mejor arriba). Arreglarlo es mover nodos que el celu comparte, y sin
+  `tabindex` positivos; va a la hoja de ruta.
+- Medido con un script suelto a 1280×800: Fin → la última, Inicio → la
+  inicial, ↓↓↑ → e4; 80 Tab y 30 Shift+Tab sin salir de la hoja; Escape
+  devuelve el foco a la tuerca; desde el inicio, Tab llega a una fila y Enter
+  abre la Partida.
+- Celu igual al byte salvo la versión.
 
 **v0.152, tocar una pieza la marca y no abre la variante** (lavado del
 revisor sobre la v0.144, "la variante vacía"; celu y PC; la B entre cuatro, tal

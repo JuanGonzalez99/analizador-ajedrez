@@ -371,7 +371,7 @@ lo demás se dibuja contra ella.
       jugada" o "Elegiste a8", "‹ ›" grisados, y hay que tocar "Volver" para
       seguir pasando jugadas. ¿Elegir una pieza tiene que abrir un modo, o la
       variante empieza recién al jugar la primera jugada? Con variantes.
-- [ ] **[PC] Lavado de cara: el teclado fuera de la Partida** (revisor,
+- [x] **[PC] Lavado de cara: el teclado fuera de la Partida** (v0.153, 17-nov: la app entera — Tab llega a las filas, no se escapa de Ajustes, ↑ ↓ Inicio Fin en la lista; revisor,
       v0.144). En el inicio Tab no llega a las filas de partidas; con Ajustes
       abierto se escapa de la hoja a los botones de atrás; la lista de jugadas
       no es enfocable, y ↑/↓ e Inicio/Fin no hacen nada. ¿La app entera se
@@ -419,6 +419,12 @@ lo demás se dibuja contra ella.
       botón suelto (lo que propuso el revisor)? ¿una caja que solo reserva
       el alto, sin borde? ¿otra cosa de la jugada mientras no se piden?
       Sin que la lista ni "‹ ›" salten. Con variantes.
+- [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
+      la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
+      las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que
+      seguir el de lectura: volver, tuerca, Mejor, las tres mejores, lista,
+      "‹ ›", Girar. Sin `tabindex` positivos; si hay que mover nodos que
+      comparte el celu, cuidar la comparación byte a byte.
 - [ ] **[PC] El cuadrito "Mejor" corta "la juga…"** (revisor, v0.150; leve,
       ya estaba). Cuando la jugada fue la mejor, a 1000 de ancho el valor del
       cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:

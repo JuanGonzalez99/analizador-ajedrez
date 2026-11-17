@@ -3424,3 +3424,16 @@ test("un sacrificio de verdad sigue siendo Brillante", () => {
     assert.ok(txt.includes("La mejor era a3"), txt);
   });
 }
+
+test("el teclado fuera de la Partida (v0.153)", () => {
+  /* Las filas de partidas son botones, Tab no se escapa de la hoja de ajustes
+     y la lista de jugadas se recorre con ↑ ↓, Inicio y Fin cuando tiene foco. */
+  assert.ok(html.includes('`<div data-i="${i}" tabindex="0" role="button"'), "la fila llega con Tab");
+  assert.ok(html.includes('ev.target.matches(".lista > div[data-i]")'), "y Enter o Espacio la abren");
+  assert.ok(html.includes('id="jugadas" tabindex="0"'), "la lista de jugadas es enfocable");
+  assert.ok(html.includes('["ArrowUp", "ArrowDown", "Home", "End"].includes(tecla)'), "con ↑ ↓ Inicio Fin");
+  const hoja = html.slice(html.indexOf('if (!$("hojaAjustes").classList.contains("oculto")) {'));
+  assert.ok(hoja.slice(0, 1200).includes('if (tecla === "Tab")'), "Tab da la vuelta adentro de la hoja");
+  const v = html.slice(html.indexOf("function volver()"), html.indexOf("function enfocarLaFila()"));
+  assert.ok(v.includes("enfocarLaFila();"), "al volver, el foco va a la fila que se abrió");
+});

@@ -304,6 +304,10 @@
   .lista > div { padding: var(--e-3) var(--e-3); border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
   .lista > div:last-child { border-bottom: 0; }
   .lista > div.sel { font-weight: 700; border-left: 3px solid var(--acento); padding-left: 9px; }
+  /* EL TECLADO LLEGA A LAS FILAS (v0.153, [PC]): el aro va ADENTRO de la fila
+     (offset negativo) porque la lista recorta lo que se sale de su caja */
+  .lista > div:focus-visible, .jugadas:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: -2px; }
   /* !important a propósito: es una utilidad de un solo uso, y sin eso cualquier
      regla posterior que fije display —.evalbar { display: flex } lo hizo— gana
      por venir después con la misma especificidad, y el elemento no se esconde.
@@ -1474,7 +1478,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.152 · 17-11";
+  window.VERSION = "v0.153 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1922,7 +1926,7 @@
         <button class="chico" id="btnAlts">Ver las tres mejores</button></div>
       <div class="altLista" id="altLista"></div>
     </div>
-    <div class="jugadas" id="jugadas"></div>
+    <div class="jugadas" id="jugadas" tabindex="0" role="group" aria-label="Jugadas: ↑ ↓ para pasar, Inicio y Fin para ir a la punta"></div>
   </aside>
   </div>
   <div class="curva" id="curva" role="img"
@@ -4213,7 +4217,18 @@ function irAPantalla(v) {
 
 function volver() {
   if (history.state && history.state.vista) history.back();
-  else { quieto(); mostrarVista("inicio", { scroll: true }); }
+  else { quieto(); mostrarVista("inicio", { scroll: true }); enfocarLaFila(); }
+}
+
+/* AL VOLVER, EL FOCO A LA FILA QUE SE ABRIÓ (v0.153, [PC]; revisor). El "‹"
+   que lo tenía ya no se ve, así que el foco caía en <body> y para abrir la
+   partida siguiente había que tabear de nuevo desde arriba. Es lo mismo que
+   hace la hoja de ajustes con la tuerca. Sin scroll: la pantalla queda donde
+   la deja `mostrarVista`. Y no aparece ningún aro si se volvió tocando: el
+   navegador lo muestra solo cuando se viene del teclado. */
+function enfocarLaFila() {
+  const f = document.querySelector(VISTA === "mes" ? "#mesLista > div.sel" : "#partidas > div.sel");
+  if (f && f.offsetParent) f.focus({ preventScroll: true });
 }
 
 /* El navegador guarda su propia posición de scroll por entrada de historial y
@@ -4225,6 +4240,7 @@ try { history.scrollRestoration = "manual"; } catch (e) { /* navegador viejo */ 
 window.addEventListener("popstate", ev => {
   quieto();
   mostrarVista((ev.state && ev.state.vista) || "inicio", { scroll: true });
+  enfocarLaFila();
 });
 const log = (...a) => window.LOG.add("·", a.join(" "));
 
@@ -6281,7 +6297,7 @@ function filaDePartida(g, i, prec, sel, cab) {
   const rival = lado === "w" ? n : lado === "b" ? b : `${b} vs ${n}`;
   const fin = lado ? (PALABRA_FIN[resultadoDeLado(lado, g.white.result ? g : null, cab)] || "")
     : g.white.result === "win" ? "1-0" : g.black.result === "win" ? "0-1" : "Tablas";
-  return `<div data-i="${i}"${sel ? ' class="sel"' : ""}>` +
+  return `<div data-i="${i}" tabindex="0" role="button"${sel ? ' class="sel"' : ""}>` +
     `<span class="rival">${sinHtml(rival || "?")}</span><span class="res">${fin}</span>` +
     `<span class="prec" title="tu precisión">${typeof prec === "number" ? "prec.\u00a0" + prec : prec}</span>` +
     `<span class="fecha">${g.end_time ? fechaCorta(g.end_time) : ""}</span></div>`;
@@ -8661,6 +8677,34 @@ document.addEventListener("keydown", seguro("teclas", ev => {
      abiertos, las flechas no tienen que estar navegando la partida de atrás. */
   if (!$("hojaAjustes").classList.contains("oculto")) {
     if (tecla === "Escape") { ev.preventDefault(); verAjustes(false); }
+    /* TAB NO SE ESCAPA DE LA HOJA (v0.153, [PC]): es `aria-modal`, así que
+       el foco da la vuelta adentro en vez de irse a los botones de atrás,
+       que con la hoja abierta no se ven. */
+    if (tecla === "Tab") {
+      const hoja = $("hojaAjustes");
+      const fs = [...hoja.querySelectorAll("button, input, select, textarea, a[href], [tabindex]")]
+        .filter(x => !x.disabled && x.tabIndex >= 0 && x.getClientRects().length);
+      const i = fs.indexOf(document.activeElement);
+      if (fs.length && (i < 0 || (ev.shiftKey ? i === 0 : i === fs.length - 1))) {
+        ev.preventDefault();
+        fs[ev.shiftKey ? fs.length - 1 : 0].focus();
+      }
+    }
+    return;
+  }
+  /* LAS FILAS DE PARTIDAS SON BOTONES (v0.153, [PC]): Tab llega a cada una y
+     Enter o Espacio la abren, igual que el clic. */
+  if ((tecla === "Enter" || tecla === " ") && ev.target.matches && ev.target.matches(".lista > div[data-i]")) {
+    ev.preventDefault(); ev.target.click(); return;
+  }
+  /* LA LISTA DE JUGADAS SE RECORRE CON ↑ ↓, INICIO Y FIN (v0.153, [PC]) cuando
+     tiene el foco: es una lista vertical y ←/→ ya pasan desde cualquier lado.
+     Solo con el foco ahí, porque sin él ↑ ↓ e Inicio/Fin mueven la página. */
+  if (ev.target === $("jugadas") && R && !ev.ctrlKey && !ev.altKey && !ev.metaKey &&
+      ["ArrowUp", "ArrowDown", "Home", "End"].includes(tecla)) {
+    ev.preventDefault();
+    if (tecla === "ArrowUp" || tecla === "ArrowDown") pasarConVariante(tecla === "ArrowDown" ? 1 : -1);
+    else irA(tecla === "Home" ? -1 : R.filas.length - 1);
     return;
   }
   /* SIN Ctrl, Alt NI Meta TAMPOCO LAS FLECHAS (v0.144): Alt+← es "atrás" del
