@@ -531,12 +531,12 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.149):** para que el tablero no se mueva, la
-  tarjeta deja siempre lugar para dos renglones de frase, y con una frase
-  corta queda uno vacío abajo. El tablero del celu queda fijo 19 px más abajo
-  que en las jugadas cortas de antes. La otra era la C: la frase debajo del
-  tablero (gana 20 px de tablero, pero la explicación queda lejos de
-  "Mejor"/"Libro").
+- **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
+  línea del título y la frase a todo el ancho) y la A (el símbolo en su
+  columna, como antes, con el mismo lugar para dos renglones). Dijo *"por
+  ahora dejémoslo así, lo voy usando y vemos qué onda"* (17-nov). No se toca
+  hasta que diga; si elige la A, es volver la tarjeta a flex y dejar la
+  reserva de renglones (§7 del traspaso, v0.149).
 - **No sé si esto te copa (v0.148, del revisor):** en una jugada de libro los
   cuadritos de abajo siguen mostrando la mejor del motor y la pérdida. O se
   dejan, porque es dato crudo y a veces interesa ver que el motor prefiere

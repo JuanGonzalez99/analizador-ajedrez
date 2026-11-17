@@ -486,6 +486,12 @@ hay. Las primeras salen del historial del traspaso.
   mía:* lo que la pantalla dice al lado de una categoría no la puede
   contradecir.
 
+- **La tarjeta que no cambia de alto, a prueba** (17-nov-2026, v0.149):
+  le gusta que el tablero quede quieto; entre la B (símbolo en la línea del
+  título, frase a todo el ancho) y la A (símbolo en su columna) *"no sé si
+  prefiero la A"*, y la está usando para decidir. Hasta que diga, no se
+  cambia ninguna de las dos cosas.
+
 ### No le copa
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no
   entra en un renglón: *"es medio molesto"* (16-nov-2026, sobre la v0.148; a
