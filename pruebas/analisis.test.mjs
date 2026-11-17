@@ -3437,3 +3437,23 @@ test("el teclado fuera de la Partida (v0.153)", () => {
   const v = html.slice(html.indexOf("function volver()"), html.indexOf("function enfocarLaFila()"));
   assert.ok(v.includes("enfocarLaFila();"), "al volver, el foco va a la fila que se abrió");
 });
+
+test("el titular de una sección cerrada solo nombra lo que se aparta (v0.156)", () => {
+  const f = (nombre, malas, total) => ({ nombre, malas, total });
+  const r = n => `Con la ${n.toLowerCase()}`;
+  /* los espacios duros (número y %, el paréntesis) se comparan como espacios */
+  const tt = (...a) => T.titularTasas(...a).replace(/\u00a0/g, " ");
+  /* pocas malas en total: no se compara */
+  assert.equal(tt([f("Dama", 3, 10)], f("", 5, 200), r), "", "muda: lo dice una vez el rótulo");
+  /* 30 de 600 = 5 %; una fila de 20 de 60 tiene el piso del rango muy arriba */
+  assert.equal(tt([f("Dama", 20, 60), f("Torre", 4, 100)], f("", 30, 600), r),
+    "Con la dama: 33 % de malas, contra tu 5 %");
+  /* una fila un poco más alta pero con rango ancho no se nombra */
+  assert.equal(tt([f("Dama", 2, 20), f("Torre", 28, 580)], f("", 30, 600), r),
+    "Nada se aparta de tu 5 % de malas");
+  /* dos que se apartan: la de piso más alto y "y 1 más"; y las de Mecanismos traen `con` */
+  assert.equal(tt([{ nombre: "A", con: f("", 15, 50) }, { nombre: "B", con: f("", 20, 40) }],
+    f("", 40, 800), n => n), "B: 50 % de malas, contra tu 5 % (y 1 más)");
+  assert.equal(T.rotuloPieza("Torre"), "Con la torre");
+  assert.equal(T.rotuloPieza("Caballo"), "Con el caballo");
+});

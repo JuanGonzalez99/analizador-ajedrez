@@ -387,7 +387,7 @@ lo demás se dibuja contra ella.
       (revisor, v0.146; leve, ya estaba). La banda va de borde a borde de la
       columna y el texto arranca al ras de su borde izquierdo, sin aire.
       ¿El hover necesita banda, o alcanza con el cursor y la flecha?
-- [ ] **Lavado de cara: que cada sección cerrada del Mes adelante su dato**
+- [x] **Lavado de cara: que cada sección cerrada del Mes adelante su dato** (v0.156, 17-nov: la A entre tres — un renglón gris debajo del título, solo cerrada; nombra una fila solo si se aparta de verdad)
       (la C de las variantes de la v0.146; revisor: sirve, pero es otro ítem).
       Un titular por tabla bajo el título ("viste 3 de 4"), para leer la pila
       sin abrirla. Hay que definir qué dice cada una. Con variantes.
@@ -556,6 +556,12 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.156):** cada sección cerrada del Mes tiene un
+  renglón gris con su dato ("Con la dama: 12 % de malas, contra tu 4 %";
+  "Nada se aparta de tu 4 % de malas"; con menos de 20 malas en el mes,
+  "Pocas jugadas malas para comparar todavía"). Nombra una fila solo si se
+  aparta de verdad, con el margen de la tabla. La otra forma era solo el
+  dato corto a la derecha ("dama · 12 %"), sin alargar la página.
 - **A prueba (v0.155, compu):** el hover de los títulos del Mes, solo la
   flecha. Juan: *"es re sutil… dejala así"*; si al usarlo no le gusta, la C
   (banda suave con aire y puntas redondeadas).

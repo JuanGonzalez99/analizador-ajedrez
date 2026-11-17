@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.155**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.156**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,45 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.156, cada sección cerrada del Mes adelanta su dato** (lavado del
+revisor, la C de la v0.146; la A entre tres con ajustes de contenido, 17-nov;
+celu y PC). Un renglón tenue (`.tl`, `--t-leyenda`, `--tenue`) debajo del
+título de cada sección, **solo cerrada**: abierta, habla la tabla. Tres
+formas a 386 (`pruebas/maqueta-titular.mjs`, no se commitea): **A, el renglón
+debajo**; B, el texto a la derecha en la misma línea (a 386 partía los títulos
+en tres renglones); C, solo el dato corto ("dama · 12 %", "parejos", "16"),
+que no alarga nada pero hay que descifrarlo: el error de "Ganada 89" seis
+veces. La A alarga la página ~15 px por sección cerrada.
+- **Qué dice cada una** (decidido con el revisor; es lo grande de esta versión
+  y va de duda a Juan):
+  - Partida por partida: "16 partidas, de 61 a 92 de precisión" (sin las
+    asistidas; del ritmo elegido, como la lista).
+  - Riesgo por franja, Por pieza movida, Por tramo y Mecanismos
+    (`titularTasas`): nombra una fila **solo si se aparta de verdad**, o sea
+    si el piso de su rango de Wilson queda por encima de la tasa general de
+    malas: "Con la dama: 12 % de malas, contra tu 4 %". Varias: la de piso más
+    alto y "(y N más)". Ninguna: "Nada se aparta de tu 4 % de malas". **Con
+    menos de 20 malas en total** (`MIN_MALAS_TITULAR`, `pocasMalas`) las
+    cuatro quedan mudas y "Pocas jugadas malas para comparar todavía" va
+    **una sola vez**, bajo el rótulo "Jugada por jugada" (`#capJugadas`):
+    es un dato del mes, no de cada sección, y cuatro renglones iguales
+    enterraban el de Capturas (corrección del revisor). Que los rangos se
+    pisen con pocos datos es falta de datos, no parejura (§5).
+  - Espacios duros entre el número y el "%" y adentro de "(y 1 más)": a 386
+    Mecanismos ocupa dos renglones y cortaba "4 / % (y 1 más)". Medido con
+    los textos más largos escritos en la app: corta limpio.
+  - Capturas: "Tomaste 3 de las 4 que ganaban material" (la fila canario).
+  - Cómo terminaron (abierta de fábrica): la fila más frecuente con las mismas
+    palabras que la tabla, "Gané por abandono: 6 de 16".
+- Las funciones puras (`titularTasas`, `porCiento`, rótulos) viven en el bloque
+  de tablas y se prueban con `extraer-tablas.mjs`; la prueba agarró que en
+  Mecanismos el nombre de la fila se pisaba con el `nombre` vacío de `tasa()`.
+  `porCiento` pasa por `pct`: la prueba de §5 no deja calcular una tasa en
+  otro lado. `titular()` escribe el `<span>` y la rama vacía de `pintarMes`
+  los borra.
+- Celu: cambian `mes` y `mes-seccion` (los renglones nuevos) y las que
+  muestran la versión.
 
 **v0.155, [PC] el hover de los títulos de sección del Mes es la flecha**
 (lavado del revisor sobre la v0.146; la B entre cuatro, 17-nov). Era una banda

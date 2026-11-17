@@ -218,6 +218,19 @@
                        font-weight: 600; list-style: none; display: flex;
                        align-items: center; gap: 14px; }
   .seccion > summary > .tit { flex: 1; min-width: 0; }
+  /* EL TITULAR DE LA SECCIÓN CERRADA (v0.156; lavado del revisor, la C de
+     la v0.146): un renglón tenue debajo del título con lo que la tabla
+     tiene para decir, para leer la pila sin abrirla. Abierta, habla la
+     tabla y el renglón se va. Ganó la A de tres (la B, a la derecha, partía
+     los títulos en tres renglones a 386; la C, solo "dama · 12 %", había que
+     descifrarla). Los textos salen de `titularDe…`. */
+  .seccion > summary .tl { display: block; font-weight: 400; font-size: var(--t-leyenda);
+                           color: var(--tenue); margin-top: 2px; }
+  .seccion[open] > summary .tl, .seccion > summary .tl:empty { display: none; }
+  /* con pocas malas en el mes lo dice UNA vez, bajo el rótulo, y no en las
+     cuatro tablas de tasas: es un dato del mes, no de cada sección (revisor) */
+  #capJugadas { margin: 0 0 var(--e-2); }
+  #capJugadas:empty { display: none; }
   .seccion > summary::-webkit-details-marker { display: none; }
   .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
                               color: var(--tenue); font-size: 18px;
@@ -1493,7 +1506,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.155 · 17-11";
+  window.VERSION = "v0.156 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1809,6 +1822,7 @@
     <div id="mesLista" class="lista"></div>
   </details>
   <h2 class="rotulo">Jugada por jugada</h2>
+  <p class="cap capGrupo" id="capJugadas"></p>
   <details class="seccion">
     <summary><span class="tit">Riesgo por franja de ventaja</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMesFranja"></p>
@@ -7522,6 +7536,47 @@ function textoSolape(filas) {
   return ` Ojo, hay filas que se solapan (${pares.map(p => p.texto).join("; ")})` + cola;
 }
 
+/* LOS TITULARES DE LAS SECCIONES (v0.156). Se escriben en un <span class="tl">
+   adentro del título; vacío, no se ve. La regla de fondo es la de §5: no se
+   afirma lo que no está medido.
+   - En las tablas de tasas y en Mecanismos se nombra una fila SOLO si se
+     aparta de verdad: el piso de su rango de Wilson queda por encima de la
+     tasa general de malas. Es conservador —la general incluye a la propia
+     fila— y está bien que lo sea. Si se apartan varias, la de piso más alto
+     y "y N más"; nunca una lista.
+   - Con pocas malas en total, que los rangos se pisen es falta de datos y
+     no parejura: por debajo de MIN_MALAS_TITULAR las cuatro quedan mudas y
+     lo dice UNA vez `#capJugadas`, bajo el rótulo (`pocasMalas`).
+   - La comparación va en el renglón ("contra tu 4 %"), para no tener que
+     acordarse de la tasa general. */
+const MIN_MALAS_TITULAR = 20;
+const pocasMalas = general => general.malas < MIN_MALAS_TITULAR;
+function titular(idTabla, texto) {
+  const tit = $(idTabla).closest("details").querySelector("summary .tit");
+  let tl = tit.querySelector(".tl");
+  if (!tl) { tl = document.createElement("span"); tl.className = "tl"; tit.appendChild(tl); }
+  tl.textContent = texto || "";
+}
+/* por `pct`, que es el único lugar donde se calcula una tasa (prueba de §5) */
+const porCiento = f => `${Math.round(+pct(f))}\u00a0%`;   /* el % no se separa del número */
+function titularTasas(filas, general, rotulo) {
+  if (!general.total) return "";
+  if (pocasMalas(general)) return "";
+  const tg = +pct(general);
+  const aparte = filas
+    .map(f => f.con ? Object.assign({}, f.con, { nombre: f.nombre }) : f)
+    .filter(f => f.total && rangoWilson(f.malas, f.total).lo > tg)
+    .sort((a, b) => rangoWilson(b.malas, b.total).lo - rangoWilson(a.malas, a.total).lo);
+  if (!aparte.length) return `Nada se aparta de tu ${porCiento(general)} de malas`;
+  const f = aparte[0];
+  return `${rotulo(f.nombre)}: ${porCiento(f)} de malas, contra tu ` +
+         porCiento(general) + (aparte.length > 1 ? `\u00a0(y\u00a0${aparte.length - 1}\u00a0más)` : "");
+}
+const ARTICULO = { Torre: "la", Dama: "la" };
+const rotuloPieza = n => `Con ${ARTICULO[n] || "el"} ${n.toLowerCase()}`;
+const rotuloTramo = n => `Jugadas ${n}`;
+const rotuloFranja = n => `Con ${n}`;
+
 /* ================== fin del bloque de tablas =================== */
 const NOMBRE_PIEZA = { p: "Peón", n: "Caballo", b: "Alfil", r: "Torre", q: "Dama", k: "Rey" };
 const TRAMOS = [["1 a 10", n => n <= 10], ["11 a 25", n => n > 10 && n <= 25],
@@ -7556,6 +7611,10 @@ function pintarDetalle(todas, porPartida, tiempo) {
      tasa(conCap.filter(f => !f.tomoBuena && !f.tomoConOtra && f.esCaptura), "Tomé otra"),
      tasa(conCap.filter(f => !f.tomoBuena && !f.tomoConOtra && !f.esCaptura), "No capturé")],
     "Situación");
+  const vi = conCap.filter(f => f.tomoBuena).length;
+  titular("mesCapturas", !conCap.length ? ""
+    : conCap.length === 1 ? `${vi ? "Tomaste" : "No tomaste"} la única que ganaba material`
+    : `Tomaste ${vi} de las ${conCap.length} que ganaban material`);
 
   const { trasMala } = paresDeErrores(porPartida);
   tablaContrastes("mesMecanismos", "capMecanismos",
@@ -7564,18 +7623,26 @@ function pintarDetalle(todas, porPartida, tiempo) {
     [contraste(todas, f => f.colgada, "Dejé comible la pieza que moví"),
      { nombre: "Jugada siguiente a una mala", dentro: trasMala, con: tasa(trasMala) }],
     "Mecanismo", tasa(todas));
+  const general = tasa(todas);
+  $("capJugadas").textContent = general.total && pocasMalas(general)
+    ? "Pocas jugadas malas para comparar todavía" : "";
+  titular("mesMecanismos", titularTasas(
+    [contraste(todas, f => f.colgada, "Dejé comible la pieza que moví"),
+     { nombre: "Jugada siguiente a una mala", con: tasa(trasMala) }], general, n => n));
 
+  const piezas = Object.keys(NOMBRE_PIEZA).map(k =>
+    tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total);
   tablaTasas("mesPieza", "capPieza",
     "Compara situaciones, no jugadas: con qué pieza se movió y qué porcentaje " +
     "de esas jugadas salió mal.",
-    Object.keys(NOMBRE_PIEZA).map(k =>
-      tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total),
-    "Pieza", tiempo);
+    piezas, "Pieza", tiempo);
+  titular("mesPieza", titularTasas(piezas, general, rotuloPieza));
 
+  const tramos = TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom));
   tablaTasas("mesTramo", "capTramo",
     "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
-    TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom)),
-    "Jugadas", tiempo);
+    tramos, "Jugadas", tiempo);
+  titular("mesTramo", titularTasas(tramos, general, rotuloTramo));
 }
 
 /* De dónde salen los números de las tablas. La lista de partidas NO pasa por
@@ -7715,6 +7782,8 @@ function pintarMes(prof) {
     /* "mesDesenlaces" también (v0.146): la sección va abierta de fábrica, y sin
        esto mostraba la tabla del mes anterior */
     ["mesDesenlaces", "mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => $(t).innerHTML = "");
+    ["mesDesenlaces", "mesFranja", "mesCapturas", "mesMecanismos", "mesPieza", "mesTramo"].forEach(t => titular(t, ""));
+    $("capJugadas").textContent = "";
     pintarLista(d.tiempo && d.tiempo.cadencia);
     return;
   }
@@ -7765,11 +7834,20 @@ function pintarMes(prof) {
     "táctica—. El motivo lo escribe siempre el que no ganó: chess.com le pone " +
     "\"win\" al ganador y el detalle al otro.",
     filasDesenlace(d.desenlaces), "Desenlace", ["partida", "partidas"]);
+  /* con las mismas palabras que la fila de la tabla: dos voces para lo
+     mismo se leen como dos cosas */
+  {
+    const fd = filasDesenlace(d.desenlaces), n = fd.reduce((a, f) => a + f.total, 0);
+    const top = fd.slice().sort((a, b) => b.total - a.total)[0];
+    titular("mesDesenlaces", top ? `${top.nombre}: ${top.total} de ${n}` : "");
+  }
 
+  const franjas = FRANJAS.map(([nom, t]) => tasa(todas.filter(f => t(f.franja)), nom));
+  titular("mesFranja", titularTasas(franjas, tasa(todas), rotuloFranja));
   tablaTasas("mesFranja", "capMesFranja",
     "Compara situaciones, no jugadas: de cada nivel de ventaja, cuántas " +
     "jugadas salieron mal sobre cuántas se jugaron desde ahí.",
-    FRANJAS.map(([nom, t]) => tasa(todas.filter(f => t(f.franja)), nom)),
+    franjas,
     /* la columna de segundos sale sola —tablaTasas la dibuja si las filas la
        tienen— y acá significa algo: cuánto se piensa según la ventaja. Se le
        pasa `d.tiempo` para que la leyenda pueda avisar si falta algún reloj. */
@@ -7797,6 +7875,13 @@ function pintarLista(cad) {
     return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? "" : Math.round(p),
                          false, r.cab);
   }).join("");
+  {
+    const rs = MES.resultados.filter(delRitmo);
+    const ps = rs.filter(r => !esAsistida(r)).map(precisionDe).filter(p => p != null).map(Math.round);
+    const lo = Math.min(...ps), hi = Math.max(...ps);
+    titular("mesLista", !rs.length ? "" : cuantas(rs.length, "partida", "partidas") +
+      (!ps.length ? "" : lo === hi ? `, ${lo} de precisión` : `, de ${lo} a ${hi} de precisión`));
+  }
   pintarLeyenda("capLista", [], [cad ? `Las partidas analizadas de ${nombreMes($("meses").value)} a ${cad.nombre}.`
                                         : `Todas las partidas analizadas de ${nombreMes($("meses").value)}.`,
     "Tocá una para abrirla.", "Las asistidas van marcadas y no entran en los números."]);
