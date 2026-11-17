@@ -3089,7 +3089,7 @@ test("una pieza CLAVADA no está atrapada, está clavada", () => {
      motivo equivocado, y ya hay una frase que lo dice mejor. */
   const o = mirar("4k3/8/8/8/4n3/8/8/R6K w - - 0 1", "a1e1");
   assert.equal(o.atrapada, null);
-  assert.deepEqual(o.clavadas, [{ sq: "e4", pieza: "n" }]);
+  assert.deepEqual(o.clavadas, [{ sq: "e4", pieza: "n", contra: "k" }]);
 });
 
 test("jaque descubierto: el jaque no lo da la pieza que se movió", () => {
@@ -3524,4 +3524,28 @@ test("en una omisión, lo que había va primero (v0.161)", () => {
   assert.equal(A.enCambio([h, { txt: "Bb4 clava la dama." }])[1].txt, "En cambio, Bb4 clava la dama.",
     "si arranca con una jugada, no baja");
   assert.equal(A.enCambio([h]).length, 1, "sola, queda sola");
+});
+
+test("la clavada dice contra qué, y también contra la dama (v0.162)", () => {
+  /* contra la dama: la torre clava el caballo de e4, que tiene la dama detrás
+     (no contra el rey: la dama está en el medio) */
+  const rel = mirar("4k3/8/4q3/8/4n3/8/8/R6K w - - 0 1", "a1e1");
+  assert.deepEqual(rel.clavadas, [{ sq: "e4", pieza: "n", contra: "q" }]);
+  /* una dama no clava contra otra dama: correr la pieza solo ofrece el cambio */
+  assert.deepEqual(mirar("4k3/8/4q3/8/4n3/8/8/Q6K w - - 0 1", "a1e1").clavadas, []);
+  /* si ya estaba clavada, la jugada no se la atribuye */
+  assert.deepEqual(mirar("4k3/8/4q3/8/4n3/8/8/4R2K w - - 0 1", "h1g1").clavadas, []);
+});
+
+test("clavar ya es atacar: una sola frase (v0.162)", () => {
+  /* el 10… Bb4 de Juan, en chico: el alfil ataca la dama Y la clava contra el
+     rey; la tarjeta dice la clavada, no las dos */
+  const ant = "4k3/3q4/8/8/8/8/8/4KB2 w - - 0 1";
+  const j = new Chess(ant); const m = j.move({ from: "f1", to: "b5" });
+  const f = { fen: j.fen(), uci: "f1b5", turno: "w", pieza: "b", san: m.san, n: 1, cat: "bien", perdida: 0 };
+  const obs = A.observarJugada(f, ant);
+  assert.deepEqual(obs.clavadas, [{ sq: "d7", pieza: "q", contra: "k" }]);
+  const txt = A.partesDeLaExplicacion(f, null, true, null, obs, { ranuras: 2 }).map(p => p.txt);
+  assert.ok(txt.includes("Clava la dama de d7 contra el rey."), txt.join(" | "));
+  assert.ok(!txt.some(t => t.startsWith("Ataca la dama")), "y no repite el ataque");
 });

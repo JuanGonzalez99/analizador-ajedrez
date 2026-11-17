@@ -1505,7 +1505,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.161 · 17-11";
+  window.VERSION = "v0.162 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3141,9 +3141,24 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   if (o.descubierto)
     fuertes.push({ txt: `Es un jaque descubierto: lo da ${piezaEn(o.descubierto.pieza, o.descubierto.sq)}.`,
                    marca: "jaque descubierto", sq: o.descubierto.sq });
-  if (o.clavadas && o.clavadas.length) {
-    const c = o.clavadas[0];
-    fuertes.push({ txt: `Clava ${piezaEn(c.pieza, c.sq)}.`, marca: "Clava", sq: c.sq });
+  /* LA CLAVADA DICE CONTRA QUÉ (v0.162, Juan): contra el rey —la pieza no
+     se puede mover de la línea— o contra la dama, que es la que queda detrás
+     y se pierde si la pieza se corre. */
+  const fraseClavada = c => ({ txt: `Clava ${piezaEn(c.pieza, c.sq)} contra ` +
+                                    `${c.contra === "q" ? "la dama" : "el rey"}.`,
+                               marca: "Clava", sq: c.sq });
+  if (o.clavadas && o.clavadas.length) fuertes.push(fraseClavada(o.clavadas[0]));
+  /* CLAVAR YA ES ATACAR (v0.162; Juan: "¿no queda mejor 'clava' en lugar de
+     'ataca', ya que clavar implica atacar?"). Si la pieza atacada es la misma
+     que queda clavada, la frase del ataque pasa a ser la de la clavada, en el
+     lugar del ataque, y la clavada no se repite más abajo. */
+  if (ataque && !Array.isArray(ataque.sq) && o.clavadas) {
+    const c = o.clavadas.find(x => x.sq === ataque.sq);
+    if (c) {
+      ataque = fraseClavada(c);
+      const k = fuertes.findIndex(x => x.marca === "Clava" && x.sq === c.sq);
+      if (k >= 0) fuertes.splice(k, 1);
+    }
   }
   if (o.descubierta)
     fuertes.push({ txt: `Descubre ${piezaEn(o.descubierta.pieza, o.descubierta.sq)} sobre ` +
@@ -3800,7 +3815,36 @@ function observarJugada(f, fenAntes = null) {
       const sq = "abcdefgh"[c] + (8 - r);
       if (!estaClavada(f.fen, sq, reyRival)) continue;
       if (fenAntes && estaClavada(fenAntes, sq, reyRival)) continue;
-      clavadas.push({ sq, pieza: p.type });
+      clavadas.push({ sq, pieza: p.type, contra: "k" });
+    }
+    /* Y CONTRA LA DAMA (v0.162, Juan): la clavada relativa. Detrás de la pieza
+       está la dama rival, y lo que clava es una torre o un alfil (si clavara
+       una dama, correr la pieza solo ofrece cambiar damas). La dama no puede
+       estar clavada contra sí misma, y las clavadas contra el rey van primero. */
+    const damas = [];
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = tablero[r][c];
+      if (p && p.type === "q" && p.color === rival) damas.push("abcdefgh"[c] + (8 - r));
+    }
+    const contraDama = (fen, tab, sq) => damas.some(dq => {
+      const cl = quienLaClava(tab, sq, dq);
+      if (!cl) return false;
+      const t = tab[8 - +cl[1]]["abcdefgh".indexOf(cl[0])];
+      return t && t.type !== "q";
+    });
+    const tabAntes = fenAntes ? new Chess(fenAntes).board() : null;
+    for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
+      const p = tablero[r][c];
+      if (!p || p.color !== rival || p.type === "k" || p.type === "q") continue;
+      const sq = "abcdefgh"[c] + (8 - r);
+      if (clavadas.some(x => x.sq === sq)) continue;
+      if (!contraDama(f.fen, tablero, sq)) continue;
+      /* antes: la misma pieza en la misma casilla, y la dama donde estaba */
+      if (tabAntes) {
+        const q = tabAntes[r][c];
+        if (q && q.type === p.type && q.color === p.color && contraDama(fenAntes, tabAntes, sq)) continue;
+      }
+      clavadas.push({ sq, pieza: p.type, contra: "q" });
     }
     /* el peón que ACABA de quedar pasado: si ya lo era antes de moverse, la
        jugada no hizo nada nuevo */

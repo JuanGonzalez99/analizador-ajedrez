@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.161**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.162**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.162, clavar ya es atacar, y las clavadas contra la dama** (Juan,
+17-nov, sobre la tarjeta de 10… Bb4: *"¿no queda mejor 'clava' en lugar de
+'ataca', ya que clavar implica atacar?"* y *"¿se pueden agregar clavadas
+contra la reina?"*).
+- **Una sola frase**: si la pieza que la jugada ataca es la misma que queda
+  clavada, el ataque pasa a decir la clavada, en el lugar del ataque, y la
+  clavada no se repite entre las fuertes. Si ataca otra cosa, quedan las dos.
+  "Es un ataque doble" no se toca.
+- **La clavada dice contra qué**: "Clava la dama de d2 contra el rey." /
+  "Clava el caballo de e4 contra la dama." (`fraseClavada`, `contra: "k"|"q"`).
+- **Clavadas contra la dama** (relativas) en `observarJugada`: detrás de la
+  pieza rival está su dama, y lo que clava es una torre o un alfil (una dama
+  clavando contra otra dama solo ofrece el cambio). La dama no cuenta como
+  clavada contra sí misma, una pieza ya clavada contra el rey no se repite, y
+  si ya estaba clavada antes de la jugada no se la atribuye. Usa la misma
+  geometría que la absoluta (`quienLaClava` con la casilla de la dama).
+- La tarjeta de Juan queda: "Había exd4, que se llevaba el caballo. En
+  cambio, clava la dama de d2 contra el rey."
+- Pruebas: la relativa, la de dama contra dama, la que ya estaba, y la de
+  Juan en chico (alfil a b5 que ataca y clava la dama de d7).
 
 **v0.161, en una omisión la tarjeta dice primero qué se dejó pasar** (Juan,
 17-nov, con una captura de 10… Bb4: *"la marca como omisión, pero no dice
