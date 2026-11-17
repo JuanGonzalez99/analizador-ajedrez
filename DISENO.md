@@ -505,6 +505,12 @@ hay. Las primeras salen del historial del traspaso.
   *"quedó bien"* (17-nov-2026). No pidió la C (el renglón "Elegiste f6: tocá
   adónde va."). *Lectura mía:* un gesto que todavía no hizo nada no cambia la
   pantalla; el tablero ya lo dice con los puntos, como en chess.com.
+- **El hover de los títulos del Mes, solo la flecha, a prueba** (v0.155,
+  17-nov-2026): *"es re sutil… ni idea, dejala así. Si en algún momento lo
+  pruebo te digo qué onda"*. No es un "me copa": queda hasta que lo use. Si
+  dice que no se nota, va la C (la banda suave con aire y puntas
+  redondeadas). *Lectura mía:* en un estado pasajero de la compu le da igual
+  lo sutil; no hace falta insistir con eso.
 
 ### No le copa
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no

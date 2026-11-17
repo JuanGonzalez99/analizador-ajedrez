@@ -556,10 +556,9 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.155, compu):** con el mouse encima, el título
-  de una sección del Mes ya no se pinta con una banda: solo se aclara la
-  flecha. Si lo sentís muerto, la otra es una banda suave con aire y las
-  puntas redondeadas (la C).
+- **A prueba (v0.155, compu):** el hover de los títulos del Mes, solo la
+  flecha. Juan: *"es re sutil… dejala así"*; si al usarlo no le gusta, la C
+  (banda suave con aire y puntas redondeadas).
 - **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
   línea del título y la frase a todo el ancho) y la A (el símbolo en su
   columna, como antes, con el mismo lugar para dos renglones). Dijo *"por
