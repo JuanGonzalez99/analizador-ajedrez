@@ -791,6 +791,34 @@
                     box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
   .vlinea .vj .sm { font-weight: 700; margin-right: 3px; }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
+  /* LA TARJETA DEL VEREDICTO NO CAMBIA DE ALTO (v0.149, lavado de cara; Juan,
+     16-nov: "es medio molesto" que el tablero baje 19 px cuando la frase no
+     entra en un renglón; a 386 pasaba en 5 de 37 jugadas). Dos cosas, la B
+     entre tres que eligió el revisor:
+     1. LA FRASE VA A TODO EL ANCHO de la tarjeta, y el símbolo pasa a la línea
+        del título, chico, como en la lista de jugadas. Eran 26 + 12 de columna
+        que no tenían nada debajo: de 6 a 8 letras más por renglón, y la frase
+        de dos renglones se parte pareja, sin la palabra viuda.
+     2. EL RENGLÓN DE LA FRASE RESERVA LO QUE PUEDE LLEGAR A MEDIR: dos
+        renglones (dos frases como mucho, "corta" y "media") o tres con
+        "larga". Lo pone `aplicarLargoExp` en --rExp: que el tablero cambie de
+        lugar al tocar un ajuste está bien, es algo que hace uno; lo que no
+        puede es saltar al pasar jugadas. `min-height` y no `height`: si alguna
+        frase se pasara, la tarjeta crece en vez de cortarla.
+     El texto va ARRIBA en lo reservado y no centrado: centrado, la frase de un
+     renglón y la de dos quedaban a alturas distintas y saltaba el texto.
+     Descartadas: la A (lo mismo con la columna del símbolo; el hueco se veía
+     más vacío) y la C (la frase debajo del tablero, lejos de su categoría).
+     Solo #veredicto: la de la variante (#prueba) tiene la tira y el Volver. */
+  #veredicto { display: grid; grid-template-columns: auto 1fr auto; gap: 0;
+               grid-template-areas: "ico tit ev" "frase frase frase"; }
+  #veredicto.invertida { grid-template-columns: auto auto 1fr; grid-template-areas: "ev ico tit" "frase frase frase"; }
+  #veredicto > .txt { display: contents; }
+  #vIco { grid-area: ico; font-size: var(--t-cuerpo); min-width: 0; margin-right: var(--e-2); }
+  #vTit { grid-area: tit; min-width: 0; }
+  #vEv { grid-area: ev; margin-left: var(--e-2); }
+  #veredicto.invertida #vEv { margin-left: 0; margin-right: var(--e-2); }
+  #vSub, #vExp { grid-area: frase; min-height: calc(var(--rExp, 2) * 1lh); align-self: start; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: var(--e-2) auto 0; }
   /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
      horizontal, porque son lo mismo contado de dos maneras. Va pegada arriba de
@@ -1414,7 +1442,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.148.1 · 16-11";
+  window.VERSION = "v0.149 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4791,6 +4819,9 @@ const ranurasDeLaExplicacion = () =>
   (LARGOS_EXP[LARGO_EXP] || LARGOS_EXP.media).ranuras;
 function aplicarLargoExp(id) {
   LARGO_EXP = LARGOS_EXP[id] ? id : "media";
+  /* lo que reserva la tarjeta (v0.149, ver el CSS de #veredicto): dos frases
+     como mucho en corta y media, tres en larga */
+  $("veredicto").style.setProperty("--rExp", LARGO_EXP === "larga" ? 3 : 2);
   try { localStorage.setItem("largoExp", LARGO_EXP); } catch (e) { /* incógnito */ }
 }
 (function iniciarLargoExp() {

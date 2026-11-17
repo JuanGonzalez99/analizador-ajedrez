@@ -224,6 +224,15 @@ chequear("el mouse quieto no pide la previa", [
   ...(/if \(PRUEBA && !PRUEBA\.linea\.length\) return irA\(IDX \+ dir\);/.test(html) ? [] : ["una variante sin jugadas deja muertas las flechas"]),
 ]);
 
+/* La tarjeta del veredicto no cambia de alto al pasar jugadas (v0.149, Juan:
+   "es medio molesto"): el renglón de la frase reserva lo que puede medir, y el
+   ajuste de largo es el que dice cuánto. `mirar` y la maqueta lo midieron. */
+chequear("la tarjeta del veredicto no cambia de alto", [
+  ...(/#vSub, #vExp \{ grid-area: frase; min-height: calc\(var\(--rExp, 2\) \* 1lh\);/.test(html) ? [] : ["la frase no reserva sus renglones"]),
+  ...(/\$\("veredicto"\)\.style\.setProperty\("--rExp", LARGO_EXP === "larga" \? 3 : 2\);/.test(html) ? [] : ["la reserva no sigue al largo de la explicación"]),
+  ...(/#veredicto \{ display: grid;[^}]*gap: 0;/.test(html) ? [] : ["el gap de .veredicto se cuela entre las filas"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

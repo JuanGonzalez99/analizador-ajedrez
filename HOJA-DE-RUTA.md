@@ -335,7 +335,7 @@ lo demás se dibuja contra ella.
       640, o va el renglón del celu (rival · resultado · prec. · fecha)? La
       v0.128.1 ya achicó el hueco una vez: esto pide forma, no otro número. Con
       variantes.
-- [ ] **Lavado de cara: el alto de la tarjeta del veredicto** (revisor,
+- [x] **Lavado de cara: el alto de la tarjeta del veredicto** (v0.149, 17-nov: la B entre tres — la frase a todo el ancho, el símbolo en la línea del título, y lugar reservado para dos renglones, tres con "larga"; revisor,
       v0.148; celu, y PC en menor medida). A 386, el ancho de Juan, la tarjeta
       pasa de 61 a 80 y el tablero baja 19 px cada vez que la frase no entra en
       un renglón: en libro, 4 jugadas de 27 (eran 16 antes de la v0.148), con
@@ -526,6 +526,12 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.149):** para que el tablero no se mueva, la
+  tarjeta deja siempre lugar para dos renglones de frase, y con una frase
+  corta queda uno vacío abajo. El tablero del celu queda fijo 19 px más abajo
+  que en las jugadas cortas de antes. La otra era la C: la frase debajo del
+  tablero (gana 20 px de tablero, pero la explicación queda lejos de
+  "Mejor"/"Libro").
 - **No sé si esto te copa (v0.148, del revisor):** en una jugada de libro los
   cuadritos de abajo siguen mostrando la mejor del motor y la pérdida. O se
   dejan, porque es dato crudo y a veces interesa ver que el motor prefiere

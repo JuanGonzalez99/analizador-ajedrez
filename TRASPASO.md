@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.148.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.149**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4750,6 +4750,44 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.149, la tarjeta del veredicto no cambia de alto** (lavado del revisor
+sobre la v0.148; Juan, 16-nov: *"es medio molesto"*; la B entre tres, 17-nov;
+celu y compu). A 386 la tarjeta medía 61 con la frase en un renglón y 80 con
+dos, y el tablero bajaba 19 px: 5 de las 37 posiciones de la partida de prueba,
+la más larga de 90 caracteres (14… Kxh7, dos frases). Tres variantes sobre la
+app de verdad con `pantallas()` (`pruebas/maqueta-tarjeta.mjs`, no se
+commitea): A, el renglón de la frase reserva dos líneas; **B, lo mismo con la
+frase a todo el ancho y el símbolo en la línea del título**; C, la tarjeta con
+el título solo y la frase debajo del tablero (gana 20 px de tablero, pero la
+frase queda lejos de su categoría y la zona se lee en dos pedazos). El revisor
+eligió B: la columna del símbolo eran 26 + 12 px sin nada debajo, y a todo el
+ancho entran de 6 a 8 letras más por renglón (330 px a 386).
+- **`#veredicto` pasa de flex a grilla**, áreas `"ico tit ev" / "frase frase
+  frase"` (con `.invertida`, el número primero: `"ev ico tit"`), `.txt` en
+  `display: contents`, sin `gap` —el de `.veredicto` son 12 y se colaba entre
+  las filas: la tarjeta medía 92— y los espacios como márgenes del símbolo y
+  del número, así la posición inicial (sin símbolo) no deja un hueco. El
+  símbolo baja a `--t-cuerpo` (16), al tamaño del título. `#prueba` sigue en
+  flex: tiene la tira y el Volver.
+- **`#vSub` y `#vExp` tienen `min-height: calc(var(--rExp) * 1lh)`**, arriba
+  en lo reservado (centrado, el texto saltaba adentro de la tarjeta).
+  `aplicarLargoExp` pone `--rExp` en 2 (corta y media: dos frases como mucho)
+  o 3 (larga). Que el tablero cambie al tocar el ajuste está bien; que salte al
+  pasar jugadas, no. `min-height` y no `height`: si una frase se pasa, la
+  tarjeta crece en vez de cortarla.
+- Medido recorriendo las 37 posiciones: un solo lugar del tablero en cada caso
+  —170 a 386 y a 412 con corta y media, 189 con larga (la de Kxh7 con "Acá se
+  terminó la teoría." llena los tres renglones), y en la compu 86 a 1000×700 y
+  82 a 1200 y a 1600—. La tarjeta mide siempre 80 (99 con larga). En el celu
+  las cuatro cajitas terminan en ~696 de 760: todo lo de la jugada sigue sin
+  scrollear. En la compu la frase mide 312–352 px (~60 caracteres): no hizo
+  falta tope de ancho.
+- El costo, que va a Juan como duda: con una sola frase queda un renglón vacío
+  abajo, y el tablero del celu queda siempre 19 px más abajo que en las
+  jugadas de un renglón de antes.
+- Celu: cambian las capturas de la Partida (y Ajustes, que la tiene de fondo);
+  inicio y Mes iguales al byte salvo la versión.
 
 **v0.148.1, [PC] la fila de la lista: la precisión pegada al resultado**
 (lavado del revisor sobre la v0.129, "la fila como dos islas"; la C entre
