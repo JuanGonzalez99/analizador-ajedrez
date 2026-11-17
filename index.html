@@ -1506,7 +1506,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.156 · 17-11";
+  window.VERSION = "v0.157 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1824,7 +1824,7 @@
   <h2 class="rotulo">Jugada por jugada</h2>
   <p class="cap capGrupo" id="capJugadas"></p>
   <details class="seccion">
-    <summary><span class="tit">Riesgo por franja de ventaja</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <summary><span class="tit">Por ventaja antes de mover</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capMesFranja"></p>
     <div class="tw"><table id="mesFranja"></table></div>
   </details>
@@ -1832,11 +1832,6 @@
     <summary><span class="tit">Capturas que estaban disponibles</span><button type="button" class="ayuda" data-ayuda="capCapturas" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capCapturas"></p>
     <div class="tw"><table id="mesCapturas"></table></div>
-  </details>
-  <details class="seccion">
-    <summary><span class="tit">Mecanismos</span><button type="button" class="ayuda" data-ayuda="capMecanismos" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
-    <p class="cap" id="capMecanismos"></p>
-    <div class="tw"><table id="mesMecanismos"></table></div>
   </details>
   <details class="seccion">
     <summary><span class="tit">Por pieza movida</span><button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
@@ -1847,6 +1842,11 @@
     <summary><span class="tit">Por tramo de la partida</span><button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
     <p class="cap" id="capTramo"></p>
     <div class="tw"><table id="mesTramo"></table></div>
+  </details>
+  <details class="seccion">
+    <summary><span class="tit">Mecanismos</span><button type="button" class="ayuda" data-ayuda="capMecanismos" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capMecanismos"></p>
+    <div class="tw"><table id="mesMecanismos"></table></div>
   </details>
 
   <div class="fila filaSeguir"><button id="seguirMes" class="chico oculto"></button></div>
@@ -7055,7 +7055,8 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
      mejor que no esté y que la leyenda lo explique. */
   const conTiempo = filas.some(f => f.seg != null);
   pintarLeyenda(idCap,
-    [DEF_MALA],
+    /* cada definición entera en su renglón: a 386 cortaba "3+ / peones" */
+    [duro(DEF_MEJOR), duro(DEF_MALA)],
     [texto, conTiempo ? textoTiempo(tiempo) : "", AYUDA_RANGO]);
   /* "mediana" va en el encabezado y no en la leyenda: ahí no cuesta un renglón
      y queda al lado del número que califica. */
@@ -7063,11 +7064,15 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
      es. Nombrar la cantidad además le da cuerpo al encabezado, así que deja de
      verse suelto. La tabla de REPARTO se queda con "%" a propósito: ahí el
      número no es una tasa sino qué parte del total es cada fila. */
+  /* LO QUE SALE BIEN Y LO QUE SALE MAL, LADO A LADO (v0.157; Juan: "muy
+     centrado en jugadas malas"). Hasta la v0.156 eran Malas · Jugadas · Tasa,
+     o sea una sola pregunta. La cantidad de malas no se pierde: es la tasa
+     por las jugadas, y el ? lo explica. */
   $(idTabla).innerHTML = `
-    <thead><tr><th>${encabezado}</th><th>Malas</th><th>Jugadas</th><th>Tasa</th>` +
+    <thead><tr><th>${encabezado}</th><th>Jugadas</th><th>La mejor</th><th>Malas</th>` +
       (conTiempo ? '<th>Seg.<span class="sub">mediana</span></th>' : "") + `</tr></thead>
-    <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.malas}</td><td>${f.total}</td>` +
-      `<td>${textoPct(f)}</td>` +
+    <tbody>${filas.map(f => `<tr><td>${f.nombre}</td><td>${f.total}</td>` +
+      `<td>${textoPct(comoMejor(f))}</td><td>${textoPct(f)}</td>` +
       (conTiempo ? `<td>${f.seg == null ? "\u2014" : f.seg.toFixed(1)}</td>` : "") +
       `</tr>`).join("")}
     </tbody>`;
@@ -7078,6 +7083,9 @@ function tablaTasas(idTabla, idCap, texto, filas, encabezado, tiempo) {
    clasificación y esta no. La agregan solas tablaTasas y tablaContrastes, para
    que ninguna tabla pueda quedarse sin decirlo. */
 const DEF_MALA = "Mala = pierde 3+ peones";
+const DEF_MEJOR = "La mejor = la del motor, sin contar el libro";
+/* una definición no se parte: corta en el " · " de la leyenda y no adentro */
+const duro = t => t.replace(/ /g, "\u00a0");
 
 /* Toda leyenda se parte en dos, y el corte NO es por largo:
 
@@ -7382,6 +7390,12 @@ function textoMarcador(m) {
 }
 
 const esMala = f => f.perdida >= 3;
+/* la del motor o la que la iguala: las tres categorías de "la mejor" */
+const LA_MEJOR = new Set(["brillante", "genial", "mejor"]);
+const esLaMejor = f => LA_MEJOR.has(f.cat);
+/* la tasa de la mejor con la forma de una tasa de malas, para reusar
+   `pct`, `textoPct` y `rangoWilson` sin una línea paralela */
+const comoMejor = f => ({ nombre: f.nombre, malas: f.mejores, total: f.fueraDeLibro });
 /* Además de la tasa de malas, la mediana de segundos pensados. Van juntas
    porque son la misma agrupación —las jugadas de dama, las del final— vista de
    dos maneras, y separarlas obligaría a filtrar dos veces lo mismo.
@@ -7390,7 +7404,12 @@ const esMala = f => f.perdida >= 3;
 const tasa = (fs, nombre) => {
   const segs = [];
   for (const f of fs) if (f.seg != null) segs.push(f.seg);
+  /* LA MEJOR (v0.157, Juan: las tablas no pueden contar solo errores).
+     Sobre las jugadas fuera del libro: en el libro no se elige, así que
+     contarlas achataría el tramo de la apertura. */
+  const fuera = fs.filter(f => f.cat !== "libro");
   return { nombre, malas: fs.filter(esMala).length, total: fs.length,
+           mejores: fuera.filter(esLaMejor).length, fueraDeLibro: fuera.length,
            conSeg: segs.length,
            /* NO el mínimo de 30: ese es para porcentajes. Una mediana es mucho
               más robusta que una tasa de casos raros —2 malas de 21 es ruido,
@@ -7551,6 +7570,9 @@ function textoSolape(filas) {
      acordarse de la tasa general. */
 const MIN_MALAS_TITULAR = 20;
 const pocasMalas = general => general.malas < MIN_MALAS_TITULAR;
+/* unas cuatro partidas: por debajo, ningún rango deja nombrar nada */
+const MIN_JUGADAS_TITULAR = 150;
+const pocasJugadas = general => general.total < MIN_JUGADAS_TITULAR;
 function titular(idTabla, texto) {
   const tit = $(idTabla).closest("details").querySelector("summary .tit");
   let tl = tit.querySelector(".tl");
@@ -7559,18 +7581,29 @@ function titular(idTabla, texto) {
 }
 /* por `pct`, que es el único lugar donde se calcula una tasa (prueba de §5) */
 const porCiento = f => `${Math.round(+pct(f))}\u00a0%`;   /* el % no se separa del número */
-function titularTasas(filas, general, rotulo) {
-  if (!general.total) return "";
-  if (pocasMalas(general)) return "";
-  const tg = +pct(general);
-  const aparte = filas
-    .map(f => f.con ? Object.assign({}, f.con, { nombre: f.nombre }) : f)
-    .filter(f => f.total && rangoWilson(f.malas, f.total).lo > tg)
-    .sort((a, b) => rangoWilson(b.malas, b.total).lo - rangoWilson(a.malas, a.total).lo);
-  if (!aparte.length) return `Nada se aparta de tu ${porCiento(general)} de malas`;
-  const f = aparte[0];
-  return `${rotulo(f.nombre)}: ${porCiento(f)} de malas, contra tu ` +
-         porCiento(general) + (aparte.length > 1 ? `\u00a0(y\u00a0${aparte.length - 1}\u00a0más)` : "");
+function titularTasas(filas, general, rotulo, soloMalas = false) {
+  /* PRIMERO LO QUE SALE BIEN (v0.157; Juan: "muy centrado en jugadas
+     malas"). Una fila se nombra si el piso de su rango de Wilson queda por
+     encima de tu promedio: en "la mejor" (sale bien) o en malas (sale mal).
+     Con pocas jugadas no se compara nada (lo dice una vez `#capJugadas`), y
+     con pocas malas, las malas no. Mecanismos va `soloMalas`: es la única
+     tabla que mira errores a propósito. */
+  if (!general.total || pocasJugadas(general)) return "";
+  const norm = filas.map(f => f.con ? Object.assign({}, f.con, { nombre: f.nombre }) : f)
+                    .filter(f => f.total);
+  const piso = f => rangoWilson(f.malas, f.total).lo;
+  const porPiso = (a, b) => piso(b) - piso(a);
+  const gm = comoMejor(general);
+  const buenas = soloMalas || !gm.total ? []
+    : norm.map(comoMejor).filter(f => f.total && piso(f) > +pct(gm)).sort(porPiso);
+  const malas = pocasMalas(general) ? [] : norm.filter(f => piso(f) > +pct(general)).sort(porPiso);
+  const n = buenas.length + malas.length;
+  if (!n) return soloMalas ? (pocasMalas(general) ? "" : `Nada se aparta de tu ${porCiento(general)} de malas`)
+                           : "Nada se aparta de tu promedio";
+  const mas = n > 1 ? `\u00a0(y\u00a0${n - 1}\u00a0más)` : "";
+  if (buenas.length)
+    return `${rotulo(buenas[0].nombre)}: ${porCiento(buenas[0])} la mejor, contra tu ${porCiento(gm)}${mas}`;
+  return `${rotulo(malas[0].nombre)}: ${porCiento(malas[0])} de malas, contra tu ${porCiento(general)}${mas}`;
 }
 const ARTICULO = { Torre: "la", Dama: "la" };
 const rotuloPieza = n => `Con ${ARTICULO[n] || "el"} ${n.toLowerCase()}`;
@@ -7624,24 +7657,26 @@ function pintarDetalle(todas, porPartida, tiempo) {
      { nombre: "Jugada siguiente a una mala", dentro: trasMala, con: tasa(trasMala) }],
     "Mecanismo", tasa(todas));
   const general = tasa(todas);
-  $("capJugadas").textContent = general.total && pocasMalas(general)
-    ? "Pocas jugadas malas para comparar todavía" : "";
+  $("capJugadas").textContent = general.total && pocasJugadas(general)
+    ? "Pocas jugadas para comparar todavía" : "";
   titular("mesMecanismos", titularTasas(
     [contraste(todas, f => f.colgada, "Dejé comible la pieza que moví"),
-     { nombre: "Jugada siguiente a una mala", con: tasa(trasMala) }], general, n => n));
+     { nombre: "Jugada siguiente a una mala", con: tasa(trasMala) }], general, n => n, true));
 
   const piezas = Object.keys(NOMBRE_PIEZA).map(k =>
     tasa(todas.filter(f => f.pieza === k), NOMBRE_PIEZA[k])).filter(x => x.total);
   tablaTasas("mesPieza", "capPieza",
-    "Compara situaciones, no jugadas: con qué pieza se movió y qué porcentaje " +
-    "de esas jugadas salió mal.",
+    "Compara situaciones, no jugadas: con qué pieza se movió, y de esas " +
+    "jugadas qué parte fue la mejor y qué parte salió mal.",
     piezas, "Pieza", tiempo);
   titular("mesPieza", titularTasas(piezas, general, rotuloPieza));
 
   const tramos = TRAMOS.map(([nom, test]) => tasa(todas.filter(f => test(f.n)), nom));
   tablaTasas("mesTramo", "capTramo",
-    "Compara situaciones, no jugadas: en qué momento de la partida se jugó.",
-    tramos, "Jugadas", tiempo);
+    "Compara situaciones, no jugadas: en qué momento de la partida se jugó, " +
+    "y qué parte fue la mejor y qué parte salió mal. Las de libro no " +
+    "cuentan para la mejor: ahí no se elige.",
+    tramos, "Tramo", tiempo);
   titular("mesTramo", titularTasas(tramos, general, rotuloTramo));
 }
 
@@ -7845,13 +7880,14 @@ function pintarMes(prof) {
   const franjas = FRANJAS.map(([nom, t]) => tasa(todas.filter(f => t(f.franja)), nom));
   titular("mesFranja", titularTasas(franjas, tasa(todas), rotuloFranja));
   tablaTasas("mesFranja", "capMesFranja",
-    "Compara situaciones, no jugadas: de cada nivel de ventaja, cuántas " +
-    "jugadas salieron mal sobre cuántas se jugaron desde ahí.",
+    "Compara situaciones, no jugadas: de cada nivel de ventaja, qué parte " +
+    "de las jugadas fue la mejor y qué parte salió mal, sobre cuántas se " +
+    "jugaron desde ahí. Sirve para ver si con mucha ventaja te relajás.",
     franjas,
     /* la columna de segundos sale sola —tablaTasas la dibuja si las filas la
        tienen— y acá significa algo: cuánto se piensa según la ventaja. Se le
        pasa `d.tiempo` para que la leyenda pueda avisar si falta algún reloj. */
-    "Ventaja antes de mover", d.tiempo);
+    "Ventaja", d.tiempo);
 
   pintarDetalle(todas, porPartida, d.tiempo);
   pintarLista(d.tiempo && d.tiempo.cadencia);

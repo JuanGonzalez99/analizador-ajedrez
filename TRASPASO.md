@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.156**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.157**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,44 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.157, las tablas de "Jugada por jugada" cuentan también lo que sale
+bien** (Juan, 17-nov, sobre la v0.156: *"me hace ruido que los textos estén
+muy centrados en 'jugadas malas'… arrastrado de cómo se armaron las
+tablas"*; la propuesta se la pasé en texto y dijo *"me cierra, me gusta"*).
+Las cinco tablas medían una sola cosa, qué parte sale mala, y va contra
+`NORTE.md`. Lo que cambió:
+- **"La mejor"**: qué parte de las jugadas fue la del motor (Brillante, Genial
+  o Mejor; `LA_MEJOR`, `esLaMejor`), **sobre las jugadas fuera del libro**
+  (en el libro no se elige: contarlas achataba el tramo 1 a 10). `tasa()`
+  suma `mejores` y `fueraDeLibro`; `comoMejor(f)` la devuelve con la forma de
+  una tasa de malas para usar `pct`, `textoPct` y `rangoWilson` sin línea
+  paralela. Se eligió contra la precisión promedio (0–100), que en jugadas
+  sueltas da casi todo ~100 y achata las diferencias.
+- `tablaTasas` (franja, pieza, tramo): **Jugadas · La mejor · Malas**, las dos
+  tasas con su rango; antes Malas (cantidad) · Jugadas · Tasa. La cantidad de
+  malas sale de tasa × jugadas. La leyenda corta suma `DEF_MEJOR` ("La mejor
+  = la del motor, sin contar el libro"); las dos definiciones van con
+  espacios duros (`duro`) para que a 386 corten en el " · " y no en "3+ /
+  peones". Los textos del "?" dicen las dos cosas.
+- "Riesgo por franja de ventaja" pasa a **"Por ventaja antes de mover"** (el
+  encabezado de su columna ya lo decía).
+- **Mecanismos se muda al final** de la pila: es la única que mira errores a
+  propósito (su pregunta es esa) y sigue igual, `tablaContrastes`.
+- **El renglón de la sección cerrada (v0.156) dice primero lo bueno**:
+  "Con el caballo: 48 % la mejor, contra tu 35 %". Si no se aparta nada
+  bueno, las malas como antes; nada: "Nada se aparta de tu promedio".
+  Mecanismos va `soloMalas`. **Con menos de 150 jugadas** (`MIN_JUGADAS_TITULAR`,
+  unas cuatro partidas) no se compara nada y `#capJugadas` dice una vez
+  "Pocas jugadas para comparar todavía"; con menos de 20 malas, solo las
+  malas callan.
+- Medido a 386: la tabla de pieza mide 358 en una caja de 358, sin desborde.
+- Correcciones del revisor: la primera columna de tramos decía "Jugadas"
+  pegada a la columna "Jugadas" (pasa a **"Tramo"**), y la de la franja,
+  "Ventaja antes de mover", repetía el título nuevo y ocupaba dos renglones a
+  386 (pasa a **"Ventaja"**).
+- Lavado que dejó el revisor (ya estaba): el renglón dice "48 %" y la tabla
+  "48.0%"; el decimal promete una precisión que el rango desmiente.
 
 **v0.156, cada sección cerrada del Mes adelanta su dato** (lavado del
 revisor, la C de la v0.146; la A entre tres con ajustes de contenido, 17-nov;

@@ -180,7 +180,10 @@ test("la columna de tasas se llama Tasa, y la de reparto sigue siendo %", () => 
   /* Son dos cosas distintas: una estima una propension y la otra reparte un
      conjunto cerrado. Y un "%" solo, en una columna ancha, flotaba sin decir de
      que era. */
-  assert.equal((html.match(/<th>Tasa<\/th>/g) || []).length, 2);
+  /* desde la v0.157 las tablas de tasas dicen QUÉ tasa: "La mejor" y
+     "Malas"; la de contrastes (Mecanismos) sigue con "Tasa" */
+  assert.equal((html.match(/<th>Tasa<\/th>/g) || []).length, 1);
+  assert.ok(html.includes("<th>Jugadas</th><th>La mejor</th><th>Malas</th>"));
   const rep = html.slice(html.indexOf("function tablaReparto"));
   assert.ok(rep.slice(0, rep.indexOf("\n}")).includes("<th>%</th>"),
     "el reparto no es una tasa");
@@ -261,8 +264,8 @@ test("la leyenda corta se queda con el universo y el ? con el porqué", () => {
   const cuerpo = html.slice(html.indexOf("function tablaTasas"),
                             html.indexOf("function tablaTasas") + 1200);
   const corto = cuerpo.slice(cuerpo.indexOf("pintarLeyenda(idCap,"));
-  assert.ok(corto.includes("[DEF_MALA],"),
-    "arriba solo qué es mala: el alcance lo dice la cabecera, una vez");
+  assert.ok(corto.includes("[duro(DEF_MEJOR), duro(DEF_MALA)],"),
+    "arriba solo qué es la mejor y qué es mala (v0.157): el alcance lo dice la cabecera, una vez");
   assert.ok(corto.includes("[texto, conTiempo ? textoTiempo(tiempo)"),
     "detrás del ?: el texto explicativo y el detalle de las cadencias");
 });
@@ -3438,22 +3441,29 @@ test("el teclado fuera de la Partida (v0.153)", () => {
   assert.ok(v.includes("enfocarLaFila();"), "al volver, el foco va a la fila que se abrió");
 });
 
-test("el titular de una sección cerrada solo nombra lo que se aparta (v0.156)", () => {
-  const f = (nombre, malas, total) => ({ nombre, malas, total });
+test("el titular de una sección cerrada solo nombra lo que se aparta (v0.156, v0.157)", () => {
+  /* f(nombre, malas, total, mejores, fueraDeLibro) con la forma de `tasa` */
+  const f = (nombre, malas, total, mejores = 0, fuera = total) =>
+    ({ nombre, malas, total, mejores, fueraDeLibro: fuera });
   const r = n => `Con la ${n.toLowerCase()}`;
-  /* los espacios duros (número y %, el paréntesis) se comparan como espacios */
   const tt = (...a) => T.titularTasas(...a).replace(/\u00a0/g, " ");
-  /* pocas malas en total: no se compara */
-  assert.equal(tt([f("Dama", 3, 10)], f("", 5, 200), r), "", "muda: lo dice una vez el rótulo");
-  /* 30 de 600 = 5 %; una fila de 20 de 60 tiene el piso del rango muy arriba */
-  assert.equal(tt([f("Dama", 20, 60), f("Torre", 4, 100)], f("", 30, 600), r),
+  /* pocas jugadas: no se compara nada (lo dice una vez el rótulo) */
+  assert.equal(tt([f("Dama", 3, 10, 2)], f("", 5, 100, 30), r), "");
+  /* lo bueno primero: 35 % de la mejor en general, la dama 60 de 100 */
+  assert.equal(tt([f("Dama", 2, 100, 60), f("Torre", 4, 500, 150)], f("", 30, 600, 210), r),
+    "Con la dama: 60 % la mejor, contra tu 35 %");
+  /* sin nada bueno que se aparte, las malas: 20 de 60 contra 5 % */
+  assert.equal(tt([f("Dama", 20, 60, 21), f("Torre", 10, 540, 189)], f("", 30, 600, 210), r),
     "Con la dama: 33 % de malas, contra tu 5 %");
-  /* una fila un poco más alta pero con rango ancho no se nombra */
-  assert.equal(tt([f("Dama", 2, 20), f("Torre", 28, 580)], f("", 30, 600), r),
-    "Nada se aparta de tu 5 % de malas");
-  /* dos que se apartan: la de piso más alto y "y 1 más"; y las de Mecanismos traen `con` */
+  /* con pocas malas, las malas no se nombran */
+  assert.equal(tt([f("Dama", 10, 30, 10), f("Torre", 0, 570, 200)], f("", 10, 600, 210), r),
+    "Nada se aparta de tu promedio");
+  /* las dos cosas: la buena y "y 1 más" */
+  assert.equal(tt([f("Dama", 20, 60, 6), f("Caballo", 1, 100, 70), f("Torre", 9, 440, 134)], f("", 30, 600, 210), r),
+    "Con la caballo: 70 % la mejor, contra tu 35 % (y 1 más)");
+  /* Mecanismos: solo malas, y sus filas traen `con` */
   assert.equal(tt([{ nombre: "A", con: f("", 15, 50) }, { nombre: "B", con: f("", 20, 40) }],
-    f("", 40, 800), n => n), "B: 50 % de malas, contra tu 5 % (y 1 más)");
+    f("", 40, 800), n => n, true), "B: 50 % de malas, contra tu 5 % (y 1 más)");
   assert.equal(T.rotuloPieza("Torre"), "Con la torre");
   assert.equal(T.rotuloPieza("Caballo"), "Con el caballo");
 });

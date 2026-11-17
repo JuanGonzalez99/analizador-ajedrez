@@ -419,8 +419,8 @@ lo demás se dibuja contra ella.
       botón suelto (lo que propuso el revisor)? ¿una caja que solo reserva
       el alto, sin borde? ¿otra cosa de la jugada mientras no se piden?
       Sin que la lista ni "‹ ›" salten. Con variantes.
-- [ ] **Lavado de cara: las tablas de "Jugada por jugada" solo cuentan
-      malas** (Juan, 17-nov, sobre la v0.156: *"me hace ruido que los textos
+- [x] **Lavado de cara: las tablas de "Jugada por jugada" solo cuentan
+      malas** (v0.157, 17-nov: la columna "La mejor" al lado de Malas, el renglón dice primero lo bueno, Mecanismos al final; propuesta aprobada por Juan) (Juan, 17-nov, sobre la v0.156: *"me hace ruido que los textos
       estén muy centrados en 'jugadas malas'… arrastrado de cómo se armaron
       las tablas"*). Franja, Capturas, Mecanismos, Pieza y Tramo miden todas
       "qué parte sale mala" (pierde 3+), y el renglón de la v0.156 lo hereda.
@@ -430,6 +430,11 @@ lo demás se dibuja contra ella.
       te va mejor—, sin perder lo que §5 exige (margen, contraste, no
       afirmar lo no medido)? Primero proponer qué mide cada una; después la
       forma. Con variantes.
+- [ ] **Lavado de cara: cómo se escribe una tasa en toda la app** (revisor,
+      v0.157; ya estaba; celu y PC). El renglón de la sección dice "48 %"
+      (entero, con espacio) y la tabla, para la misma cifra, "48.0%". Y el
+      decimal promete una precisión que el rango desmiente: "100.0%" sobre 3
+      jugadas, con rango 21–100. ¿Una sola forma, y cuándo vale el decimal?
 - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
       la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
       las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que
@@ -567,12 +572,10 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.156):** cada sección cerrada del Mes tiene un
-  renglón gris con su dato ("Con la dama: 12 % de malas, contra tu 4 %";
-  "Nada se aparta de tu 4 % de malas"; con menos de 20 malas en el mes,
-  "Pocas jugadas malas para comparar todavía"). Nombra una fila solo si se
-  aparta de verdad, con el margen de la tabla. La otra forma era solo el
-  dato corto a la derecha ("dama · 12 %"), sin alargar la página.
+- **No sé si esto te copa (v0.156/v0.157):** el renglón gris de cada sección
+  cerrada del Mes; desde la v0.157 dice primero lo que sale bien ("Con el
+  caballo: 48 % la mejor, contra tu 35 %"). La otra forma era el dato corto a
+  la derecha, sin alargar la página.
 - **A prueba (v0.155, compu):** el hover de los títulos del Mes, solo la
   flecha. Juan: *"es re sutil… dejala así"*; si al usarlo no le gusta, la C
   (banda suave con aire y puntas redondeadas).
