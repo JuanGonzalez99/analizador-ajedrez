@@ -464,6 +464,21 @@ lo demás se dibuja contra ella.
       lista abajo"** (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
       cortado de la jugada anterior y la elegida queda pegada a "›". Ya
       estaba, pero ahora es la forma que Juan usa.
+- [ ] **Con algunas jugadas que dan jaque, la tarjeta no ve nada** (revisor de
+      ajedrez, v0.163; ya estaba). En `7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w`, d4f6
+      (Bxf6+), `observarJugada` devuelve todo vacío: ni la clavada nueva del
+      caballo de e4. La misma jugada sin jaque (rey en g8) sí la detecta, y
+      con Nc7+ anda. Buscar la causa.
+- [ ] **"Pierde material en el cambio" como mecanismo** (revisor de ajedrez,
+      v0.163). Con Qe1 Rxe1 Kxe1 (`4k3/8/8/8/4r3/8/5K2/Q7 w`, a1e1) la dama no
+      queda "comible" porque hay recaptura, así que la tarjeta de un grave
+      dice "Toma la columna abierta e." y no que se cambia dama por torre.
+      Hace falta decir lo que se pierde cuando `quedaComible` da falso por la
+      recaptura y aun así el cambio pierde.
+- [ ] **El orden de las frases fuertes** (revisor de ajedrez, v0.163; leve).
+      En `4k3/3q4/8/8/P7/8/8/4KB2 w` f1b5 sale primero "Salva tu peón de a4"
+      y después "Clava la dama de d7 contra el rey", que gana la dama. La que
+      gana más va primero.
 - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
       la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
       las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que

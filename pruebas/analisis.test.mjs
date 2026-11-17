@@ -3089,7 +3089,7 @@ test("una pieza CLAVADA no está atrapada, está clavada", () => {
      motivo equivocado, y ya hay una frase que lo dice mejor. */
   const o = mirar("4k3/8/8/8/4n3/8/8/R6K w - - 0 1", "a1e1");
   assert.equal(o.atrapada, null);
-  assert.deepEqual(o.clavadas, [{ sq: "e4", pieza: "n", contra: "k" }]);
+  assert.deepEqual(o.clavadas, [{ sq: "e4", pieza: "n", contra: "k", por: "e1" }]);
 });
 
 test("jaque descubierto: el jaque no lo da la pieza que se movió", () => {
@@ -3530,9 +3530,13 @@ test("la clavada dice contra qué, y también contra la dama (v0.162)", () => {
   /* contra la dama: la torre clava el caballo de e4, que tiene la dama detrás
      (no contra el rey: la dama está en el medio) */
   const rel = mirar("4k3/8/4q3/8/4n3/8/8/R6K w - - 0 1", "a1e1");
-  assert.deepEqual(rel.clavadas, [{ sq: "e4", pieza: "n", contra: "q" }]);
-  /* una dama no clava contra otra dama: correr la pieza solo ofrece el cambio */
-  assert.deepEqual(mirar("4k3/8/4q3/8/4n3/8/8/Q6K w - - 0 1", "a1e1").clavadas, []);
+  assert.deepEqual(rel.clavadas, [{ sq: "e4", pieza: "n", contra: "q", por: "e1" }]);
+  /* dama contra dama (v0.163): la de atrás SIN defensa, clavada; defendida
+     (acá por el rey en e7), es solo una oferta de cambio */
+  assert.deepEqual(mirar("7k/8/4q3/8/4n3/8/8/Q6K w - - 0 1", "a1e1").clavadas,
+                   [{ sq: "e4", pieza: "n", contra: "q", por: "e1" }], "la dama de e6 no la defiende nadie");
+  assert.deepEqual(mirar("8/4k3/4q3/8/4n3/8/8/Q6K w - - 0 1", "a1e1").clavadas, [],
+                   "el rey de e7 defiende la dama: es un cambio");
   /* si ya estaba clavada, la jugada no se la atribuye */
   assert.deepEqual(mirar("4k3/8/4q3/8/4n3/8/8/4R2K w - - 0 1", "h1g1").clavadas, []);
 });
@@ -3540,12 +3544,46 @@ test("la clavada dice contra qué, y también contra la dama (v0.162)", () => {
 test("clavar ya es atacar: una sola frase (v0.162)", () => {
   /* el 10… Bb4 de Juan, en chico: el alfil ataca la dama Y la clava contra el
      rey; la tarjeta dice la clavada, no las dos */
-  const ant = "4k3/3q4/8/8/8/8/8/4KB2 w - - 0 1";
+  /* con el peón de a4 defendiendo b5, como el de a5 en la de Juan: si el alfil
+     quedara suelto, Qxb5 lo come gratis y no es clavada que valga decir */
+  const ant = "4k3/3q4/8/8/P7/8/8/4KB2 w - - 0 1";
   const j = new Chess(ant); const m = j.move({ from: "f1", to: "b5" });
   const f = { fen: j.fen(), uci: "f1b5", turno: "w", pieza: "b", san: m.san, n: 1, cat: "bien", perdida: 0 };
   const obs = A.observarJugada(f, ant);
-  assert.deepEqual(obs.clavadas, [{ sq: "d7", pieza: "q", contra: "k" }]);
+  assert.deepEqual(obs.clavadas, [{ sq: "d7", pieza: "q", contra: "k", por: "b5" }]);
   const txt = A.partesDeLaExplicacion(f, null, true, null, obs, { ranuras: 2 }).map(p => p.txt);
   assert.ok(txt.includes("Clava la dama de d7 contra el rey."), txt.join(" | "));
   assert.ok(!txt.some(t => t.startsWith("Ataca la dama")), "y no repite el ataque");
 });
+
+test("no hay clavada si la clavada puede comer al que clava, ni se elogia la que queda comible (v0.163)", () => {
+  /* casos del revisor de ajedrez, verificados con chess.js */
+  assert.deepEqual(mirar("7k/8/4q3/8/4r3/8/8/Q6K w - - 0 1", "a1e1").clavadas, [], "Rxe1 come a la dama que clava");
+  assert.deepEqual(mirar("7k/8/4q3/8/4r3/8/8/R6K w - - 0 1", "a1e1").clavadas, [], "Rxe1 come a la torre que clava");
+  assert.deepEqual(mirar("7k/8/5q2/4p3/8/8/8/6BK w - - 0 1", "g1d4").clavadas, [], "exd4 come al alfil que clava");
+  /* la que clava queda comible: la clavada existe, pero la tarjeta no la dice */
+  const ant = "7k/8/4q3/8/4n3/8/5p2/R6K w - - 0 1";
+  const j = new Chess(ant); const m = j.move({ from: "a1", to: "e1" });
+  const f = { fen: j.fen(), uci: "a1e1", turno: "w", pieza: "r", san: m.san, n: 1,
+              cat: "error", perdida: 4, colgada: true };
+  const obs = A.observarJugada(f, ant);
+  assert.equal(obs.clavadas.length, 1, "la clavada existe");
+  const txt = A.partesDeLaExplicacion(f, null, true, null, obs, { ranuras: 3 }).map(p => p.txt).join(" ");
+  assert.ok(!/Clava/.test(txt), txt);
+});
+
+test("contra el rey, la clavada que se come gratis no se dice; y lo que cuelga no se elogia (v0.163)", () => {
+  /* Qe1 Rxe1 Kxe1: se cambia dama por torre; no es "clava la torre" */
+  assert.deepEqual(mirar("4k3/8/8/8/4r3/8/5K2/Q7 w - - 0 1", "a1e1").clavadas, []);
+  /* la de Juan, en chico, con la dama que come un alfil defendido: sí */
+  assert.equal(mirar("4k3/8/8/8/4q3/8/5K2/R7 w - - 0 1", "a1e1").clavadas.length, 1);
+  sinElogio("4k3/8/8/8/4q3/8/7K/R7 w - - 0 1", "a1e1", "r");
+});
+function sinElogio(ant, uci, pieza) {
+  const j = new Chess(ant); const m = j.move({ from: uci.slice(0, 2), to: uci.slice(2, 4) });
+  const f = { fen: j.fen(), uci, turno: "w", pieza, san: m.san, n: 1, cat: "grave", perdida: 5, colgada: true };
+  const txt = A.partesDeLaExplicacion(f, null, true, null, A.observarJugada(f, ant), { ranuras: 3 })
+    .map(p => p.txt).join(" ");
+  assert.match(txt, /queda comible/, txt);
+  assert.ok(!/Ataca|Clava|columna/.test(txt), "nada de lo que logra la pieza que se pierde: " + txt);
+}

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.162**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.163**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4753,6 +4753,40 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.163, la dama que clava contra la dama** (Juan, 17-nov, sobre la
+v0.162: *"una verdad a medias, porque ahí estás asumiendo que la dama está
+defendida"*). En la v0.162 una dama nunca clavaba contra la otra dama ("correr
+la pieza solo ofrece cambiar damas"). Eso vale solo si la dama de atrás está
+defendida; si no, correr la pieza la regala. Ahora la clavada de dama contra
+dama cuenta **cuando la de atrás no tiene defensores**, contados con
+`atacantesDe` y **sin la pieza clavada**, que al correrse deja de defender.
+Con torre o alfil sigue contando siempre. Pruebas: la de atrás sin defensa
+(clavada) y defendida por el rey (no). Es la primera versión que mira el
+revisor de ajedrez.
+- **Lo que encontró el revisor de ajedrez en su estreno** (verificado con
+  chess.js) y se corrigió en esta misma versión:
+  - **Si la "clavada" puede comerse a la que clava, no hay clavada** (contra
+    la dama): la torre de e4 juega Rxe1, el peón de e5 juega exd4. Se mira
+    con las jugadas legales de la posición (`legales`, ya es el turno del
+    rival). Contra el rey no se aplica: ahí sigue clavada aunque pueda comer
+    (en la de Juan, Qxb4 es legal y pierde la dama).
+  - **Si la que clava es la que queda comible, la clavada no se dice** en esa
+    tarjeta ("Tu torre queda comible en e1. Clava el caballo…" elogiaba algo
+    que se pierde). Para eso cada clavada guarda `por`, la casilla del que
+    clava, contra el rey y contra la dama.
+  - Prueba de unidad con sus casos.
+- **Segunda vuelta del revisor de ajedrez**, también en esta versión:
+  - **Contra el rey, la clavada que se come gratis no se dice.** Sigue siendo
+    clavada aunque la pieza pueda comer al que clava, pero si comerlo no
+    cuesta nada (el que clava vale lo mismo o más, o no está defendido), no
+    se dice: con Qe1 Rxe1 la tarjeta decía "Clava la torre contra el rey"
+    mientras se cambiaba la dama por la torre. La de Juan sigue saliendo
+    (Qxb4 come un alfil defendido por el peón de a5).
+  - **Si la pieza movida queda comible, nada de lo que logra se dice**
+    (`cuelga`): ni el ataque, ni la clavada desde ahí, ni la columna abierta
+    o semiabierta, la séptima o el caballo plantado. Antes, al callar la
+    clavada, volvía el elogio como "Ataca la dama con una torre".
+
 **v0.162, clavar ya es atacar, y las clavadas contra la dama** (Juan,
 17-nov, sobre la tarjeta de 10… Bb4: *"¿no queda mejor 'clava' en lugar de
 'ataca', ya que clavar implica atacar?"* y *"¿se pueden agregar clavadas
@@ -7002,6 +7036,15 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
     captura. El detalle está en `TAREA-NOCTURNA.md` (pasos 3 y 5) y en
     `.claude/agents/revisor-ux.md`. El porqué: Juan no quiere que darse
     cuenta de que algo "no convence" dependa de su ojo.
+  - **Un segundo revisor, el de ajedrez** (Juan, 17-nov-2026, después de la
+    v0.162). Lo que salió ese día —una omisión que no decía qué se omitió,
+    "ataca y clava" la misma pieza, las tablas que solo contaban malas— lo
+    encontró Juan usando la app, y ningún revisor lo había visto: el de UX
+    mira cómo se ve, nadie miraba si lo que se dice es cierto y útil.
+    `.claude/agents/revisor-ajedrez.md` corre después de cada cambio que toque
+    lo que la app dice de una partida, y los domingos sobre partidas reales.
+    Su regla de hierro: nada a ojo, todo verificado con chess.js, porque un
+    modelo de lenguaje inventa clavadas y piezas colgadas con total seguridad.
   - **No se parcha lo que hay que rehacer** (Juan, 9-nov-2026, después de la
     v0.118, que agrandó el tablero en la compu y dejó la curva colgando debajo
     de una franja vacía). Lo que se ve mal en la pantalla frena la versión

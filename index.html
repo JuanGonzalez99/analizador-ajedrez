@@ -1505,7 +1505,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.162 · 17-11";
+  window.VERSION = "v0.163 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3147,13 +3147,26 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   const fraseClavada = c => ({ txt: `Clava ${piezaEn(c.pieza, c.sq)} contra ` +
                                     `${c.contra === "q" ? "la dama" : "el rey"}.`,
                                marca: "Clava", sq: c.sq });
-  if (o.clavadas && o.clavadas.length) fuertes.push(fraseClavada(o.clavadas[0]));
+  /* SI LA QUE CLAVA ES LA QUE QUEDA COMIBLE, LA CLAVADA NO SE DICE (v0.163,
+     revisor de ajedrez): "Tu torre queda comible en e1. Clava el caballo
+     contra la dama." elogia algo que se pierde en la jugada siguiente, el
+     mismo síntoma que la omisión de 10… Bb4. La clavada existe; en esa
+     tarjeta, callada. */
+  /* Y MÁS EN GENERAL (v0.163, segunda vuelta del revisor): si la pieza que se
+     movió queda comible, nada de lo que esa pieza "logra" se dice —ni el
+     ataque, ni la clavada desde ahí, ni la columna, la séptima o el caballo
+     plantado—: se pierde en la jugada siguiente. La tarjeta queda con lo que
+     se pierde y la mejor. */
+  const cuelga = !!(mecanismo && mecanismo.marca === "queda comible");
+  if (cuelga) ataque = null;
+  const clavadas = (o.clavadas || []).filter(c => !(cuelga && c.por === mecanismo.sq));
+  if (clavadas.length) fuertes.push(fraseClavada(clavadas[0]));
   /* CLAVAR YA ES ATACAR (v0.162; Juan: "¿no queda mejor 'clava' en lugar de
      'ataca', ya que clavar implica atacar?"). Si la pieza atacada es la misma
      que queda clavada, la frase del ataque pasa a ser la de la clavada, en el
      lugar del ataque, y la clavada no se repite más abajo. */
-  if (ataque && !Array.isArray(ataque.sq) && o.clavadas) {
-    const c = o.clavadas.find(x => x.sq === ataque.sq);
+  if (ataque && !Array.isArray(ataque.sq) && clavadas.length) {
+    const c = clavadas.find(x => x.sq === ataque.sq);
     if (c) {
       ataque = fraseClavada(c);
       const k = fuertes.findIndex(x => x.marca === "Clava" && x.sq === c.sq);
@@ -3179,10 +3192,10 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
     fuertes.push({ txt: `${mio ? "Te" : "Le"} quedan peones doblados en la ${o.doblados}.`,
                    marca: "doblados", sq: donde });
 
-  if (o.plantado)
+  if (o.plantado && !cuelga)
     menores.push({ txt: `El caballo de ${o.plantado} se planta: ningún peón lo puede echar.`,
                    marca: "se planta", sq: o.plantado });
-  if (o.septima)
+  if (o.septima && !cuelga)
     menores.push({ txt: `La torre entra en la séptima.`,
                    marca: "la séptima", sq: o.septima });
   if (o.sinDamas)
@@ -3190,10 +3203,10 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   if (o.conectadas)
     menores.push({ txt: `Las torres quedan conectadas.`,
                    marca: "conectadas", sq: o.conectadas });
-  if (o.columna)
+  if (o.columna && !cuelga)
     menores.push({ txt: `Toma la columna abierta ${o.columna}.`,
                    marca: "columna abierta", sq: donde });
-  if (o.semiabierta)
+  if (o.semiabierta && !cuelga)
     menores.push({ txt: `Toma la columna semiabierta ${o.semiabierta}.`,
                    marca: "columna semiabierta", sq: donde });
   if (o.pasadoContra)
@@ -3809,42 +3822,71 @@ function observarJugada(f, fenAntes = null) {
     const rival = mio === "w" ? "b" : "w";
     const reyRival = casillaDelRey(tablero, rival);
     const clavadas = [];
+    /* las jugadas legales del rival, que ya es su turno: con ellas se mira si
+       la pieza "clavada" se puede comer al que clava (v0.163) */
+    const legales = new Chess(f.fen).moves({ verbose: true });
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const p = tablero[r][c];
       if (!p || p.color !== rival || p.type === "k") continue;
       const sq = "abcdefgh"[c] + (8 - r);
-      if (!estaClavada(f.fen, sq, reyRival)) continue;
+      const por = reyRival && quienLaClava(tablero, sq, reyRival);
+      if (!por) continue;
       if (fenAntes && estaClavada(fenAntes, sq, reyRival)) continue;
-      clavadas.push({ sq, pieza: p.type, contra: "k" });
+      /* CONTRA EL REY SIGUE CLAVADA aunque pueda comer al que clava (en la de
+         Juan, Qxb4 es legal y pierde la dama), PERO NO SE DICE si comerlo no
+         le cuesta nada: el que clava vale lo mismo o más, o no está defendido.
+         "Clava la torre contra el rey" con Qe1 Rxe1 era elogiar perder la dama
+         (v0.163, revisor de ajedrez). */
+      const quien = tablero[8 - +por[1]]["abcdefgh".indexOf(por[0])];
+      if (legales.some(m => m.from === sq && m.to === por) &&
+          (VALOR[quien.type] >= VALOR[p.type] || !atacantesDe(tablero, por, mio).length)) continue;
+      clavadas.push({ sq, pieza: p.type, contra: "k", por });
     }
     /* Y CONTRA LA DAMA (v0.162, Juan): la clavada relativa. Detrás de la pieza
-       está la dama rival, y lo que clava es una torre o un alfil (si clavara
-       una dama, correr la pieza solo ofrece cambiar damas). La dama no puede
+       está la dama rival, y lo que clava es una torre o un alfil, o una dama
+       si la de atrás no está defendida (abajo). La dama no puede
        estar clavada contra sí misma, y las clavadas contra el rey van primero. */
     const damas = [];
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const p = tablero[r][c];
       if (p && p.type === "q" && p.color === rival) damas.push("abcdefgh"[c] + (8 - r));
     }
-    const contraDama = (fen, tab, sq) => damas.some(dq => {
-      const cl = quienLaClava(tab, sq, dq);
-      if (!cl) return false;
-      const t = tab[8 - +cl[1]]["abcdefgh".indexOf(cl[0])];
-      return t && t.type !== "q";
-    });
+    /* DAMA CONTRA DAMA (v0.163; Juan: "es una verdad a medias"): si la que
+       clava es una dama, correr la pieza solo ofrece cambiar damas cuando la
+       de atrás está defendida; si no lo está, la regala, y ahí sí está
+       clavada. Los defensores se cuentan SIN la pieza clavada, que al correrse
+       deja de defender. */
+    /* Y SI LA CLAVADA PUEDE COMERSE AL QUE CLAVA, NO HAY CLAVADA (v0.163,
+       revisor de ajedrez): la torre de e4 "clavada" por la torre de e1 la
+       come con Rxe1; el peón de e5 "clavado" por el alfil de d4 juega exd4.
+       Como mucho es un cambio, o el que clava queda regalado. Se mira con
+       las jugadas legales de la posición, que ya es el turno del rival. */
+    const contraDama = (fen, tab, sq) => {
+      for (const dq of damas) {
+        const cl = quienLaClava(tab, sq, dq);
+        if (!cl) continue;
+        const t = tab[8 - +cl[1]]["abcdefgh".indexOf(cl[0])];
+        if (!t) continue;
+        if (t.type === "q" && atacantesDe(tab, dq, rival).some(d => d.sq !== sq)) continue;
+        if (fen === f.fen && legales.some(m => m.from === sq && m.to === cl)) continue;
+        return cl;
+      }
+      return null;
+    };
     const tabAntes = fenAntes ? new Chess(fenAntes).board() : null;
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const p = tablero[r][c];
       if (!p || p.color !== rival || p.type === "k" || p.type === "q") continue;
       const sq = "abcdefgh"[c] + (8 - r);
       if (clavadas.some(x => x.sq === sq)) continue;
-      if (!contraDama(f.fen, tablero, sq)) continue;
+      const por = contraDama(f.fen, tablero, sq);
+      if (!por) continue;
       /* antes: la misma pieza en la misma casilla, y la dama donde estaba */
       if (tabAntes) {
         const q = tabAntes[r][c];
         if (q && q.type === p.type && q.color === p.color && contraDama(fenAntes, tabAntes, sq)) continue;
       }
-      clavadas.push({ sq, pieza: p.type, contra: "q" });
+      clavadas.push({ sq, pieza: p.type, contra: "q", por });
     }
     /* el peón que ACABA de quedar pasado: si ya lo era antes de moverse, la
        jugada no hizo nada nuevo */
