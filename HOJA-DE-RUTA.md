@@ -410,6 +410,15 @@ lo demás se dibuja contra ella.
       corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
       corta en una fila completa, o sigue con un fundido o una sombra que diga
       "hay más"? Con variantes.
+- [ ] **[PC] Lavado de cara: la caja vacía de las tres mejores debajo de la
+      curva** (Juan, 17-nov, sobre la v0.150; revisor, v0.151). Sin pedirlas
+      son ~115 px de tarjeta con un rótulo y un botón suelto: se lee como un
+      hueco. **No se calculan solas** (Juan: *"dudo que uno quiera ver las 3
+      mejores de cada movimiento"*; lo tentaba solo el cuadro vacío). La
+      pregunta es la forma: ¿las tres filas marcadas en tenue en vez del
+      botón suelto (lo que propuso el revisor)? ¿una caja que solo reserva
+      el alto, sin borde? ¿otra cosa de la jugada mientras no se piden?
+      Sin que la lista ni "‹ ›" salten. Con variantes.
 - [ ] **[PC] El cuadrito "Mejor" corta "la juga…"** (revisor, v0.150; leve,
       ya estaba). Cuando la jugada fue la mejor, a 1000 de ancho el valor del
       cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:
@@ -536,12 +545,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.150):** en la compu, cuando la caja de las tres
-  mejores baja debajo de la curva, ¿se calculan solas al pararte en una
-  jugada, como en chess.com, o siguen con el botón? Quedaron con el botón,
-  porque cambiar cuándo corre el motor es tuyo. Ojo: baja en pocas ventanas
-  (de 1000 a ~1060 de ancho con 892 o más de alto; en un Chrome normal de
-  1920×1080 no baja).
 - **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
   línea del título y la frase a todo el ancho) y la A (el símbolo en su
   columna, como antes, con el mismo lugar para dos renglones). Dijo *"por

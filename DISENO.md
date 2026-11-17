@@ -486,6 +486,14 @@ hay. Las primeras salen del historial del traspaso.
   mía:* lo que la pantalla dice al lado de una categoría no la puede
   contradecir.
 
+- **La barra horizontal arriba del panel en la compu** (v0.151, la C del
+  revisor: en el renglón de las comidas, tablero y panel arrancando juntos):
+  *"quedó bien"* (17-nov-2026).
+- **Las tres mejores NO se calculan solas** (17-nov-2026, sobre la v0.150):
+  *"dudo que uno quiera ver las 3 mejores jugadas de cada movimiento"*. Lo que
+  lo tentaba era el cuadro vacío debajo de la curva, no la utilidad. *Lectura
+  mía:* un hueco no se tapa con un dato que nadie pidió; si algo se ve vacío,
+  se le cambia la forma.
 - **La tarjeta que no cambia de alto, a prueba** (17-nov-2026, v0.149):
   le gusta que el tablero quede quieto; entre la B (símbolo en la línea del
   título, frase a todo el ancho) y la A (símbolo en su columna) *"no sé si
