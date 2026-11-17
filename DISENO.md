@@ -499,6 +499,12 @@ hay. Las primeras salen del historial del traspaso.
   título, frase a todo el ancho) y la A (símbolo en su columna) *"no sé si
   prefiero la A"*, y la está usando para decidir. Hasta que diga, no se
   cambia ninguna de las dos cosas.
+- **Tocar una pieza solo la marca, sin texto** (v0.152, la B del revisor:
+  marco y puntos violetas, la tarjeta sigue siendo la de la jugada, la prueba
+  arranca al jugar) y **la app entera con teclado en la compu** (v0.153):
+  *"quedó bien"* (17-nov-2026). No pidió la C (el renglón "Elegiste f6: tocá
+  adónde va."). *Lectura mía:* un gesto que todavía no hizo nada no cambia la
+  pantalla; el tablero ya lo dice con los puntos, como en chess.com.
 
 ### No le copa
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no

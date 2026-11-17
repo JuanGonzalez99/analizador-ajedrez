@@ -556,11 +556,6 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.152):** tocar una pieza ya no cambia la
-  tarjeta ni hace saltar el tablero: solo la marca con los puntos violetas
-  adonde puede ir, como en chess.com, y la variante (tarjeta violeta, Volver)
-  arranca al jugar. La otra, dibujada: que además el renglón de la
-  explicación diga "Elegiste f6: tocá adónde va." mientras está marcada.
 - **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
   línea del título y la frase a todo el ancho) y la A (el símbolo en su
   columna, como antes, con el mismo lugar para dos renglones). Dijo *"por
