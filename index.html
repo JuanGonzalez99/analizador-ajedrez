@@ -1506,7 +1506,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.158 · 17-11";
+  window.VERSION = "v0.159 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2032,6 +2032,10 @@
        elige usando la app. SE VA cuando esté elegida: §4novodecies. -->
   <label class="ajFila"><span>Cuánto habla</span>
     <select id="largoExp" class="chico"></select></label>
+  <!-- (v0.159) el nombre de la apertura en las jugadas de libro: Juan no se
+       decidió entre las dos y elige usando la app; de fábrica, "cuando cambia" -->
+  <label class="ajFila"><span>Nombre de la apertura</span>
+    <select id="nombreAp" class="chico"><option value="cambia">cuando cambia</option><option value="siempre">en cada jugada</option></select></label>
   <!-- DIAL TEMPORAL (v0.76): cómo se ve la pantalla mientras se prueba una
        jugada. Son cuatro formas dibujadas que el usuario no pudo elegir mirando
        capturas, así que se ponen las cuatro y se decide usando la app, como el
@@ -4114,6 +4118,59 @@ function aperturaEs(nombre) {
   return { largo: fam + ": " + vari, corto: fam };
 }
 
+/* EL NOMBRE DE LA APERTURA HASTA ACÁ (v0.159; lavado del revisor, v0.148).
+   Con 3. Bc4 ya es la Italiana y con 3… Bc5 el Giuoco Piano: ver cómo se
+   afina enseña, y arriba solo está el nombre final. Va en la TARJETA de las
+   jugadas de libro, que habla de la jugada en la que estás parado; la
+   cabecera sigue con el de la partida entera. Dos formas, porque Juan no se
+   decidió y lo elige usando la app (ajuste "Nombre de la apertura"):
+   - "cambia" (la de fábrica): el nombre SOLO en la jugada que le da nombre o
+     lo afina, "Ahora es el Giuoco Piano.", en lugar de la frase. En las
+     otras no se repite y va la frase de la jugada.
+   - "siempre": el nombre en cada jugada de libro, y después la frase.
+   `nombres` es el mapa del libro (posición → nombre en inglés, con ECO) y
+   `claves` las posiciones de la partida hasta la jugada, en orden. */
+function aperturaHastaAca(claves, nombres) {
+  /* "Variante normal" y "Línea principal" solas no son un nombre: dicen que
+     no pasó nada (2… Nc6 de la del caballo de rey), así que no cuentan */
+  const nombreEn = k => {
+    const n = nombres[k] && aperturaEs(nombres[k]).largo;
+    return n && !/^(variante normal|línea principal)$/i.test(n) ? n : "";
+  };
+  let i = claves.length - 1;
+  while (i >= 0 && !nombreEn(claves[i])) i--;
+  if (i < 0) return null;
+  const nombre = nombreEn(claves[i]);
+  /* cambia si ESTA posición tiene nombre y el de antes era otro (o no había) */
+  let j = i - 1;
+  while (j >= 0 && !nombreEn(claves[j])) j--;
+  const antes = j >= 0 ? nombreEn(claves[j]) : "";
+  /* lo NUEVO: si la familia es la misma de antes, solo la variante
+     ("el Giuoco Piano", no "la Apertura italiana: Giuoco Piano" otra vez) */
+  const [fam, vari] = nombre.split(": ");
+  const nuevo = vari && antes.split(": ")[0] === fam ? vari : nombre;
+  return { nombre, nuevo, primera: !antes, cambia: i === claves.length - 1 && antes !== nombre };
+}
+/* el artículo sale de la primera palabra: las cabezas de AP_TIPO más
+   "Partida"; lo demás (Gambito, Ataque, Giuoco Piano…) es masculino */
+const AP_FEMENINAS = new Set(["apertura", "defensa", "formación", "variante", "línea", "trampa", "partida"]);
+/* y en mitad de la oración, el sustantivo común va en minúscula ("la
+   apertura italiana", "el gambito Evans"); lo propio queda ("el Giuoco
+   Piano") (revisor) */
+const AP_COMUNES = new Set([...AP_FEMENINAS, "gambito", "contragambito", "ataque", "sistema", "contraataque"]);
+const conArticulo = n => {
+  const [p0, ...resto] = n.split(" ");
+  const p = AP_COMUNES.has(p0.toLowerCase()) ? p0.toLowerCase() : p0;
+  return (AP_FEMENINAS.has(p0.toLowerCase()) ? "la " : "el ") + [p, ...resto].join(" ");
+};
+/* la frase que suma la tarjeta, o null si en esta jugada no va */
+function fraseDeApertura(ap, modo) {
+  if (!ap) return null;
+  if (modo === "siempre") return ap.nombre + ".";
+  /* "Ahora" solo si antes había otro: en 1. e4 no hay un antes (revisor) */
+  return ap.cambia ? `${ap.primera ? "Es" : "Ahora es"} ${conArticulo(ap.nuevo)}.` : null;
+}
+
 /* ===================== fin del bloque de análisis ====================== */
 
 try {
@@ -4910,6 +4967,19 @@ function aplicarLargoExp(id) {
   $("largoExp").value = LARGO_EXP;
   $("largoExp").onchange = seguro("largo de la explicación", () => {
     aplicarLargoExp($("largoExp").value);
+    if (R) pintarRevision();
+  });
+})();
+
+/* El nombre de la apertura en la tarjeta (v0.159): "cambia" o "siempre", ver
+   `aperturaHastaAca`. Se guarda, como el resto de los ajustes de la tarjeta. */
+let NOMBRE_AP = "cambia";
+(function iniciarNombreAp() {
+  try { NOMBRE_AP = localStorage.getItem("nombreAp") === "siempre" ? "siempre" : "cambia"; } catch (e) { /* incógnito */ }
+  $("nombreAp").value = NOMBRE_AP;
+  $("nombreAp").onchange = seguro("nombre de la apertura", () => {
+    NOMBRE_AP = $("nombreAp").value === "siempre" ? "siempre" : "cambia";
+    try { localStorage.setItem("nombreAp", NOMBRE_AP); } catch (e) { /* incógnito */ }
     if (R) pintarRevision();
   });
 })();
@@ -8121,6 +8191,15 @@ function pintarRevision() {
                                        observarJugada(f, fenDeLaJugada(IDX)),
                                        { ranuras: ranurasDeLaExplicacion(),
                                          salioDelLibro, rivalErro });
+  /* el nombre de la apertura hasta acá, en las de libro (v0.159, arriba de
+     `aperturaHastaAca`): "cambia" lo pone EN LUGAR de la frase; "siempre",
+     antes. La tarjeta reserva dos renglones (v0.149), y medido a 386 con el
+     nombre más largo y una frase entran. */
+  if (!enInicio && f.cat === "libro" && LIBRO) {
+    const claves = R.filas.slice(0, IDX + 1).map(x => claveLibro(x.fen));
+    const fr = fraseDeApertura(aperturaHastaAca(claves, LIBRO.nombres), NOMBRE_AP);
+    if (fr) partes.splice(0, NOMBRE_AP === "siempre" ? 0 : partes.length, { txt: fr });
+  }
   const explicado = partes.map(p => p.txt).join(" ");
   /* En la posición inicial la tarjeta no juzga nada: sin símbolo, con el borde
      de la línea y no de una categoría, y dice qué es y a quién le toca. */

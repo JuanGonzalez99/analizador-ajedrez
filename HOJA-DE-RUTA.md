@@ -391,7 +391,7 @@ lo demás se dibuja contra ella.
       (la C de las variantes de la v0.146; revisor: sirve, pero es otro ítem).
       Un titular por tabla bajo el título ("viste 3 de 4"), para leer la pila
       sin abrirla. Hay que definir qué dice cada una. Con variantes.
-- [ ] **Lavado de cara: el nombre de la apertura "hasta acá"** (revisor,
+- [x] **Lavado de cara: el nombre de la apertura "hasta acá"** (v0.159, 17-nov: en la tarjeta de las jugadas de libro; "cuando cambia" de fábrica y "en cada jugada" en Ajustes, elegido con Juan) (revisor,
       v0.148; celu y PC). Ver que con 3. Bc4 ya es la Italiana y con 3… Bc5 el
       Giuoco Piano enseña, pero el dato no tiene dónde vivir: en la tarjeta no
       entra (un renglón, ~45 caracteres a 386) y en la cabecera ya está el
@@ -435,6 +435,13 @@ lo demás se dibuja contra ella.
       (entero, con espacio) y la tabla, para la misma cifra, "48.0%". Y el
       decimal promete una precisión que el rango desmiente: "100.0%" sobre 3
       jugadas, con rango 21–100. ¿Una sola forma, y cuándo vale el decimal?
+- [ ] **Lavado de cara: los diales de "elegilo usando la app" en Ajustes**
+      (revisor, v0.159; celu). En La explicación, dos de tres filas son
+      diales temporales ("Cuánto habla", marcado "SE VA cuando esté
+      elegida", y "Nombre de la apertura"), más "Al probar una jugada" en la
+      otra sección. Se ven igual que los ajustes de verdad y la hoja ya pide
+      scroll. ¿Dónde viven para no confundirse con lo permanente, y cuándo
+      se retiran?
 - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
       la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
       las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que
@@ -576,6 +583,10 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   cerrada del Mes; desde la v0.157 dice primero lo que sale bien ("Con el
   caballo: 48 % la mejor, contra tu 35 %"). La otra forma era el dato corto a
   la derecha, sin alargar la página.
+- **A prueba (v0.159):** el nombre de la apertura en la tarjeta. Juan no se
+  decidió entre "cuando cambia" (de fábrica) y "en cada jugada"; quedaron las
+  dos en Ajustes → La explicación → "Nombre de la apertura". Cuando elija,
+  se saca el ajuste y queda una.
 - **A prueba (v0.155, compu):** el hover de los títulos del Mes, solo la
   flecha. Juan: *"es re sutil… dejala así"*; si al usarlo no le gusta, la C
   (banda suave con aire y puntas redondeadas).

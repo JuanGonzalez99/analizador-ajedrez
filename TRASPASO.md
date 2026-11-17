@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.158**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.159**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,37 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.159, el nombre de la apertura hasta acá, en la tarjeta** (lavado del
+revisor, v0.148; celu y PC; decidido con Juan en la sesión, 17-nov). Ver que
+con 3. Bc4 ya es la Italiana y con 3… Bc5 el Giuoco Piano enseña, y arriba
+solo estaba el nombre final. Le dibujé tres lugares (en la tarjeta al lado de
+"Libro", en la tarjeta en lugar de la frase genérica, y la cabecera que cambia
+con la jugada) y eligió **la tarjeta**: habla de la jugada en la que estás
+parado, y la cabecera queda fija con el de la partida. Para cuando la jugada
+ya tiene frase propia le dibujé dos formas y no se decidió: **van las dos,
+con un ajuste** ("Nombre de la apertura", en La explicación), de fábrica
+"cuando cambia":
+- **"cuando cambia"** (`NOMBRE_AP = "cambia"`): el nombre SOLO en la jugada que
+  le da nombre o lo afina, en lugar de la frase: "Es la apertura de peón de
+  rey." (la primera, sin "Ahora"), "Ahora es la apertura italiana.", "Ahora
+  es el Giuoco Piano.", "Ahora es la variante clásica.". El sustantivo común
+  va en minúscula en mitad de la oración y lo propio queda (`AP_COMUNES`;
+  correcciones del revisor). Si
+  la familia es la misma que antes, solo lo nuevo (la variante). En las demás
+  jugadas de libro va la frase de la jugada o la genérica.
+- **"en cada jugada"**: el nombre en todas las de libro, y después la frase:
+  "Apertura de caballo de rey. Salva el peón de e5, que estaba sin defender."
+- `aperturaHastaAca(claves, nombres)` busca hacia atrás la última posición con
+  nombre (por `claveLibro` de cada `fila.fen`); "Variante normal" y "Línea
+  principal" solas no cuentan como nombre (2… Nc6 decía "Ahora es la Variante
+  normal"). `conArticulo` saca "el"/"la" de la primera palabra. Las tres son
+  puras, viven al final del bloque de análisis y tienen prueba.
+- En la tarjeta: `partes.splice(...)` en `pintarRevision`, solo con
+  `f.cat === "libro"`; la tarjeta reserva dos renglones desde la v0.149 y el
+  tablero no se mueve (medido: arranca en 170 en las ocho primeras jugadas, en
+  los dos modos). La variante (probar jugadas) no lo usa.
+- Celu: cambian las capturas de jugadas de libro.
 
 **v0.158, un porcentaje se escribe de una sola forma** (lavado del revisor
 sobre la v0.157; Juan pidió hacerlo en el acto; la A entre dos, 17-nov). Las

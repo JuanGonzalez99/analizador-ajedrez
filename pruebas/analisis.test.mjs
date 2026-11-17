@@ -3477,3 +3477,27 @@ test("un porcentaje se escribe de una sola forma (v0.158)", () => {
   assert.equal(e(299 / 3, 299, 300), ">99 %", "no siempre y redondea a 100");
   assert.ok(!/toFixed\(1\)\s*\+\s*"%"/.test(html), "ningún porcentaje con decimal");
 });
+
+test("el nombre de la apertura hasta acá, en las dos formas (v0.159)", () => {
+  const N = { a: "C50 Italian Game", c: "C50 Italian Game: Giuoco Piano" };
+  /* claves de posiciones: a = 3. Bc4 (Italiana), b = sin nombre, c = 3… Bc5 (Giuoco Piano) */
+  const ap1 = A.aperturaHastaAca(["x", "a"], N);
+  assert.equal(ap1.cambia, true, "3. Bc4 le da nombre");
+  const ap2 = A.aperturaHastaAca(["x", "a", "b"], N);
+  assert.equal(ap2.cambia, false, "una sin nombre no cambia nada");
+  assert.equal(ap2.nombre, ap1.nombre, "y sigue valiendo el de antes");
+  const ap3 = A.aperturaHastaAca(["x", "a", "b", "c"], N);
+  assert.equal(ap3.cambia, true, "3… Bc5 lo afina");
+  assert.equal(A.aperturaHastaAca(["x", "y"], N), null, "sin nombre todavía, nada");
+  assert.equal(A.fraseDeApertura(ap2, "cambia"), null, "cuando cambia: en las otras, nada");
+  assert.match(A.fraseDeApertura(ap1, "cambia"), /^Es la apertura italiana\.$/, "la primera: sin 'Ahora', y en minúscula");
+  assert.match(A.fraseDeApertura(ap2, "siempre"), /^Apertura italiana\.$/);
+  assert.equal(A.conArticulo("Gambito de dama"), "el gambito de dama");
+  assert.equal(A.conArticulo("Defensa siciliana"), "la defensa siciliana");
+  assert.equal(A.conArticulo("Giuoco Piano"), "el Giuoco Piano", "lo propio queda");
+  /* lo nuevo, si la familia es la misma: solo la variante */
+  assert.match(A.fraseDeApertura(ap3, "cambia"), /^Ahora es el Giuoco Piano\.$/);
+  /* "Variante normal" sola no es un nombre */
+  const ap4 = A.aperturaHastaAca(["x", "a", "n"], { ...N, n: "C44 King's Knight Opening: Normal Variation" });
+  assert.equal(ap4.cambia, false);
+});
