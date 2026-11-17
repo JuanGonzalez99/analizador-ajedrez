@@ -31,6 +31,12 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    primera sección, **"El criterio del revisor"**: qué cambió, en una línea
    cada cosa, para que Juan lo apruebe o lo dé vuelta. Esa noche cuenta como
    un ítem.
+   **Y los domingos, también: la pasada del revisor de ajedrez sobre partidas
+   reales** (decisión de Juan, 17-nov-2026). Lanzalo con el usuario de
+   chess.com de Juan para que recorra las tarjetas de varias partidas del mes
+   y marque lo que no sea cierto, coherente o útil. Lo que encuentre entra a
+   `HOJA-DE-RUTA.md` como ítems y va al resumen en una sección "Lo que vio el
+   revisor de ajedrez". No cuenta como ítem de la noche.
 1. **Arrancar.** El hook deja el checkout en `main`; confirmalo con
    `git status` (si no, `git checkout -B main origin/main`). **Y confirmá que
    estás en la punta de verdad**: `git fetch origin main` y que `git log -1`
@@ -82,6 +88,10 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    variantes. **Y quien programa también lo dice**, antes de construir: si el
    ítem es mejorar una parte de una zona que se ve mal entera, no lo hace y
    propone el lavado (decisión de Juan, 9-nov-2026).
+   **El revisor de ajedrez** (`.claude/agents/revisor-ajedrez.md`) corre
+   además, con las mismas reglas de vueltas, cuando el cambio toca lo que la
+   app dice de una partida: la explicación, las categorías, los cuadritos, las
+   tablas del Mes o el análisis. Si el cambio es solo visual, no.
    Lo que el revisor deja en "dudas para Juan" va al resumen. **Lo que deja en
    "lavado de cara" va a `HOJA-DE-RUTA.md`** como ítem nuevo sin tachar, al
    final de la etapa que se está haciendo, con lo que dijo el revisor; y al

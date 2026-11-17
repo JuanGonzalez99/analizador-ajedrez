@@ -13,6 +13,9 @@ tacha acá, en el mismo commit.
 - **Revisor:** después de cada cambio.
   *(La otra opción es "una vez al final de la noche". Se pasa a esa si el
   consumo se come el tope semanal; lo dice Juan o lo propone la mañana.)*
+- **Revisor de ajedrez:** después de cada cambio que toque lo que la app dice
+  de una partida (explicación, categorías, cuadritos, tablas, análisis), y una
+  pasada sobre partidas reales los domingos (Juan, 17-nov).
 - **Por noche: hasta dos ítems** (decisión de Juan, 6-nov). Pasa al segundo
   solo si el primero terminó **aprobado por el revisor**, con o sin
   correcciones en el medio. Si después de las dos vueltas de corrección el

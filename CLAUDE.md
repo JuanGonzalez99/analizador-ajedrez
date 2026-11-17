@@ -25,6 +25,12 @@ describe. §10 tiene las reglas de trabajo.
     tabla, una pantalla entera nueva, sacar algo que Juan usa— **tampoco
     frenan**: se elige la recomendación, se sigue, y van al resumen como duda
     ("no sé si esto te copa"), con captura. Darla vuelta cuesta poco.
+  - **Hay un segundo revisor, el de ajedrez** (`.claude/agents/revisor-ajedrez.md`,
+    decisión de Juan del 17-nov-2026): mira si lo que la app DICE de una
+    partida es cierto en el tablero, coherente y útil —la explicación, las
+    categorías, los cuadritos, las tablas del Mes—, verificando con chess.js y
+    nunca a ojo. Corre después de cada cambio que toque eso, además del de UX
+    si también se ve; lo puramente visual no lo necesita.
   - **El revisor es otro agente**, no el que programa, y mira capturas de celu
     **y** de PC. Revisa después de cada cambio; si el consumo se come el tope
     semanal, una vez al final (perilla en `HOJA-DE-RUTA.md`).
