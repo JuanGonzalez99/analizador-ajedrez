@@ -405,6 +405,11 @@ lo demás se dibuja contra ella.
       "1.20", Caída "11.0 pt": la misma contradicción, un piso más abajo.
       ¿Qué contestan los cuatro cuadritos cuando la jugada es de libro? Es
       duda para Juan (abajo): dato crudo que a veces interesa, o se callan.
+- [ ] **[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
+      entra entera** (revisor, v0.149; ya estaba). A 1600×900 la lista se
+      corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
+      corta en una fila completa, o sigue con un fundido o una sombra que diga
+      "hay más"? Con variantes.
 
 ## Etapa 2 · Partir `index.html`
 
