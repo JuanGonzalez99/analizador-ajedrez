@@ -346,8 +346,8 @@ lo demás se dibuja contra ella.
       tarjeta una o dos frases sin que cambie la posición del tablero?** Con
       variantes, a 386 y con la frase más larga, sin perder "todo lo de la
       jugada sin scrollear". **Juan (16-nov): *"es medio molesto"*; por eso va primero.**
-- [ ] **[PC] Lavado de cara: qué más merece estar a la vista en la compu
-      cuando sobra alto** (revisor, v0.135; leve). Con la curva abajo siguen
+- [x] **[PC] Lavado de cara: qué más merece estar a la vista en la compu
+      cuando sobra alto** (v0.150, 17-nov: la D entre cuatro con tres ajustes — la caja de las tres mejores baja debajo de la curva si entra entera, alto fijo, al pie de "‹ ›"; revisor, v0.135; leve). Con la curva abajo siguen
       sobrando ~190 px a 1000×900, con las dos columnas cerradas a la misma
       altura (no se ve armada con pedazos). Si se quiere usar ese alto, la
       pregunta es qué otra cosa de la partida va a la vista —¿las tres
@@ -410,6 +410,11 @@ lo demás se dibuja contra ella.
       corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
       corta en una fila completa, o sigue con un fundido o una sombra que diga
       "hay más"? Con variantes.
+- [ ] **[PC] El cuadrito "Mejor" corta "la juga…"** (revisor, v0.150; leve,
+      ya estaba). Cuando la jugada fue la mejor, a 1000 de ancho el valor del
+      cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:
+      un texto más corto ("esta") o que entre entero. Arreglo chico, sin
+      variantes.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -531,6 +536,12 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.150):** en la compu, cuando la caja de las tres
+  mejores baja debajo de la curva, ¿se calculan solas al pararte en una
+  jugada, como en chess.com, o siguen con el botón? Quedaron con el botón,
+  porque cambiar cuándo corre el motor es tuyo. Ojo: baja en pocas ventanas
+  (de 1000 a ~1060 de ancho con 892 o más de alto; en un Chrome normal de
+  1920×1080 no baja).
 - **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
   línea del título y la frase a todo el ancho) y la A (el símbolo en su
   columna, como antes, con el mismo lugar para dos renglones). Dijo *"por

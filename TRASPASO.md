@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.149**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.150**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -296,7 +296,9 @@ para arriba (el inicio y el Mes siguen partiéndose en 950), tablero a la izquie
 curva, alternativas, lista y "‹ ›"), sin tres columnas y con la tira mudada
 por DOM al pie de la lista. Desde la v0.135, si sobra alto (ventanas angostas
 y altas) la curva baja debajo del tablero: `.curvaAbajo`, que pone
-`ubicarCurva()`. Lo que sigue en este párrafo es la historia.
+`ubicarCurva()`. Desde la v0.150, si además entra entera, la caja de las tres
+mejores (`#alts`) se muda por DOM debajo de la curva: `.altsAbajo`, que pone
+`ubicarAlts()`. Lo que sigue en este párrafo es la historia.
 Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
 **de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
 con `minmax`; de 700 a 949 es una columna con el tablero que crece; §7, v0.118): `.principal` es la de siempre, de 700, y `.lateral` es
@@ -4750,6 +4752,41 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.150, [PC] las tres mejores debajo de la curva cuando sobra alto**
+(lavado del revisor sobre la v0.135; la D entre cuatro con tres ajustes,
+17-nov). A 1000×900, con la curva abajo, sobraban ~175 px al pie del tablero
+antes del Resumen. Cuatro variantes con `pantallas()`
+(`pruebas/maqueta-alto.mjs`, no se commitea): A, las tres desplegadas en el
+panel (le saca renglones a la lista y deja el hueco igual); B, la curva de 46
+a 150 (estira lo que ya está); C, un resumen chico con la precisión y las
+malas de cada uno (repite el Resumen, número suelto, y arma la zona alrededor
+de los errores); **D, la caja de las tres mejores mudada a la columna
+izquierda, bajo la curva y a su ancho**. El revisor eligió D: las tres caen
+debajo del tablero donde se dibujan sus flechas y la lista gana 6 renglones
+(10 a 16 a 1000×900).
+- **Las mismas reglas de siempre: no se calculan solas.** Sin pedir, la caja
+  muestra el rótulo arriba y "Ver las tres mejores" centrado. Si se calculan
+  solas en la compu va a Juan como duda (cambiar cuándo corre el motor es de
+  él).
+- **Alto fijo de 135 en los dos estados** (revisor): dibujada sin fijar, la
+  caja medía 54 sin pedir y 135 pedidas, y la lista y "‹ ›" saltaban 81 px de
+  una jugada a otra.
+- **Solo si entra entera**: `ubicarAlts()`, llamada al final de
+  `ubicarCurva()`, pone `.altsAbajo` y muda `#alts` por DOM (en el panel vive
+  adentro de `#lateral`) si entre el pie de la curva y el de la ventana hay
+  135 + 32. Lo que sobraba bajo la curva, medido por el revisor: 176 a
+  1000×900 y a 1000×1000, 115 a 1100×900, 95 a 1050×850, 76 a 1000×800, 40 a
+  1200×900; o sea que hoy baja solo en 1000 a ~1060 de ancho con 900 o más de
+  alto. La curva está arriba de la caja, así que mudarla no cambia la
+  condición: no oscila.
+- **El pie de la caja y el de "‹ ›" en la misma línea** (875 a 1000×900): la
+  caja va sin margen abajo (en el panel lleva 10), y la fila de la lista
+  cruza hasta la fila de la caja (`grid-row: 4 / 7`). El relleno de abajo
+  descuenta los 151 de la caja para que el Resumen siga arrancando en la
+  pantalla siguiente (934 a 1000×900, 1034 a 1000×1000).
+- Medido sin pedir, pedidas y en la jugada siguiente: caja 740–875 y "‹ ›"
+  831–875 las tres veces. Tablero quieto. Celu igual al byte salvo la versión.
 
 **v0.149, la tarjeta del veredicto no cambia de alto** (lavado del revisor
 sobre la v0.148; Juan, 16-nov: *"es medio molesto"*; la B entre tres, 17-nov;

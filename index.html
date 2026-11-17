@@ -1119,6 +1119,23 @@
       margin-top: calc(var(--e-4) - 10px); margin-left: var(--izqCurva, var(--mTab));
       width: calc(100% - var(--izqCurva, var(--mTab)) - var(--mTab)); }
     #zonaRevision.curvaAbajo > .colLista { grid-row: 4 / 6; min-height: 100%; }
+    /* LAS TRES MEJORES DEBAJO DE LA CURVA (v0.150), si entran enteras: las pone
+       `ubicarAlts()`. Debajo del tablero, que es donde se dibujan sus flechas,
+       y la lista de la derecha gana esos renglones (10 a 16 a 1000×900). LA
+       CAJA NO CAMBIA DE ALTO entre pedidas y sin pedir (revisor): si no, la
+       lista y "‹ ›" saltaban 81 px de una jugada a la otra. Sin pedir, el
+       rótulo arriba y el botón centrado en lo que queda. Sin margen abajo, así
+       termina en la misma línea que "‹ ›". */
+    #zonaRevision.altsAbajo { grid-template-rows: auto auto auto 1fr auto auto;
+      padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab) - 62px - 151px)); }
+    #zonaRevision.altsAbajo > .colLista { grid-row: 4 / 7; }
+    #zonaRevision.altsAbajo > .alts { grid-column: 1; grid-row: 6; box-sizing: border-box; height: 135px;
+      margin: var(--e-4) 0 0 var(--izqCurva, var(--mTab));
+      width: calc(100% - var(--izqCurva, var(--mTab)) - var(--mTab));
+      display: flex; flex-direction: column; }
+    #zonaRevision.altsAbajo > .alts:has(.altLista:empty) .altCab { flex: 1; flex-direction: column;
+      align-items: flex-start; }
+    #zonaRevision.altsAbajo > .alts:has(.altLista:empty) #btnAlts { margin: auto; }
     /* MÍNIMO CUATRO RENGLONES de lista (300 son las alternativas, cuatro
        renglones, "‹ ›" y sus márgenes): con el tablero limitado por el ancho
        —de 950 a ~1000— quedaban dos. Ahí el panel se pasa del pie de las
@@ -1442,7 +1459,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.149 · 17-11";
+  window.VERSION = "v0.150 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -7742,6 +7759,28 @@ function ubicarCurva() {
   const porAlto = vh - 48 - (z.classList.contains("sinEvalH") ? 64 : 80) - 62;
   z.classList.toggle("curvaAbajo", window.matchMedia(CORTE_ANCHO).matches &&
     porAlto >= Math.min(vw - panel - 120, 680));
+  ubicarAlts();
+}
+/* LAS TRES MEJORES BAJAN DEBAJO DE LA CURVA SI ENTRAN ENTERAS (v0.150, lavado
+   de cara del revisor, v0.135: con la curva abajo sobraban ~175 px al pie del
+   tablero a 1000×900). Solo si lo que queda entre el pie de la curva y el de la
+   ventana alcanza para la caja entera —135 de alto, fijo, más 16 arriba y 16
+   abajo—; si no, se quedan en el panel como siempre. Por DOM y no por CSS: en
+   el panel viven adentro de la lista. La curva no se mueve por esto (está
+   arriba de la caja), así que la condición no oscila. Con la vista escondida
+   no se mide nada y se deja como estaba. */
+const ALTS_ALTO = 135;
+function ubicarAlts() {
+  const z = $("zonaRevision"), a = $("alts"), c = $("curva");
+  let abajo = false;
+  if (z.classList.contains("curvaAbajo")) {
+    const rc = c.getBoundingClientRect(), rz = z.getBoundingClientRect();
+    if (!rc.height) return;
+    abajo = window.innerHeight - 8 - (rc.bottom - rz.top) >= ALTS_ALTO + 32;
+  }
+  if (abajo === z.classList.contains("altsAbajo")) return;
+  z.classList.toggle("altsAbajo", abajo);
+  if (abajo) c.after(a); else $("lateral").prepend(a);
 }
 window.addEventListener("resize", ubicarCurva);
 /* EL RESUMEN, DE LA COLUMNA a AL BORDE DEL PANEL (v0.137). En píxeles de la
