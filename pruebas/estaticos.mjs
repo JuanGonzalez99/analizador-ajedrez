@@ -237,6 +237,16 @@ chequear("la tarjeta del veredicto no cambia de alto", [
   ...(/#veredicto \{ display: grid;[^}]*gap: 0;/.test(html) ? [] : ["el gap de .veredicto se cuela entre las filas"]),
 ]);
 
+/* Y la de la variante tampoco (v0.164, Juan: "tienen los saltos de tablero
+   con el cambio de tamaño"): pensando, con resultado o sin frase, mide lo
+   mismo. La explicación vacía no se esconde: guarda su lugar. */
+chequear("la tarjeta de la variante no cambia de alto", [
+  ...(/#pExp \{ grid-area: exp; min-height: calc\(var\(--rExp, 2\) \* 1lh\);/.test(html) ? [] : ["la explicación no reserva sus renglones"]),
+  ...(/#pSub \{ grid-area: sub; min-height: 1lh;/.test(html) ? [] : ["el renglón del pierde no se reserva"]),
+  ...(/\$\("prueba"\)\.style\.setProperty\("--rExp", LARGO_EXP === "larga" \? 3 : 2\);/.test(html) ? [] : ["la reserva no sigue al largo de la explicación"]),
+  ...(!/\$\("pExp"\)\.classList\.toggle\("oculto"/.test(html) ? [] : ["la explicación vacía se esconde y la tarjeta se achica"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

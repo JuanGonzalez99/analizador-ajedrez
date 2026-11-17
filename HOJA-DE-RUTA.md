@@ -356,7 +356,7 @@ lo demás se dibuja contra ella.
       pregunta es qué otra cosa de la partida va a la vista —¿las tres
       mejores desplegadas en vez del botón?—, no estirar lo que ya está.
 
-- [ ] **La tarjeta de la variante cambia de alto y hace saltar el tablero**
+- [x] **La tarjeta de la variante cambia de alto y hace saltar el tablero** (v0.164, 17-nov: mide 101 en todos los estados, como la del veredicto de la v0.149; queda un salto de 21 px al entrar y al salir, duda para Juan)
       (Juan, 17-nov, probando "la lista abajo": *"la tarjeta cuando se
       prueban jugadas no se revisaron, y tienen los saltos de tablero con el
       cambio de tamaño"*). Es el ítem de la etapa 3 ("La tarjeta que se achica
@@ -525,7 +525,7 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
       tarjeta que cambia de alto pasó a la etapa 1 como lavado de cara, v0.148:
       no es animarlo, es que el tablero no se mueva.)
 - [ ] `prefers-reduced-motion` en todas.
-- [ ] La tarjeta que se achica al probar y hace saltar el tablero 78 px (falla
+- [x] (v0.164, ver arriba) La tarjeta que se achica al probar y hace saltar el tablero 78 px (falla
       de la v0.84). **Revisor, v0.152:** desde que tocar solo marca, es lo
       único que mueve el tablero en todo el camino de probar: al jugar la
       primera, ~40 px a 412 (la tarjeta violeta con "pierde 5.46 · en la

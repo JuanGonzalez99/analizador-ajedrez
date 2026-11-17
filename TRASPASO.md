@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.163**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.164**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,37 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.164, la tarjeta de la variante no cambia de alto** (Juan, 17-nov,
+probando "la lista abajo": *"tienen los saltos de tablero con el cambio de
+tamaño"*; era también el ítem de la etapa 3 de la v0.84 y la nota del revisor
+de la v0.152). Medido a 386 y 412, con "sin la lista" y "la lista abajo", tres
+jugadas encadenadas (`pruebas/maqueta-variante.mjs`, no se commitea): la
+tarjeta medía **59** con "Probando…" o el error corto, **78** con "pierde ·
+en la partida…" partido en dos (la columna del símbolo y el Volver le comían
+ancho) y **117** con explicación de dos renglones. El tablero iba de 149 a
+208: saltaba al jugar (a "Probando", más chica) y otra vez al contestar el
+motor.
+- **`#prueba` pasa a grilla como `#veredicto` (v0.149)**: áreas `"ico tit btn"
+  / "sub sub sub" / "exp exp exp" / "linea linea linea"`, `.txt` en `display:
+  contents`, símbolo a `--t-cuerpo` en la línea del título. `#pSub` reserva un
+  renglón y `#pExp` `--rExp` renglones (`aplicarLargoExp` lo pone en las dos
+  tarjetas). **`#pExp` ya no se esconde**: vacía guarda su lugar —"Probando",
+  el error y "Probá otra jugada" no tienen frase—.
+- **El Volver se dibuja de 28 y no de 36**, con −3 arriba y abajo y el toque
+  de 49 × 80 por un `::after` (`inset: -10px -6px`; el revisor: §1.7 pide 48,
+  y antes eran 36; sobresale 4 arriba, sobre el hueco hasta la barra, y abajo
+  cae sobre el "pierde", que es texto): con 36 estiraba el renglón del título 14 px, y
+  metido en el relleno con −7 quedaba a 1 px del borde.
+- Resultado: la de la variante mide **101** en todos los estados (120 con
+  "larga"), y el tablero queda en 191 mientras se prueba. **Lo que queda**, que
+  va a Juan como duda: al entrar a la variante y al tocar Volver el tablero se
+  mueve 21 px una vez (la del veredicto mide 80), porque la variante tiene un
+  renglón más —el "pierde"—. Igualarlas pedía mudar el "pierde" a la línea del
+  título, que ya tiene el Volver. El revisor sumó otra: esconder la barra de
+  evaluación de arriba durante la variante (24 px, casi compensa), pero eso
+  saca algo que Juan usa; recomienda dejarlo así hasta que lo use.
+- Chequeo estático nuevo: "la tarjeta de la variante no cambia de alto".
 
 **v0.163, la dama que clava contra la dama** (Juan, 17-nov, sobre la
 v0.162: *"una verdad a medias, porque ahí estás asumiendo que la dama está

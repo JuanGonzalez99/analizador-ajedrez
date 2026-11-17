@@ -837,6 +837,28 @@
   #vEv { grid-area: ev; margin-left: var(--e-2); }
   #veredicto.invertida #vEv { margin-left: 0; margin-right: var(--e-2); }
   #vSub, #vExp { grid-area: frase; min-height: calc(var(--rExp, 2) * 1lh); align-self: start; }
+  /* LA DE LA VARIANTE TAMPOCO CAMBIA DE ALTO (v0.164; Juan, 17-nov: "tienen
+     los saltos de tablero con el cambio de tamaño"). Medía 59 con "Probando…",
+     78 con el "pierde · en la partida" partido en dos y 117 con explicación:
+     el tablero saltaba hasta 59 px entre pensar y contestar. Lo mismo que el
+     veredicto de la v0.149: el símbolo y el Volver en la línea del título, y
+     abajo, a todo el ancho, un renglón para el "pierde" y los de la
+     explicación reservados (--rExp), aunque esté pensando o no haya frase.
+     #pExp ya no se esconde: vacío, guarda su lugar. */
+  #prueba { display: grid; grid-template-columns: auto 1fr auto; gap: 0; align-items: center;
+            grid-template-areas: "ico tit btn" "sub sub sub" "exp exp exp" "linea linea linea"; }
+  #prueba > .txt { display: contents; }
+  #pIco { grid-area: ico; font-size: var(--t-cuerpo); min-width: 0; margin-right: var(--e-2); }
+  #pTit { grid-area: tit; min-width: 0; }
+  /* el Volver medía 36 y el título 22: estiraba el renglón 14 px. Se dibuja
+     de 28, se mete 3 arriba y 3 abajo en el relleno (le quedan 5 al borde) y
+     el toque es de 49 × 80 por el ::after (§1.7 pide 48; revisor). */
+  #prueba > .chico { grid-area: btn; margin: -3px 0 -3px var(--e-2); min-height: 28px;
+                     padding: 3px 12px; position: relative; }
+  #prueba > .chico::after { content: ""; position: absolute; inset: -10px -6px; }
+  #pSub { grid-area: sub; min-height: 1lh; margin-top: 2px; align-self: start; }
+  #pExp { grid-area: exp; min-height: calc(var(--rExp, 2) * 1lh); align-self: start; }
+  #pLinea { grid-area: linea; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: var(--e-2) auto 0; }
   /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
      horizontal, porque son lo mismo contado de dos maneras. Va pegada arriba de
@@ -1505,7 +1527,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.163 · 17-11";
+  window.VERSION = "v0.164 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1895,7 +1917,7 @@
   <div class="veredicto prueba oculto" id="prueba">
     <div class="ico" id="pIco"></div>
     <div class="txt"><div class="tit" id="pTit"></div><div class="sub" id="pSub"></div>
-      <div class="exp oculto" id="pExp"></div>
+      <div class="exp" id="pExp"></div>
       <div class="vlinea oculto" id="pLinea"></div></div>
     <button class="chico" id="btnProbar">Volver</button>
   </div>
@@ -5044,6 +5066,7 @@ function aplicarLargoExp(id) {
   /* lo que reserva la tarjeta (v0.149, ver el CSS de #veredicto): dos frases
      como mucho en corta y media, tres en larga */
   $("veredicto").style.setProperty("--rExp", LARGO_EXP === "larga" ? 3 : 2);
+  $("prueba").style.setProperty("--rExp", LARGO_EXP === "larga" ? 3 : 2);   /* (v0.164) */
   try { localStorage.setItem("largoExp", LARGO_EXP); } catch (e) { /* incógnito */ }
 }
 (function iniciarLargoExp() {
@@ -8711,8 +8734,7 @@ function pintarRevision() {
     $("pIco").style.color = t.color;
     $("pTit").textContent = t.tit;
     $("pSub").textContent = t.sub;
-    $("pExp").textContent = t.exp;
-    $("pExp").classList.toggle("oculto", !t.exp);
+    $("pExp").textContent = t.exp;   /* vacía y a la vista: guarda su lugar (v0.164) */
     const tira = fp.lista === "adentro" ? tiraDeLaVariante() : "";
     $("pLinea").innerHTML = tira;
     $("pLinea").classList.toggle("oculto", !tira);
