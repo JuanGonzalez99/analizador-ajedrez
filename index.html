@@ -220,7 +220,8 @@
   .seccion > summary > .tit { flex: 1; min-width: 0; }
   .seccion > summary::-webkit-details-marker { display: none; }
   .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
-                              color: var(--tenue); font-size: 18px; transition: transform var(--m-corta) var(--m-entra); }
+                              color: var(--tenue); font-size: 18px;
+                              transition: transform var(--m-corta) var(--m-entra), color var(--m-corta) var(--m-entra); }
   .seccion[open] > summary::after { transform: rotate(-90deg); }
   .seccion > .cap { margin-top: 0; }
   .seccion > .tw { margin-bottom: var(--e-4); }
@@ -1414,7 +1415,14 @@
     .tocable:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
     .tira > button:hover { color: inherit; }
     .curva:hover, .evalh:hover { border-color: color-mix(in srgb, currentColor 40%, transparent); }
-    .seccion > summary:hover { background: color-mix(in srgb, currentColor 5%, transparent); }
+    /* EL HOVER DEL TÍTULO DE SECCIÓN ES LA FLECHA (v0.155; lavado del
+       revisor, v0.146). Era una banda del 5% de borde a borde de la columna,
+       con el texto al ras de su borde: un estado pasajero con peso de
+       tarjeta. El título ya se lee como algo que se abre —chevron, raya,
+       peso—, así que con la mano y la flecha que se aclara alcanza. Ganó la B
+       de cuatro: C era la banda con aire y radio, y D el subrayado, que en el
+       sistema quiere decir "lo elegido". El "?" no cambia: tiene su toque. */
+    .seccion > summary:hover::after { color: var(--texto); }
   }
   .resAncho { display: none; }
   .pie { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-6) 0 0; }
@@ -1485,7 +1493,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.154 · 17-11";
+  window.VERSION = "v0.155 · 17-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

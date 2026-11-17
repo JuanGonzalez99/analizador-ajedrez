@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.154**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.155**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,22 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.155, [PC] el hover de los títulos de sección del Mes es la flecha**
+(lavado del revisor sobre la v0.146; la B entre cuatro, 17-nov). Era una banda
+`currentColor 5%` de borde a borde de la columna (531–1171 a 1280) con el
+texto al ras de su borde. Cuatro recortes a 1280 con el hover forzado por
+clase (`pruebas/maqueta-hover.mjs`, no se commitea): hoy; **B, sin banda: el
+chevron de `--tenue` a `--texto`**; C, la banda con 10 de aire y radio 8; D,
+el título subrayado. El revisor eligió B: el título ya se lee como algo que se
+abre, y el subrayado de 2 px en el sistema es "lo elegido" (§1, v0.97).
+- `.seccion > summary:hover::after { color: var(--texto) }`, adentro de
+  `@media (hover: hover)`; el `background` se fue entero. El color entra con
+  la transición corta (120 ms) sumada a la del giro del chevron. El "?" no
+  cambia.
+- Medido con el mouse de verdad: fondo transparente antes y durante, flecha
+  `#a4a19b` → `#e9e7e3`, el "?" igual.
+- Celu igual al byte salvo la versión.
 
 **v0.154, [PC] el inicio con los bordes del Mes** (lavado del revisor sobre
 la v0.145, "el inicio corrido a la izquierda"; la C entre cuatro, 17-nov,
