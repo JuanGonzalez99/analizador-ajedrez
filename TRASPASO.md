@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.168**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.169**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,50 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.169, arrastrar piezas con el dedo** (Juan, 18-nov: *"uhh esa estaría
+buena"*). Hasta acá el arrastre de la v0.84 era solo con mouse y el dedo
+jugaba con tocar y tocar. Ahora:
+- **Si el gesto arranca sobre una pieza que puede mover, arrastra; si no,
+  desliza** (propuesta del revisor). `dibujar` le pone `data-mueve` a la
+  casilla de cada pieza con alguna jugada legal en la posición que se ve
+  (un `new Chess(fen).moves()` por pintada), y el arrastre con el dedo solo
+  agarra desde ahí. Desde cualquier otra casilla el dedo sigue deslizando
+  jugadas y scrolleando la página. Umbral de 8 px con el dedo (4 con mouse).
+- **Cómo se le saca el gesto al navegador**: un `touchstart` no pasivo hace
+  `preventDefault` sobre una casilla `data-mueve` (salvo con el motor
+  ocupado), que es lo que hacen los tableros de internet. Medido en la
+  emulación táctil de Chromium: **`touch-action: none` en los `<rect>` del
+  SVG no rige** (la página scrolleaba igual; en un `div` sí), y el
+  `touchmove` no llega en la emulación, así que cortar ahí no se podía
+  probar. Efecto asumido: arrancar a scrollear con el dedo sobre una pieza
+  que puede mover ya no scrollea; sobre las demás casillas, sí.
+- **El toque quieto lo atiende el arrastre**: con el `touchstart` cortado el
+  navegador no manda el click, así que el `pointerup` sin arrastre llama a
+  `tocarCasilla` (con el dedo). Si el click llega igual, se ignora **para esa
+  casilla** por 500 ms (`tocadoConElDedo = { t, sq }`): ignorarlo solo por
+  tiempo se comía el destino tocado enseguida (medido: g1 y f3 seguidos no
+  jugaban).
+- **Arrastrar no cuenta como deslizar**: el `touchend` llega después del
+  `pointerup` y se ignora si hubo arrastre (`recienArrastrado`).
+- Ojo al probar: en la emulación, un deslizamiento hacia la derecha desde una
+  casilla vacía dispara el "atrás" por gesto del Chrome de escritorio y sale
+  de la Partida. Es del navegador de escritorio, no de la app: en la maqueta
+  se apaga con `overscroll-behavior-x: none`.
+- **El halo debajo del dedo** (revisor, en la misma versión): el dedo tapa
+  la pieza y la casilla de abajo y se soltaba a ciegas. Mientras se arrastra
+  con el dedo, un círculo `#6a1b9a` a .2, de radio `TAB_S` (dos casillas de
+  diámetro, asoma alrededor de la yema), centrado en la casilla de
+  `casillaEn(ev)` —cualquiera, no solo los destinos: contesta "¿dónde
+  cae?"—, debajo de las piezas, sordo al dedo, y se mueve en seco cambiando
+  `cx`/`cy`, sin repintar. Con mouse no: el puntero se ve. La pieza no se
+  agranda ni se levanta (revisor: quieto antes que animado, y levantarla
+  descasaría la pieza que se ve de la casilla donde cae).
+- Medido por el revisor: un dedo apoyado en una pieza que puede mover y que
+  sube como para scrollear **juega** (1. e3 abría la variante). Se asume,
+  como en chess.com y lichess: se deshace con Volver o el atrás (v0.168).
+  Si molesta, la otra es arrastrar recién tras un toque largo (duda para
+  Juan).
 
 **v0.168, cinco arreglos chicos de la variante, en una versión** (Juan,
 18-nov: *"son muy chicas, no se pueden unificar?"*; salieron del recorrido del

@@ -2773,15 +2773,33 @@ test("arrastrar la pieza no es un camino nuevo para mover", () => {
   assert.ok(html.includes("(function arrastrarPiezas()"), "existe el arrastre");
   assert.ok(html.includes("tocarCasilla(desde, true);") && html.includes("else tocarCasilla(hasta);"),
     "y pasa por tocarCasilla, no por un camino paralelo");
-  assert.ok(html.includes('if (ev.pointerType !== "mouse" || ev.button !== 0 || TRABAJANDO) return;'),
-    "con el dedo no existe, y con el motor ocupado tampoco");
+  assert.ok(html.includes('if (ev.button !== 0 || TRABAJANDO) return;'),
+    "con el motor ocupado no existe");
+  /* desde la v0.169 también con el dedo, pero solo desde una pieza que puede
+     mover: desde otra casilla el dedo desliza y scrollea */
+  assert.ok(html.includes('if (ev.pointerType !== "mouse" &&\n        !(ev.target.closest && ev.target.closest("[data-mueve]"))) return;'),
+    "con el dedo, solo desde una casilla con data-mueve");
+  assert.ok(html.includes('if (!TRABAJANDO && ev.cancelable && ev.target.closest && ev.target.closest("[data-mueve]"))'),
+    "y desde esa casilla el touchstart le saca el gesto al navegador");
+  assert.ok(html.includes('if (ev.pointerType !== "mouse") { tocadoConElDedo = { t: Date.now(), sq: origen }; tocarCasilla(origen); }'),
+    "sin click, el toque quieto lo atiende el arrastre");
+  assert.ok(html.includes("if (casilla === tocadoConElDedo.sq && Date.now() - tocadoConElDedo.t < 500) return;"),
+    "y no se cuenta dos veces si el click llega igual, pero el destino tocado enseguida sí llega");
+  assert.ok(html.includes("if (Date.now() - recienArrastrado < 400) return;"),
+    "y arrastrar no cuenta como deslizar");
+  /* el halo debajo del dedo (revisor, v0.169): se suelta sabiendo dónde cae */
+  const arr = html.slice(html.indexOf("(function arrastrarPiezas()"));
+  assert.ok(arr.includes('if (ev.pointerType !== "mouse") {\n        halo = document.createElementNS('),
+    "con el dedo hay halo, con mouse no");
+  assert.ok(arr.includes('svg.insertBefore(halo, svg.querySelector("[data-pz]"));'),
+    "debajo de las piezas");
   /* LA TRAMPA: tocarCasilla repinta el SVG entero, así que la pieza que se
      agarró deja de existir y hay que volver a buscarla. */
   assert.ok(html.includes("pieza = cont.querySelector(`[data-pz=\"${desde}\"]`);"),
     "la pieza se vuelve a buscar después de encender los destinos");
   assert.ok(html.includes('data-pz="${"abcdefgh"[f]}${8 - r}"'),
     "y cada pieza sabe en qué casilla está, que es lo que deja agarrarla");
-  assert.ok(html.includes("if (Math.abs(dx) + Math.abs(dy) < 4) return;"),
+  assert.ok(html.includes('if (Math.abs(dx) + Math.abs(dy) < (ev.pointerType === "mouse" ? 4 : 8)) return;'),
     "el umbral de 4 px evita repintar el tablero en cada clic");
 });
 

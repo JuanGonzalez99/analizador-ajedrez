@@ -1527,7 +1527,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.168 · 18-11";
+  window.VERSION = "v0.169 · 18-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5775,9 +5775,17 @@ function dibujar(fen, jugada, mejor, prueba) {
        las piezas: un <use> se come el click y el <rect> del fondo no se entera */
     /* la manito abierta SOLO donde hay una pieza: es lo que avisa que eso se
        agarra y se arrastra, y sobre una casilla vacía prometería algo falso */
-    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++)
+    /* LA PIEZA QUE PUEDE MOVER SE ARRASTRA TAMBIÉN CON EL DEDO (v0.169,
+       Juan). Su casilla lleva `data-mueve`, que es lo que miran el arrastre y
+       el `touchmove` que le corta el scroll al navegador (abajo, con el
+       deslizamiento). Desde cualquier otra casilla el dedo sigue deslizando
+       jugadas y scrolleando la página, como siempre. */
+    const mueven = new Set(new Chess(fen).moves({ verbose: true }).map(m => m.from));
+    for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+      const sq = "abcdefgh"[f] + (8 - r);
       s += `<rect x="${fx(f)}" y="${ry(r)}" width="${S}" height="${S}" fill="transparent"
-        data-sq="${"abcdefgh"[f]}${8 - r}" style="cursor:${b[r][f] ? "grab" : "pointer"}"/>`;
+        data-sq="${sq}"${mueven.has(sq) ? " data-mueve" : ""} style="cursor:${b[r][f] ? "grab" : "pointer"}"/>`;
+    }
   }
   return s + "</svg>";
 }
@@ -8888,16 +8896,29 @@ function pintarRevision() {
    descubre el gesto.
    No se llama preventDefault en touchmove a propósito: bloquearía el scroll
    vertical de la página, que es cómo se llega al resto de la vista. */
-let tocado = null, recienDeslizado = 0;
+let tocado = null, recienDeslizado = 0, recienArrastrado = 0, tocadoConElDedo = { t: 0, sq: null };
 $("tablero").addEventListener("touchstart", ev => {
   const t = ev.changedTouches[0];
   tocado = { x: t.clientX, y: t.clientY };
 }, { passive: true });
+/* ARRASTRAR CON EL DEDO (v0.169): si el dedo se apoya en una pieza que puede
+   mover, el `touchstart` le saca el gesto al navegador —ni scroll ni
+   deslizamiento— y lo sigue el arrastre de piezas, que es también el que
+   atiende el toque quieto (el navegador ya no manda el click). Es lo que hacen
+   los tableros de internet. `touch-action: none` no sirve acá: Chrome no lo
+   lee en las casillas, que son `<rect>` de un SVG (medido: la página
+   scrolleaba). Con el motor ocupado no se corta nada: no se puede jugar. */
+$("tablero").addEventListener("touchstart", ev => {
+  if (!TRABAJANDO && ev.cancelable && ev.target.closest && ev.target.closest("[data-mueve]"))
+    ev.preventDefault();
+}, { passive: false });
 $("tablero").addEventListener("touchend", seguro("deslizar", ev => {
   if (!tocado || !R) return;
   const t = ev.changedTouches[0];
   const dx = t.clientX - tocado.x, dy = t.clientY - tocado.y;
   tocado = null;
+  /* arrastrar una pieza con el dedo no es deslizar (v0.169) */
+  if (Date.now() - recienArrastrado < 400) return;
   /* pide un gesto claramente horizontal: si no, un scroll con el dedo apoyado
      en el tablero pasaría jugadas sin querer */
   if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
@@ -8918,7 +8939,12 @@ $("tablero").addEventListener("click", seguro("tablero", ev => {
   /* el navegador dispara un click al terminar el toque; sin esta marca, un
      deslizamiento que termina sobre el tablero elegiría una casilla sin querer */
   if (Date.now() - recienDeslizado < 400) return;
-  tocarCasilla(sq.getAttribute("data-sq"));
+  /* y si ESE toque ya lo atendió el arrastre (v0.169), no se cuenta dos veces.
+     Por casilla y no solo por tiempo: tocar la pieza y enseguida el destino
+     son dos toques, y el segundo tiene que llegar. */
+  const casilla = sq.getAttribute("data-sq");
+  if (casilla === tocadoConElDedo.sq && Date.now() - tocadoConElDedo.t < 500) return;
+  tocarCasilla(casilla);
 }));
 
 /* Tocar la curva lleva a esa jugada. Un manejador solo en el contenedor y la
@@ -8993,15 +9019,19 @@ $("curva").addEventListener("click", seguro("curva", ev => {
    el tablero en cada apretón, incluido el que era solo un clic. */
 (function arrastrarPiezas() {
   const cont = $("tablero");
-  let desde = null, pieza = null, orig = "", x0 = 0, y0 = 0, k = 1, arrastro = false;
-  const soltarTodo = () => { desde = null; pieza = null; arrastro = false; };
+  let desde = null, pieza = null, orig = "", x0 = 0, y0 = 0, k = 1, arrastro = false, halo = null;
+  const soltarTodo = () => { desde = null; pieza = null; arrastro = false; halo = null; };
   const casillaDe = ev => {
     const t = ev.target.closest && ev.target.closest("[data-sq]");
     return t && t.getAttribute("data-sq");
   };
   cont.addEventListener("pointerdown", seguro("agarrar", ev => {
-    if (ev.pointerType !== "mouse" || ev.button !== 0 || TRABAJANDO) return;
+    if (ev.button !== 0 || TRABAJANDO) return;
     const sq = casillaDe(ev);
+    /* con el dedo, solo una pieza que puede mover (v0.169, ver `dibujar`):
+       desde cualquier otra casilla el gesto es deslizar o scrollear */
+    if (ev.pointerType !== "mouse" &&
+        !(ev.target.closest && ev.target.closest("[data-mueve]"))) return;
     /* solo se agarra donde HAY una pieza: sobre una casilla vacía el gesto es
        arrastrar la página, no una jugada que no existe */
     if (!sq || !cont.querySelector(`[data-pz="${sq}"]`)) return;
@@ -9023,7 +9053,8 @@ $("curva").addEventListener("click", seguro("curva", ev => {
     if (!desde) return;
     const dx = ev.clientX - x0, dy = ev.clientY - y0;
     if (!arrastro) {
-      if (Math.abs(dx) + Math.abs(dy) < 4) return;
+      /* con el dedo, un poco más: un toque nunca cae quieto */
+      if (Math.abs(dx) + Math.abs(dy) < (ev.pointerType === "mouse" ? 4 : 8)) return;
       arrastro = true;
       tocarCasilla(desde, true);
       const svg = cont.querySelector("svg.tab");
@@ -9038,6 +9069,23 @@ $("curva").addEventListener("click", seguro("curva", ev => {
          mouse para no taparle el `pointerup` a las casillas, que están encima */
       pieza.style.pointerEvents = "none";
       pieza.parentNode.appendChild(pieza);
+      /* EL HALO DEBAJO DEL DEDO (v0.169, revisor): el dedo tapa la pieza y la
+         casilla de abajo, y se soltaba a ciegas. Un círculo violeta de dos
+         casillas de diámetro, centrado en la casilla donde caería, asoma
+         alrededor de la yema. En cualquier casilla, no solo en los destinos:
+         contesta "¿dónde cae?". Debajo de las piezas, sordo al dedo, y se
+         mueve en seco cambiando `cx`/`cy`, sin repintar. Con mouse no: el
+         puntero se ve. */
+      if (ev.pointerType !== "mouse") {
+        halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        halo.setAttribute("r", TAB_S);
+        halo.setAttribute("fill", "#6a1b9a");
+        halo.setAttribute("opacity", ".2");
+        halo.setAttribute("data-halo", "");
+        halo.style.pointerEvents = "none";
+        halo.setAttribute("visibility", "hidden");
+        svg.insertBefore(halo, svg.querySelector("[data-pz]"));
+      }
       try { cont.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura, como antes */ }
     }
     if (!pieza) return;
@@ -9045,13 +9093,26 @@ $("curva").addEventListener("click", seguro("curva", ev => {
        corrimiento va ADELANTE del que ya tenía y no lo pisa */
     pieza.setAttribute("transform",
       `translate(${(dx * k).toFixed(2)} ${(dy * k).toFixed(2)}) ${orig}`);
+    if (halo) {
+      const sq = casillaEn(ev);
+      halo.setAttribute("visibility", sq ? "visible" : "hidden");
+      if (sq) { halo.setAttribute("cx", sqCx(sq)); halo.setAttribute("cy", sqCy(sq)); }
+    }
   }));
   cont.addEventListener("pointerup", seguro("soltar", ev => {
     if (!desde) return;
     const hubo = arrastro, origen = desde;
     const hasta = hubo ? casillaEn(ev) : null;
     soltarTodo();
-    if (!hubo) return;                     /* fue un clic: lo atiende el click */
+    /* fue un clic: lo atiende el click. Con el dedo no hay click —lo cortó el
+       `touchstart`, ver el deslizamiento—, así que se atiende acá (v0.169) */
+    if (!hubo) {
+      if (ev.pointerType !== "mouse") { tocadoConElDedo = { t: Date.now(), sq: origen }; tocarCasilla(origen); }
+      return;
+    }
+    /* el `touchend` llega después y no tiene que leer el arrastre como un
+       deslizamiento (v0.169) */
+    recienArrastrado = Date.now();
     /* Soltar en la misma casilla, o fuera del tablero, devuelve la pieza a su
        lugar —por eso el repintado— pero la deja ELEGIDA, con sus destinos
        encendidos. No es un descuido: agarrar ya fue un `tocarCasilla`, así que
