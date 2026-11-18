@@ -412,6 +412,8 @@ lo demás se dibuja contra ella.
             guardarla por posición de arranque con una marca violeta en la
             tira que la reabre, y que con variante todo hable de la línea. El
             revisor recomienda quedarse con "la lista abajo" del dial.
+            **El dial no se le vuelve a preguntar** (Juan, 18-nov: *"estoy
+            probando todavía, no me apures"*): lo dice él cuando elija.
       - [ ] **Arrastrar piezas con el dedo** (Juan, 18-nov: *"uhh esa estaría
             buena"*). Hoy solo tocar y tocar. Choca con deslizar sobre el
             tablero para pasar jugadas: si el gesto arranca sobre una pieza
