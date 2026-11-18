@@ -1527,7 +1527,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.165 · 18-11";
+  window.VERSION = "v0.166 · 18-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6115,6 +6115,7 @@ function textoPrueba(prof) {
   }
   if (p.ver > 0) {
     const f = p.linea[p.ver - 1].fila, c = presentar(f);
+    const fenAntes = p.ver > 1 ? p.linea[p.ver - 2].fen : fenDeLaJugada(p.desde0);
     const lado = ladoDelUsuario(R);
     /* La comparación contra la jugada real vale para la PRIMERA de la variante y
        para ninguna más: de la segunda en adelante la posición ya no es la de la
@@ -6125,10 +6126,14 @@ function textoPrueba(prof) {
       sub: `pierde ${f.perdida.toFixed(2)}` + (p.ver === 1 ? contra : ""),
       /* SIN "salió del libro" en la variante, y es correcto: una jugada
          inventada no está en ningún libro, así que la pregunta no aplica. */
-      exp: explicarJugada(f, null, lado ? f.turno === lado : null,
+      /* LA MEJOR SE NOMBRA, como en la partida (v0.166, revisor de ajedrez):
+         con `null` una Omisión decía "Había mate forzado en 1" sin decir con
+         qué, y un Error no decía "La mejor era X". Sale de la posición de
+         ANTES de la probada, que es de donde sale `f.mejor`. */
+      exp: explicarJugada(f, f.mejor && f.mejor !== f.uci ? sanDeUci(fenAntes, f.mejor) : null,
+                          lado ? f.turno === lado : null,
                           sanDeUci(f.fen, f.mejorRival),
-                          observarJugada(f, p.ver > 1 ? p.linea[p.ver - 2].fen
-                                                      : fenDeLaJugada(p.desde0)),
+                          observarJugada(f, fenAntes),
                           { ranuras: ranurasDeLaExplicacion() }),
       color: `var(--c-${c.clave})`
     };
@@ -8426,14 +8431,23 @@ function pintarRevision() {
   $("veredicto").classList.toggle("invertida", modo === "tarjeta");
 
   /* en la inicial no hay jugada: pérdida, caída y tiempo no existen */
-  $("mPerdida").textContent = enInicio ? "\u2014" : f.perdida.toFixed(2);
+  /* CON UNA VARIANTE, PÉRDIDA Y CAÍDA SON DE LA JUGADA PROBADA (v0.166,
+     revisor de ajedrez): la tarjeta decía "4. Qg6 — Omisión · pierde 7.67" y
+     el cuadrito de abajo "3.43", la de la partida. Pensando, "…"; en el
+     arranque de la variante o si falló, "—". Pensó, siempre "—": una jugada
+     inventada no gastó reloj. */
+  const eP = PRUEBA && PRUEBA.ver > 0 ? PRUEBA.linea[PRUEBA.ver - 1] : null;
+  const fP = eP && eP.fila;
+  const sinJugada = enInicio || (PRUEBA && !fP);
+  const raya = PRUEBA && eP && !eP.fila && !eP.error ? "\u2026" : "\u2014";
+  $("mPerdida").textContent = sinJugada ? raya : (fP || f).perdida.toFixed(2);
   /* UN DECIMAL, no cero. El cuadrito redondeaba —"21 pt"— mientras la tarjeta
      decía "20.9 puntos de victoria"; cuando los números se fueron de la tarjeta
      en la v0.72, ese decimal se perdía. Y no es adorno: la caída es la medida en
      la que se apoyan el modo amigable y la precisión, así que redondearla a
      entero borra la diferencia entre una imprecisión y una jugada buena en el
      rango donde más se parecen. La pérdida, al lado, siempre tuvo dos. */
-  $("mCaida").textContent = enInicio ? "\u2014" : f.caida.toFixed(1) + " pt";
+  $("mCaida").textContent = sinJugada ? raya : (fP || f).caida.toFixed(1) + " pt";
   /* `f.seg` ya viajaba en la fila desde la v0.43 y no lo usaba nadie más que
      las tablas. `tiempoCorto` pone el "·" cuando la partida no trae relojes
      —correspondencia, o un PGN pegado a mano—, así que el cuadrito no cambia de
@@ -8441,8 +8455,8 @@ function pintarRevision() {
   /* SIN RELOJ SE DICE (v0.131): el "·" de `tiempoCorto` era un glifo para
      descifrar, y "—" dice "todavía no", que es otra cosa. Las tablas siguen
      con el "·", que ahí tiene su leyenda. */
-  const sinReloj = !enInicio && f.seg == null;
-  $("mPenso").textContent = enInicio ? "\u2014" : sinReloj ? "sin reloj" : tiempoCorto(f.seg);
+  const sinReloj = !enInicio && !PRUEBA && f.seg == null;
+  $("mPenso").textContent = enInicio || PRUEBA ? "\u2014" : sinReloj ? "sin reloj" : tiempoCorto(f.seg);
   $("mPenso").classList.toggle("sinDato", sinReloj);
   /* En la inicial la fila es Mejor y una leyenda: no promete el tiempo si la
      partida no trae relojes, porque ese dato no va a llegar nunca. */

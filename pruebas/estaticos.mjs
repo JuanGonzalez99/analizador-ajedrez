@@ -255,6 +255,15 @@ chequear("la barra de evaluación sigue a la variante", [
   ...(/textoBarra\(fb\.evalTexto\)/.test(html) && /"horizontal" \? fb\.evalTexto/.test(html) ? [] : ["el número de la barra lee la jugada de la partida"]),
 ]);
 
+/* Y lo demás de la variante habla de la jugada probada (v0.166, revisor de
+   ajedrez): los cuadritos de pérdida y caída, y la mejor nombrada en la
+   explicación ("Había mate forzado en 1, con Qxf7#"). */
+chequear("los cuadritos y la explicación siguen a la variante", [
+  ...(/\$\("mPerdida"\)\.textContent = sinJugada \? raya : \(fP \|\| f\)\.perdida/.test(html) ? [] : ["la pérdida es la de la jugada de la partida"]),
+  ...(/\$\("mCaida"\)\.textContent = sinJugada \? raya : \(fP \|\| f\)\.caida/.test(html) ? [] : ["la caída es la de la jugada de la partida"]),
+  ...(/exp: explicarJugada\(f, f\.mejor && f\.mejor !== f\.uci \? sanDeUci\(fenAntes, f\.mejor\) : null,/.test(html) ? [] : ["la explicación de la variante no nombra la mejor"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

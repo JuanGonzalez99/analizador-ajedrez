@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.165**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.166**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,28 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.166, los cuadritos y la explicación hablan de la jugada probada**
+(revisor de ajedrez, en el recorrido del lavado de cara funcional de probar
+jugadas, 18-nov). Dos fallas de antes, del mismo tipo que la barra:
+- **Pérdida y Caída** leían `f = R.filas[IDX]`: en partida-mate, 3… Nf6,
+  probando 4. Qg6 la tarjeta decía "pierde 7.67" y el cuadrito "3.43" (el de
+  Nf6, que encima es del rival). Ahora, con variante, la fila de la probada
+  que se mira (`fP`); pensando, "…"; en el arranque o si falló, "—". **Pensó**
+  con variante es siempre "—": una jugada inventada no gastó reloj.
+- **`textoPrueba` le pasaba `null` como mejor a `explicarJugada`**: una
+  Omisión decía "Había mate forzado en 1. En cambio, tu dama queda comible en
+  g6." sin decir con qué, y un Error perdía "La mejor era X". Ahora
+  `sanDeUci(fenAntes, f.mejor)` si no es la misma jugada; `fenAntes` es la
+  posición de antes de la probada, la misma que ya usaba `observarJugada`.
+  Medido (`maqueta-omision.mjs`): "Había mate forzado en 1, con Qxf7#. En
+  cambio, tu dama queda comible en g6."
+- **No se tocó el cuadrito Mejor**: en la variante sigue nombrando la mejor de
+  la posición que se ve (lo que dibuja la flecha verde, v0.94). El revisor lo
+  marca como duda para Juan: afuera de la variante "Mejor" es la que había que
+  jugar en vez de la jugada; adentro, la respuesta del rival.
+- Chequeo estático nuevo: "los cuadritos y la explicación siguen a la
+  variante".
 
 **v0.165, la barra de evaluación sigue a la variante** (Juan, 18-nov, al
 probar la v0.164: *"cuando se prueban jugadas no se mueve la barra de
