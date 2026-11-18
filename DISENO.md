@@ -547,6 +547,15 @@ hay. Las primeras salen del historial del traspaso.
   elige.
 
 ### No le copa
+- **Que algo que sigue al dedo salte de a casillas, en seco**: el halo
+  violeta del arrastre (v0.169) *"se siente raro… es como un círculo que se
+  mueve en ortogonal… medio rígido, poco fluido"* (18-nov-2026, probándolo en
+  el celu). Lo que acompaña un gesto continuo tiene que moverse continuo:
+  puede marcar casillas, pero llega a cada una deslizándose (v0.170, 120 ms
+  de §1.8). "Quieto antes que animado" vale para todo cambio de estado, sea
+  por un toque o porque la app cambia sola (pantallas, tarjetas, paneles); la
+  excepción es lo que va pegado a un gesto continuo mientras el dedo se mueve
+  (el arrastre): eso acompaña sin saltos.
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no
   entra en un renglón: *"es medio molesto"* (16-nov-2026, sobre la v0.148; a
   su ancho, 386, el tablero baja 19 px). Va con "que el tablero salte", de más
@@ -613,6 +622,15 @@ qué se le pasó y la regla general que sale**. El revisor lo lee antes que nada
 Se anota cada vez que Juan rechaza algo que pasó por el revisor (decisión de
 Juan, 7-nov-2026). Las reglas que salen de acá las destila la revisión del
 criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
+
+- **El halo del arrastre con el dedo, movido en seco** (v0.169). El revisor
+  lo pidió "sin transición" por "quieto antes que animado", y lo juzgó con un
+  recorte a mitad del gesto. *Se le pasó*: una foto quieta no dice cómo se
+  siente un gesto, y saltar de casilla en casilla bajo un dedo que se mueve
+  continuo se siente rígido. *Regla*: lo que va pegado a un gesto se juzga
+  en movimiento, y acompaña al dedo sin saltos. "Quieto antes que animado"
+  sigue valiendo para todo cambio de estado, por un toque o solo (el fundido
+  de la v0.110 de arriba); la excepción es solo lo pegado a un gesto continuo.
 
 - **El fundido de 120 ms al cambiar de pantalla** (v0.110). Lo decidió el
   revisor con la duración y la curva de §1.8, y lo verificó congelando el

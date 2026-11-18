@@ -3681,3 +3681,14 @@ test("la jugada que da mate dice Jaque mate y el ahogado lo dice (v0.168)", () =
     .startsWith("Se cumplen 50 jugadas"));
   for (const x of [...pm, ...pa, ...po, ...pf]) assert.ok(x.txt.includes(x.marca), x.marca);
 });
+
+test("el halo del dedo se desliza entre casillas (v0.170)", () => {
+  /* Juan: en seco "se siente raro, medio rígido". Por style, no por atributo:
+     el cambio de atributo no dispara la transición de forma confiable. */
+  assert.ok(html.includes(".haloDedo { transition: cx 120ms cubic-bezier(.2, 0, 0, 1), cy 120ms cubic-bezier(.2, 0, 0, 1); }"));
+  assert.ok(html.includes('halo.style.cx = sqCx(sq) + "px"; halo.style.cy = sqCy(sq) + "px";'));
+  assert.ok(html.includes('if (volvia) halo.style.transition = "none";'),
+    "volviendo al tablero aparece donde entra el dedo, sin deslizarse");
+  assert.ok(html.includes('halo.style.cx = sqCx(desde) + "px"; halo.style.cy = sqCy(desde) + "px";'),
+    "arranca en la casilla de origen: el primer tramo también se desliza");
+});

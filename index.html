@@ -1501,6 +1501,8 @@
   #panelLog { border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px; margin: 0 0 12px; }
   #logTexto { font: 11px/1.35 ui-monospace, monospace; white-space: pre-wrap; word-break: break-word;
               max-height: 260px; overflow-y: auto; margin: 8px 0 0; color: var(--tenue); }
+  /* el halo del arrastre con el dedo se desliza entre casillas (v0.170) */
+  .haloDedo { transition: cx 120ms cubic-bezier(.2, 0, 0, 1), cy 120ms cubic-bezier(.2, 0, 0, 1); }
   /* SIN MOVIMIENTO SI EL TELÉFONO LO PIDE (§1.8, v0.104): obligatorio desde la
      primera animación, y ya había cinco transiciones */
   @media (prefers-reduced-motion: reduce) {
@@ -1527,7 +1529,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.169 · 18-11";
+  window.VERSION = "v0.170 · 18-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -9073,17 +9075,22 @@ $("curva").addEventListener("click", seguro("curva", ev => {
          casilla de abajo, y se soltaba a ciegas. Un círculo violeta de dos
          casillas de diámetro, centrado en la casilla donde caería, asoma
          alrededor de la yema. En cualquier casilla, no solo en los destinos:
-         contesta "¿dónde cae?". Debajo de las piezas, sordo al dedo, y se
-         mueve en seco cambiando `cx`/`cy`, sin repintar. Con mouse no: el
-         puntero se ve. */
+         contesta "¿dónde cae?". Debajo de las piezas, sordo al dedo, sin
+         repintar. Con mouse no: el puntero se ve.
+         SE DESLIZA de una casilla a la otra (v0.170, Juan: en seco "se siente
+         raro, medio rígido, poco fluido"): `cx`/`cy` van por `style` para que
+         los anime la transición corta de §1.8 (`.haloDedo`), y arranca en la
+         casilla de origen, así el primer tramo también se desliza. */
       if (ev.pointerType !== "mouse") {
         halo = document.createElementNS("http://www.w3.org/2000/svg", "circle");
         halo.setAttribute("r", TAB_S);
         halo.setAttribute("fill", "#6a1b9a");
         halo.setAttribute("opacity", ".2");
         halo.setAttribute("data-halo", "");
+        halo.setAttribute("class", "haloDedo");
+        halo.style.cx = sqCx(desde) + "px"; halo.style.cy = sqCy(desde) + "px";
         halo.style.pointerEvents = "none";
-        halo.setAttribute("visibility", "hidden");
+        halo.setAttribute("visibility", "visible");
         svg.insertBefore(halo, svg.querySelector("[data-pz]"));
       }
       try { cont.setPointerCapture(ev.pointerId); } catch (e) { /* sin captura, como antes */ }
@@ -9095,8 +9102,15 @@ $("curva").addEventListener("click", seguro("curva", ev => {
       `translate(${(dx * k).toFixed(2)} ${(dy * k).toFixed(2)}) ${orig}`);
     if (halo) {
       const sq = casillaEn(ev);
+      /* si el dedo salió del tablero y vuelve, el halo aparece donde entra, sin
+         deslizarse desde la última casilla (revisor, v0.170) */
+      const volvia = halo.getAttribute("visibility") === "hidden";
       halo.setAttribute("visibility", sq ? "visible" : "hidden");
-      if (sq) { halo.setAttribute("cx", sqCx(sq)); halo.setAttribute("cy", sqCy(sq)); }
+      if (sq) {
+        if (volvia) halo.style.transition = "none";
+        halo.style.cx = sqCx(sq) + "px"; halo.style.cy = sqCy(sq) + "px";
+        if (volvia) { halo.getBoundingClientRect(); halo.style.transition = ""; }
+      }
     }
   }));
   cont.addEventListener("pointerup", seguro("soltar", ev => {

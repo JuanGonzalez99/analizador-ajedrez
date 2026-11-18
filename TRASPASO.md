@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.169**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.170**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,18 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.170, el halo del dedo se desliza** (Juan, 18-nov, probándolo en el
+celu: en seco *"se siente raro… es como un círculo que se mueve en
+ortogonal… medio rígido, poco fluido"*). El halo sigue marcando la casilla
+donde cae, pero llega a cada una deslizándose: `cx`/`cy` van por `style`
+(no por atributo) para que los anime `.haloDedo`, con la corta de §1.8
+(120 ms, `cubic-bezier(.2, 0, 0, 1)`), y arranca en la casilla de origen, así
+el primer tramo también se desliza. Medido en la emulación: de g1 a f3 pasa
+por (275, 304), (254, 261), (248, 249) y llega a (246, 246). Con
+`prefers-reduced-motion` la regla global lo deja en 0 ms. Si sigue sin
+convencer, la otra es que el halo siga al dedo exacto y la casilla se marque
+aparte. `DISENO.md` §2 y §3.
 
 **v0.169, arrastrar piezas con el dedo** (Juan, 18-nov: *"uhh esa estaría
 buena"*). Hasta acá el arrastre de la v0.84 era solo con mouse y el dedo
