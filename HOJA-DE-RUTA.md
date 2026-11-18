@@ -385,7 +385,11 @@ lo demás se dibuja contra ella.
       mejor era" de la probada (v0.166), "…" pensando, el arranque en un
       renglón y dos bordes (v0.167). **Lo que trajo el recorrido (18-nov) y
       falta**, chico primero:
-      - [ ] **Cinco arreglos chicos de la variante, en UNA versión** (Juan,
+      - [x] **Cinco arreglos chicos de la variante, en UNA versión** (v0.168,
+            18-nov; con tres correcciones del revisor de ajedrez: las tablas
+            por material y por 50 jugadas también dicen por qué, una Omisión
+            de mate que ahoga dice qué mate había, y la forzada que ahoga lo
+            dice) (Juan,
             18-nov: *"son muy chicas, no se pueden unificar?"*; cuenta como un
             ítem de la noche, con los dos revisores al final):
             1. Jugar la jugada que ya está avanza en vez de abrir o cortar:
@@ -561,6 +565,11 @@ lo demás se dibuja contra ella.
       cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:
       un texto más corto ("esta") o que entre entero. Arreglo chico, sin
       variantes.
+- [ ] **Con dos mates en 1, el que no es el del motor sale "Excelente"**
+      (revisor de ajedrez, v0.168; ya venía de antes). En
+      `6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`, Ra8# con la del motor Rd8# y
+      pérdida 0 sale Excelente y no Mejor: un mate es un mate. Revisor de
+      ajedrez.
 - [ ] **Sacar los restos de "la lista adentro" de la v0.160** (revisor de
       código, 18-nov; interno). `tiraDeLaVariante()`, la rama
       `fp.lista === "adentro"`, el `<div id="pLinea">`, el CSS `.vlinea` /
@@ -738,6 +747,16 @@ El jaque en los detectores y la nueva definición de "a salvo" ya están hechos
 Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Juan
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
+
+- **No sé si esto te copa (v0.168):** con una variante abierta, la flecha ‹
+  de arriba ahora primero cierra la variante y te deja en la partida, igual
+  que el atrás del celu; para irte al inicio, dos toques. (1) Así, que
+  recomiendan los revisores: el atrás y la flecha hacen siempre lo mismo.
+  (2) Que la flecha te saque siempre al inicio.
+- **Lo apunto (v0.168):** adentro de una variante, volviendo con ‹ al
+  arranque y jugando la de la partida, la variante sigue abierta y dice "es
+  la de la partida"; afuera, esa misma jugada avanza. Si molesta: cerrar la
+  variante y avanzar.
 
 - **No sé si esto te copa (v0.156/v0.157):** el renglón gris de cada sección
   cerrada del Mes; desde la v0.157 dice primero lo que sale bien ("Con el
