@@ -382,21 +382,28 @@ lo demás se dibuja contra ella.
       mejor era" de la probada (v0.166), "…" pensando, el arranque en un
       renglón y dos bordes (v0.167). **Lo que trajo el recorrido (18-nov) y
       falta**, chico primero:
-      - [ ] Jugar la jugada que ya está avanza en vez de abrir o cortar: la
-            de la partida sin variante avanza la partida; la siguiente de la
-            línea, adentro de la variante, avanza sin cortar ni llamar al
-            motor (hoy compara "bxa8=Q pierde 0.00 · en la partida bxa8=Q").
-      - [ ] El "atrás" de Android cierra primero la variante (hoy sale de la
-            Partida entera) y n/p no hacen nada con una abierta (saltaban de
-            jugada y la tiraban; las flechas ya se arreglaron en la v0.144).
-      - [ ] Con "la lista abajo", el símbolo de cada probada en el color de
-            su categoría y la jugada en `--inventada` (hoy todo violeta).
-      - [ ] La jugada que da mate no dice "Jaque mate." ni el ahogado
-            "Ahoga al rey: tablas." (también en la tarjeta de la partida;
-            `partesDeLaExplicacion`). Revisor de ajedrez.
-      - [ ] Probar la misma jugada de la partida: "· es la de la partida" en
-            vez de comparar dos números que con Stockfish real pueden no
-            coincidir.
+      - [ ] **Cinco arreglos chicos de la variante, en UNA versión** (Juan,
+            18-nov: *"son muy chicas, no se pueden unificar?"*; cuenta como un
+            ítem de la noche, con los dos revisores al final):
+            1. Jugar la jugada que ya está avanza en vez de abrir o cortar:
+               la de la partida sin variante avanza la partida; la siguiente
+               de la línea, adentro de la variante, avanza sin cortar ni
+               llamar al motor (hoy compara "bxa8=Q pierde 0.00 · en la
+               partida bxa8=Q").
+            2. El "atrás" de Android cierra primero la variante (hoy sale de
+               la Partida entera) y n/p no hacen nada con una abierta
+               (saltaban de jugada y la tiraban; las flechas ya se
+               arreglaron en la v0.144).
+            3. Con "la lista abajo", el símbolo de cada probada en el color
+               de su categoría y la jugada en `--inventada` (hoy todo
+               violeta).
+            4. La jugada que da mate dice "Jaque mate." y el ahogado "Ahoga
+               al rey: tablas." (también en la tarjeta de la partida;
+               `partesDeLaExplicacion`). Revisor de ajedrez.
+            5. Probar la misma jugada de la partida dice "· es la de la
+               partida" en vez de comparar dos números que con Stockfish
+               real pueden no coincidir (con el 1, solo queda el caso de
+               "probar otra en su lugar").
       - [ ] ⏸ a prueba con Juan (18-nov: *"eso no sé, lo voy probando y
             vemos"*) · **El cuadrito Mejor y la flecha verde en la
             variante**: hoy la mejor de la posición que se ve (la respuesta
