@@ -17,8 +17,8 @@ tacha acá, en el mismo commit.
   de una partida (explicación, categorías, cuadritos, tablas, análisis), y una
   pasada sobre partidas reales los domingos (Juan, 17-nov).
 - **Revisor de código:** los miércoles, desde la tarea nocturna (Juan,
-  18-nov): lo que cambió en la semana y una zona que rota. **Próxima zona: 1,
-  el CSS** (el orden está en `.claude/agents/revisor-codigo.md`).
+  18-nov): lo que cambió en la semana y una zona que rota. **Próxima zona: 2,
+  el `<script>` clásico** (la 1, el CSS, se miró el 18-nov) (el orden está en `.claude/agents/revisor-codigo.md`).
 - **Por noche: hasta dos ítems** (decisión de Juan, 6-nov). Pasa al segundo
   solo si el primero terminó **aprobado por el revisor**, con o sin
   correcciones en el medio. Si después de las dos vueltas de corrección el
@@ -561,6 +561,41 @@ lo demás se dibuja contra ella.
       cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:
       un texto más corto ("esta") o que entre entero. Arreglo chico, sin
       variantes.
+- [ ] **Sacar los restos de "la lista adentro" de la v0.160** (revisor de
+      código, 18-nov; interno). `tiraDeLaVariante()`, la rama
+      `fp.lista === "adentro"`, el `<div id="pLinea">`, el CSS `.vlinea` /
+      `.vj` / `#pLinea`, el campo `reemplaza` de `FORMAS_PRUEBA` (siempre
+      true) y `listaAdentro` en `mirar.mjs`: ninguna forma pide la lista
+      adentro desde la v0.160. ~1.200 tokens. Reescribir la prueba "con una
+      prueba abierta la tarjeta real se esconde" (protege el renglón muerto
+      palabra por palabra). Capturas de la variante byte a byte.
+- [ ] **Sacar las marcas de la curva que ya no se usan ("punto" y "raya")**
+      (revisor de código, 18-nov; interno). `MARCAS_CURVA`, `MARGEN_MARCA`,
+      la rama `modo === "raya"` y el `aro` del punto grande en
+      `dibujarCurva`: Juan eligió "punto chico" en la v0.160. ~1.300 tokens.
+      Ojo: las pruebas de analisis.test.mjs ~1496, 1528 y 1542–1559 usan esa
+      rama como límite; se reescriben en el mismo cambio.
+- [ ] **CSS muerto en la fila de Girar** (revisor de código, 18-nov;
+      interno). `.soloAncho` (nadie la lleva desde la v0.160),
+      `.acciones > button.prendido`, el `:not(.revcab)`, `.acciones`
+      declarada dos veces seguidas, y comentarios que hablan de "Siempre la
+      mejor", que ya no está. ~800 tokens. Las pruebas que buscan
+      `.colLista, .soloAncho { display: none; }` pasan a `.colLista`. La
+      regla de `max-width: 359px` que esconde el ícono NO se toca.
+- [ ] **Dos pruebas que no prueban lo que dicen** (revisor de código,
+      18-nov; interno). La del Escape de Ajustes (analisis.test.mjs ~2632)
+      busca `tecla === "Escape"`, que está en tres lugares: tiene que buscar
+      el renglón entero de `verAjustes(false)`. La de `data-sq="` (~2162)
+      matchea también las marcas de la explicación: buscar la del tablero.
+- [ ] **Recortar los comentarios de historia del CSS**, en tres noches por
+      tramos (renglones 6–500, 500–1000 y el bloque de PC) (revisor de
+      código, 18-nov; interno). De los 107 KB del CSS, 65 son comentarios
+      (~16.000 tokens) y 48 KB cuentan cómo se llegó (versión, "Juan dijo",
+      variantes descartadas). Cada uno queda en una línea con el porqué
+      medido y "§7, v0.X"; si el número no está en el traspaso, se muda
+      antes de borrar. Verificación: el CSS sin comentarios idéntico antes y
+      después, `npm test` y capturas byte a byte. Ahorro: 6.000–8.000 tokens
+      por lectura del CSS.
 
 ## Etapa 2 · Partir `index.html`
 
