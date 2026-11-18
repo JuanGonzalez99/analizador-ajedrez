@@ -129,7 +129,7 @@ chequear("el traspaso está al día",
    leyenda en vez de tres "—", y sin reloj Pensó dice "sin reloj" y no "·". */
 chequear("la fila sin jugada dice qué pasa", [
   ...(/id="mLeyenda"/.test(html) ? [] : ["falta la leyenda del arranque (#mLeyenda)"]),
-  ...(/toggle\("enInicio", enInicio\)/.test(html) ? [] : ["la fila no se entera de la posición inicial"]),
+  ...(/toggle\("enInicio", (?:enInicio|leyenda)\)/.test(html) ? [] : ["la fila no se entera de la posición inicial"]),
   ...(/sinReloj \? "sin reloj"/.test(html) ? [] : ["Pensó vuelve al \"·\" sin reloj"]),
 ]);
 
@@ -250,9 +250,9 @@ chequear("la tarjeta de la variante no cambia de alto", [
 /* Con una variante abierta, la barra es la de la variante (v0.165, Juan:
    "cuando se prueban jugadas no se mueve la barra de evaluación"). */
 chequear("la barra de evaluación sigue a la variante", [
-  ...(/if \(PRUEBA\.linea\[k\]\.fila\) \{ fb = PRUEBA\.linea\[k\]\.fila; break; \}\n\s+\}\n\s+const pct = llenadoBarra\(fb\);/.test(html) ? [] : ["la barra lee la jugada de la partida"]),
+  ...(/if \(PRUEBA\.linea\[k\]\.fila\) \{ fb = PRUEBA\.linea\[k\]\.fila; break; \}\n\s+\}[\s\S]{0,600}?const pct = llenadoBarra\(fb\);/.test(html) ? [] : ["la barra lee la jugada de la partida"]),
   ...(/fb = filaDePosicion\(PRUEBA\.desde0\) \|\| f;/.test(html) ? [] : ["el arranque de la variante muestra la evaluación de después de la jugada"]),
-  ...(/textoBarra\(fb\.evalTexto\)/.test(html) && /"horizontal" \? fb\.evalTexto/.test(html) ? [] : ["el número de la barra lee la jugada de la partida"]),
+  ...(/const numB = eB && !eB\.fila && !eB\.error \? "\\u2026" : fb\.evalTexto;/.test(html) && /"horizontal" \? numB : ""/.test(html) ? [] : ["el número de la barra no sigue a la variante, o afirma un número mientras piensa"]),
 ]);
 
 /* Y lo demás de la variante habla de la jugada probada (v0.166, revisor de

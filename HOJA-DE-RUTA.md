@@ -378,6 +378,45 @@ lo demás se dibuja contra ella.
       dice la tarjeta en la variante), y armar la lista de lo que falta o
       molesta. Lo que Juan recuerde se suma acá. Con variantes donde pida
       forma nueva.
+      **Hecho**: la barra sigue a la variante (v0.165), cuadritos y "la
+      mejor era" de la probada (v0.166), "…" pensando, el arranque en un
+      renglón y dos bordes (v0.167). **Lo que trajo el recorrido (18-nov) y
+      falta**, chico primero:
+      - [ ] Jugar la jugada que ya está avanza en vez de abrir o cortar: la
+            de la partida sin variante avanza la partida; la siguiente de la
+            línea, adentro de la variante, avanza sin cortar ni llamar al
+            motor (hoy compara "bxa8=Q pierde 0.00 · en la partida bxa8=Q").
+      - [ ] El "atrás" de Android cierra primero la variante (hoy sale de la
+            Partida entera) y n/p no hacen nada con una abierta (saltaban de
+            jugada y la tiraban; las flechas ya se arreglaron en la v0.144).
+      - [ ] Con "la lista abajo", el símbolo de cada probada en el color de
+            su categoría y la jugada en `--inventada` (hoy todo violeta).
+      - [ ] La jugada que da mate no dice "Jaque mate." ni el ahogado
+            "Ahoga al rey: tablas." (también en la tarjeta de la partida;
+            `partesDeLaExplicacion`). Revisor de ajedrez.
+      - [ ] Probar la misma jugada de la partida: "· es la de la partida" en
+            vez de comparar dos números que con Stockfish real pueden no
+            coincidir.
+      - [ ] ⏸ espera a Juan · **El cuadrito Mejor y la flecha verde en la
+            variante**: hoy la mejor de la posición que se ve (la respuesta
+            del rival, decisión de la v0.94); el revisor de UX propone "la
+            que había en vez de la probada", como afuera (gusto de la v0.139).
+      - [ ] ⏸ espera a Juan · **La variante como modo, y que no se pierda**:
+            con "sin la lista" la tira y la curva siguen en la partida (dos
+            "estás acá"); se tira sin aviso por siete caminos (Volver, Esc,
+            la tira, la curva, la lista de la compu…) y no vuelve. Propuesta:
+            guardarla por posición de arranque con una marca violeta en la
+            tira que la reabre, y que con variante todo hable de la línea. El
+            revisor recomienda quedarse con "la lista abajo" del dial.
+      - [ ] ⏸ espera a Juan · Arrastrar piezas con el dedo (hoy solo tocar y
+            tocar); choca con deslizar para pasar jugadas.
+      - [ ] [PC] La variante adentro de la planilla, debajo de la jugada de
+            donde sale, con sangría (como lichess). Con variantes.
+      - Propuestas del revisor de ajedrez para más adelante: qué amenaza el
+        rival en la posición de la variante; la evaluación como número en la
+        tarjeta de la variante con el modo "en la tarjeta"; la línea corta del
+        motor; resumen de la variante contra la partida; aviso de confianza
+        cuando la variante se alarga.
 - [ ] **Pantalla propia de "Acerca de"** (Juan, 15-nov, al mudar los créditos
       a Ajustes en la v0.143: la pensaba así, "más a futuro"). Hoy la
       atribución de las piezas vive al pie de la hoja de Ajustes y alcanza.

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.166**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.167**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.167, tres bordes de la variante** (revisores de UX y de ajedrez, en el
+recorrido del lavado funcional de probar jugadas, 18-nov). Lo chico que
+decidieron ellos:
+- **Pensando, el número de la barra dice "…"** (`numB`): desde la v0.165 la
+  barra quedaba quieta en la jugada anterior, pero el número la afirmaba sobre
+  el tablero de la nueva (−0.65 de Bd2 con el tablero en Ba6). El relleno
+  sigue quieto hasta el resultado; quieto antes que animado.
+- **El arranque de la variante, en un renglón**: "Tocá una pieza y después
+  adónde va. · en la partida Nc3 pierde 1.67" ocupaba tres y el tablero
+  saltaba 18 px al volver con ‹ (la tarjeta pasaba a 120). Ahora el título es
+  siempre "Probá otra jugada" y el sub, la comparación sola ("en la partida
+  Nc3 pierde 1.67") o, sin jugada real, la instrucción. "Elegiste e2" se fue:
+  lo dicen la pieza marcada y sus puntos (v0.152). Medido: 101 en el arranque
+  también, a 386 y 412.
+- **En la posición inicial con una probada, Pérdida y Caída aparecen**: la
+  clase `.enInicio` escondía los cuadritos y dejaba la leyenda. Ahora
+  `sinJugada = PRUEBA ? !fP : enInicio` y la leyenda va solo sin probada
+  (`leyenda`).
+- **Si la evaluación falla, Mejor dice "—"** y no "…" para siempre
+  (`pensando` mira `eP.error`).
 
 **v0.166, los cuadritos y la explicación hablan de la jugada probada**
 (revisor de ajedrez, en el recorrido del lavado de cara funcional de probar

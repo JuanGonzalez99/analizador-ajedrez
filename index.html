@@ -1527,7 +1527,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.166 · 18-11";
+  window.VERSION = "v0.167 · 18-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6138,10 +6138,13 @@ function textoPrueba(prof) {
       color: `var(--c-${c.clave})`
     };
   }
-  return { ico: "→",
-           tit: p.desde ? `Elegiste ${p.desde}` : "Probá otra jugada",
-           sub: p.desde ? "Tocá adónde va, o tocá otra pieza."
-                        : "Tocá una pieza y después adónde va." + contra,
+  /* EL ARRANQUE, EN UN RENGLÓN (v0.167, revisor): "Tocá una pieza y después
+     adónde va. · en la partida Nc3 pierde 1.67" ocupaba tres y el tablero
+     saltaba 18 px al volver con ‹, rompiendo el alto fijo de la v0.164. Con
+     jugada real, solo la comparación; sin ella, la instrucción. Tampoco
+     "Elegiste e2": la pieza marcada y sus puntos ya lo dicen (v0.152). */
+  return { ico: "→", tit: "Probá otra jugada",
+           sub: real ? contra.replace(/^ · /, "") : "Tocá una pieza y después adónde va.",
            exp: "", color: "var(--inventada)" };
 }
 
@@ -8392,6 +8395,11 @@ function pintarRevision() {
     for (let k = PRUEBA.ver - 1; k >= 0; k--)
       if (PRUEBA.linea[k].fila) { fb = PRUEBA.linea[k].fila; break; }
   }
+  /* PENSANDO, EL NÚMERO DICE "…" (v0.167, revisor): el relleno queda quieto
+     donde estaba, pero el número no puede afirmar la evaluación de la jugada
+     anterior sobre el tablero de la nueva. La misma marca que el cuadrito Mejor. */
+  const eB = PRUEBA && PRUEBA.ver > 0 ? PRUEBA.linea[PRUEBA.ver - 1] : null;
+  const numB = eB && !eB.fila && !eB.error ? "\u2026" : fb.evalTexto;
   const pct = llenadoBarra(fb);
   const gananBlancas = pct >= 50;
   const modo = MODO_EVAL;
@@ -8409,7 +8417,7 @@ function pintarRevision() {
   /* claro sobre el relleno, oscuro sobre el fondo: el número siempre contrasta */
   const tinta = gananBlancas ? "var(--fondo)" : "var(--texto)";
   const nv = $("evalnum"), nh = $("evalnumh");
-  nv.textContent = modo === "barra" ? textoBarra(fb.evalTexto) : "";
+  nv.textContent = modo === "barra" ? (numB === "\u2026" ? numB : textoBarra(numB)) : "";
   /* EL NÚMERO LARGO SE ACORTA, NO SE ACHICA (v0.105). La barra recorta lo que
      sobra SIN AVISAR, porque tiene `overflow: hidden` por las esquinas del
      relleno: "+10.00" a 11 no entra. Hasta la v0.104 se achicaba la letra a 8;
@@ -8421,7 +8429,7 @@ function pintarRevision() {
   nv.style.top = arriba ? "3px" : "auto";
   nv.style.bottom = arriba ? "auto" : "3px";
 
-  nh.textContent = modo === "horizontal" ? fb.evalTexto : "";
+  nh.textContent = modo === "horizontal" ? numB : "";
   nh.style.color = tinta;
   nh.style.top = "50%";
   nh.style.transform = "translateY(-50%)";
@@ -8438,7 +8446,8 @@ function pintarRevision() {
      inventada no gastó reloj. */
   const eP = PRUEBA && PRUEBA.ver > 0 ? PRUEBA.linea[PRUEBA.ver - 1] : null;
   const fP = eP && eP.fila;
-  const sinJugada = enInicio || (PRUEBA && !fP);
+  /* con variante manda la probada, aunque arranque en la inicial (revisor) */
+  const sinJugada = PRUEBA ? !fP : enInicio;
   const raya = PRUEBA && eP && !eP.fila && !eP.error ? "\u2026" : "\u2014";
   $("mPerdida").textContent = sinJugada ? raya : (fP || f).perdida.toFixed(2);
   /* UN DECIMAL, no cero. El cuadrito redondeaba —"21 pt"— mientras la tarjeta
@@ -8460,8 +8469,9 @@ function pintarRevision() {
   $("mPenso").classList.toggle("sinDato", sinReloj);
   /* En la inicial la fila es Mejor y una leyenda: no promete el tiempo si la
      partida no trae relojes, porque ese dato no va a llegar nunca. */
-  $("mLeyenda").closest(".metricas").classList.toggle("enInicio", enInicio);
-  if (enInicio)
+  const leyenda = enInicio && !fP;   /* con una probada en la inicial, los cuadritos */
+  $("mLeyenda").closest(".metricas").classList.toggle("enInicio", leyenda);
+  if (leyenda)
     $("mLeyenda").textContent = R.filas.some(x => x.seg != null)
       ? "Pérdida, caída y lo que pensó, desde la primera jugada."
       : "Pérdida y caída, desde la primera jugada.";
@@ -8549,7 +8559,7 @@ function pintarRevision() {
   const sinAlternativa = !mejorVista || mejorVista === uciAzul;
   /* "Todavía no" y "no hay" no son lo mismo: el motor está pensando la jugada
      que se acaba de probar, o la variante llegó a un mate y no hay jugada. */
-  const pensando = !!PRUEBA && !vista.ev;
+  const pensando = !!PRUEBA && !vista.ev && !(eP && eP.error);   /* falló: "—" */
   $("mMejor").title = mejorVista || "";
   /* prendido según la PREFERENCIA y no según si hay flecha: en una jugada que
      ya era la mejor no hay flecha que dibujar, pero el interruptor sigue
