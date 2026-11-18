@@ -397,19 +397,26 @@ lo demás se dibuja contra ella.
       - [ ] Probar la misma jugada de la partida: "· es la de la partida" en
             vez de comparar dos números que con Stockfish real pueden no
             coincidir.
-      - [ ] ⏸ espera a Juan · **El cuadrito Mejor y la flecha verde en la
+      - [ ] ⏸ a prueba con Juan (18-nov: *"eso no sé, lo voy probando y
+            vemos"*) · **El cuadrito Mejor y la flecha verde en la
             variante**: hoy la mejor de la posición que se ve (la respuesta
             del rival, decisión de la v0.94); el revisor de UX propone "la
             que había en vez de la probada", como afuera (gusto de la v0.139).
-      - [ ] ⏸ espera a Juan · **La variante como modo, y que no se pierda**:
+      - [ ] ⏸ espera a Juan · **La variante como modo, y que no se pierda**
+            (Juan, 18-nov, sobre guardarla: *"en principio no, pero depende de
+            cómo quede puede ser. acepto propuestas, llegado el momento"*: no
+            se hace sola; cuando toque, se le llevan variantes dibujadas):
             con "sin la lista" la tira y la curva siguen en la partida (dos
             "estás acá"); se tira sin aviso por siete caminos (Volver, Esc,
             la tira, la curva, la lista de la compu…) y no vuelve. Propuesta:
             guardarla por posición de arranque con una marca violeta en la
             tira que la reabre, y que con variante todo hable de la línea. El
             revisor recomienda quedarse con "la lista abajo" del dial.
-      - [ ] ⏸ espera a Juan · Arrastrar piezas con el dedo (hoy solo tocar y
-            tocar); choca con deslizar para pasar jugadas.
+      - [ ] **Arrastrar piezas con el dedo** (Juan, 18-nov: *"uhh esa estaría
+            buena"*). Hoy solo tocar y tocar. Choca con deslizar sobre el
+            tablero para pasar jugadas: si el gesto arranca sobre una pieza
+            que puede mover, arrastra; si no, desliza (propuesta del revisor).
+            Tocar y tocar sigue andando. Va después de lo chico.
       - [ ] [PC] La variante adentro de la planilla, debajo de la jugada de
             donde sale, con sangría (como lichess). Con variantes.
       - Propuestas del revisor de ajedrez para más adelante: qué amenaza el

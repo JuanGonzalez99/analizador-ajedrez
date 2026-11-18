@@ -533,6 +533,11 @@ hay. Las primeras salen del historial del traspaso.
   evaluación durante la variante. *Lectura mía:* lo que molesta es que el
   tablero salte mientras uno encadena jugadas; un movimiento al cambiar de
   modo, que lo hace uno, no.
+- **Arrastrar las piezas con el dedo** (18-nov-2026): *"uhh esa estaría
+  buena"*. Y sobre guardar la variante al salir: *"en principio no, pero
+  depende de cómo quede"*. *Lectura mía:* lo que se siente como un tablero de
+  verdad le copa enseguida; lo que agrega estado y marcas nuevas, lo quiere
+  ver dibujado antes.
 - **La hoja de Ajustes, repasada** (17-nov-2026, v0.160): la curva con
   **punto chico**; la lista de la compu en **planilla** ("no lo uso en la
   compu"); al probar una jugada, **"la lista abajo"** a prueba contra "sin la
