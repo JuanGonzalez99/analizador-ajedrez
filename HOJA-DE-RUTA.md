@@ -428,7 +428,9 @@ lo demás se dibuja contra ella.
             revisor recomienda quedarse con "la lista abajo" del dial.
             **El dial no se le vuelve a preguntar** (Juan, 18-nov: *"estoy
             probando todavía, no me apures"*): lo dice él cuando elija.
-      - [ ] **Arrastrar piezas con el dedo** (Juan, 18-nov: *"uhh esa estaría
+      - [x] **Arrastrar piezas con el dedo** (v0.169, 18-nov; con un halo
+            violeta debajo del dedo que dice dónde cae, pedido del revisor)
+            (Juan, 18-nov: *"uhh esa estaría
             buena"*). Hoy solo tocar y tocar. Choca con deslizar sobre el
             tablero para pasar jugadas: si el gesto arranca sobre una pieza
             que puede mover, arrastra; si no, desliza (propuesta del revisor).
@@ -748,6 +750,12 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.169):** si apoyás el dedo sobre una pieza que
+  puede mover y arrastrás para scrollear o pasar jugadas, la mueve y abre una
+  variante (se cierra con Volver o el atrás). Es como chess.com y lichess.
+  (1) Así. (2) Que el arrastre con el dedo arranque recién después de un
+  toque largo (~150 ms quieto), y el gesto rápido siga siendo scroll o
+  deslizar (más lento para jugar).
 - **No sé si esto te copa (v0.168):** con una variante abierta, la flecha ‹
   de arriba ahora primero cierra la variante y te deja en la partida, igual
   que el atrás del celu; para irte al inicio, dos toques. (1) Así, que
