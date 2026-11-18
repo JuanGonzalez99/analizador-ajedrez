@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.167**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.168**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,48 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.168, cinco arreglos chicos de la variante, en una versión** (Juan,
+18-nov: *"son muy chicas, no se pueden unificar?"*; salieron del recorrido del
+lavado funcional de probar jugadas):
+- **La jugada que ya está avanza.** Sin variante, jugar en el tablero la misma
+  de la partida pasa a la siguiente (`irA(IDX + 1)` en `tocarCasilla`) en vez
+  de abrir una variante. Adentro, jugar la que ya viene en la línea es lo
+  mismo que ›: no corta ni llama al motor (`probarJugada`). Antes la cortaba,
+  la reevaluaba y comparaba "bxa8=Q pierde 0.00 · en la partida bxa8=Q".
+- **El "atrás" de Android cierra primero la variante.** `abrirPrueba` empuja
+  una entrada `{ ...estado, prueba: true }` (una sola, aunque se abra otra
+  encima desde las alternativas) y el `popstate` que vuelve a la entrada de la
+  Partida cierra la variante sin cambiar de pantalla. Cerrarla por otro camino
+  (Volver, Esc, `irA`) pasa por `soltarPrueba`, que saca la entrada con un
+  `history.back()` cuyo `popstate` se ignora (`IGNORAR_POP`): si no, el
+  siguiente atrás no haría nada visible. Efecto lateral asumido: el "‹" de
+  arriba, que es `history.back()`, también cierra primero la variante, igual
+  que el gesto (la regla de §4sexies: los tres hacen lo mismo). Son ahora dos
+  los `pushState` (la prueba lo cuenta).
+- **`n` y `p` no hacen nada con una variante con jugadas**: saltaban de
+  jugada y se llevaban la línea (las flechas ya se arreglaron en la v0.144).
+- **Con "la lista abajo", el símbolo de cada probada va en el color de su
+  categoría** y la jugada sigue en `--inventada` (`laVarianteEnLaTira`).
+- **"Jaque mate." y las tablas dicen por qué** en `partesDeLaExplicacion`
+  (paso 0), en la partida y en la variante: solo existe `f.remate` en la
+  última jugada juzgada. El mate va solo —cualquier otra frase habla de una
+  partida que ya no sigue—. Las tablas van primero y dejan lugar a `habia`
+  o a la alternativa: "Ahoga/Ahogás al rey: tablas." (como Coronás), "Ya no
+  queda material para dar mate: tablas." y "Se cumplen 50 jugadas sin
+  capturas ni movimientos de peón: tablas.". Correcciones del revisor de
+  ajedrez en la misma versión: una Omisión de mate que ahoga
+  (`7k/4Q3/6K1/… Qf7`) decía solo el ahogado y perdía "Había mate forzado en
+  1, con Qe8#"; y el paso 0 va **antes** de la salida de la forzada, porque
+  el ahogado forzado (Kxc2 como única legal) es un hecho del tablero, no una
+  elección. Mate y ahogado señalan al rey del que no puede mover. Con eso el
+  "ojo con el ahogado" ya no sale con 0 jugadas. La triple repetición no
+  está en el FEN y sigue sin decirse.
+- **Probar la misma jugada de la partida dice "· es la de la partida"**: desde
+  el arranque, si la jugada es la real se usa su fila y `R.evs[desde0 + 1]`
+  en vez de pedírsela al motor, que con Stockfish de verdad no da dos veces el
+  mismo número. Con el primer arreglo, solo pasa en "probar otra en su lugar"
+  o volviendo con ‹ al arranque.
 
 **v0.167, tres bordes de la variante** (revisores de UX y de ajedrez, en el
 recorrido del lavado funcional de probar jugadas, 18-nov). Lo chico que

@@ -1527,7 +1527,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.167 · 18-11";
+  window.VERSION = "v0.168 · 18-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3028,7 +3028,30 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
                                obs = null, ctx = null) {
   /* En una forzada no hubo decisión y la tarjeta ya lo dice entera: cualquier
      cosa que agreguemos acá juzga algo que no se eligió. */
-  if (!f || f.forzada) return [];
+  /* 0. LA PARTIDA SE TERMINA EN EL TABLERO (v0.168, Juan). El mate se dice y
+     nada más: cualquier otra frase —"ataca la dama", "la posición pasa a
+     ganada"— habla de una partida que ya no sigue. Las tablas dicen por qué
+     —ahogado, material, 50 jugadas— y dejan lugar a lo que había, que es lo
+     que importa si el que las hizo ganaba (una Omisión de mate que ahoga
+     dice qué mate se omitió; revisor de ajedrez). Va ANTES de la forzada:
+     decir que hubo mate o ahogado no juzga una elección, es el tablero (el
+     ahogado forzado es el truco clásico del que va perdiendo).
+     `remate` solo existe en la última jugada de lo que se juzgó: la de la
+     partida, o la probada en la variante. La triple repetición no está en el
+     FEN y no se dice (ver `remateEnTablero`). */
+  let tablas = null;
+  if (f && f.remate && f.fen) {
+    const t = new Chess(f.fen), rey = casillaDelRey(t.board(), t.turn());
+    if (t.in_checkmate()) return [{ txt: "Jaque mate.", marca: "Jaque mate", sq: rey }];
+    if (t.in_stalemate())
+      tablas = { txt: `${mio ? "Ahogás" : "Ahoga"} al rey: tablas.`, marca: mio ? "Ahogás" : "Ahoga", sq: rey };
+    else if (t.insufficient_material())
+      tablas = { txt: "Ya no queda material para dar mate: tablas.", marca: "material para dar mate" };
+    else if (t.in_draw())
+      tablas = { txt: "Se cumplen 50 jugadas sin capturas ni movimientos de peón: tablas.",
+                 marca: "50 jugadas" };
+  }
+  if (!f || f.forzada) return tablas ? [tablas] : [];
   const pieza = (mio ? PIEZA_TU : PIEZA_EL)[f.pieza] || "la pieza";
   const donde = (f.uci || "").slice(2, 4);
   const suya = t => (mio ? PIEZA_TU : PIEZA_EL)[t] || "la pieza";
@@ -3366,6 +3389,8 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      teoría.
      Va por la CATEGORÍA y no por si el motor coincide: es la misma pregunta
      que hace `salioDelLibro`, y vale en los dos modos. */
+  if (tablas) return [tablas, habia || alternativa].filter(Boolean);
+
   if (f.cat === "libro") {
     const seVe = p => p && !["doblados", "aislado", "el ahogado"].includes(p.marca);
     return [salvada, ataque, ...fuertes, ...menores].filter(seVe).slice(0, 1);
@@ -4447,6 +4472,13 @@ function enfocarLaFila() {
 try { history.scrollRestoration = "manual"; } catch (e) { /* navegador viejo */ }
 
 window.addEventListener("popstate", ev => {
+  if (IGNORAR_POP) { IGNORAR_POP = false; return; }
+  /* volver de la entrada de la variante a la de su Partida: se cierra la
+     variante y la pantalla no se mueve (v0.168, ver `abrirPrueba`) */
+  const st = ev.state || {};
+  if (PRUEBA && VISTA === "partida" && st.vista === "partida" && !st.prueba) {
+    PRUEBA = null; return void pintarRevision();
+  }
   quieto();
   mostrarVista((ev.state && ev.state.vista) || "inicio", { scroll: true });
   enfocarLaFila();
@@ -5851,7 +5883,7 @@ function irA(i) {
      a la mejor: una prueba pertenece a UNA posición, y arrastrarla a la
      siguiente mostraría una jugada evaluada contra una posición que no es la
      suya. Va acá y no en cada botón porque acá pasan todos los caminos. */
-  PRUEBA = null;
+  if (PRUEBA) soltarPrueba();
   MARCADA = null;
   pintarRevision();
 }
@@ -5944,9 +5976,23 @@ function abrirPrueba(desde0) {
      es lo que deja encadenar varias con unas listas y otras no. */
   PRUEBA = { desde0, linea: [], ver: 0, desde: null, destinos: [], corriendo: false };
   MARCADA = null;
+  /* EL "ATRÁS" DE ANDROID CIERRA PRIMERO LA VARIANTE (v0.168, Juan): abrirla
+     empuja una entrada de historial sobre la de la Partida, y el gesto la
+     saca a ella en vez de a la pantalla (ver el `popstate`). Una sola entrada
+     por variante: abrir otra encima —las alternativas— no apila. */
+  if (!(history.state && history.state.prueba))
+    try { history.pushState({ ...(history.state || {}), prueba: true }, "", location.href); } catch (e) { /* nada */ }
 }
 
-function salirDePrueba() { if (PRUEBA) { PRUEBA = null; pintarRevision(); } }
+/* Cerrar la variante por cualquier otro camino —Volver, Esc, pasar de
+   jugada— saca también su entrada de historial, o el próximo "atrás" no
+   haría nada visible. El `popstate` que eso dispara se ignora. */
+let IGNORAR_POP = false;
+function soltarPrueba() {
+  PRUEBA = null;
+  if (history.state && history.state.prueba) { IGNORAR_POP = true; history.back(); }
+}
+function salirDePrueba() { if (PRUEBA) { soltarPrueba(); pintarRevision(); } }
 
 
 /* Moverse por la variante. No llama al motor: las evaluaciones ya están. */
@@ -5971,6 +6017,11 @@ function tocarCasilla(sq, agarrar = false) {
     const m0 = marcada();
     const m = m0 && salidas.find(x => x.from === m0.desde && x.to === sq &&
                                       (!x.promotion || x.promotion === "q"));
+    /* LA JUGADA QUE YA ESTÁ AVANZA (v0.168, Juan): jugar en el tablero la
+       misma que se jugó en la partida no inventa nada, así que no abre una
+       variante: pasa a la jugada siguiente. */
+    const sigue = m && R.filas[IDX + 1];
+    if (sigue && sigue.uci === m.from + m.to + (m.promotion || "")) return void irA(IDX + 1);
     if (m) { abrirPrueba(IDX + 1); return void probarJugada(m); }
     const puede = salidas.filter(x => x.from === sq);
     /* volver a tocar la marcada la desmarca, como tocar cualquier otra cosa;
@@ -6017,15 +6068,28 @@ function probarJugada(m) {
   const j = new Chess(vista.fen);
   const hecho = j.move({ from: m.from, to: m.to, promotion: m.promotion });
   if (!hecho) return;
+  const uci = hecho.from + hecho.to + (hecho.promotion || "");
+  /* LA SIGUIENTE DE LA LÍNEA AVANZA (v0.168, Juan): parado en el medio de la
+     variante, jugar la que ya viene después no corta nada ni llama al motor;
+     es lo mismo que ›. Antes la cortaba y la volvía a evaluar, y la tarjeta
+     comparaba la jugada contra sí misma. */
+  if (p.ver < p.linea.length && p.linea[p.ver].uci === uci) return void verDeLaVariante(p.ver + 1);
   /* Jugar estando parado en el medio de la variante CORTA lo que venía después,
      que es lo que hace cualquier tablero: la continuación que había ya no sale
      de esta posición. Si alguna de las cortadas estaba en la cola, la cola la
      descarta sola: se mira por identidad. */
   p.linea = p.linea.slice(0, p.ver);
-  p.linea.push({ uci: hecho.from + hecho.to + (hecho.promotion || ""),
-                 san: hecho.san, hecho, fen: j.fen(),
+  /* LA DE LA PARTIDA, PROBADA EN SU LUGAR (v0.168): desde el arranque, la
+     misma jugada que se hizo ya está juzgada, y se usa ESA fila y esa
+     evaluación en vez de volver a pedírsela al motor. Con Stockfish de verdad
+     dos corridas no dan el mismo número, y la tarjeta decía "pierde 0.31 · en
+     la partida Nf3 pierde 0.27" de la misma jugada. */
+  const real = p.ver === 0 ? jugadaReal() : null;
+  const deLaPartida = real && real.uci === uci && R.evs && R.evs[p.desde0 + 1];
+  p.linea.push({ uci, san: hecho.san, hecho, fen: j.fen(),
                  /* sin evaluar todavía: eso es lo que la cola viene a llenar */
-                 ev: null, fila: null, error: null });
+                 ev: deLaPartida ? R.evs[p.desde0 + 1] : null,
+                 fila: deLaPartida ? real : null, error: null });
   p.ver = p.linea.length;
   p.desde = null; p.destinos = [];
   pintarRevision();
@@ -6123,7 +6187,8 @@ function textoPrueba(prof) {
     return {
       ico: c.icono,
       tit: `${f.n}${f.turno === "w" ? "." : "..."} ${f.san} — ${c.nombre}`,
-      sub: `pierde ${f.perdida.toFixed(2)}` + (p.ver === 1 ? contra : ""),
+      sub: `pierde ${f.perdida.toFixed(2)}` +
+           (p.ver === 1 ? (f === real ? " · es la de la partida" : contra) : ""),
       /* SIN "salió del libro" en la variante, y es correcto: una jugada
          inventada no está en ningún libro, así que la pregunta no aplica. */
       /* LA MEJOR SE NOMBRA, como en la partida (v0.166, revisor de ajedrez):
@@ -6179,8 +6244,11 @@ function laVarianteEnLaTira() {
   if (!p || !p.linea.length) return "";
   return `<span class="corte" aria-hidden="true"></span>` + p.linea.map((x, i) => {
     const c = x.fila ? presentar(x.fila) : null;
+    /* el símbolo en el color de su categoría y la jugada en violeta (v0.168):
+       todo violeta no dejaba ver cuál de las probadas era un error */
+    const sm = c ? ` style="color:var(--c-${c.clave})"` : "";
     return `<span class="jg inv ${c ? "" : "pend"} ${i + 1 === p.ver ? "sel" : ""}" ` +
-           `data-v="${i + 1}"><span class="sm">${c ? c.icono : "\u2026"}</span>${x.san}</span>`;
+           `data-v="${i + 1}"><span class="sm"${sm}>${c ? c.icono : "\u2026"}</span>${x.san}</span>`;
   }).join("");
 }
 
@@ -9110,7 +9178,9 @@ document.addEventListener("keydown", seguro("teclas", ev => {
   const t = ev.target.tagName;
   if (t === "INPUT" || t === "TEXTAREA" || t === "SELECT") return;
   ev.preventDefault();
-  if (salto) saltarAMala(tecla === "n" ? 1 : -1);
+  /* con una variante abierta, `n` y `p` no hacen nada (v0.168): saltaban de
+     jugada en la partida y se llevaban puesta la línea probada sin aviso */
+  if (salto) { if (!(PRUEBA && PRUEBA.linea.length)) saltarAMala(tecla === "n" ? 1 : -1); }
   /* por `atras` y `adelante`, los de los botones: con una variante abierta la
      recorren a ella. Hasta la v0.143 las flechas llamaban a `irA`, que la
      cerraba sin avisar y se llevaba la línea probada. */

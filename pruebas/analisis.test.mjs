@@ -806,7 +806,11 @@ test("solo mostrarVista prende y apaga las zonas de las pantallas", () => {
 test("solo irAPantalla empuja historial, y sobre la misma url", () => {
   /* Un solo lugar empuja: así el gesto de volver de Android, la flecha del
      navegador y el "‹" de arriba deshacen siempre lo mismo. */
-  assert.equal((html.match(/history\.pushState/g) || []).length, 1);
+  /* y la variante, desde la v0.168: el "atrás" de Android la cierra primero */
+  assert.equal((html.match(/history\.pushState/g) || []).length, 2);
+  const prueba = html.slice(html.indexOf("function abrirPrueba"), html.indexOf("function soltarPrueba"));
+  assert.ok(prueba.includes('history.pushState({ ...(history.state || {}), prueba: true }, "", location.href)'),
+    "la variante empuja sobre la misma url");
   const cuerpo = html.slice(html.indexOf("function irAPantalla"), html.indexOf("function volver()"));
   assert.ok(cuerpo.includes('history.pushState({ vista: v, de }, "", location.href)'),
     "sobre la misma url, o una recarga da 404 en GitHub Pages");
@@ -2061,8 +2065,8 @@ test("jugar una prueba NO espera al motor", () => {
   assert.ok(!/^async function probarJugada/m.test(html), "y no es async");
   assert.ok(cuerpo.indexOf("pintarRevision()") < cuerpo.indexOf("atenderCola()"),
     "primero dibuja, después encola");
-  assert.ok(cuerpo.includes("ev: null, fila: null, error: null"),
-    "la jugada entra a la línea sin veredicto, y por eso se puede dibujar ya");
+  assert.ok(cuerpo.includes("fila: deLaPartida ? real : null, error: null"),
+    "la jugada entra a la línea sin veredicto —salvo la de la partida, que ya lo tiene—, y por eso se puede dibujar ya");
 });
 
 test("la cola evalúa de a una y en orden", () => {
@@ -2114,7 +2118,7 @@ test("las dos puertas arrancan de posiciones distintas", () => {
 test("la comparación contra la jugada real es solo para la primera", () => {
   /* De la segunda en adelante la posición ya no es la de la partida, así que no
      hay contra qué comparar. */
-  assert.ok(html.includes("(p.ver === 1 ? contra : \"\")"));
+  assert.ok(html.includes('(p.ver === 1 ? (f === real ? " · es la de la partida" : contra) : "")'));
 });
 
 test("probar no escribe en el análisis ni en la caché", () => {
@@ -3587,3 +3591,75 @@ function sinElogio(ant, uci, pieza) {
   assert.match(txt, /queda comible/, txt);
   assert.ok(!/Ataca|Clava|columna/.test(txt), "nada de lo que logra la pieza que se pierde: " + txt);
 }
+
+/* --- los cinco arreglos chicos de la variante, v0.168 --- */
+
+test("jugar la jugada que ya está avanza, sin abrir ni cortar (v0.168)", () => {
+  const tocar = html.slice(html.indexOf("function tocarCasilla"), html.indexOf("function probarJugada"));
+  assert.ok(tocar.indexOf("return void irA(IDX + 1)") < tocar.indexOf("abrirPrueba(IDX + 1)"),
+    "sin variante, la de la partida pasa a la jugada siguiente antes de abrir nada");
+  const probar = html.slice(html.indexOf("function probarJugada"), html.indexOf("async function atenderCola"));
+  assert.ok(probar.indexOf("return void verDeLaVariante(p.ver + 1)") < probar.indexOf("p.linea = p.linea.slice(0, p.ver)"),
+    "adentro de la variante, la siguiente de la línea avanza antes de cortar");
+});
+
+test("con una variante abierta, n y p no hacen nada (v0.168)", () => {
+  assert.ok(html.includes('if (salto) { if (!(PRUEBA && PRUEBA.linea.length)) saltarAMala(tecla === "n" ? 1 : -1); }'));
+});
+
+test("el atrás cierra la variante y cerrarla saca su entrada (v0.168)", () => {
+  const pop = html.slice(html.indexOf('window.addEventListener("popstate"'));
+  assert.ok(pop.indexOf("PRUEBA = null; return void pintarRevision();") < pop.indexOf("quieto();"),
+    "con variante abierta, el popstate la cierra antes de cambiar de pantalla");
+  assert.ok(html.includes("if (PRUEBA) soltarPrueba();"), "irA la suelta con su entrada");
+  assert.ok(html.includes("function salirDePrueba() { if (PRUEBA) { soltarPrueba(); pintarRevision(); } }"));
+});
+
+test("con la lista abajo, el símbolo va en el color de su categoría (v0.168)", () => {
+  const f = html.slice(html.indexOf("function laVarianteEnLaTira"));
+  assert.ok(f.slice(0, 900).includes('` style="color:var(--c-${c.clave})"`'));
+});
+
+test("la jugada que da mate dice Jaque mate y el ahogado lo dice (v0.168)", () => {
+  /* verificado con chess.js, no a ojo */
+  const pegar = (pgn) => { const c = new Chess(); c.load_pgn(pgn); return c; };
+  const mate = pegar("1. f3 e5 2. g4 Qh4#");
+  assert.ok(mate.in_checkmate());
+  const fm = { remate: "0-1", fen: mate.fen(), pieza: "q", uci: "d8h4", turno: "b", cat: "mejor",
+               perdida: 0, mejor: "d8h4", senales: [] };
+  const pm = A.partesDeLaExplicacion(fm, null, true, null, null, null);
+  assert.deepEqual(pm.map(x => x.txt), ["Jaque mate."]);
+  assert.equal(pm[0].sq, "e1", "señala al rey mateado");
+  const ahog = "7k/5Q2/6K1/8/8/8/8/8 b - - 0 60";   /* después de Qf7 */
+  const t = new Chess(ahog);
+  assert.ok(t.in_stalemate());
+  const fa = { remate: "tablas", fen: ahog, pieza: "q", uci: "e7f7", turno: "w", cat: "error",
+               perdida: 9, mejor: "e7e8", senales: [] };
+  const pa = A.partesDeLaExplicacion(fa, "Qe8#", true, null, null, null);
+  assert.equal(pa[0].txt, "Ahogás al rey: tablas.", "con la jugada propia, Ahogás, como Coronás");
+  assert.equal(pa[0].sq, "h8");
+  assert.ok(pa[1].txt.startsWith("La mejor era Qe8#"), "y deja lugar a la mejor");
+  /* revisor de ajedrez: una Omisión de mate que ahoga dice qué se omitió */
+  const fo = { ...fa, cat: "omision", oportunidad: { tipo: "mate", n: 1 } };
+  const po = A.partesDeLaExplicacion(fo, "Qe8#", false, null, null, null);
+  assert.deepEqual(po.map(x => x.txt), ["Ahoga al rey: tablas.", "Había mate forzado en 1, con Qe8#."]);
+  /* la forzada que ahoga lo dice igual: es el tablero, no una elección */
+  const fz = "k7/p7/P7/4B3/8/8/8/1NKN4 b - - 0 1";   /* después de Kxc2 */
+  assert.ok(new Chess(fz).in_stalemate());
+  const pf = A.partesDeLaExplicacion({ remate: "tablas", fen: fz, forzada: true, pieza: "k",
+    uci: "c1c2", turno: "w", cat: "forzada", perdida: 0, senales: [] }, null, true, null, null, null);
+  assert.deepEqual(pf.map(x => x.txt), ["Ahogás al rey: tablas."]);
+  /* material insuficiente y 50 jugadas */
+  const ins = "8/8/8/8/4k3/8/8/K7 w - - 0 70";
+  assert.ok(new Chess(ins).insufficient_material());
+  assert.equal(A.partesDeLaExplicacion({ remate: "tablas", fen: ins, pieza: "k", uci: "e5e4",
+    turno: "b", cat: "mejor", perdida: 0, senales: [] }, null, null, null, null, null)[0].txt,
+    "Ya no queda material para dar mate: tablas.");
+  const cin = "8/8/8/4k3/8/4R3/8/K7 b - - 100 120";
+  const c50 = new Chess(cin);
+  assert.ok(c50.in_draw() && !c50.insufficient_material() && !c50.in_stalemate());
+  assert.ok(A.partesDeLaExplicacion({ remate: "tablas", fen: cin, pieza: "r", uci: "e2e3",
+    turno: "w", cat: "error", perdida: 6, senales: [] }, null, null, null, null, null)[0].txt
+    .startsWith("Se cumplen 50 jugadas"));
+  for (const x of [...pm, ...pa, ...po, ...pf]) assert.ok(x.txt.includes(x.marca), x.marca);
+});
