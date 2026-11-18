@@ -527,6 +527,12 @@ hay. Las primeras salen del historial del traspaso.
   dice que no se nota, va la C (la banda suave con aire y puntas
   redondeadas). *Lectura mía:* en un estado pasajero de la compu le da igual
   lo sutil; no hace falta insistir con eso.
+- **La tarjeta de la variante con alto fijo, y el salto de 21 px al entrar**
+  (v0.164, 18-nov-2026): *"ahí lo probé, dejalo así, está bien"*. Prefirió el
+  salto una vez al entrar y al salir antes que esconder la barra de
+  evaluación durante la variante. *Lectura mía:* lo que molesta es que el
+  tablero salte mientras uno encadena jugadas; un movimiento al cambiar de
+  modo, que lo hace uno, no.
 - **La hoja de Ajustes, repasada** (17-nov-2026, v0.160): la curva con
   **punto chico**; la lista de la compu en **planilla** ("no lo uso en la
   compu"); al probar una jugada, **"la lista abajo"** a prueba contra "sin la

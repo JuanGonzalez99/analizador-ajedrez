@@ -365,6 +365,19 @@ lo demás se dibuja contra ella.
       v0.149; la de la variante ("Probando…", "pierde 5.46 · en la partida
       Qh5+ pierde 4.66", "No se pudo evaluar") no. Mirar las dos formas que
       quedan ("sin la lista" y "la lista abajo").
+- [ ] **Lavado de cara funcional: probar jugadas** (Juan, 18-nov, después
+      de probar la v0.164: *"creo que merece un lavado de cara funcional"*).
+      Lo que dijo: **al probar jugadas la barra de evaluación no se mueve**,
+      *"capaz estaría bueno"*; y *"otras cosas que ahora me estoy olvidando"*.
+      Ojo: el revisor de la v0.164 anotó que la barra sí se actualiza con la
+      variante, así que primero medir cuál no se mueve (la horizontal de
+      arriba, la vertical, el número) y en qué momento (pensando, con
+      resultado, al recorrer la variante). Después, recorrer el camino entero
+      de probar —tocar, jugar, encadenar, recorrer con ‹ › y la tira, volver—
+      como alguien que juega, con el revisor de UX y el de ajedrez (lo que
+      dice la tarjeta en la variante), y armar la lista de lo que falta o
+      molesta. Lo que Juan recuerde se suma acá. Con variantes donde pida
+      forma nueva.
 - [ ] **Pantalla propia de "Acerca de"** (Juan, 15-nov, al mudar los créditos
       a Ajustes en la v0.143: la pensaba así, "más a futuro"). Hoy la
       atribución de las piezas vive al pie de la hoja de Ajustes y alcanza.
