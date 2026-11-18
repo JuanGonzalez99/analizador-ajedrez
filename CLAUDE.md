@@ -31,6 +31,10 @@ describe. §10 tiene las reglas de trabajo.
     categorías, los cuadritos, las tablas del Mes—, verificando con chess.js y
     nunca a ojo. Corre después de cada cambio que toque eso, además del de UX
     si también se ve; lo puramente visual no lo necesita.
+  - **Y uno de código** (`.claude/agents/revisor-codigo.md`, decisión de Juan
+    del 18-nov-2026): los miércoles, desde la tarea nocturna, mira lo que
+    cambió en la semana y una zona de `index.html` que rota, y propone
+    limpiezas y arreglos que entran a la hoja de ruta. No edita nada.
   - **El revisor es otro agente**, no el que programa, y mira capturas de celu
     **y** de PC. Revisa después de cada cambio; si el consumo se come el tope
     semanal, una vez al final (perilla en `HOJA-DE-RUTA.md`).

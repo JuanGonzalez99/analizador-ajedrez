@@ -38,6 +38,13 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    y marque lo que no sea cierto, coherente o útil. Lo que encuentre entra a
    `HOJA-DE-RUTA.md` como ítems y va al resumen en una sección "Lo que vio el
    revisor de ajedrez". No cuenta como ítem de la noche.
+   **Los miércoles: la revisión de código** (decisión de Juan, 18-nov-2026).
+   Lanzá el agente `revisor-codigo` (`.claude/agents/revisor-codigo.md`) con
+   la zona que dice la perilla "Revisor de código" de `HOJA-DE-RUTA.md`. Lo
+   que proponga entra a la hoja de ruta como ítems sin tachar, al final de la
+   etapa que se está haciendo; actualizá en la perilla qué zona sigue. En el
+   resumen de la mañana, una línea sin jerga ("Lo que vio el revisor de
+   código"). No edita nada ni cuenta como ítem de la noche.
 1. **Arrancar.** El hook deja el checkout en `main`; confirmalo con
    `git status` (si no, `git checkout -B main origin/main`). **Y confirmá que
    estás en la punta de verdad**: `git fetch origin main` y que `git log -1`

@@ -16,6 +16,9 @@ tacha acá, en el mismo commit.
 - **Revisor de ajedrez:** después de cada cambio que toque lo que la app dice
   de una partida (explicación, categorías, cuadritos, tablas, análisis), y una
   pasada sobre partidas reales los domingos (Juan, 17-nov).
+- **Revisor de código:** los miércoles, desde la tarea nocturna (Juan,
+  18-nov): lo que cambió en la semana y una zona que rota. **Próxima zona: 1,
+  el CSS** (el orden está en `.claude/agents/revisor-codigo.md`).
 - **Por noche: hasta dos ítems** (decisión de Juan, 6-nov). Pasa al segundo
   solo si el primero terminó **aprobado por el revisor**, con o sin
   correcciones en el medio. Si después de las dos vueltas de corrección el

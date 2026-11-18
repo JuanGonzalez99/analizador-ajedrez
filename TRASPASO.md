@@ -7143,6 +7143,14 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
     lo que la app dice de una partida, y los domingos sobre partidas reales.
     Su regla de hierro: nada a ojo, todo verificado con chess.js, porque un
     modelo de lenguaje inventa clavadas y piezas colgadas con total seguridad.
+  - **Y uno de código** (Juan, 18-nov-2026). Nadie miraba el código: el de UX
+    mira cómo se ve y el de ajedrez qué se dice. `.claude/agents/revisor-codigo.md`
+    corre los miércoles sobre lo que cambió en la semana y una zona que rota
+    (diez zonas, por el mapa del §3), busca errores probados, pruebas que no
+    prueban, código muerto, comentarios que repiten el traspaso y lógica
+    duplicada, y propone ítems para la hoja de ruta. No edita: un refactor que
+    rompe algo en silencio es peor que el código feo. La ganancia más segura es
+    de tokens: cada sesión paga por leer las zonas de `index.html`.
   - **No se parcha lo que hay que rehacer** (Juan, 9-nov-2026, después de la
     v0.118, que agrandó el tablero en la compu y dejó la curva colgando debajo
     de una franja vacía). Lo que se ve mal en la pantalla frena la versión
