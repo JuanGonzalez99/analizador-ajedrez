@@ -247,6 +247,14 @@ chequear("la tarjeta de la variante no cambia de alto", [
   ...(!/\$\("pExp"\)\.classList\.toggle\("oculto"/.test(html) ? [] : ["la explicación vacía se esconde y la tarjeta se achica"]),
 ]);
 
+/* Con una variante abierta, la barra es la de la variante (v0.165, Juan:
+   "cuando se prueban jugadas no se mueve la barra de evaluación"). */
+chequear("la barra de evaluación sigue a la variante", [
+  ...(/if \(PRUEBA\.linea\[k\]\.fila\) \{ fb = PRUEBA\.linea\[k\]\.fila; break; \}\n\s+\}\n\s+const pct = llenadoBarra\(fb\);/.test(html) ? [] : ["la barra lee la jugada de la partida"]),
+  ...(/fb = filaDePosicion\(PRUEBA\.desde0\) \|\| f;/.test(html) ? [] : ["el arranque de la variante muestra la evaluación de después de la jugada"]),
+  ...(/textoBarra\(fb\.evalTexto\)/.test(html) && /"horizontal" \? fb\.evalTexto/.test(html) ? [] : ["el número de la barra lee la jugada de la partida"]),
+]);
+
 /* 8. La versión SUBIÓ respecto del último commit, si index.html cambió.
       La versión es lo que ubica un reporte del usuario en el historial (§10) y
       cada push es un deploy en vivo, así que dos deploys distintos no pueden

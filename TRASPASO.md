@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.164**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.165**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,30 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.165, la barra de evaluación sigue a la variante** (Juan, 18-nov, al
+probar la v0.164: *"cuando se prueban jugadas no se mueve la barra de
+evaluación, capaz estaría bueno"*; primer punto del lavado de cara funcional
+de probar jugadas). `pintarRevision` llenaba las dos barras (vertical y
+horizontal) y su número con `R.filas[IDX]`, la jugada de la partida, aunque
+hubiera una variante abierta. Ahora usa `fb`: la última jugada probada que ya
+tiene fila, de la que se está mirando para atrás; sin ninguna (el arranque de
+la variante, o la primera todavía pensando) es la de la partida, que es la
+misma posición. Mientras el motor piensa la barra queda donde estaba y se
+mueve cuando contesta; si una jugada falla, muestra la anterior. Medido con
+el motor de prueba (`maqueta-variante.mjs`): −5.80 en la partida, −7.47 con la
+primera probada, se queda en −7.47 mientras piensa la segunda y pasa a −2.20 y
++0.26. Volver la deja en la de la partida (`PRUEBA` vuelve a `null`).
+**Sin ninguna probada evaluada, la barra es la de `desde0`, no `f`**
+(revisor de ajedrez): entrando por "probar otra en su lugar"
+(`jugarAlternativa` → `abrirPrueba(IDX)`) la variante arranca ANTES de la
+jugada, y `f` daba la evaluación de después sobre el tablero de antes (+7.33
+sobre una posición de +7.00, medido en 14… Kxh7 con `maqueta-alt.mjs`).
+`filaDePosicion(k)` arma lo que la barra necesita de cualquier posición de la
+partida —`R.evs[k]` con el turno del FEN— y es el respaldo.
+Chequeo estático nuevo: "la barra de evaluación sigue a la variante". El
+número de `#vEv` (la evaluación en la tarjeta, modo "tarjeta") no se tocó: con
+la variante abierta esa tarjeta está escondida; va al recorrido del lavado.
 
 **v0.164, la tarjeta de la variante no cambia de alto** (Juan, 17-nov,
 probando "la lista abajo": *"tienen los saltos de tablero con el cambio de
