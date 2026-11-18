@@ -373,6 +373,9 @@ Cada entrada: qué, si le copa o no, y el porqué con sus palabras cuando las
 hay. Las primeras salen del historial del traspaso.
 
 ### Le copa
+- **El halo del arrastre con el dedo deslizándose entre casillas** (v0.170,
+  120 ms de §1.8): *"listo, quedó bien"* (18-nov-2026). Marca la casilla donde
+  cae y llega a cada una acompañando al dedo, sin saltos.
 
 - **Modo oscuro**: usa el celu así (5-nov-2026).
 - **La app siempre en oscuro**, aunque el teléfono esté en claro: *"en
