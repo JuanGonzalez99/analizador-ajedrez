@@ -3704,3 +3704,12 @@ test("en la compu la variante va en la planilla y sale de la tira (v0.171)", () 
   assert.ok(/function laVarianteEnLaPlanilla\(\)[\s\S]{0,400}fenDeLaJugada\(p\.desde0\)/.test(html),
     "el número sale del FEN de arranque");
 });
+
+test("en una jugada de libro los cuadritos no dicen pérdida (v0.172)", () => {
+  /* la tarjeta dice "Libro" y la fila decía "Pérdida 1.20"; ahora Mejor y
+     Pensó quedan y en el medio la leyenda dice por qué no hay número. Y la
+     frase no puede decir que no se cuenta: la precisión sí la suma. */
+  assert.ok(html.includes('const deLibro = !leyenda && !sinJugada && (fP || f).cat === "libro";'));
+  assert.ok(html.includes('.metricas.enLibro > .leyInicio { display: flex; grid-column: span 2; order: 1; }'));
+  assert.ok(!html.includes('"De libro: no se le cuenta pérdida."'));
+});

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.171**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.172**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,30 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.172, los cuadritos en una jugada de libro** (lavado de cara del
+revisor, v0.148; celu y PC). La tarjeta decía "5. d4 — Libro" y ya no
+hablaba el motor, pero la fila de abajo seguía con Pérdida "1.20" y Caída
+"11.0 pt": la misma contradicción un piso más abajo. Ahora, en una de libro
+(`deLibro`, también la probada si es de libro), **Mejor y Pensó quedan** y
+en lugar de Pérdida y Caída va la leyenda de la inicial (`#mLeyenda`, la de
+la v0.131, sin caja y en tenue) en dos columnas: *"De libro: es teoría."*. Clase `.enLibro` en `.metricas`; la leyenda va entre los dos con
+`order`, porque en el HTML es la última.
+- **Se dibujaron tres** y el revisor eligió esta: callar todo con "—" (tres
+  rayas para descifrar: ¿no analizó?) y el dato apagado (en voz baja, sigue
+  diciendo que perdió). Mejor queda porque qué prefería el motor es dato
+  crudo que a veces interesa.
+- **El texto de la maqueta era falso** y no entró: "no se le cuenta
+  pérdida". La precisión de la partida (`precisionDe`) promedia la de TODAS
+  las jugadas propias, las de libro incluidas; solo las tablas del Mes las
+  sacan (`fueraDeLibro`). Tampoco quedó "es teoría, no se juzga" (que es lo
+  que se construyó primero): se lee como que no mueve la precisión, y la
+  mueve (revisores). Y en un renglón entra a 386, sin una palabra sola abajo.
+- La fila mide 52 con y sin libro a 412, 386 y 1280 (el cuadrito normal,
+  51,5): no salta nada al salir del libro. A 386 la leyenda entra en un
+  renglón. Capturas del celu: cambian solo `revision-1` y
+  `revision-arriba` (la franja de Pérdida y Caída) y las del número de
+  versión.
 
 **v0.171, [PC] la variante adentro de la planilla** (hoja de ruta, "probar
 jugadas"; como lichess). Con la forma "la lista abajo" y la planilla de la
