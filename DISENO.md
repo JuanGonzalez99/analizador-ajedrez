@@ -373,6 +373,10 @@ Cada entrada: qué, si le copa o no, y el porqué con sus palabras cuando las
 hay. Las primeras salen del historial del traspaso.
 
 ### Le copa
+- **La variante adentro de la planilla de la compu, como lichess** (v0.171):
+  *"lo de la compu está bueno"* (19-nov-2026). Un párrafo con sangría y
+  punteado violeta debajo de la jugada de donde sale; la planilla sigue
+  mostrando la partida entera y la tira del pie queda con "‹ ›" solos.
 - **El halo del arrastre con el dedo deslizándose entre casillas** (v0.170,
   120 ms de §1.8): *"listo, quedó bien"* (18-nov-2026). Marca la casilla donde
   cae y llega a cada una acompañando al dedo, sin saltos.

@@ -802,9 +802,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   de la partida deje de contar las jugadas de libro. Hoy las cuenta, y las
   tablas del Mes no: la misma partida con dos criterios. Cambia números que ya
   viste, por eso no se hizo sola (ítem abajo).
-- **No sé si esto te copa (v0.171, compu):** la variante que armás va adentro
-  de la planilla, debajo de la jugada de donde sale (como lichess), y abajo
-  quedan solo "‹ ›". La otra: que la tira violeta de abajo se quede también.
 - **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
   segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
   ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su
