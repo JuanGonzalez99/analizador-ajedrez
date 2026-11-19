@@ -990,6 +990,16 @@
                      font-size: 12.5px; color: var(--tenue);
                      border-top: 1px solid var(--linea); }
   .jugadas .cierre b { font-weight: 700; color: var(--texto); }
+  /* LA VARIANTE EN LA PLANILLA (v0.171, `laVarianteEnLaPlanilla`): párrafo
+     con sangría, el punteado y el violeta de lo inventado, como en la tira */
+  .jugadas > div.var { display: block; margin-left: 18px; padding: 4px 6px;
+                       border-left: 2px dashed var(--inventada); line-height: 1.9;
+                       background: color-mix(in srgb, var(--inventada) 6%, transparent); }
+  .jugadas > div.var .ata { white-space: nowrap; }
+  .jugadas > div.var .np { margin: 0 2px 0 4px; }
+  .jugadas > div.var .jg { display: inline-flex; gap: 3px; padding: 1px 4px;
+                           color: var(--inventada); vertical-align: middle; }
+  .jugadas > div.var .jg.pend { color: var(--tenue); }
 
   /* Fuera de pantalla ancha no hay ni columna ni dial. VA ANTES de la media
      query: a igual especificidad gana la última regla, y puesto después le
@@ -1529,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.170 · 18-11";
+  window.VERSION = "v0.171 · 19-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6262,6 +6272,35 @@ function laVarianteEnLaTira() {
   }).join("");
 }
 
+/* La variante EN LA PLANILLA DE LA COMPU (v0.171, como lichess): un párrafo
+   con sangría y borde punteado violeta debajo del renglón de la jugada que
+   reemplaza, con las jugadas corridas como texto ("5… Rb8 6. Bb5"), que
+   envuelve si es larga. El revisor eligió esta entre cuatro: en renglones de
+   planilla repetía el número de la partida ("5" y "5") y con diez jugadas
+   tapaba la partida; plegar la partida o apagarla decía que no había pasado.
+   La planilla sigue siendo la referencia de lo que pasó, entera. Los eslabones
+   son los de la tira ("abajo"): símbolo en el color de su categoría, jugada
+   en violeta, "…" la que está en la cola. El número sale del FEN de arranque y
+   no de `R.filas`, porque se puede probar desde la posición final. */
+function laVarianteEnLaPlanilla() {
+  const p = PRUEBA;
+  if (!p || !p.linea.length) return "";
+  const f = fenDeLaJugada(p.desde0).split(" ");
+  let negras = f[1] === "b", n = +f[5] || 1;
+  return `<div class="var">` + p.linea.map((x, i) => {
+    const c = x.fila ? presentar(x.fila) : null;
+    const sm = c ? ` style="color:var(--c-${c.clave})"` : "";
+    const num = !negras ? `<span class="np">${n}.</span>` : i === 0 ? `<span class="np">${n}\u2026</span>` : "";
+    if (negras) n++;
+    negras = !negras;
+    /* el número va atado a su jugada: al envolver, "8." quedaba al final de un
+       renglón y "Bd3" al principio del otro */
+    return `<span class="ata">` + num +
+      `<span class="jg inv ${c ? "" : "pend"} ${i + 1 === p.ver ? "sel" : ""}" data-v="${i + 1}">` +
+      `<span class="sm"${sm}>${c ? c.icono : "\u2026"}</span><span class="sa">${x.san}</span></span></span>`;
+  }).join("") + `</div>`;
+}
+
 /* Rival y Siempre la mejor SE GUARDAN desde la v0.114, como el resto de las
    preferencias: hasta ahí volvían a apagarse en cada carga. */
 let VER_AMBOS = false;
@@ -8680,12 +8719,20 @@ function pintarRevision() {
      mientras se prueba: esa partida no termina así. */
   const fp = formaPrueba();
   const varAbajo = !!(PRUEBA && PRUEBA.linea.length && fp.lista === "abajo");
-  const hasta = varAbajo ? PRUEBA.desde0 : R.filas.length;
+  /* EN LA COMPU LA VARIANTE VA EN LA PLANILLA (v0.171), debajo de la jugada
+     de donde sale, y entonces SALE DE LA TIRA: con las dos, la misma jugada
+     quedaba marcada "estás acá" en dos lugares a un palmo (revisor). La tira
+     muestra la partida sin marca y sin cierre, y sus ‹ › siguen recorriendo
+     la variante. En el celu no cambia nada: ahí la tira es lo único que hay. */
+  const alPanel = window.matchMedia(CORTE_ANCHO).matches && !!formaJugadas().clase;
+  const varEnLista = varAbajo && alPanel && formaJugadas().clase === "planilla";
+  const varEnTira = varAbajo && !varEnLista;
+  const hasta = varEnTira ? PRUEBA.desde0 : R.filas.length;
   const selTira = varAbajo && PRUEBA.ver > 0 ? -1 : IDX;
   $("tiraSc").innerHTML = R.filas.slice(0, hasta).map((x, i) =>
     (x.turno === "w" || i === 0 ? `<span class="np">${x.n}.</span>` : "") +
     celda(x, i, selTira)).join("") +
-    (varAbajo ? laVarianteEnLaTira() : cierreDeLaTira(fin, R.filas));
+    (varEnTira ? laVarianteEnLaTira() : varAbajo ? "" : cierreDeLaTira(fin, R.filas));
   $("tiraSc").querySelectorAll("span[data-i]").forEach(sp => {
     sp.onclick = () => irA(+sp.dataset.i);
     previaEn(sp, +sp.dataset.i);
@@ -8697,10 +8744,12 @@ function pintarRevision() {
      porque está adentro de `.pmedio`, que la grilla no puede partir. Sin lista
      (el dial en "no") vuelve abajo del tablero, que es su lugar en el celu. Con
      una variante en la forma "abajo" se muestra entera: es donde se ve. */
-  const tiraEl = $("tira"), alPanel = window.matchMedia(CORTE_ANCHO).matches && !!formaJugadas().clase;
+  const tiraEl = $("tira");
   if (alPanel && tiraEl.parentElement !== $("lateral")) $("lateral").append(tiraEl);
   else if (!alPanel && tiraEl.parentElement === $("lateral")) document.querySelector(".pmedio").append(tiraEl);
-  $("zonaRevision").classList.toggle("conVariante", varAbajo);
+  /* (desde la v0.171, solo si la variante va en la tira: en la compu va en la
+     planilla y la tira del pie se queda con "‹ ›", igual que sin variante) */
+  $("zonaRevision").classList.toggle("conVariante", varEnTira);
   medirTira();
   centrarTira();
   /* en la inicial no hay jugada elegida: la tira arranca del principio */
@@ -8741,7 +8790,16 @@ function pintarRevision() {
           celda(par.w && par.w.x, par.w && par.w.i, selTira) + segundos(par.w && par.w.x) +
           celda(par.b && par.b.x, par.b && par.b.i, selTira) + segundos(par.b && par.b.x) +
           `</div>`;
-      }).join("") + cierreDeLaTira(fin, R.filas);
+      }).join("") + (varEnLista ? "" : cierreDeLaTira(fin, R.filas));
+      if (varEnLista) {
+        const desde = lista.querySelector(`span[data-i="${PRUEBA.desde0}"]`);
+        const html = laVarianteEnLaPlanilla();
+        if (desde) desde.parentElement.insertAdjacentHTML("afterend", html);
+        else lista.insertAdjacentHTML("beforeend", html);
+        lista.querySelectorAll("span[data-v]").forEach(sp => {
+          sp.onclick = () => verDeLaVariante(+sp.dataset.v);
+        });
+      }
     } else {
       /* el número acompaña a la de las BLANCAS, igual que en la tira y que como
          se escribe una partida: repetirlo en las dos filas del par sería decir

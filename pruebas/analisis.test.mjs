@@ -2562,7 +2562,9 @@ test("la tira lleva la partida entera, no una ventana", () => {
      dibujadas abajo, y corta justo donde se abrió la prueba—, y eso NO es una
      ventana: el corte sale de la variante y no de un largo elegido. Lo que esta
      prueba fija es eso: o la partida entera, o hasta donde arrancó la prueba. */
-  assert.ok(html.includes("const hasta = varAbajo ? PRUEBA.desde0 : R.filas.length;"),
+  /* (desde la v0.171 corta solo si la variante va en la tira: en la compu
+     va en la planilla y la tira lleva la partida entera) */
+  assert.ok(html.includes("const hasta = varEnTira ? PRUEBA.desde0 : R.filas.length;"),
     "o entera, o hasta donde se abrió la prueba");
   assert.ok(html.includes("$(\"tiraSc\").innerHTML = R.filas.slice(0, hasta).map((x, i) =>"),
     "se dibujan TODAS las filas hasta ahí");
@@ -3691,4 +3693,14 @@ test("el halo del dedo se desliza entre casillas (v0.170)", () => {
     "volviendo al tablero aparece donde entra el dedo, sin deslizarse");
   assert.ok(html.includes('halo.style.cx = sqCx(desde) + "px"; halo.style.cy = sqCy(desde) + "px";'),
     "arranca en la casilla de origen: el primer tramo también se desliza");
+});
+
+test("en la compu la variante va en la planilla y sale de la tira (v0.171)", () => {
+  /* una sola marca de "estás acá": con la variante en la planilla, la tira no
+     la repite; y la planilla la pone debajo del renglón de donde sale */
+  assert.ok(html.includes("const varEnLista = varAbajo && alPanel && formaJugadas().clase === \"planilla\";"));
+  assert.ok(html.includes("(varEnTira ? laVarianteEnLaTira() : varAbajo ? \"\" : cierreDeLaTira(fin, R.filas))"));
+  assert.ok(html.includes("lista.querySelector(`span[data-i=\"${PRUEBA.desde0}\"]`)"));
+  assert.ok(/function laVarianteEnLaPlanilla\(\)[\s\S]{0,400}fenDeLaJugada\(p\.desde0\)/.test(html),
+    "el número sale del FEN de arranque");
 });

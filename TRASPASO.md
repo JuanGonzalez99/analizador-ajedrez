@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.170**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.171**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,42 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.171, [PC] la variante adentro de la planilla** (hoja de ruta, "probar
+jugadas"; como lichess). Con la forma "la lista abajo" y la planilla de la
+compu, la variante va **debajo del renglón de la jugada que reemplaza**
+(`PRUEBA.desde0`), en un párrafo con sangría de 18, borde punteado y fondo
+violeta al 6 %, y las jugadas corridas como texto ("5… Rb8 6. Bb5 Ra8 7.
+Ba6") que envuelven si la línea es larga. `laVarianteEnLaPlanilla`, al lado
+de `laVarianteEnLaTira` y con los mismos eslabones (símbolo en el color de su
+categoría, jugada en `--inventada`, "…" la que está en la cola); cada una se
+toca (`data-v`, `verDeLaVariante`). El número sale del FEN de arranque y no
+de `R.filas`, porque se puede probar desde la posición final; y va atado a
+su jugada (`.ata`, `nowrap`): al envolver, "8." quedaba solo al final del
+renglón.
+- **Se dibujaron cuatro** sobre la app a 1280×800 y el revisor eligió la del
+  párrafo. Las otras: en renglones de planilla (repetía el "5" de la partida
+  y con diez jugadas tapaba la planilla visible, ~270 px), cortar la planilla
+  y plegar lo que seguía de la partida ("13 jugadas más", contradice que la
+  planilla es la referencia de lo que pasó, y es el modo variante que espera
+  a Juan) y apagar lo que siguió al 40 % (dice "esto no pasó", y pasó).
+- **La variante sale de la tira del pie** en la compu (`varEnLista` /
+  `varEnTira`): con las dos, la jugada elegida quedaba marcada en dos lugares
+  a un palmo. La tira del pie se queda con "‹ ›" solos, igual que sin
+  variante (`conVariante` sigue a `varEnTira`; corrección del revisor: mostrar
+  la partida ahí era otra copia de la planilla), y los ‹ › recorren la variante. La planilla tampoco lleva el cierre
+  mientras se prueba (la partida inventada no termina así), igual que la tira.
+  En el celu nada cambia; con "sin la lista" tampoco (sigue sin lista).
+- Medido con una variante de 4 y una de 14: la elegida queda a la vista
+  adentro de la planilla, sin nada pegado (`espacios`); tocar la primera la
+  elige; ‹ desde ella va al arranque, y Esc cierra y vuelve el cierre. Las
+  capturas del celu, iguales al byte salvo el número de versión y
+  `encadenadas`, que cambia entre dos corridas del mismo código (cuántas
+  jugadas alcanza a evaluar el motor de mentira antes de la foto).
+- Lo que el revisor dejó como lavado de cara (a la hoja de ruta): en la compu
+  la variante se anuncia con tres recursos distintos (la tarjeta punteada,
+  "En lugar de…" y la planilla); va con "la variante como modo", que espera a
+  Juan.
 
 **v0.170, el halo del dedo se desliza** (Juan, 18-nov, probándolo en el
 celu: en seco *"se siente raro… es como un círculo que se mueve en
