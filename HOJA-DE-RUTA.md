@@ -435,8 +435,14 @@ lo demás se dibuja contra ella.
             tablero para pasar jugadas: si el gesto arranca sobre una pieza
             que puede mover, arrastra; si no, desliza (propuesta del revisor).
             Tocar y tocar sigue andando. Va después de lo chico.
-      - [ ] [PC] La variante adentro de la planilla, debajo de la jugada de
-            donde sale, con sangría (como lichess). Con variantes.
+      - [x] [PC] La variante adentro de la planilla, debajo de la jugada de
+            donde sale, con sangría (como lichess). Con variantes. (**v0.171**, 19-nov: la B entre cuatro — un párrafo con sangría
+            y punteado violeta; la tira del pie queda con "‹ ›" solos)
+      - [ ] [PC] Lavado de cara (revisor, v0.171): con una variante abierta,
+            el panel dice "estás en una variante" tres veces y de tres
+            maneras (la tarjeta punteada, "En lugar de…" y el párrafo de la
+            planilla). ¿Dónde vive eso en un solo lugar? Va con "la variante
+            como modo", que espera a Juan: se le llevan dibujadas juntas.
       - Propuestas del revisor de ajedrez para más adelante: qué amenaza el
         rival en la posición de la variante; la evaluación como número en la
         tarjeta de la variante con el modo "en la tarjeta"; la línea corta del
@@ -488,12 +494,16 @@ lo demás se dibuja contra ella.
       final? Si hace falta, ¿dónde, sin tocar el alto de la tarjeta ni la
       cabecera? ¿Qué se muestra en las posiciones sin nombre y con "Variante
       normal" (2… Nc6)? Con variantes.
-- [ ] **Lavado de cara: los cuadritos en una jugada de libro** (revisor,
+- [x] **Lavado de cara: los cuadritos en una jugada de libro** (v0.172, 19-nov: la C entre tres — Mejor y Pensó quedan, en el medio "De libro: es teoría.") (revisor,
       v0.148; celu y PC). La tarjeta dice "5. d4 — Libro" y ya no habla el
       motor, pero la fila de abajo sigue diciendo Mejor "Bb5 ↗", Pérdida
       "1.20", Caída "11.0 pt": la misma contradicción, un piso más abajo.
       ¿Qué contestan los cuatro cuadritos cuando la jugada es de libro? Es
       duda para Juan (abajo): dato crudo que a veces interesa, o se callan.
+- [ ] ⏸ espera a Juan · **La precisión de la partida sin las jugadas de
+      libro** (revisor de ajedrez, v0.172). `precisionDe` promedia todas las
+      propias, las de libro incluidas; las tablas del Mes las sacan
+      (`fueraDeLibro`). Cambia números ya mostrados: duda en "Dudas abiertas".
 - [ ] **[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
       entra entera** (revisor, v0.149; ya estaba). A 1600×900 la lista se
       corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
@@ -783,10 +793,18 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   ahora dejémoslo así, lo voy usando y vemos qué onda"* (17-nov). No se toca
   hasta que diga; si elige la A, es volver la tarjeta a flex y dejar la
   reserva de renglones (§7 del traspaso, v0.149).
-- **No sé si esto te copa (v0.148, del revisor):** en una jugada de libro los
-  cuadritos de abajo siguen mostrando la mejor del motor y la pérdida. O se
-  dejan, porque es dato crudo y a veces interesa ver que el motor prefiere
-  otra; o en libro se callan igual que la tarjeta.
+- **No sé si esto te copa (v0.172):** en una jugada de libro, Pérdida y
+  Caída se cambiaron por "De libro: es teoría." y Mejor sigue mostrando qué
+  jugaba el motor. La otra: que Mejor también se calle. El revisor de ajedrez
+  recomienda dejarla: el libro también trae gambitos dudosos (el Letón, el
+  Englund) y la Mejor es lo único que te avisa.
+- **No sé si esto te copa (v0.172, del revisor de ajedrez):** que la precisión
+  de la partida deje de contar las jugadas de libro. Hoy las cuenta, y las
+  tablas del Mes no: la misma partida con dos criterios. Cambia números que ya
+  viste, por eso no se hizo sola (ítem abajo).
+- **No sé si esto te copa (v0.171, compu):** la variante que armás va adentro
+  de la planilla, debajo de la jugada de donde sale (como lichess), y abajo
+  quedan solo "‹ ›". La otra: que la tira violeta de abajo se quede también.
 - **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
   segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
   ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su
