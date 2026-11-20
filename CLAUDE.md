@@ -43,7 +43,7 @@ describe. §10 tiene las reglas de trabajo.
     del 20-nov-2026): los sábados, desde la tarea nocturna, mira la hoja de
     ruta, el norte y estos documentos con mirada global —si la semana sumó
     algo nuevo o solo corrigió lo hecho, ítems trabados o fuera de lugar,
-    dudas viejas, documentos que se contradicen— y la tarea los ordena.
+    preguntas para Juan que se acumulan, documentos que se contradicen— y la tarea los ordena.
     Existe porque la etapa 1 se alargó semanas sin que nadie lo viera.
   - **Lo que levantan los revisores no frena lo nuevo** (Juan, 20-nov-2026):
     los lavados de cara y retoques van a "Relleno" y los errores a
