@@ -72,13 +72,13 @@ de lo que dice la app y los retoques que quedaban (20-nov). Son seis ítems y
 uno de cierre; cuenta estimada: 4 o 5 noches. Lo que se levante mientras
 tanto va a Arreglos o a Relleno, **no acá**.
 
-- [ ] **Dos frases y un veredicto, en una versión** (revisor de ajedrez):
-  - [ ] **Con dos mates en 1, el que no es el del motor sale "Excelente"**
+- [x] ~~**Dos frases y un veredicto, en una versión**~~ (hecho en la v0.177):
+  - [x] **Con dos mates en 1, el que no es el del motor sale "Excelente"**
         (revisor de ajedrez, v0.168; ya venía de antes). En
         `6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`, Ra8# con la del motor Rd8# y
         pérdida 0 sale Excelente y no Mejor: un mate es un mate. Revisor de
         ajedrez.
-  - [ ] **El orden de las frases fuertes** (revisor de ajedrez, v0.163; leve).
+  - [x] **El orden de las frases fuertes** (revisor de ajedrez, v0.163; leve).
         En `4k3/3q4/8/8/P7/8/8/4KB2 w` f1b5 sale primero "Salva tu peón de a4"
         y después "Clava la dama de d7 contra el rey", que gana la dama. La que
         gana más va primero.
@@ -387,6 +387,17 @@ archiva los que pierden sentido.
       antes de borrar. Verificación: el CSS sin comentarios idéntico antes y
       después, `npm test` y capturas byte a byte. Ahorro: 6.000–8.000 tokens
       por lectura del CSS.
+
+- [ ] **El orden de las frases con lo que de verdad gana la clavada**
+      (revisor de ajedrez, v0.177). Hoy la clavada vale lo que la pieza
+      clavada; mejor la clavada menos la que clava: en
+      `r3k3/1p6/2n5/8/P7/8/8/4KB2 w`, f1b5 sale "Clava el caballo…" antes que
+      "Salva tu peón de a4" y el caballo está defendido. Y en las de libro el
+      orden viejo sigue (salvar antes que el ataque).
+- [ ] **El otro mate y la tabla de capturas** (revisor de ajedrez, v0.177;
+      casi no pasa). Con el motor eligiendo Rxa8# y jugada Rd8#
+      (`n5k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`), cuenta como "La vi y la tomé"
+      sin capturar. Antes contaba una omisión falsa, que era peor.
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 

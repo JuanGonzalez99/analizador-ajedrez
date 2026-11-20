@@ -3020,7 +3020,7 @@ test("una frase menor no le puede ganar el lugar a una oportunidad perdida", () 
   /* Lo destapó una prueba de verdad: puesto arriba, "Pierde el enroque corto"
      tapaba a "había Bxd7, que ganaba 9 peones". El peso menor no es solo entre
      los conceptos: es en TODO el orden de la tarjeta. */
-  const orden = html.slice(html.indexOf("  const partes = [...primero, merito, mecanismo, salvada, ataque, posicional,"),
+  const orden = html.slice(html.indexOf("  const partes = [...primero, merito, mecanismo,"),
                            html.indexOf("].filter(Boolean).slice(0, ranuras >= 3 ? 3 : 2);"));
   assert.ok(orden.indexOf("menor") > orden.indexOf("habia"), "después de la oportunidad");
   assert.ok(orden.indexOf("menor") > orden.indexOf("alternativa"), "y de la alternativa");
@@ -3751,4 +3751,33 @@ test("la precision rapida del inicio da lo mismo que derivarFilas", () => {
     assert.equal(de(rapidas), de(filas), "lado " + lado);
   }
   assert.equal(rapidas.filter(f => f.cat === "libro").length, 4);
+});
+
+/* --- v0.177: dos frases y un veredicto (revisor de ajedrez) --- */
+
+test("con dos mates en 1, el que no elegía el motor también es Mejor (v0.177)", () => {
+  const antes = "6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w - - 0 1";
+  const j = new Chess(antes);
+  const m = j.move("Ra8");
+  assert.ok(j.in_checkmate(), "Ra8 tiene que ser mate");
+  const evs = [{ cp: null, mate: 1, mejor: "d1d8" }, { cp: null, mate: 0, mejor: null }];
+  const f = A.derivarFilas([m], [antes, j.fen()], evs, { pos: new Set(), nombres: {} }).filas[0];
+  assert.deepEqual(f.cats, { critico: "mejor", amigable: "mejor" });
+  /* y una jugada que no da mate, con el mate en 1 a la vista, no se cuela */
+  const j2 = new Chess(antes);
+  const m2 = j2.move("Rd7");
+  const f2 = A.derivarFilas([m2], [antes, j2.fen()], [evs[0], { cp: -500, mate: null, mejor: "g8f8" }],
+                            { pos: new Set(), nombres: {} }).filas[0];
+  assert.notEqual(f2.cat, "mejor");
+});
+
+test("la clavada de la dama va antes que salvar un peón (v0.177)", () => {
+  const antes = "4k3/3q4/8/8/P7/8/8/4KB2 w - - 0 1";
+  const obs = mirar(antes, "f1b5");
+  assert.equal(obs.clavadas[0].pieza, "q");
+  assert.equal(obs.salvadas[0].pieza, "p");
+  const j = new Chess(antes); j.move({ from: "f1", to: "b5" });
+  const f = { fen: j.fen(), uci: "f1b5", turno: "w", pieza: "b", cat: "mejor", mejor: "f1b5" };
+  assert.equal(A.explicarJugada(f, null, true, null, obs),
+               "Clava la dama de d7 contra el rey. Salva tu peón de a4, que estaba sin defender.");
 });

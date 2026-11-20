@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.176 · 20-11";
+  window.VERSION = "v0.177 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2704,7 +2704,12 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const precision = precisionJugada(caida);
 
     const uci = j.from + j.to + (j.promotion || "");
-    const esMejor = evs[i].mejor === uci;
+    /* UN MATE ES UN MATE (v0.177, revisor de ajedrez): con dos mates en 1, el
+       que no elegía el motor salía "Excelente" con pérdida 0 (Ra8# en
+       `6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`, con Rd8# del motor). Si había mate en
+       1 y la jugada lo da, es la mejor. chess.js solo se pregunta en ese caso. */
+    const esMejor = evs[i].mejor === uci ||
+                    (evs[i].mate === 1 && new Chess(fens[i + 1]).in_checkmate());
     const clave = claveLibro(fens[i + 1]);
     const esLibro = libro.pos.has(clave);
     if (esLibro && libro.nombres[clave]) apertura = libro.nombres[clave];
@@ -3237,18 +3242,24 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   const fuertes = [], menores = [];
   /* ATRAPAR una pieza es lo más caro que puede decir la tarjeta, así que va
      primera: el rival tiene que resolverlo ya mismo o la pierde. */
+  /* LO QUE VALE CADA FRASE FUERTE (v0.177, revisor de ajedrez): la pieza que
+     atrapa o clava. Sirve para que "Salva tu peón de a4" no vaya antes que
+     "Clava la dama de d7 contra el rey": la que gana más va primero (abajo, en
+     el orden). Va aparte y no en la frase para no cambiar su forma. */
+  const vale = new Map();
+  const conValor = (frase, pieza) => (vale.set(frase, VALOR[pieza] || 0), frase);
   if (o.atrapada)
-    fuertes.push({ txt: `Atrapa ${piezaEn(o.atrapada.pieza, o.atrapada.sq)}: no tiene salida.`,
-                   marca: "Atrapa", sq: o.atrapada.sq });
+    fuertes.push(conValor({ txt: `Atrapa ${piezaEn(o.atrapada.pieza, o.atrapada.sq)}: no tiene salida.`,
+                            marca: "Atrapa", sq: o.atrapada.sq }, o.atrapada.pieza));
   if (o.descubierto)
     fuertes.push({ txt: `Es un jaque descubierto: lo da ${piezaEn(o.descubierto.pieza, o.descubierto.sq)}.`,
                    marca: "jaque descubierto", sq: o.descubierto.sq });
   /* LA CLAVADA DICE CONTRA QUÉ (v0.162, Juan): contra el rey —la pieza no
      se puede mover de la línea— o contra la dama, que es la que queda detrás
      y se pierde si la pieza se corre. */
-  const fraseClavada = c => ({ txt: `Clava ${piezaEn(c.pieza, c.sq)} contra ` +
-                                    `${c.contra === "q" ? "la dama" : "el rey"}.`,
-                               marca: "Clava", sq: c.sq });
+  const fraseClavada = c => conValor({ txt: `Clava ${piezaEn(c.pieza, c.sq)} contra ` +
+                                            `${c.contra === "q" ? "la dama" : "el rey"}.`,
+                                       marca: "Clava", sq: c.sq }, c.pieza);
   /* SI LA QUE CLAVA ES LA QUE QUEDA COMIBLE, LA CLAVADA NO SE DICE (v0.163,
      revisor de ajedrez): "Tu torre queda comible en e1. Clava el caballo
      contra la dama." elogia algo que se pierde en la jugada siguiente, el
@@ -3461,7 +3472,13 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      o material y se dejó pasar—, y estaba séptima en el orden: con dos
      ranuras ganaban "Ataca la dama" y "Clava la dama", que suenan a elogio. */
   const primero = f.cat === "omision" && habia ? [habia] : [];
-  const partes = [...primero, merito, mecanismo, salvada, ataque, posicional,
+  /* LO QUE SE SALVA VA DESPUÉS DE LO QUE GANA MÁS (v0.177): si la clavada o
+     la pieza atrapada valen más que lo salvado, van primero. */
+  const valeSalvada = salvada && obs ? VALOR[obs.salvadas[0].pieza] || 0 : 0;
+  const ganaMas = p => !!p && (vale.get(p) || 0) > valeSalvada;
+  const salvaDespues = !!salvada && (ganaMas(ataque) || ganaMas(posicional));
+  const partes = [...primero, merito, mecanismo, salvaDespues ? null : salvada, ataque, posicional,
+          salvaDespues ? salvada : null,
           ranuras >= 2 ? llegada : null,
           primero.length ? null : habia, rumbo, alternativa, menor, respuesta]
     .filter(Boolean).slice(0, ranuras >= 3 ? 3 : 2);

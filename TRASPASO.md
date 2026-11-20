@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.176**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.177**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4756,6 +4756,20 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.177, dos frases y un veredicto** (revisor de ajedrez, v0.163 y v0.168).
+- **Un mate es un mate**: con dos mates en 1, el que no elegía el motor salía
+  "Excelente" con pérdida 0 (Ra8# en `6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`, con
+  Rd8# del motor). En `derivarFilas`, `esMejor` también es verdadero si había
+  mate en 1 (`evs[i].mate === 1`) y la jugada lo da; chess.js solo se
+  pregunta en ese caso, así que el barrido no paga nada. Las partidas ya
+  analizadas se corrigen solas: la categoría se deriva al pintar. El cuadrito
+  Mejor sigue mostrando la del motor.
+- **La que gana más va primero**: en `4k3/3q4/8/8/P7/8/8/4KB2 w`, Bb5 decía
+  "Salva tu peón de a4" antes que "Clava la dama de d7 contra el rey". Las
+  frases fuertes que atrapan o clavan llevan el valor de la pieza (un `Map`
+  aparte, `vale`, para no cambiar la forma de la frase), y si la del ataque o
+  la posicional vale más que lo salvado, lo salvado va después de las dos.
 
 **v0.176, el libro baja en paralelo, y cómo se buscan los saltos** (Juan,
 20-nov: *"¿hay algo más en la app que salte con el tiempo y no tenga
