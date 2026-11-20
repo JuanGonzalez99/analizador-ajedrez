@@ -4780,6 +4780,9 @@ la suma de precisiones aparezca **una sola vez** en `index.html`.
   contando todas: es un recuento, no una medida. Las tasas de malas siguen
   sobre todas (una de libro puede ser mala: `textoDesglose` las nombra);
   quedó como duda para Juan.
+- **A prueba con Juan** (20-nov: *"no sé si me copa dejar afuera las jugadas
+  de libro. Pero por ahora dejalo así"*). Si se da vuelta, alcanza con que
+  `fueraDelLibro` devuelva todas: las dos cuentas y la prueba pasan por ahí.
 - "solo libro" y la raya de la cabecera del Mes van con `.sinDato` (tenue,
   peso 400), como Pensó sin reloj: no son el dato (revisor de UX).
 - Las leyendas del Resumen y del detalle del Mes lo dicen: *"La precisión y

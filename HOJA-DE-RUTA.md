@@ -765,11 +765,12 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
-- **No sé si esto te copa (v0.174):** la precisión y la mediana ya no cuentan
-  las jugadas de libro, pero la tasa de malas del Mes sí (una de libro puede
-  ser mala, un gambito dudoso). Opciones: 1) dejarlo así, una mala es mala
-  aunque esté en el libro; 2) que las malas también se cuenten fuera del
-  libro, y todo el Mes habla de las mismas jugadas.
+- **A prueba (v0.174):** la precisión y la mediana sin las jugadas de libro.
+  Juan, 20-nov: *"no sé si me copa dejar afuera las jugadas de libro. Pero
+  por ahora dejalo así"*. Queda como está, y las malas del Mes siguen
+  contando las de libro (tampoco se tocan). No se le vuelve a preguntar: si
+  no le copa, lo dice él, y la vuelta atrás es que `precisionMedia` y
+  `medianaFuera` no filtren.
 - **No sé si esto te copa (v0.169):** si apoyás el dedo sobre una pieza que
   puede mover y arrastrás para scrollear o pasar jugadas, la mueve y abre una
   variante (se cierra con Volver o el atrás). Es como chess.com y lichess.
