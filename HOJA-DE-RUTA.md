@@ -721,9 +721,17 @@ Pendientes que estaban anotados solo en el traspaso.
 - [ ] **Otros sets de piezas para elegir** (§4bis): la costura está
       (`#cb-<color><tipo>`); falta elegir sets y verificarle la licencia a
       cada uno, y el selector va en Ajustes.
-- [ ] ⏸ espera a Juan · **La lista de cuentas de entrenador** (§8): tiene un
-      solo nombre; los demás los tiene que pasar Juan. Coincidencia exacta,
-      no por prefijo.
+- [ ] **La lista de cuentas de entrenador** (§8): tiene un solo nombre.
+      Juan (20-nov): *"que se fije si hay alguna manera que lo saque Claude"*.
+      Primero investigar, sin tocar la app: la API pública no tiene marca de
+      entrenador (`status` solo vale closed, basic, premium, mod o staff),
+      pero quizás la haya en otro lado —el perfil web de cada cuenta, el
+      directorio de entrenadores de chess.com, algún endpoint de la API que
+      no se miró— leído con el navegador del contenedor o con la API. Si sale,
+      armar la lista (coincidencia exacta, no por prefijo) y contar de dónde
+      salió y cada cuánto hay que refrescarla. Si hace falta permiso de red
+      para un host, pedirlo y anotarlo; si no hay manera, decirlo con lo que
+      se probó y recién ahí pedirle los nombres a Juan.
 
 ## Etapa 4 · Posiciones, y el puente con el profe — primer módulo nuevo
 
