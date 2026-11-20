@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.177.1 · 20-11";
+  window.VERSION = "v0.178 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2220,6 +2220,30 @@ function quedaComible(fenDespues, sq) {
     if (!j2.moves({ verbose: true }).some(m => m.to === sq)) return true;
   }
   return false;
+}
+
+/* EL CAMBIO EN UNA CASILLA (20-nov, revisor de ajedrez): cuánto gana el que
+   mueve en `fen` cambiando en `sq`, con la jugada que más le conviene en cada
+   paso y pudiendo parar cuando seguir le cuesta. Es el "static exchange" de
+   los motores: se come siempre con la pieza más barata (el rey, la última), y
+   la legalidad la pone chess.js, así que una pieza clavada no recaptura.
+   `quedaComible` contesta otra pregunta —¿hay recaptura?— y por eso con
+   Qe1 Rxe1 Kxe1 daba falso aunque el cambio pierda la dama por una torre.
+   Devuelve el neto y la línea de capturas. */
+function cambioEn(fen, sq, prof = 0) {
+  const nada = { neto: 0, linea: [] };
+  if (prof > 12) return nada;
+  const j = new Chess(fen);
+  const caras = t => t === "k" ? 100 : (VALOR[t] || 0);
+  const capt = j.moves({ verbose: true })
+    .filter(m => m.to === sq && m.captured && (!m.promotion || m.promotion === "q"))
+    .sort((a, b) => caras(a.piece) - caras(b.piece));
+  if (!capt.length) return nada;
+  const m = capt[0];
+  j.move(m);
+  const r = cambioEn(j.fen(), sq, prof + 1);
+  const neto = (VALOR[m.captured] || 0) - r.neto;
+  return neto > 0 ? { neto, linea: [m, ...r.linea] } : nada;
 }
 
 /* ganancia estimada de una captura: lo que como menos lo que me pueden devolver */
@@ -3128,6 +3152,19 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   else if (f.colgada && f.perdida >= 0.5)
     mecanismo = { txt: `${mayus(pieza)} queda comible en ${donde}.`,
                   marca: "queda comible", sq: donde };
+  /* Tiene recaptura, pero el cambio pierde (20-nov, revisor de ajedrez): con
+     Qe1 Rxe1 Kxe1 la tarjeta de un grave decía "Toma la columna abierta e." y
+     no que se cambiaba la dama por una torre. Se nombra lo que se va de cada
+     lado; si del rival no se va nada, es lo mismo que quedar comible. */
+  else if (obs && obs.cambio && f.perdida >= 0.5) {
+    const nom = (ts, tabla) => ts.map(t => tabla[t] || "una pieza").join(" y ");
+    mecanismo = obs.cambio.suyas.length
+      ? { txt: `Pierde material en el cambio: ${nom(obs.cambio.mias, mio ? PIEZA_TU : PIEZA_EL)}` +
+               ` por ${nom(obs.cambio.suyas, PIEZA_UN)}.`,
+          marca: "en el cambio", sq: donde }
+      : { txt: `${mayus(pieza)} queda comible en ${donde}.`,
+          marca: "queda comible", sq: donde };
+  }
   else if (f.tomoConOtra && f.perdida >= 0.5 && f.cap)
     mecanismo = { txt: `La captura iba con otra pieza: ${f.cap.san}.`,
                   marca: f.cap.san };
@@ -3270,7 +3307,8 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      ataque, ni la clavada desde ahí, ni la columna, la séptima o el caballo
      plantado—: se pierde en la jugada siguiente. La tarjeta queda con lo que
      se pierde y la mejor. */
-  const cuelga = !!(mecanismo && mecanismo.marca === "queda comible");
+  const cuelga = !!(mecanismo && (mecanismo.marca === "queda comible" ||
+                                  mecanismo.marca === "en el cambio"));
   if (cuelga) ataque = null;
   const clavadas = (o.clavadas || []).filter(c => !(cuelga && c.por === mecanismo.sq));
   if (clavadas.length) fuertes.push(fraseClavada(clavadas[0]));
@@ -3878,7 +3916,8 @@ function observarJugada(f, fenAntes = null) {
                   corona: false, enroque: null, pierdeEnroque: null,
                   legalesRival: null,
                   /* los caros, de la v0.78 */
-                  atrapada: null, descubierto: null, descubierta: null };
+                  atrapada: null, descubierto: null, descubierta: null,
+                  cambio: null };
   if (!f || !f.fen || !f.uci) return vacio;
   const donde = f.uci.slice(2, 4), deDonde = f.uci.slice(0, 2);
   try {
@@ -3943,9 +3982,17 @@ function observarJugada(f, fenAntes = null) {
     const rival = mio === "w" ? "b" : "w";
     const reyRival = casillaDelRey(tablero, rival);
     const clavadas = [];
-    /* las jugadas legales del rival, que ya es su turno: con ellas se mira si
-       la pieza "clavada" se puede comer al que clava (v0.163) */
-    const legales = new Chess(f.fen).moves({ verbose: true });
+    /* ¿la pieza "clavada" se puede comer al que clava? (v0.163). Hasta el
+       20-nov se preguntaba con las jugadas legales del rival, y el jaque lo
+       rompía: en jaque esa captura no es legal AHORA, así que el filtro no
+       actuaba y se anunciaban clavadas falsas (Ne7+ en
+       6k1/8/4b3/3N4/8/1B6/8/6K1 decía "Clava el alfil de e6", que come al de
+       b3; revisor de ajedrez). Es el mismo error de la v0.133 con las
+       colgadas: el jaque se contesta en una jugada y la amenaza sigue. Ahora
+       es geometría, con `atacantesDe`, que ya sabe que una pieza clavada
+       contra su rey solo come sobre la línea de su clavada. */
+    const puedeComer = (tab, sq, aQuien) =>
+      atacantesDe(tab, aQuien, rival).some(a => a.sq === sq);
     for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
       const p = tablero[r][c];
       if (!p || p.color !== rival || p.type === "k") continue;
@@ -3959,7 +4006,7 @@ function observarJugada(f, fenAntes = null) {
          "Clava la torre contra el rey" con Qe1 Rxe1 era elogiar perder la dama
          (v0.163, revisor de ajedrez). */
       const quien = tablero[8 - +por[1]]["abcdefgh".indexOf(por[0])];
-      if (legales.some(m => m.from === sq && m.to === por) &&
+      if (puedeComer(tablero, sq, por) &&
           (VALOR[quien.type] >= VALOR[p.type] || !atacantesDe(tablero, por, mio).length)) continue;
       clavadas.push({ sq, pieza: p.type, contra: "k", por });
     }
@@ -3981,7 +4028,7 @@ function observarJugada(f, fenAntes = null) {
        revisor de ajedrez): la torre de e4 "clavada" por la torre de e1 la
        come con Rxe1; el peón de e5 "clavado" por el alfil de d4 juega exd4.
        Como mucho es un cambio, o el que clava queda regalado. Se mira con
-       las jugadas legales de la posición, que ya es el turno del rival. */
+       la geometría de `puedeComer`, de arriba. */
     const contraDama = (fen, tab, sq) => {
       for (const dq of damas) {
         const cl = quienLaClava(tab, sq, dq);
@@ -3989,7 +4036,7 @@ function observarJugada(f, fenAntes = null) {
         const t = tab[8 - +cl[1]]["abcdefgh".indexOf(cl[0])];
         if (!t) continue;
         if (t.type === "q" && atacantesDe(tab, dq, rival).some(d => d.sq !== sq)) continue;
-        if (fen === f.fen && legales.some(m => m.from === sq && m.to === cl)) continue;
+        if (fen === f.fen && puedeComer(tab, sq, cl)) continue;
         return cl;
       }
       return null;
@@ -4146,10 +4193,33 @@ function observarJugada(f, fenAntes = null) {
       }
     }
 
+    /* LO QUE SE PIERDE EN EL CAMBIO (20-nov, revisor de ajedrez): la pieza
+       que moví tiene recaptura —así que no "queda comible"— pero cambiar ahí
+       igual me cuesta. Se resta lo que la jugada comió, y solo cuenta desde
+       dos peones netos: menos que eso es ruido de la cuenta (un alfil por un
+       caballo, un peón de más o de menos). */
+    let cambio = null;
+    const ca = cambioEn(f.fen, donde);
+    if (ca.linea.length) {
+      const comio = fenAntes ? new Chess(fenAntes).get(donde) : null;
+      /* lo que ganó la coronación también se resta (revisor de ajedrez): d8=Q+
+         Rxd8 Rxd8+ da un peón y gana una torre, no "tu dama por una torre". Y
+         lo que se perdió en d8 es el peón. */
+      const corono = f.uci.length > 4 ? (VALOR[f.uci[4]] || 0) - VALOR.p : 0;
+      const pierde = ca.neto - corono -
+                     (comio && comio.color !== mio ? (VALOR[comio.type] || 0) : 0);
+      if (pierde >= 2)
+        cambio = { pierde,
+                   mias: ca.linea.filter((_, k) => k % 2 === 0)
+                           .map((m, k) => k === 0 && corono ? "p" : m.captured),
+                   suyas: [...(comio && comio.color !== mio ? [comio.type] : []),
+                           ...ca.linea.filter((_, k) => k % 2 === 1).map(m => m.captured)] };
+    }
+
     return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
              semiabierta, aislado, doblados, pasadoContra, pareja, septima,
              sinDamas, conectadas, plantado, corona, enroque, pierdeEnroque,
-             legalesRival, atrapada, descubierto, descubierta };
+             legalesRival, atrapada, descubierto, descubierta, cambio };
   } catch (e) { return vacio; }
 }
 

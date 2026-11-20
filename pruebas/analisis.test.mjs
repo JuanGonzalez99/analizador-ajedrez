@@ -3792,3 +3792,60 @@ test("juntar lo analizado no suelta un análisis que ya corría (v0.177.1)", () 
   const fuente = html.slice(html.indexOf("$(\"fuente\").onchange"), html.indexOf("let CARGA = 0;"));
   assert.ok(fuente.includes("if (v !== \"todo\" && OCUPADO) { pintarFuente(); return; }"));
 });
+
+test("dar jaque no ciega la tarjeta: Bxf6+ calla la clavada porque ya estaba (20-nov)", () => {
+  /* Con el rey en h8, ANTES de Bxf6+ la torre de f6 ya estaba clavada por el
+     alfil de d4, así que no defendía a la dama: Nf2 Qxe6 y no hay recaptura.
+     El caballo de e4 ya estaba clavado contra la dama. Con el rey en g8 la
+     torre sí defendía (Nf2 Qxe6+ Rxe6) y la clavada es nueva. */
+  assert.deepEqual(mirar("7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w - - 0 1", "d4f6").clavadas, []);
+  assert.deepEqual(mirar("6k1/8/4qr2/8/3Bn3/8/8/4Q1K1 w - - 0 1", "d4f6").clavadas,
+                   [{ sq: "e4", pieza: "n", contra: "q", por: "e1" }]);
+  /* y un jaque que SÍ crea la clavada la ve igual que sin jaque */
+  for (const rey of ["7k", "6k1"])
+    assert.deepEqual(mirar(rey + "/5p2/4q3/6N1/4n3/8/8/4Q1K1 w - - 0 1", "g5f7").clavadas,
+                     [{ sq: "e4", pieza: "n", contra: "q", por: "e1" }], rey);
+});
+
+test("lo que se pierde en el cambio es el mecanismo, aunque haya recaptura (20-nov)", () => {
+  /* Qe1 Rxe1 Kxe1: la dama no "queda comible" porque el rey recaptura, pero se
+     cambia por una torre. La tarjeta decía "Toma la columna abierta e." */
+  const evs = cp => [{ cp: 0, mate: null, mejor: "f2g2", segunda: { cp: -10, mate: null } },
+                     { cp, mate: null, mejor: "e4e1", segunda: null }];
+  const qe1 = "4k3/8/8/8/4r3/8/5K2/Q7 w - - 0 1";
+  const f = unaFila(qe1, "Qe1", evs(400));
+  assert.equal(f.colgada, false);
+  const obs = mirar(qe1, "a1e1");
+  assert.deepEqual(obs.cambio, { pierde: 4, mias: ["q"], suyas: ["r"] });
+  assert.equal(A.explicarJugada(f, null, true, null, obs),
+    "Pierde material en el cambio: tu dama por una torre. La posición pasa de parejo a perdiendo.");
+  /* la calidad: Rd3 Bxd3 cxd3, torre por alfil */
+  const rd3 = "4k3/8/8/1b6/8/8/2P5/3RK3 w - - 0 1";
+  assert.deepEqual(mirar(rd3, "d1d3").cambio, { pierde: 2, mias: ["r"], suyas: ["b"] });
+  assert.ok(A.explicarJugada(unaFila(rd3, "Rd3", evs(200)), null, false, null, mirar(rd3, "d1d3"))
+    .startsWith("Pierde material en el cambio: la torre por un alfil."));
+  /* un caballo que el peón come y nadie recaptura no cambia: sigue "queda comible" */
+  assert.equal(mirar("4k3/8/2p5/8/8/2N5/8/4K3 w - - 0 1", "c3d5").cambio.suyas.length, 0);
+  /* un cambio parejo no es un hallazgo, y comer lo que había tampoco */
+  assert.equal(mirar("4k3/8/2p5/3p4/8/5N2/8/4K3 w - - 0 1", "f3e5").cambio, null);
+  assert.equal(mirar("r3k3/8/8/8/8/8/8/R3K3 w - - 0 1", "a1a8").cambio, null);
+});
+
+test("con el rival en jaque, la clavada que se come al que clava tampoco se dice (20-nov)", () => {
+  /* En jaque, comerse al que clava no es legal AHORA, y el filtro de la v0.163
+     miraba las legales: salía "Clava el alfil de e6" con Ne7+, y el alfil come
+     al de b3, que vale lo mismo. Contra la dama, la torre de e5 come la de e1. */
+  for (const [fen, uci] of [["6k1/8/4b3/3N4/8/1B6/8/6K1 w - - 0 1", "d5e7"],
+                            ["6k1/8/4b3/3N4/8/1B6/8/6K1 w - - 0 1", "d5f6"],
+                            ["4q1k1/7p/8/4r3/4N3/8/8/4R1K1 w - - 0 1", "e4f6"],
+                            ["4q1k1/8/8/4r3/4B3/8/8/4R1K1 w - - 0 1", "e4d5"]])
+    assert.deepEqual(mirar(fen, uci).clavadas, [], uci);
+});
+
+test("coronar y perder la dama en el cambio no es perder material (20-nov)", () => {
+  /* d8=Q+ Rxd8 Rxd8+: se dio un peón y se ganó una torre */
+  const antes = "2r4k/3P4/8/8/8/8/8/3R2K1 w - - 0 1";
+  const j = new Chess(antes); const m = j.move({ from: "d7", to: "d8", promotion: "q" });
+  const obs = A.observarJugada({ fen: j.fen(), uci: "d7d8q", turno: "w", pieza: "p", san: m.san }, antes);
+  assert.equal(obs.cambio, null);
+});

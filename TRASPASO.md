@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.177.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4756,6 +4756,39 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.178, lo que se pierde en el cambio, y el jaque que inventaba clavadas**
+(revisor de ajedrez, v0.163; tarea nocturna del 20-nov).
+- **El ítem "con jaque la tarjeta no ve nada" no era un error.** En
+  `7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w`, Bxf6+ calla la clavada del caballo de e4
+  porque **ya estaba**: con el rey en h8 la torre de f6 estaba clavada por el
+  alfil de d4 y no defendía la dama (Nf2 Qxe6 y no hay recaptura; con el rey
+  en g8, sí: Rxe6). Un jaque que crea la clavada (Nxf7+ en
+  `7k/5p2/4q3/6N1/4n3/8/8/4Q1K1 w`) la ve igual. Queda una prueba.
+- **Pero el jaque sí rompía otra cosa**, y lo encontró el revisor al
+  verificar: el filtro de la v0.163 ("la clavada que puede comerse al que
+  clava no se dice") miraba las jugadas legales del rival, y en jaque esa
+  captura no es legal ahora. Salían clavadas falsas: Ne7+ en
+  `6k1/8/4b3/3N4/8/1B6/8/6K1 w` decía "Clava el alfil de e6", que come al de
+  b3. Es el error de la v0.133 con las colgadas otra vez. Ahora es geometría:
+  `puedeComer` en `observarJugada`, con `atacantesDe` (que ya sabe que una
+  pieza clavada contra su rey solo come sobre su línea).
+- **"Pierde material en el cambio" es un mecanismo.** `quedaComible` pregunta
+  si hay recaptura; con Qe1 Rxe1 Kxe1 la hay, así que la tarjeta de un grave
+  decía "Toma la columna abierta e.". `cambioEn(fen, sq)` (geometría, junto a
+  `quedaComible`) hace el cambio estático: se come siempre con la más barata
+  —el rey último—, cada lado puede parar, y la legalidad la pone chess.js.
+  `observarJugada` da `cambio: { pierde, mias, suyas }` cuando la pieza movida
+  pierde **dos peones netos o más** contando lo que comió y lo que ganó la
+  coronación (menos es ruido: un alfil por un caballo; y d8=Q+ Rxd8 Rxd8+ da
+  un peón y gana una torre, no "tu dama por una torre", revisor). Al paso no lo
+  ve (la captura cae en otra casilla): se pierden casos, no se miente. La frase, después de "queda comible" y antes de "la
+  captura iba con otra": "Pierde material en el cambio: tu dama por una
+  torre."; si del rival no se va nada, dice "queda comible" (Qd5 cxd5, donde
+  recapturar pierde más). Con este mecanismo, igual que con "queda comible",
+  no se dice lo que la pieza logra (la columna, la clavada desde ahí).
+- **"La mejor marcada Error"** ya estaba hecho desde la v0.134 y seguía en la
+  hoja: se tachó.
 
 **v0.177.1, juntar "todo" no suelta el análisis que corre** (revisor,
 v0.109; estaba en Arreglos). `juntarTodo` hacía su propio

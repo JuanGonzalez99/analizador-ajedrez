@@ -82,21 +82,24 @@ tanto va a Arreglos o a Relleno, **no acá**.
         En `4k3/3q4/8/8/P7/8/8/4KB2 w` f1b5 sale primero "Salva tu peón de a4"
         y después "Clava la dama de d7 contra el rey", que gana la dama. La que
         gana más va primero.
-- [ ] **Con algunas jugadas que dan jaque, la tarjeta no ve nada** (revisor de
+- [x] ~~**Con algunas jugadas que dan jaque, la tarjeta no ve nada**~~ (v0.178:
+      no era un error —la clavada ya estaba—, pero el jaque sí inventaba
+      clavadas que se comen al que clava, y eso se arregló) (revisor de
       ajedrez, v0.163; ya estaba). En `7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w`, d4f6
       (Bxf6+), `observarJugada` devuelve todo vacío: ni la clavada nueva del
       caballo de e4. La misma jugada sin jaque (rey en g8) sí la detecta, y
       con Nc7+ anda. Buscar la causa.
-- [ ] **Lo que se pierde en el cambio y la mejor marcada Error** (revisor de
+- [x] ~~**Lo que se pierde en el cambio y la mejor marcada Error**~~ (hecho en
+      la v0.178) (revisor de
       ajedrez; si no entran juntos, son dos versiones de la misma noche):
-  - [ ] **"Pierde material en el cambio" como mecanismo** (revisor de ajedrez,
+  - [x] **"Pierde material en el cambio" como mecanismo** (revisor de ajedrez,
         v0.163). Con Qe1 Rxe1 Kxe1 (`4k3/8/8/8/4r3/8/5K2/Q7 w`, a1e1) la dama no
         queda "comible" porque hay recaptura, así que la tarjeta de un grave
         dice "Toma la columna abierta e." y no que se cambia dama por torre.
         Hace falta decir lo que se pierde cuando `quedaComible` da falso por la
         recaptura y aun así el cambio pierde.
-  - [ ] La jugada que era la mejor y sale marcada Error (falla de la v0.95, ya
-        diagnosticada en §8 del traspaso).
+  - [x] La jugada que era la mejor y sale marcada Error (falla de la v0.95, ya
+        diagnosticada en §8 del traspaso). Ya estaba hecha desde la v0.134.
 - [ ] **[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
       entra entera** (revisor, v0.149; ya estaba). A 1600×900 la lista se
       corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
@@ -398,6 +401,19 @@ archiva los que pierden sentido.
       casi no pasa). Con el motor eligiendo Rxa8# y jugada Rd8#
       (`n5k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`), cuenta como "La vi y la tomé"
       sin capturar. Antes contaba una omisión falsa, que era peor.
+
+- [ ] **La clavada vieja que la jugada cobra** (revisor de ajedrez, v0.178).
+      Hoy solo se dicen las clavadas nuevas. En `7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w`,
+      Bxf6+ cobra la clavada del caballo de e4 (que ya estaba: tras cualquier
+      respuesta cae el caballo o la dama), y la tarjeta solo dice "El rival
+      tiene Qxf6", que suena a que se pierde el alfil. Decir "el caballo de e4
+      sigue clavado y cae" cuando la jugada la aprovecha. Revisor de ajedrez sí.
+
+- [ ] **El cambio no ve las clavadas contra la dama** (revisor de ajedrez,
+      v0.178). `cambioEn` (y `quedaComible`, de antes) da por buena una
+      captura con una pieza clavada contra su dama: un peón de e6 que come y
+      deja la dama de e8 a tiro de la torre de e1. Hoy lo frena el corte de
+      pérdida ≥ 0,5 del motor; medir si llega a la tarjeta.
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 
