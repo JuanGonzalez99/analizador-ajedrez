@@ -655,12 +655,6 @@
                            line-height: 1.35; align-items: center; }
   .metricas.enInicio > div:not(.tocable):not(.leyInicio) { display: none; }
   .metricas.enInicio > .leyInicio { display: flex; }
-  /* EN UNA JUGADA DE LIBRO (v0.172): Mejor y Pensó quedan, y en lugar de
-     Pérdida y Caída la misma leyenda dice por qué no hay número. Va entre los
-     dos con `order`, porque en el HTML la leyenda es la última. */
-  .metricas.enLibro > div:not(.tocable):not(.leyInicio):not(:has(#mPenso)) { display: none; }
-  .metricas.enLibro > .leyInicio { display: flex; grid-column: span 2; order: 1; }
-  .metricas.enLibro > div:has(#mPenso) { order: 2; }
   /* "sin reloj": dice qué falta, en vez del "·" que había que descifrar */
   .metricas .va.sinDato { color: var(--tenue); font-weight: 400; }
   /* Grisado (la jugada ya era la mejor) solo el VALOR: el cuadrito sigue
@@ -1545,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.172 · 19-11";
+  window.VERSION = "v0.173 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -8594,18 +8588,10 @@ function pintarRevision() {
      partida no trae relojes, porque ese dato no va a llegar nunca. */
   const leyenda = enInicio && !fP;   /* con una probada en la inicial, los cuadritos */
   $("mLeyenda").closest(".metricas").classList.toggle("enInicio", leyenda);
-  /* DE LIBRO, PÉRDIDA Y CAÍDA SE CALLAN Y LO DICEN (v0.172, revisor, v0.148):
-     la tarjeta decía "5. d4 — Libro" y la fila de abajo "Pérdida 1.20": la
-     misma contradicción un piso más abajo. Mejor queda, porque qué prefería el
-     motor es dato crudo que a veces interesa; Pensó también. Se eligió entre
-     tres (callar todo con "—", el dato apagado, y esta). NO DICE "no se le
-     cuenta pérdida", que era el texto de la maqueta y es falso: la precisión
-     de la partida suma la caída de las de libro (solo las tablas las sacan). Ni
-     "no se juzga", que se lee igual (revisores, v0.172). */
-  const deLibro = !leyenda && !sinJugada && (fP || f).cat === "libro";
-  $("mLeyenda").closest(".metricas").classList.toggle("enLibro", deLibro);
-  if (deLibro) $("mLeyenda").textContent = "De libro: es teoría.";
-  else if (leyenda)
+  /* EN UNA JUGADA DE LIBRO LA FILA ES LA DE SIEMPRE (v0.173). La v0.172 cambiaba
+     Pérdida y Caída por una leyenda y Juan la hizo volver: *"me parece una
+     banda cambiar toda esa parte de la UI cuando es apertura"*. DISENO.md §3. */
+  if (leyenda)
     $("mLeyenda").textContent = R.filas.some(x => x.seg != null)
       ? "Pérdida, caída y lo que pensó, desde la primera jugada."
       : "Pérdida y caída, desde la primera jugada.";

@@ -554,6 +554,12 @@ hay. Las primeras salen del historial del traspaso.
   elige.
 
 ### No le copa
+- **Que una zona cambie de forma según el tipo de jugada**: en las de libro,
+  la fila de cuadritos con una leyenda en lugar de Pérdida y Caída (v0.172).
+  *"No es un dato que use nunca, honestamente, pero me parece una banda
+  cambiar toda esa parte de la UI cuando es apertura"* (20-nov-2026). Una
+  contradicción chica entre la tarjeta y un número que casi no se mira no
+  paga que la pantalla se rearme; la fila es la misma en toda la partida.
 - **Que algo que sigue al dedo salte de a casillas, en seco**: el halo
   violeta del arrastre (v0.169) *"se siente raro… es como un círculo que se
   mueve en ortogonal… medio rígido, poco fluido"* (18-nov-2026, probándolo en
@@ -630,6 +636,17 @@ Se anota cada vez que Juan rechaza algo que pasó por el revisor (decisión de
 Juan, 7-nov-2026). Las reglas que salen de acá las destila la revisión del
 criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
 
+- **La fila de cuadritos rearmada en las jugadas de libro** (v0.172). El
+  revisor vio que la tarjeta decía "Libro" y abajo "Pérdida 1.20", lo llamó
+  contradicción y eligió entre tres formas la que cambiaba la fila (Mejor,
+  una leyenda y Pensó). *Se le pasó*: preguntó cómo callar el número y no si
+  valía la pena tocar la zona; el dato casi no se mira, y lo que sí se nota
+  es que la fila cambie de forma al pasar del libro a la jugada siguiente.
+  *Regla*: una zona que está en toda la partida no cambia de forma por el
+  tipo de jugada salvo que lo que diga esté mal de verdad y moleste; una
+  contradicción leve con un dato secundario se deja, o se arregla adentro
+  del valor, sin rearmar la zona. Y antes de proponer el lavado, preguntarse
+  si Juan usa ese dato.
 - **El halo del arrastre con el dedo, movido en seco** (v0.169). El revisor
   lo pidió "sin transición" por "quieto antes que animado", y lo juzgó con un
   recorte a mitad del gesto. *Se le pasó*: una foto quieta no dice cómo se

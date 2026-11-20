@@ -494,7 +494,7 @@ lo demás se dibuja contra ella.
       final? Si hace falta, ¿dónde, sin tocar el alto de la tarjeta ni la
       cabecera? ¿Qué se muestra en las posiciones sin nombre y con "Variante
       normal" (2… Nc6)? Con variantes.
-- [x] **Lavado de cara: los cuadritos en una jugada de libro** (v0.172, 19-nov: la C entre tres — Mejor y Pensó quedan, en el medio "De libro: es teoría.") (revisor,
+- [x] **Lavado de cara: los cuadritos en una jugada de libro** (v0.172, 19-nov: la C entre tres; **vuelta atrás en la v0.173**, Juan: *"me parece una banda cambiar toda esa parte de la UI cuando es apertura"*; la fila queda como siempre) (revisor,
       v0.148; celu y PC). La tarjeta dice "5. d4 — Libro" y ya no habla el
       motor, pero la fila de abajo sigue diciendo Mejor "Bb5 ↗", Pérdida
       "1.20", Caída "11.0 pt": la misma contradicción, un piso más abajo.
@@ -793,11 +793,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   ahora dejémoslo así, lo voy usando y vemos qué onda"* (17-nov). No se toca
   hasta que diga; si elige la A, es volver la tarjeta a flex y dejar la
   reserva de renglones (§7 del traspaso, v0.149).
-- **No sé si esto te copa (v0.172):** en una jugada de libro, Pérdida y
-  Caída se cambiaron por "De libro: es teoría." y Mejor sigue mostrando qué
-  jugaba el motor. La otra: que Mejor también se calle. El revisor de ajedrez
-  recomienda dejarla: el libro también trae gambitos dudosos (el Letón, el
-  Englund) y la Mejor es lo único que te avisa.
 - **No sé si esto te copa (v0.172, del revisor de ajedrez):** que la precisión
   de la partida deje de contar las jugadas de libro. Hoy las cuenta, y las
   tablas del Mes no: la misma partida con dos criterios. Cambia números que ya

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.172**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.173**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4752,6 +4752,16 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.173, la v0.172 vuelve atrás** (Juan, 20-nov: *"no es un dato que use
+nunca, honestamente, pero me parece una banda cambiar toda esa parte de la UI
+cuando es apertura"*). En una jugada de libro los cuadritos vuelven a ser los
+de siempre —Mejor, Pérdida, Caída, Pensó—, con los números. Se sacaron la
+clase `.enLibro`, su CSS y `deLibro`; `#mLeyenda` queda solo para la inicial.
+La regla que sale va a `DISENO.md` §2 y §3: una zona que está en toda la
+partida no cambia de forma por el tipo de jugada por una contradicción leve
+con un dato que casi no se mira. Lo de la precisión con las de libro (abajo)
+sigue en pie como duda aparte.
 
 **v0.172, los cuadritos en una jugada de libro** (lavado de cara del
 revisor, v0.148; celu y PC). La tarjeta decía "5. d4 — Libro" y ya no

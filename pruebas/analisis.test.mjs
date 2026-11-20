@@ -3705,11 +3705,7 @@ test("en la compu la variante va en la planilla y sale de la tira (v0.171)", () 
     "el número sale del FEN de arranque");
 });
 
-test("en una jugada de libro los cuadritos no dicen pérdida (v0.172)", () => {
-  /* la tarjeta dice "Libro" y la fila decía "Pérdida 1.20"; ahora Mejor y
-     Pensó quedan y en el medio la leyenda dice por qué no hay número. Y la
-     frase no puede decir que no se cuenta: la precisión sí la suma. */
-  assert.ok(html.includes('const deLibro = !leyenda && !sinJugada && (fP || f).cat === "libro";'));
-  assert.ok(html.includes('.metricas.enLibro > .leyInicio { display: flex; grid-column: span 2; order: 1; }'));
-  assert.ok(!html.includes('"De libro: no se le cuenta pérdida."'));
+test("en una jugada de libro la fila de cuadritos no cambia de forma (v0.173)", () => {
+  /* Juan hizo volver la v0.172: la fila es la misma en libro y fuera de él */
+  assert.ok(!html.includes("enLibro"));
 });
