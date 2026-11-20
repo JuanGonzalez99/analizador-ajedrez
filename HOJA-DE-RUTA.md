@@ -691,6 +691,40 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
       rechazaron ocho maneras de mostrar el reloj alrededor del tablero; esto
       es otra cosa, una tabla, y no reabre eso.
 
+- [ ] **Comparar dos jugadores** (`TRASPASO.md` §7.7): historial cara a
+      cara y precisión de los dos, solo sobre las partidas entre ellos. Los
+      datos ya están (se descargan enteras y la precisión sale para ambos).
+- [ ] **Elo estimado a partir de la precisión** (§7.9), contra el rating de
+      los rivales. Siempre con rango y cantidad de partidas, nunca un número
+      solo: el rating de chess.com es inestable y contra rivales flojos la
+      precisión sube sola.
+
+## Sueltos del traspaso (20-nov, rescatados de §4 y §8)
+
+Pendientes que estaban anotados solo en el traspaso.
+
+- [ ] **El "0s" de la primera jugada de cada lado** (§4duotrigies): chess.com
+      escribe el reloj inicial intacto y Pensó da 0 aunque se haya pensado; lo
+      honesto es "·", como sin reloj. **Juan cree que ya está resuelto**:
+      verificar primero en la app (comentario de `segundosPensados`) y, si
+      está, tachar y corregir el traspaso.
+- [ ] **"regla de 50 jugadas · 61 jugadas"** (§6, "Dos pendientes"): "jugadas"
+      dos veces con dos significados. De las cuatro salidas dibujadas, la que
+      no fuerza nada es callar el largo en ese caso.
+- [ ] **Dónde vive "cómo terminó"** (§6, mismo lugar; lo marcó Juan): el
+      cierre de la tira solo se ve al final de la lista y repite el largo que
+      la lista ya dice un renglón arriba.
+- [ ] **La jerga en las frases** (§4octodecies): "los chanchos en la séptima"
+      y compañía. Tanda propia, con su mirada en el celu; primero contestar
+      hasta dónde, sin perder la capacidad de decir un número. Revisor de
+      ajedrez sí.
+- [ ] **Otros sets de piezas para elegir** (§4bis): la costura está
+      (`#cb-<color><tipo>`); falta elegir sets y verificarle la licencia a
+      cada uno, y el selector va en Ajustes.
+- [ ] ⏸ espera a Juan · **La lista de cuentas de entrenador** (§8): tiene un
+      solo nombre; los demás los tiene que pasar Juan. Coincidencia exacta,
+      no por prefijo.
+
 ## Etapa 4 · Posiciones, y el puente con el profe — primer módulo nuevo
 
 **Recomendación: este va primero.** Es el más chico de los cuatro, sirve
