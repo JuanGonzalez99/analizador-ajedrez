@@ -500,10 +500,15 @@ lo demás se dibuja contra ella.
       "1.20", Caída "11.0 pt": la misma contradicción, un piso más abajo.
       ¿Qué contestan los cuatro cuadritos cuando la jugada es de libro? Es
       duda para Juan (abajo): dato crudo que a veces interesa, o se callan.
-- [ ] ⏸ espera a Juan · **La precisión de la partida sin las jugadas de
-      libro** (revisor de ajedrez, v0.172). `precisionDe` promedia todas las
-      propias, las de libro incluidas; las tablas del Mes las sacan
-      (`fueraDeLibro`). Cambia números ya mostrados: duda en "Dudas abiertas".
+- [ ] **La precisión de la partida sin las jugadas de libro** (revisor de
+      ajedrez, v0.172; Juan, 20-nov: *"no sé, lo que vos digas"*, y se eligió
+      sacarlas). `precisionDe` promedia todas las propias, las de libro
+      incluidas; las tablas del Mes las sacan (`fueraDeLibro`): que las dos
+      digan lo mismo. Ojo: los otros lugares que promedian `x.precision` (el
+      del análisis, cerca de "precision: mias.reduce", y el de la caché)
+      tienen que cambiar juntos, o el inicio y la Partida dirían números
+      distintos. Una partida que no salió del libro queda sin precisión: que
+      diga eso y no "0" ni "NaN". Revisor de ajedrez. Va en la versión menor.
 - [ ] **[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
       entra entera** (revisor, v0.149; ya estaba). A 1600×900 la lista se
       corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
@@ -793,10 +798,6 @@ es un gusto) y la duda se borra de acá, en el mismo commit.
   ahora dejémoslo así, lo voy usando y vemos qué onda"* (17-nov). No se toca
   hasta que diga; si elige la A, es volver la tarjeta a flex y dejar la
   reserva de renglones (§7 del traspaso, v0.149).
-- **No sé si esto te copa (v0.172, del revisor de ajedrez):** que la precisión
-  de la partida deje de contar las jugadas de libro. Hoy las cuenta, y las
-  tablas del Mes no: la misma partida con dos criterios. Cambia números que ya
-  viste, por eso no se hizo sola (ítem abajo).
 - **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
   segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
   ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su
