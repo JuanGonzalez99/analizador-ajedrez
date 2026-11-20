@@ -500,7 +500,7 @@ lo demás se dibuja contra ella.
       "1.20", Caída "11.0 pt": la misma contradicción, un piso más abajo.
       ¿Qué contestan los cuatro cuadritos cuando la jugada es de libro? Es
       duda para Juan (abajo): dato crudo que a veces interesa, o se callan.
-- [ ] **La precisión de la partida sin las jugadas de libro** (revisor de
+- [x] **La precisión de la partida sin las jugadas de libro** (v0.174, 20-nov: `precisionMedia` en los cuatro lugares, "solo libro" si no salió; la mediana acompaña, pedido de los dos revisores) (revisor de
       ajedrez, v0.172; Juan, 20-nov: *"no sé, lo que vos digas"*, y se eligió
       sacarlas). `precisionDe` promedia todas las propias, las de libro
       incluidas; las tablas del Mes las sacan (`fueraDeLibro`): que las dos
@@ -765,6 +765,11 @@ Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Jua
 contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
 es un gusto) y la duda se borra de acá, en el mismo commit.
 
+- **No sé si esto te copa (v0.174):** la precisión y la mediana ya no cuentan
+  las jugadas de libro, pero la tasa de malas del Mes sí (una de libro puede
+  ser mala, un gambito dudoso). Opciones: 1) dejarlo así, una mala es mala
+  aunque esté en el libro; 2) que las malas también se cuenten fuera del
+  libro, y todo el Mes habla de las mismas jugadas.
 - **No sé si esto te copa (v0.169):** si apoyás el dedo sobre una pieza que
   puede mover y arrastrás para scrollear o pasar jugadas, la mueve y abre una
   variante (se cierra con Volver o el atrás). Es como chess.com y lichess.

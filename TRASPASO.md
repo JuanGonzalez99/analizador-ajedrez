@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.173**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.174**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4753,6 +4753,44 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.174, la precisión sin las jugadas de libro** (revisor de ajedrez,
+v0.172; Juan, 20-nov: *"no sé, lo que vos digas"*). La precisión de una
+partida promediaba todas las jugadas propias, las de libro incluidas (que
+salen a ~100 porque no pierden nada), y las tablas del Mes ya las sacaban
+para la tasa de la mejor (`fueraDeLibro`): inflaba las partidas cortas y dos
+lugares contaban distinto. Ahora una sola cuenta, `precisionMedia(fs)` (en
+el bloque de análisis, al lado de `precisionJugada`, para que la prueben),
+promedia las de `cat !== "libro"` y devuelve `null` si no queda ninguna. La
+usan **los cuatro lugares que promediaban**: `precisionDe` (inicio, lista y
+titular de la lista del Mes, y lo que sale de la caché en
+`marcarAnalizadas`), la cabecera del Mes, el Resumen de la Partida (los dos
+jugadores, celu y compu) y el banco de configuraciones. Una prueba cuenta que
+la suma de precisiones aparezca **una sola vez** en `index.html`.
+- **Una partida que no salió del libro** no dice 0 ni NaN: en la fila del
+  inicio y del Mes va `SOLO_LIBRO` ("solo libro", en el lugar de "prec. 89",
+  como "sin analizar"); en la cabecera del Mes, lo mismo en el cuadro; en el
+  Resumen, una raya grande y "no salió del libro" en el renglón de la
+  mediana ("sin jugadas" si el lado no tiene ninguna, que antes decía 0.0).
+  `precisionDe` distingue: `null` es "no jugaste vos" ("analizada"), la
+  cadena es "jugaste y no saliste del libro".
+- **La mediana de la pérdida acompaña** (`medianaFuera`, los dos revisores):
+  van en la misma caja como dos medidas de las mismas jugadas, y las de libro
+  pierden ~0 y la achataban igual (en la partida de prueba, 14 de libro sobre
+  18). Sin jugadas fuera del libro, en el Mes va "—". "Jugadas" sigue
+  contando todas: es un recuento, no una medida. Las tasas de malas siguen
+  sobre todas (una de libro puede ser mala: `textoDesglose` las nombra);
+  quedó como duda para Juan.
+- "solo libro" y la raya de la cabecera del Mes van con `.sinDato` (tenue,
+  peso 400), como Pensó sin reloj: no son el dato (revisor de UX).
+- Las leyendas del Resumen y del detalle del Mes lo dicen: *"La precisión y
+  la mediana no cuentan las jugadas de libro."*
+- En la comparación del celu cambian las del número de versión, `inicio`,
+  `mes`, `mes-seccion` y la franja del Resumen al pie de las `revision-*` y
+  `prueba-*`. `encadenadas` también, pero es una foto a mitad del cálculo
+  que varía por tiempos.
+- Los números de precisión de partidas viejas cambian (bajan unos puntos en
+  las que tenían muchas de libro): es la versión menor.
+
 **v0.173, la v0.172 vuelve atrás** (Juan, 20-nov: *"no es un dato que use
 nunca, honestamente, pero me parece una banda cambiar toda esa parte de la UI
 cuando es apertura"*). En una jugada de libro los cuadritos vuelven a ser los
@@ -4776,9 +4814,8 @@ la v0.131, sin caja y en tenue) en dos columnas: *"De libro: es teoría."*. Clas
   diciendo que perdió). Mejor queda porque qué prefería el motor es dato
   crudo que a veces interesa.
 - **El texto de la maqueta era falso** y no entró: "no se le cuenta
-  pérdida". La precisión de la partida (`precisionDe`) promedia la de TODAS
-  las jugadas propias, las de libro incluidas; solo las tablas del Mes las
-  sacan (`fueraDeLibro`). Tampoco quedó "es teoría, no se juzga" (que es lo
+  pérdida". La precisión de la partida (`precisionDe`) promediaba la de TODAS
+  las jugadas propias, las de libro incluidas (hasta la v0.174, arriba). Tampoco quedó "es teoría, no se juzga" (que es lo
   que se construyó primero): se lee como que no mueve la precisión, y la
   mueve (revisores). Y en un renglón entra a 386, sin una palabra sola abajo.
 - La fila mide 52 con y sin libro a 412, 386 y 1280 (el cuadrito normal,

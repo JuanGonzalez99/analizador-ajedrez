@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.173 · 20-11";
+  window.VERSION = "v0.174 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2150,6 +2150,24 @@ function precisionJugada(caidaPuntos) {
   const v = 103.1668 * Math.exp(-0.04354 * caidaPuntos) - 3.1669;
   return Math.max(0, Math.min(100, v));
 }
+
+/* LA PRECISIÓN SIN EL LIBRO (v0.174, revisor de ajedrez): el promedio de las
+   jugadas FUERA del libro, como la tasa de la mejor del Mes (`tasa`,
+   `fueraDeLibro`): en el libro no se elige, y contarlas inflaba las partidas
+   cortas. La usan los cuatro lugares que promedian —inicio y lista del Mes
+   (`precisionDe`), cabecera del Mes, Resumen de la Partida y el banco— para
+   que ninguno diga otro número. Sin jugadas fuera del libro: null. */
+function precisionMedia(fs) {
+  const fuera = fueraDelLibro(fs);
+  return fuera.length ? fuera.reduce((a, x) => a + x.precision, 0) / fuera.length : null;
+}
+/* la mediana de la pérdida, sobre las MISMAS jugadas que la precisión: van en
+   la misma caja (revisores, v0.174). Las de libro pierden ~0 y la achataban. */
+function medianaFuera(fs) {
+  const fuera = fueraDelLibro(fs);
+  return fuera.length ? mediana(fuera.map(f => f.perdida)) : null;
+}
+function fueraDelLibro(fs) { return fs.filter(f => f.cat !== "libro"); }
 
 /* ============ geometría ============ */
 const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -6555,11 +6573,16 @@ function textoRecuento(n, m) {
   return cuantas(n, "partida", "partidas") + (resto ? " \u00b7 " + resto : "");
 }
 
-/* tu precisión en una partida analizada: el promedio de tus jugadas, la misma
-   cuenta de la lista del Mes */
+/* lo que se lee en lugar del número cuando nunca saliste del libro */
+const SOLO_LIBRO = "solo libro";
+
+/* tu precisión en una partida analizada: null si no jugaste vos, SOLO_LIBRO si
+   no saliste del libro, si no el número */
 function precisionDe(r) {
   const mias = filasDelUsuario(r);
-  return mias.length ? mias.reduce((a, x) => a + x.precision, 0) / mias.length : null;
+  if (!mias.length) return null;
+  const p = precisionMedia(mias);
+  return p == null ? SOLO_LIBRO : p;
 }
 
 /* QUÉ ESTÁ ANALIZADO, mirando la caché y sin motor: cada partida que está con
@@ -6640,7 +6663,8 @@ function pintarFilas() {
     const id = idPartida(g);
     const p = PREC.get(id);
     const prec = !ESCANEADO && !PREC.has(id) ? ""
-      : !PREC.has(id) ? "sin analizar" : p == null ? "analizada" : Math.round(p);
+      : !PREC.has(id) ? "sin analizar" : p == null ? "analizada"
+      : typeof p === "number" ? Math.round(p) : p;
     return filaDePartida(g, i, prec, id === vista);
   }).join("");
   $("partidas").querySelectorAll("div[data-i]").forEach(d => {
@@ -6895,8 +6919,8 @@ async function correrBanco(lista, queCompara) {
       filas.push({
         nombre: c.nombre, ms,
         prof: r.profBase,
-        precision: mias.reduce((a, x) => a + x.precision, 0) / mias.length,
-        mediana: mediana(mias.map(f => f.perdida)),
+        precision: precisionMedia(mias),
+        mediana: medianaFuera(mias),
         graves: mias.filter(f => f.cat === "grave" || f.cat === "omision").length,
         geniales: mias.filter(f => f.cat === "genial").length,
         revisadas: r.revisadas || 0
@@ -6939,8 +6963,8 @@ function pintarBanco(filas, prof, queCompara) {
       <td>${(f.ms / 1000).toFixed(1)}</td>
       <td>${f === base ? "\u2014" : (base.ms / f.ms).toFixed(2) + "\u00d7"}</td>
       <td>${f.prof}</td>
-      <td>${f.precision.toFixed(1)}</td>
-      <td>${f.mediana.toFixed(2)}</td>
+      <td>${f.precision == null ? "\u2014" : f.precision.toFixed(1)}</td>
+      <td>${f.mediana == null ? "\u2014" : f.mediana.toFixed(2)}</td>
       <td>${f.graves}</td>
       <td>${f.geniales}</td></tr>`).join("")}</tbody>`;
 }
@@ -8134,7 +8158,7 @@ function pintarMes(prof) {
     pintarLista(d.tiempo && d.tiempo.cadencia);
     return;
   }
-  const prec = todas.reduce((a, x) => a + x.precision, 0) / todas.length;
+  const prec = precisionMedia(todas);
   /* La leyenda se parte en dos: arriba queda lo que hace falta para leer los
      números —de dónde salen y con qué configuración—, y el resto se pliega.
      Todo junto era un párrafo de seis renglones antes del primer número. */
@@ -8145,6 +8169,7 @@ function pintarMes(prof) {
       ? `Quedan afuera ${d.asistidas} partida(s) con asistencia en vivo, que no miden juego propio. `
       : "") +
     "Los números de distinta profundidad o de distinto modo no se comparan." +
+    " La precisión y la mediana no cuentan las jugadas de libro." +
     " Mala = pérdida de 3 peones o más, medida siempre igual, sin importar el " +
     "modo de clasificación." + textoDesglose(todas, d.deTodo);
 
@@ -8160,10 +8185,11 @@ function pintarMes(prof) {
   $("mesMarcador").textContent = marcadorMes;
   ver("mesMarcador", !!marcadorMes);
 
-  const cuadro = (et, va) => `<div><div class="et">${et}</div><div class="va">${va}</div></div>`;
+  const cuadro = (et, va, cl = "") => `<div><div class="et">${et}</div><div class="va${cl}">${va}</div></div>`;
   $("mesCabecera").innerHTML =
-    cuadro("Precisión", prec.toFixed(1)) +
-    cuadro("Mediana", mediana(todas.map(f => f.perdida)).toFixed(2)) +
+    /* "solo libro" en tenue y sin negrita, como Pensó sin reloj: no es el dato (revisor, v0.174) */
+    cuadro("Precisión", prec == null ? SOLO_LIBRO : prec.toFixed(1), prec == null ? " sinDato" : "") +
+    cuadro("Mediana", prec == null ? "\u2014" : medianaFuera(todas).toFixed(2), prec == null ? " sinDato" : "") +
     cuadro("Jugadas", todas.length);
 
   const cuentaCat = k => todas.filter(f => f.cat === k).length;
@@ -8220,12 +8246,13 @@ function pintarLista(cad) {
     const g = r.meta && r.meta.white ? r.meta
       : { white: { username: r.cab.White || "" }, black: { username: r.cab.Black || "" } };
     const p = precisionDe(r);
-    return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? "" : Math.round(p),
+    return filaDePartida(g, i, esAsistida(r) ? "asistida" : p == null ? ""
+                         : typeof p === "number" ? Math.round(p) : p,
                          false, r.cab);
   }).join("");
   {
     const rs = MES.resultados.filter(delRitmo);
-    const ps = rs.filter(r => !esAsistida(r)).map(precisionDe).filter(p => p != null).map(Math.round);
+    const ps = rs.filter(r => !esAsistida(r)).map(precisionDe).filter(p => typeof p === "number").map(Math.round);
     const lo = Math.min(...ps), hi = Math.max(...ps);
     titular("mesLista", !rs.length ? "" : cuantas(rs.length, "partida", "partidas") +
       (!ps.length ? "" : lo === hi ? `, ${lo} de precisión` : `, de ${lo} a ${hi} de precisión`));
@@ -9440,11 +9467,16 @@ new ResizeObserver(() => { if (R && (IDX < 0 || R.filas[IDX])) { ubicarGirar(IDX
 function pintarResumen(prof) {
   const { filas, cab } = R;
   const B = filas.filter(f => f.turno === "w"), N = filas.filter(f => f.turno === "b");
-  const prec = fs => fs.length ? fs.reduce((a, x) => a + x.precision, 0) / fs.length : 0;
+  /* sin jugadas fuera del libro, una raya grande y el porqué en el renglón de
+     abajo, donde va la mediana (v0.174) */
+  const prec = fs => { const p = precisionMedia(fs); return p == null ? "\u2014" : p.toFixed(1); };
+  const pie = fs => !fs.length ? "sin jugadas" : precisionMedia(fs) == null ? "no salió del libro"
+    : `mediana ${medianaFuera(fs).toFixed(2)}`;
 
   $("capResumen").textContent =
     `Compara a los dos jugadores. Profundidad ${prof}, modo ${nombreModo()}; ` +
-    "los n\u00fameros de distinta profundidad o de distinto modo no se comparan.";
+    "los n\u00fameros de distinta profundidad o de distinto modo no se comparan. " +
+    "La precisi\u00f3n y la mediana no cuentan las jugadas de libro.";
 
   const filaCat = k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
     `<td>${B.filter(f => f.cat === k).length}</td><td>${N.filter(f => f.cat === k).length}</td></tr>`;
@@ -9453,8 +9485,8 @@ function pintarResumen(prof) {
      cifras que de verdad comparan a los jugadores, y entre diez filas de
      recuentos —casi todas en cero en una partida sola— no se veían. */
   const lado = (nom, fs) => `<div><div class="et">${nom}</div>` +
-    `<div class="gr">${prec(fs).toFixed(1)}</div>` +
-    `<div class="pe">mediana ${mediana(fs.map(f => f.perdida)).toFixed(2)}</div></div>`;
+    `<div class="gr">${prec(fs)}</div>` +
+    `<div class="pe">${pie(fs)}</div></div>`;
   $("marcador").innerHTML = lado(cab.White || "Blancas", B) + lado(cab.Black || "Negras", N);
 
   $("resumen").innerHTML = `
@@ -9463,7 +9495,7 @@ function pintarResumen(prof) {
 
   /* la misma tabla traspuesta, para la compu (v0.137): una fila por jugador */
   const filaJug = (nom, fs) => `<tr><td class="quien"><div class="et">${nom}</div>` +
-    `<span class="gr">${prec(fs).toFixed(1)}</span><span class="pe">mediana ${mediana(fs.map(f => f.perdida)).toFixed(2)}</span></td>` +
+    `<span class="gr">${prec(fs)}</span><span class="pe">${pie(fs)}</span></td>` +
     ORDEN.map(k => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; }).join("") + "</tr>";
   $("resumenAncho").innerHTML = `
     <thead><tr><th></th>${ORDEN.map(k => `<th><div class="ic" style="color:var(--c-${k})">${CATEGORIAS[k].icono}</div>` +

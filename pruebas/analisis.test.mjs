@@ -3709,3 +3709,26 @@ test("en una jugada de libro la fila de cuadritos no cambia de forma (v0.173)", 
   /* Juan hizo volver la v0.172: la fila es la misma en libro y fuera de él */
   assert.ok(!html.includes("enLibro"));
 });
+
+test("la precisión no cuenta las jugadas de libro, en ningún lado (v0.174)", () => {
+  const f = (cat, precision) => ({ cat, precision });
+  /* dos de libro a 100 y dos propias a 80 y 60: 70, no 85 */
+  assert.equal(A.precisionMedia([f("libro", 100), f("libro", 100), f("mejor", 80), f("error", 60)]), 70);
+  /* sin salir del libro no hay número: ni 0 ni NaN */
+  assert.equal(A.precisionMedia([f("libro", 100)]), null);
+  assert.equal(A.precisionMedia([]), null);
+  /* la mediana, sobre las mismas: sin las dos de libro (0) es la de 0.4 y 2, no 0 */
+  const g = (cat, perdida) => ({ cat, perdida });
+  assert.equal(A.medianaFuera([g("libro", 0), g("libro", 0), g("mejor", 0.4), g("error", 2)]), 1.2);
+  assert.equal(A.medianaFuera([g("libro", 0)]), null);
+  assert.equal((html.match(/mediana\((?:todas|fs|mias)\.map\(f => f\.perdida\)\)/g) || []).length, 0,
+    "ninguna mediana de pérdida cuenta el libro");
+  /* los cuatro lugares que promedian pasan por ella, y no queda otra cuenta suelta */
+  assert.equal((html.match(/\.reduce\(\(a, x\) => a \+ x\.precision, 0\)/g) || []).length, 1,
+    "la única suma de precisiones es la de precisionMedia");
+  for (const uso of ["const p = precisionMedia(mias);", "precision: precisionMedia(mias),",
+                     "const prec = precisionMedia(todas);", "const p = precisionMedia(fs);"])
+    assert.ok(html.includes(uso), uso);
+  assert.ok(html.includes('cuadro("Precisión", prec == null ? SOLO_LIBRO : prec.toFixed(1), prec == null ? " sinDato" : "")'),
+    "el Mes dice 'solo libro' y no NaN");
+});
