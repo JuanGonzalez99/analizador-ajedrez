@@ -151,6 +151,21 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       mientras se trabaja, o `juntarTodo` no toca `ocupado` si ya había algo
       corriendo.
 
+- [ ] **La dama recién coronada que se pierde habla de un peón** (Juan,
+      20-nov, sobre la v0.178). En `3r3k/2P5/8/8/8/8/8/6K1 w`, c8=Q (Rxc8 y
+      no hay recaptura) dice "Tu peón queda comible en c8. Coronás: el peón
+      vuelve como dama.": nombra un peón que ya no está y festeja una
+      coronación que se pierde. Juan propuso "tu peón coronado": **"Tu peón
+      coronado queda comible en c8."**, y sin la frase de "Coronás" cuando la
+      pieza coronada cuelga o se pierde en el cambio. Revisor de ajedrez sí.
+- [ ] **El cambio no ve las clavadas contra la dama** (revisor de ajedrez,
+      v0.178; Juan lo pasó a Arreglos el 20-nov). `cambioEn` (y `quedaComible`,
+      de antes) cuenta como buena una recaptura con una pieza clavada contra
+      su propia dama: un peón de e6 que recaptura y deja la dama de e8 a tiro
+      de la torre de e1. Hoy lo frena el corte de pérdida ≥ 0,5 del motor;
+      primero buscar con chess.js un caso que llegue a la tarjeta, y que la
+      recaptura que entrega la dama no cuente como recaptura.
+
 ## Etapa 2 · Partir `index.html`
 
 El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
@@ -408,12 +423,6 @@ archiva los que pierden sentido.
       respuesta cae el caballo o la dama), y la tarjeta solo dice "El rival
       tiene Qxf6", que suena a que se pierde el alfil. Decir "el caballo de e4
       sigue clavado y cae" cuando la jugada la aprovecha. Revisor de ajedrez sí.
-
-- [ ] **El cambio no ve las clavadas contra la dama** (revisor de ajedrez,
-      v0.178). `cambioEn` (y `quedaComible`, de antes) da por buena una
-      captura con una pieza clavada contra su dama: un peón de e6 que come y
-      deja la dama de e8 a tiro de la torre de e1. Hoy lo frena el corte de
-      pérdida ≥ 0,5 del motor; medir si llega a la tarjeta.
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 
