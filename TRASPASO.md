@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4756,6 +4756,21 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.178.1, el cambio sin nada del rival no se dice** (Juan, 20-nov). La
+v0.178 decía "queda comible" cuando del rival no se iba nada en el cambio, y
+era engañoso: en `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`, Bh6
+Nxh6 Qxh8+, el caballo que come cuidaba la torre. Ahora ese caso calla, como
+antes de la v0.178. **Medido con Stockfish** sobre las jugadas legales de las
+117 posiciones de las PGN de prueba que `cambioEn` marca como pérdida (123):
+con cuenta 1, el motor dice que casi no pierde (<0,5) en 2 de 20; con 2, en 1
+de 36; con 3+, en 0 de 67. Las fallas son tres: gambitos (el peón se pierde
+pero hay desarrollo; los dos de "1", que igual frena el corte de 0,5 del
+motor), **la pieza que recaptura cuidaba otra cosa** (Bh6, y Bxf7+ Qxf7
+Qxh8+), y que todo ya estaba perdido (Qa6, cuenta 6, motor 2,4). El corte de
+dos peones casi no cambia nada; lo que falla es lo segundo, y va a Arreglos.
+Para medir así: el motor corre en node copiando `stockfish-18-lite-single.js`
+a un `.cjs` con su `.wasm` al lado (el repo es `type: module`).
 
 **v0.178, lo que se pierde en el cambio, y el jaque que inventaba clavadas**
 (revisor de ajedrez, v0.163; tarea nocturna del 20-nov).

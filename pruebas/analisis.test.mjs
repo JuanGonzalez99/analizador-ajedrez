@@ -3849,3 +3849,13 @@ test("coronar y perder la dama en el cambio no es perder material (20-nov)", () 
   const obs = A.observarJugada({ fen: j.fen(), uci: "d7d8q", turno: "w", pieza: "p", san: m.san }, antes);
   assert.equal(obs.cambio, null);
 });
+
+test("si en el cambio el rival no entrega nada, la tarjeta no lo dice (v0.178.1)", () => {
+  /* Bh6 Nxh6 Qxh8+: la cuenta ve el alfil perdido, pero el caballo cuidaba
+     la torre. "Tu alfil queda comible en h6" era engañoso. */
+  const antes = "r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 1 8";
+  const f = unaFila(antes, "Bh6", [{ cp: 600, mate: null, mejor: "c4f7", segunda: { cp: 500, mate: null } },
+                                    { cp: -505, mate: null, mejor: "g8h6", segunda: null }]);
+  const t = A.explicarJugada(f, "Bxf7+", true, "Nxh6", mirar(antes, "c1h6"));
+  assert.ok(!t.includes("comible") && !t.includes("en el cambio"), t);
+});

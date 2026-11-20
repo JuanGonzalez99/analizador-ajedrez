@@ -166,6 +166,16 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       primero buscar con chess.js un caso que llegue a la tarjeta, y que la
       recaptura que entrega la dama no cuente como recaptura.
 
+- [ ] **La cuenta del cambio no ve lo que deja la pieza que recaptura**
+      (Juan, 20-nov, sobre la v0.178.1). `cambioEn` solo mira la casilla: en
+      `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`, Bh6 Nxh6 da "pierdo
+      el alfil", pero el caballo cuidaba la torre de h8 y sigue Qxh8+ (igual
+      Bxf7+ Qxf7 Qxh8+). Mirar, después de cada recaptura, si quedó colgado lo
+      que esa pieza defendía. Con esto hecho: volver a decir el caso sin nada
+      del rival ("queda comible", que la v0.178.1 calló) y bajar el corte de
+      dos peones a uno (medido en §6, v0.178.1: el corte casi no cambia nada).
+      Revisor de ajedrez sí.
+
 ## Etapa 2 · Partir `index.html`
 
 El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).

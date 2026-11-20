@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.178 · 20-11";
+  window.VERSION = "v0.178.1 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3155,15 +3155,14 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   /* Tiene recaptura, pero el cambio pierde (20-nov, revisor de ajedrez): con
      Qe1 Rxe1 Kxe1 la tarjeta de un grave decía "Toma la columna abierta e." y
      no que se cambiaba la dama por una torre. Se nombra lo que se va de cada
-     lado; si del rival no se va nada, es lo mismo que quedar comible. */
-  else if (obs && obs.cambio && f.perdida >= 0.5) {
+     lado. SI DEL RIVAL NO SE VA NADA, NO SE DICE (v0.178.1): la cuenta solo
+     mira esa casilla, y en Bh6 Nxh6 Qxh8+ el caballo que come dejaba la torre;
+     decir "queda comible" era engañoso. Antes de la v0.178 tampoco se decía. */
+  else if (obs && obs.cambio && obs.cambio.suyas.length && f.perdida >= 0.5) {
     const nom = (ts, tabla) => ts.map(t => tabla[t] || "una pieza").join(" y ");
-    mecanismo = obs.cambio.suyas.length
-      ? { txt: `Pierde material en el cambio: ${nom(obs.cambio.mias, mio ? PIEZA_TU : PIEZA_EL)}` +
-               ` por ${nom(obs.cambio.suyas, PIEZA_UN)}.`,
-          marca: "en el cambio", sq: donde }
-      : { txt: `${mayus(pieza)} queda comible en ${donde}.`,
-          marca: "queda comible", sq: donde };
+    mecanismo = { txt: `Pierde material en el cambio: ${nom(obs.cambio.mias, mio ? PIEZA_TU : PIEZA_EL)}` +
+                       ` por ${nom(obs.cambio.suyas, PIEZA_UN)}.`,
+                  marca: "en el cambio", sq: donde };
   }
   else if (f.tomoConOtra && f.perdida >= 0.5 && f.cap)
     mecanismo = { txt: `La captura iba con otra pieza: ${f.cap.san}.`,
