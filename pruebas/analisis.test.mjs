@@ -3732,3 +3732,23 @@ test("la precisión no cuenta las jugadas de libro, en ningún lado (v0.174)", (
   assert.ok(html.includes('cuadro("Precisión", prec == null ? SOLO_LIBRO : prec.toFixed(1), prec == null ? " sinDato" : "")'),
     "el Mes dice 'solo libro' y no NaN");
 });
+
+test("la precision rapida del inicio da lo mismo que derivarFilas", () => {
+  /* v0.175: la fila del inicio dejó de rehacer la partida entera para sacar
+     el número. Si las dos cuentas se separan, la lista dice una precisión y
+     la partida abierta otra. Va con libro (las primeras cuatro posiciones) y
+     con un mate en el medio, que es donde `aBlancas` hace algo distinto. */
+  const pgn = fs.readFileSync(new URL("./partida-de-prueba.pgn", import.meta.url), "utf8");
+  const { jugadas, fens } = A.prepararPartida(pgn);
+  const evs = fens.map((f, i) => ({ cp: i === 20 ? null : Math.round(300 * Math.sin(i * 1.7)),
+                                    mate: i === 20 ? 3 : null, mejor: "a1a2", segunda: null }));
+  const libro = { pos: new Set(fens.slice(1, 5).map(A.claveLibro)), nombres: {} };
+  const { filas } = A.derivarFilas(jugadas, fens, evs, libro);
+  const rapidas = A.precisionesRapidas(fens, evs, libro);
+  assert.equal(rapidas.length, filas.length);
+  for (const lado of ["w", "b"]) {
+    const de = fs2 => A.precisionMedia(fs2.filter(f => f.turno === lado));
+    assert.equal(de(rapidas), de(filas), "lado " + lado);
+  }
+  assert.equal(rapidas.filter(f => f.cat === "libro").length, 4);
+});

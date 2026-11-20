@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.174 · 20-11";
+  window.VERSION = "v0.175 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2658,6 +2658,35 @@ function prepararPartida(pgn) {
 /* Arma las filas a partir de las evaluaciones. Todo lo de acá es derivable, y
    por eso la caché guarda `evs` y no las filas: si mañana cambia una regla de
    categorización, las partidas ya analizadas no hay que volver a correrlas. */
+/* La caída en probabilidad de ganar del que mueve, con las dos evaluaciones
+   ya en escala de blancas. Aparte desde la v0.175 porque la usan
+   `derivarFilas` y `precisionesRapidas`, y la precisión tiene que ser una. */
+function caidaDe(antes, despues, turno) {
+  const wAntes = turno === "w" ? winPct(antes) : 100 - winPct(antes);
+  const wDespues = turno === "w" ? winPct(despues) : 100 - winPct(despues);
+  return Math.max(0, wAntes - wDespues);
+}
+
+/* LA PRECISIÓN SIN EL RESTO (v0.175). La fila del inicio solo necesita el
+   número, y rehacerlo con `derivarFilas` costaba ~60 ms por partida en PC
+   (colgadas, capturas, sacrificios: chess.js en cada jugada), o sea varios
+   segundos en el celu con treinta partidas guardadas: la lista salía pelada y
+   un rato después aparecían el botón y la tarjeta, empujándola (Juan,
+   20-nov). Esto devuelve filas mínimas —turno, si es de libro y precisión—,
+   que es todo lo que leen `precisionMedia` y `filasDelUsuario`; la cuenta es
+   la misma de `derivarFilas`, y una prueba lo compara contra ella. */
+function precisionesRapidas(fens, evs, libro, desde = 0) {
+  const filas = [];
+  for (let i = 0; i + 1 < fens.length; i++) {
+    const turno = (desde + i) % 2 === 0 ? "w" : "b";
+    const rival = turno === "w" ? "b" : "w";
+    const caida = caidaDe(aBlancas(evs[i], turno), aBlancas(evs[i + 1], rival), turno);
+    filas.push({ turno, cat: libro.pos.has(claveLibro(fens[i + 1])) ? "libro" : "",
+                 precision: precisionJugada(caida) });
+  }
+  return filas;
+}
+
 function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", tiempos = null,
                       mateALaVista = MATE_A_LA_VISTA, previa = null) {
   let apertura = "";
@@ -2671,9 +2700,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     const despues = aBlancas(evs[i + 1], rival);
     const perdida = Math.max(0, turno === "w" ? antes - despues : despues - antes) / 100;
 
-    const wAntes = turno === "w" ? winPct(antes) : 100 - winPct(antes);
-    const wDespues = turno === "w" ? winPct(despues) : 100 - winPct(despues);
-    const caida = Math.max(0, wAntes - wDespues);
+    const caida = caidaDe(antes, despues, turno);
     const precision = precisionJugada(caida);
 
     const uci = j.from + j.to + (j.promotion || "");
@@ -6562,7 +6589,10 @@ async function cargarMes(url) {
   $("partidasMarcador").textContent = textoRecuento(PARTIDAS.length, contarResultados(
     PARTIDAS.map(g => resultadoDeLado(ladoEnJuego(g, USUARIO), g, null))));
   ver("partidasMarcador", true);
-  pintarFilas();
+  /* LA LISTA SALE UNA SOLA VEZ, ya con lo analizado (v0.175). Antes se pintaba
+     pelada y, al terminar de mirar la caché, aparecían arriba el botón y la
+     tarjeta y la empujaban, sin aviso. Mirar la caché ahora es corto
+     (`precisionesRapidas`), así que el "Cargando…" dura un instante más. */
   await marcarAnalizadas(yo);
 }
 
@@ -6587,7 +6617,7 @@ function precisionDe(r) {
 
 /* QUÉ ESTÁ ANALIZADO, mirando la caché y sin motor: cada partida que está con
    la configuración de ahora se rehace de sus evaluaciones guardadas, que es
-   lo mismo que hace abrirla. La clave se lee directo y no con `cache.leer`
+   lo mismo que hace abrirla (solo la precisión, `precisionesRapidas`). La clave se lee directo y no con `cache.leer`
    para no ensuciar la cuenta de aciertos del registro. */
 async function marcarAnalizadas(yo) {
   const prof = +$("prof").value, vte = variante(opcionesDePantalla());
@@ -6602,9 +6632,7 @@ async function marcarAnalizadas(yo) {
       const prep = prepararPartida(g.pgn);
       if (v.evs.length !== prep.fens.length) continue;
       libro = libro || await cargarLibro();
-      const d = derivarFilas(prep.jugadas, prep.fens, v.evs, libro, 0, $("modo").value,
-                             prep.tiempos, MATE_VISTA());
-      PREC.set(id, precisionDe({ cab: prep.cab, filas: d.filas }));
+      PREC.set(id, precisionDe({ cab: prep.cab, filas: precisionesRapidas(prep.fens, v.evs, libro) }));
     } catch (e) { /* una partida que no se lee queda "sin analizar" */ }
   }
   if (yo !== CARGA) return;

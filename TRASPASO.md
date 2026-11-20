@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.174**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.175**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -273,7 +273,7 @@ lo que hay que mirar.
 | Zona | Qué hay |
 |---|---|
 | `<script>` clásico | registro, captura de errores, panel de diagnóstico |
-| bloque de análisis | evaluación, geometría, categorías, `derivarFilas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), y al final el nombre de la apertura en castellano (`aperturaEs`, v0.130) |
+| bloque de análisis | evaluación, geometría, categorías, `derivarFilas` (y `precisionesRapidas`, su atajo para la fila del inicio, v0.175), `repartir`, el reloj (`leerCadencia`, `segundosPensados`), y al final el nombre de la apertura en castellano (`aperturaEs`, v0.130) |
 | motor | clase `Motor`, grupo de motores, `evaluarPosiciones` |
 | caché | IndexedDB |
 | análisis | `analizarPartida`, barrido, híbrido |
@@ -4757,6 +4757,29 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v0.175, la lista del inicio sale de una vez** (Juan, 20-nov, con dos
+capturas: *"arranca con la 1, y después de unos segundos pasa a la 2. Sin
+nada que avise nada"*). Al cargar el mes la lista salía pelada —sin "sin
+analizar" ni "prec."— y unos segundos después aparecían arriba "Analizar el
+mes · faltan N" y la tarjeta de Estadísticas, empujándola.
+- **La causa era `marcarAnalizadas`**: para sacar tu precisión rehacía cada
+  partida guardada con `derivarFilas` entero —colgadas, capturas,
+  sacrificios: chess.js en cada jugada—. Medido en PC (Chromium headless,
+  partida de prueba de 36 jugadas): **~63 ms por partida, 2 s con 32**; en el
+  celu, varias veces eso.
+- **`precisionesRapidas(fens, evs, libro)`**, en el bloque de análisis al
+  lado de `derivarFilas`: filas mínimas (`turno`, `cat` "libro" o vacío,
+  `precision`), que es todo lo que leen `precisionMedia` y
+  `filasDelUsuario`. La caída sale de `caidaDe`, que ahora usan las dos, y
+  `cat === "libro"` equivale a `esLibro` porque `categorizar` lo devuelve
+  primero. Una prueba compara las dos cuentas por lado, con libro y un mate.
+  Medido igual: **32 partidas en ~2 ms**; queda `prepararPartida` (~3 ms por
+  partida en PC, ~100 ms las 32) y el libro, que se baja una vez.
+- **La lista se pinta una sola vez, después de mirar la caché** (`cargarMes`
+  ya no llama `pintarFilas` antes de `marcarAnalizadas`): el renglón del
+  recuento sale enseguida, y el "Cargando…" dura un instante más en lugar de
+  que la lista salte. Ninguna foto lo muestra (es un tiempo, no una forma).
+
 **v0.174, la precisión sin las jugadas de libro** (revisor de ajedrez,
 v0.172; Juan, 20-nov: *"no sé, lo que vos digas"*). La precisión de una
 partida promediaba todas las jugadas propias, las de libro incluidas (que
@@ -6489,7 +6512,7 @@ de 40 partidas (`pruebas/maqueta-inicio.mjs`, que no se commitea). Lo que quedó
 - **"Analizar el mes · faltan N"** es el botón principal (verde) y no está si no
   falta ninguna. N sale de `marcarAnalizadas()`: al cargar el mes mira la caché
   con la configuración de ahora, **sin motor**, rehace cada partida guardada con
-  `derivarFilas` y anota tu precisión en `PREC` (id → precisión, o null si no se
+  `precisionesRapidas` (hasta la v0.174, `derivarFilas`: ver v0.175) y anota tu precisión en `PREC` (id → precisión, o null si no se
   sabe tu lado). Lee la clave directo y no con `cache.leer`, para no ensuciar la
   cuenta de aciertos del registro. `ESCANEADO` dice si ya terminó: antes, ni la
   fila dice "sin analizar" ni el botón aparece. Lo que se analiza después entra
