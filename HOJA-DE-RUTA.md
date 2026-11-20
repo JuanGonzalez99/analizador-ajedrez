@@ -667,6 +667,30 @@ módulos de versiones distintas (§2). Es candidata a v1.0, que es tuya.
 - [ ] La jugada que era la mejor y sale marcada Error (falla de la v0.95, ya
       diagnosticada en §8 del traspaso).
 
+## Estadísticas del Mes (pedidos de Juan, 20-nov)
+
+- [ ] **"Por tramo" pasa a etapas: apertura, juego medio y final** (Juan,
+      20-nov: *"en vez de 'de la 1 a la 10' se podría poner 'en apertura'"*).
+      **Por el tablero, no por número de jugada**: la jugada 10 cae en
+      momentos muy distintos según la partida. La regla recomendada es la de
+      lichess: el juego medio arranca cuando quedan pocas piezas menores y
+      mayores o una primera fila se vació; el final, cuando entre los dos
+      quedan seis o menos (sin peones ni reyes); lo anterior es apertura. Sale
+      del FEN con chess.js, sin motor. Ojo: "La mejor" no cuenta las de libro
+      (v0.157), así que la fila de Apertura mide sobre menos jugadas: decirlo
+      en la tabla, no esconderlo. La columna Seg. sigue igual, ahora por
+      etapa. Revisor de ajedrez sí (verificar la división en partidas reales).
+- [ ] **El apuro: cuánto te quedaba en el reloj** (Juan, 20-nov; idea vieja
+      de `TRASPASO.md` §7.8 y §4nonies, nunca pasada acá). Lo que piensa cada
+      jugada ya está (Pensó y la columna Seg.); falta la otra pregunta: ¿cómo
+      salen las jugadas cuando queda poco reloj? `segundosPensados` ya calcula
+      `restan` y no lo emite. Dos trampas medidas: una sola cadencia (como
+      toda la vista Mes) y el confundidor de siempre —con poco reloj suelen
+      ser posiciones más complicadas—, que se separa estratificando (§8). Una
+      tabla más en el Mes, con los mismos cortes de §5. Ojo: en la v0.93 se
+      rechazaron ocho maneras de mostrar el reloj alrededor del tablero; esto
+      es otra cosa, una tabla, y no reabre eso.
+
 ## Etapa 4 · Posiciones, y el puente con el profe — primer módulo nuevo
 
 **Recomendación: este va primero.** Es el más chico de los cuatro, sirve

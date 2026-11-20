@@ -1198,6 +1198,10 @@ dibujaron ocho maneras de mostrarlo alrededor del tablero y el usuario las
 rechazó todas: si se retoma, empezar por leer §4duotrigies antes de dibujar
 nada, que ahí está por qué.
 
+**Desde el 20-nov está en `HOJA-DE-RUTA.md`** ("Estadísticas del Mes"), como
+tabla del Mes y no alrededor del tablero, junto con pasar "Por tramo" a etapas
+(apertura, juego medio, final) medidas por el tablero.
+
 ## 4decies. Las leyendas se parten en dos (v0.44)
 
 Pedido por el usuario: *"son mucho para leer, más de una línea no lo va a leer
