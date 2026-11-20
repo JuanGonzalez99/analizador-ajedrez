@@ -176,6 +176,17 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       dos peones a uno (medido en §6, v0.178.1: el corte casi no cambia nada).
       Revisor de ajedrez sí.
 
+- [ ] **"Salva" exagera cuando la jugada solo defiende** (Juan, 20-nov,
+      sobre la v0.178.1). Hoy toda pieza que deja de estar en peligro sin
+      moverse sale "Salva tu X de Y, que estaba sin defender", aunque siga
+      atacada y el rival pueda cambiarla (Bh6 en
+      `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`: el alfil cuida la
+      dama de g7, pero Qxg7 Bxg7 cambia damas). Distinguir por cómo se salva:
+      si la pieza movida ahora cuida esa casilla, **"Defiende tu dama de g7,
+      que estaba sola."**; si se interpuso, **"Tapa el ataque a tu dama de
+      g7."**; si la pieza se fue, "Saca…" como hoy. Con "a tiro de" (atacada
+      por algo que vale menos) la cola sigue siendo esa. Revisor de ajedrez sí.
+
 ## Etapa 2 · Partir `index.html`
 
 El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
