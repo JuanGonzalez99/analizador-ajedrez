@@ -52,10 +52,11 @@ Juan es el director: define hacia dónde va y decide lo grande. Claude planifica
 - **A la mañana:** un resumen en la sesión con qué hizo, qué eligió y, aparte, sus dudas del tipo "no sé si esto te copa". Juan mira sólo eso.
 - **El revisor:** revisa después de cada cambio, a prueba. Si el consumo se come el tope semanal, pasa a revisar una vez al final de la noche.
 - **Decisiones visuales chicas:** dejan de esperar el ok de Juan; las toma el revisor contra el sistema de diseño.
+- **Que la app sume cosas nuevas** (20-nov-2026): los lavados de cara y retoques que levantan los revisores van a una lista de relleno y no frenan la etapa en curso; los errores de lo que la app dice van a una lista de arreglos, uno por noche como mucho. Los sábados, un revisor de rumbo mira la hoja de ruta y estos documentos con mirada global y los ordena, porque Juan no los va a revisar.
 - **El resto del CLAUDE.md actual sigue igual.**
 
 ## Abierto
 
-- [ ] Qué módulo va primero.
+- [x] Qué módulo va primero: **Posiciones** (reordenamiento del 20-nov-2026, después de cerrar la etapa visual con la v1.0 y de partir index.html).
 - [ ] Análisis automático, con dos caminos sin decidir. Uno: un proceso que corre afuera (tipo acción de GitHub), analiza y le pasa los resultados a la app, sin tocar el resto del stack. Otro: la app nativa, que resuelve que el navegador suspenda la pestaña pero cambia todo el stack; el repo la marca como proyecto aparte.
-- [ ] Partir index.html: hoy cada sesión paga unos 103.000 tokens en leerlo por partes, y con el plan de $20 abaratar eso pesa. Si se hace, va sola en su tanda.
+- [x] Partir index.html: se hace (Juan lo dejó a criterio de Claude, 20-nov-2026), sola en su tanda, después de la v1.0 y antes de Posiciones: cada módulo nuevo lo agranda.

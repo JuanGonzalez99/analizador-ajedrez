@@ -36,15 +36,23 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    chess.com **Santico26** (no es el de Juan, pero él dijo que se use porque
    tiene más partidas) para que recorra las tarjetas de varias partidas del mes
    y marque lo que no sea cierto, coherente o útil. Lo que encuentre entra a
-   `HOJA-DE-RUTA.md` como ítems y va al resumen en una sección "Lo que vio el
+   `HOJA-DE-RUTA.md` como ítems (lo que sea falso o incoherente, a
+   "Arreglos"; las mejoras, a "Relleno") y va al resumen en una sección "Lo que vio el
    revisor de ajedrez". No cuenta como ítem de la noche.
    **Los miércoles: la revisión de código** (decisión de Juan, 18-nov-2026).
    Lanzá el agente `revisor-codigo` (`.claude/agents/revisor-codigo.md`) con
    la zona que dice la perilla "Revisor de código" de `HOJA-DE-RUTA.md`. Lo
-   que proponga entra a la hoja de ruta como ítems sin tachar, al final de la
-   etapa que se está haciendo; actualizá en la perilla qué zona sigue. En el
+   que proponga entra a la hoja de ruta como ítems sin tachar: los errores al
+   final de "Arreglos", el resto al final de "Relleno" (regla "Cómo entra lo
+   nuevo" de la hoja); actualizá en la perilla qué zona sigue. En el
    resumen de la mañana, una línea sin jerga ("Lo que vio el revisor de
    código"). No edita nada ni cuenta como ítem de la noche.
+   **Los sábados: la revisión de rumbo** (decisión de Juan, 20-nov-2026).
+   Lanzá el agente `revisor-rumbo` (`.claude/agents/revisor-rumbo.md`).
+   Aplicá los cambios que devuelva en un commit propio, antes de elegir el
+   trabajo de la noche (puede cambiar cuál es el primero). En el resumen de la
+   mañana va una sección **"El rumbo"** con sus dos o tres líneas, y sus dudas
+   en "Dudas". No cuenta como ítem de la noche.
 1. **Arrancar.** El hook deja el checkout en `main`; confirmalo con
    `git status` (si no, `git checkout -B main origin/main`). **Y confirmá que
    estás en la punta de verdad**: `git fetch origin main` y que `git log -1`
@@ -53,10 +61,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    `npm install`.
    Leé `CLAUDE.md` y `HOJA-DE-RUTA.md` enteros, `NORTE.md` y `DISENO.md` por
    encima, y del traspaso **solo** §10 y las secciones que toque el ítem.
-2. **Elegir el trabajo.** El primer ítem sin tachar de `HOJA-DE-RUTA.md` que
-   no esté marcado `⏸ espera a Juan`. Si la hoja de ruta dice "esperando el ok
-   de Juan", o todo lo que queda espera a Juan, **no hagas nada**: el resumen
-   de la mañana dice eso y nada más.
+2. **Elegir el trabajo.** El primer ítem sin tachar de **la etapa en curso**
+   de `HOJA-DE-RUTA.md` que no esté marcado `⏸ espera a Juan`; y, como mucho
+   uno por noche, el primero de "Arreglos". Si todo lo que queda de la etapa
+   espera a Juan, el primero de "Relleno". Si todo espera a Juan, **no hagas
+   nada**: el resumen de la mañana dice eso y nada más.
    **Cuántos:** hasta dos ítems por noche, con la regla de la perilla "Por
    noche" de `HOJA-DE-RUTA.md`: el segundo solo si el primero quedó aprobado
    por el revisor. No hay otra regla de cuándo parar; si algo en otro archivo
@@ -91,9 +100,9 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
      último push.
    **Si el revisor frena porque es un parche** sobre algo que pide lavado de
    cara (`revisor-ux.md`, "No se parcha lo que hay que rehacer"), el parche no
-   se pushea: se vuelve atrás, el lavado entra a `HOJA-DE-RUTA.md` arriba del
-   ítem, y si entra en la cuenta de "Por noche" se hace esa misma noche con
-   variantes. **Y quien programa también lo dice**, antes de construir: si el
+   se pushea: se vuelve atrás, si el parche es sobre lo que el ítem construye,
+   el lavado se hace dentro del ítem, con variantes; si es sobre otra zona,
+   va a "Relleno". **Y quien programa también lo dice**, antes de construir: si el
    ítem es mejorar una parte de una zona que se ve mal entera, no lo hace y
    propone el lavado (decisión de Juan, 9-nov-2026).
    **El revisor de ajedrez** (`.claude/agents/revisor-ajedrez.md`) corre
@@ -102,13 +111,15 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    tablas del Mes o el análisis. Si el cambio es solo visual, no.
    Lo que el revisor deja en "dudas para Juan" va al resumen. **Lo que deja en
    "lavado de cara" va a `HOJA-DE-RUTA.md`** como ítem nuevo sin tachar, al
-   final de la etapa que se está haciendo, con lo que dijo el revisor; y al
-   resumen, en una línea. No se hace esa misma noche salvo que entre en la
-   cuenta de "Por noche".
+   final de **"Relleno"** (o de "Arreglos" si es un error), con lo que dijo el
+   revisor; y al resumen, en una línea. **No entra a la etapa en curso** salvo
+   que sea un parche sobre lo que el mismo ítem construye (regla "Cómo entra
+   lo nuevo", 20-nov: así se alargó la etapa 1).
 6. **Pushear a `main`.** Cada push es un deploy en vivo, así que solo con todo
    verde. Si el push falla, no insistas más de cuatro veces y ponelo primero en
    el resumen.
-7. **Cerrar.** Tachá en `HOJA-DE-RUTA.md` lo hecho, agregá las dudas nuevas a
+7. **Cerrar.** Tachá en `HOJA-DE-RUTA.md` lo hecho (el revisor de rumbo lo
+   muda los sábados a `HOJA-DE-RUTA-HECHO.md`), agregá las dudas nuevas a
    "Dudas abiertas", commit y push.
 
 ## El resumen de la mañana
@@ -127,7 +138,10 @@ castellano rioplatense, sin jerga de código, en este orden:
 - si hubo variantes: la tira, y cuál eligió el revisor
 - lo que no apliqué por respetar algo que elegiste vos, con captura
 
-**Lavados de cara que vio el revisor** (si hay): qué zona, en una línea
+**El rumbo** (solo los sábados): lo que dijo el revisor de rumbo
+
+**Lavados de cara que vio el revisor** (si hay): qué zona, en una línea;
+van a Relleno
 
 **Dudas** (lo que quiero que mires)
 - "no sé si esto te copa": qué, y como mucho dos opciones
@@ -143,6 +157,8 @@ sin terminar), va **arriba de todo**, antes de la versión.
 
 - Nada que la hoja de ruta marque `⏸ espera a Juan`.
 - Cambiar el sistema de diseño (`DISENO.md` §1): se propone como duda.
-- Subir el número mayor (v1.0): lo decide Juan.
+- Subir el número mayor. **La única excepción es la v1.0**, que Juan ya
+  decidió (20-nov): sale con el ítem "Cierre: v1.0" de la hoja de ruta. La
+  v2.0 y las siguientes las decide él.
 - Borrar algo que Juan usa.
 - Usar el MCP de GitHub, abrir PRs o pushear a otra rama que no sea `main`.

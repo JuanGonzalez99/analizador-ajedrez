@@ -7407,6 +7407,21 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
     duplicada, y propone ítems para la hoja de ruta. No edita: un refactor que
     rompe algo en silencio es peor que el código feo. La ganancia más segura es
     de tokens: cada sesión paga por leer las zonas de `index.html`.
+  - **La hoja de ruta se reordenó y hay un revisor de rumbo** (Juan,
+    20-nov-2026, después de la v0.176). La etapa 1 (identidad visual) llevaba
+    semanas abierta: cada lavado de cara que levantaban los revisores entraba
+    a la etapa en curso y la tarea de la noche siempre toma el primero sin
+    tachar, así que la app no sumaba nada nuevo. Ahora: lo que se levanta va a
+    "Relleno" (retoques, limpiezas, ideas) o a "Arreglos" (errores
+    verificados, uno por noche como mucho), nunca a la etapa en curso. La
+    etapa 1 cierra con seis ítems y sale la **v1.0** (decisión de Juan; es la
+    única vez que la tarea nocturna sube el número mayor). Después, partir
+    `index.html` (a criterio de Claude: antes de sumar módulos, porque cada
+    uno lo agranda) y Posiciones. Lo hecho se mudó a `HOJA-DE-RUTA-HECHO.md`
+    (la hoja bajó de 70 a 29 KB, y se lee entera cada noche), junto con las
+    dudas viejas sin respuesta, que se dan por aceptadas. Los sábados,
+    `.claude/agents/revisor-rumbo.md` mira la hoja, el norte y estos
+    documentos con mirada global y la tarea aplica lo que proponga.
   - **No se parcha lo que hay que rehacer** (Juan, 9-nov-2026, después de la
     v0.118, que agrandó el tablero en la compu y dejó la curva colgando debajo
     de una franja vacía). Lo que se ve mal en la pantalla frena la versión

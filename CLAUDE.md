@@ -2,7 +2,9 @@
 
 **Hacia dónde va el proyecto está en `NORTE.md`**, y el orden en
 `HOJA-DE-RUTA.md`. El sistema de diseño y los gustos de Juan, en `DISENO.md`.
-Lo que hace cada noche la tarea programada, en `TAREA-NOCTURNA.md`.
+Lo que hace cada noche la tarea programada, en `TAREA-NOCTURNA.md`. Lo ya
+hecho de la hoja de ruta vive en `HOJA-DE-RUTA-HECHO.md`, que no se lee cada
+noche.
 
 **El documento del proyecto es `TRASPASO.md`.** Ahí está todo: las decisiones
 medidas, el mapa del archivo, las reglas de método y los pendientes. Leerlo
@@ -35,6 +37,16 @@ describe. §10 tiene las reglas de trabajo.
     del 18-nov-2026): los miércoles, desde la tarea nocturna, mira lo que
     cambió en la semana y una zona de `index.html` que rota, y propone
     limpiezas y arreglos que entran a la hoja de ruta. No edita nada.
+  - **Y uno de rumbo** (`.claude/agents/revisor-rumbo.md`, decisión de Juan
+    del 20-nov-2026): los sábados, desde la tarea nocturna, mira la hoja de
+    ruta, el norte y estos documentos con mirada global —si la semana sumó
+    algo nuevo o solo corrigió lo hecho, ítems trabados o fuera de lugar,
+    dudas viejas, documentos que se contradicen— y la tarea los ordena.
+    Existe porque la etapa 1 se alargó semanas sin que nadie lo viera.
+  - **Lo que levantan los revisores no frena lo nuevo** (Juan, 20-nov-2026):
+    los lavados de cara y retoques van a "Relleno" y los errores a
+    "Arreglos" de `HOJA-DE-RUTA.md`, nunca a la etapa en curso. La regla
+    entera está en la hoja, "Cómo entra lo nuevo".
   - **El revisor es otro agente**, no el que programa, y mira capturas de celu
     **y** de PC. Revisa después de cada cambio; si el consumo se come el tope
     semanal, una vez al final (perilla en `HOJA-DE-RUTA.md`).
