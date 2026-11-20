@@ -7421,7 +7421,11 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
     (la hoja bajó de 70 a 29 KB, y se lee entera cada noche), junto con las
     dudas viejas sin respuesta, que se dan por aceptadas. Los sábados,
     `.claude/agents/revisor-rumbo.md` mira la hoja, el norte y estos
-    documentos con mirada global y la tarea aplica lo que proponga.
+    documentos con mirada global y la tarea aplica lo que proponga. **Y no se
+    le pregunta más "no sé si esto te copa"** (Juan, el mismo día: no lo
+    contesta; lee el resumen y, si ve algo raro, lo dice): las decisiones se
+    toman y se cuentan, y la sección "Dudas abiertas" de la hoja se fue al
+    archivo. Solo espera a Juan lo marcado `⏸`.
   - **No se parcha lo que hay que rehacer** (Juan, 9-nov-2026, después de la
     v0.118, que agrandó el tablero en la compu y dejó la curva colgando debajo
     de una franja vacía). Lo que se ve mal en la pantalla frena la versión

@@ -28,6 +28,12 @@ avanzamos más, nos quedamos en correcciones de lo hecho"*. La regla:
   qué).
 - **Lo que pide Juan** va donde él diga; si no dice, donde recomiende quien lo
   anota, y se cuenta en el resumen.
+- **Las decisiones que serían de Juan no se guardan como preguntas** (Juan,
+  20-nov: *"no le suelo dar bola a los 'no sé si esto te copa'. Cuando me
+  levanto veo el chat, y si veo algo raro se lo digo"*). Se toma la
+  recomendación, se aplica y se cuenta en el resumen; él la da vuelta si no
+  le gusta. Solo se le pregunta lo marcado `⏸`, y eso vive en "Esperan a
+  Juan".
 - **A la etapa en curso solo entra lo que ella misma rompe o deja a medias**:
   si el revisor frena un cambio porque es un parche sobre lo que el ítem
   construye, el lavado se hace dentro del ítem. Si es sobre otra zona, va a
@@ -50,7 +56,7 @@ avanzamos más, nos quedamos en correcciones de lo hecho"*. La regla:
 - **Por noche: hasta dos ítems** (decisión de Juan, 6-nov). Pasa al segundo
   solo si el primero terminó **aprobado por el revisor**, con o sin
   correcciones en el medio. Si después de las dos vueltas de corrección el
-  revisor sigue sin aprobar, para ahí y lo deja como duda en el resumen.
+  revisor sigue sin aprobar, para ahí y lo cuenta en el resumen.
   Nunca se deja nada a medio hacer sin commitear: mejor uno solo y entero que
   dos a medias. **De los dos, como mucho uno sale de "Arreglos"**: el otro es
   de la etapa en curso (20-nov), para que los arreglos no vuelvan a frenar lo
@@ -432,58 +438,3 @@ Pendientes que estaban anotados solo en el traspaso.
   tarjeta de la variante con el modo "en la tarjeta"; la línea corta del
   motor; resumen de la variante contra la partida; aviso de confianza
   cuando la variante se alarga.
-
----
-
-## Dudas abiertas para Juan
-
-Lo que la tarea nocturna dejó preguntado y no se contestó todavía. Cuando Juan
-contesta en una sesión, la respuesta se anota donde corresponda (`DISENO.md` si
-es un gusto) y la duda se borra de acá, en el mismo commit. **Las que pasan
-una semana sin respuesta se dan por aceptadas** y se mudan a
-`HOJA-DE-RUTA-HECHO.md` (lo hace el revisor de rumbo; las de antes de la
-v0.146 se mudaron el 20-nov).
-
-- **A prueba (v0.174):** la precisión y la mediana sin las jugadas de libro.
-  Juan, 20-nov: *"no sé si me copa dejar afuera las jugadas de libro. Pero
-  por ahora dejalo así"*. Queda como está, y las malas del Mes siguen
-  contando las de libro (tampoco se tocan). No se le vuelve a preguntar: si
-  no le copa, lo dice él, y la vuelta atrás es que `precisionMedia` y
-  `medianaFuera` no filtren.
-- **No sé si esto te copa (v0.169):** si apoyás el dedo sobre una pieza que
-  puede mover y arrastrás para scrollear o pasar jugadas, la mueve y abre una
-  variante (se cierra con Volver o el atrás). Es como chess.com y lichess.
-  (1) Así. (2) Que el arrastre con el dedo arranque recién después de un
-  toque largo (~150 ms quieto), y el gesto rápido siga siendo scroll o
-  deslizar (más lento para jugar).
-- **No sé si esto te copa (v0.168):** con una variante abierta, la flecha ‹
-  de arriba ahora primero cierra la variante y te deja en la partida, igual
-  que el atrás del celu; para irte al inicio, dos toques. (1) Así, que
-  recomiendan los revisores: el atrás y la flecha hacen siempre lo mismo.
-  (2) Que la flecha te saque siempre al inicio.
-- **Lo apunto (v0.168):** adentro de una variante, volviendo con ‹ al
-  arranque y jugando la de la partida, la variante sigue abierta y dice "es
-  la de la partida"; afuera, esa misma jugada avanza. Si molesta: cerrar la
-  variante y avanzar.
-
-- **No sé si esto te copa (v0.156/v0.157):** el renglón gris de cada sección
-  cerrada del Mes; desde la v0.157 dice primero lo que sale bien ("Con el
-  caballo: 48 % la mejor, contra tu 35 %"). La otra forma era el dato corto a
-  la derecha, sin alargar la página.
-- **A prueba (v0.159):** el nombre de la apertura en la tarjeta. Juan no se
-  decidió entre "cuando cambia" (de fábrica) y "en cada jugada"; quedaron las
-  dos en Ajustes → La explicación → "Nombre de la apertura". Cuando elija,
-  se saca el ajuste y queda una.
-- **A prueba (v0.155, compu):** el hover de los títulos del Mes, solo la
-  flecha. Juan: *"es re sutil… dejala así"*; si al usarlo no le gusta, la C
-  (banda suave con aire y puntas redondeadas).
-- **A prueba (v0.149):** Juan duda entre la B que quedó (el símbolo en la
-  línea del título y la frase a todo el ancho) y la A (el símbolo en su
-  columna, como antes, con el mismo lugar para dos renglones). Dijo *"por
-  ahora dejémoslo así, lo voy usando y vemos qué onda"* (17-nov). No se toca
-  hasta que diga; si elige la A, es volver la tarjeta a flex y dejar la
-  reserva de renglones (§7 del traspaso, v0.149).
-- **No sé si esto te copa (v0.146):** "Partida por partida" subió de última a
-  segunda, debajo de "Cómo terminaron", y ahora muestra solo las partidas del
-  ritmo elegido arriba (antes, todas las del mes). La otra: al fondo, con su
-  rótulo "LAS PARTIDAS".

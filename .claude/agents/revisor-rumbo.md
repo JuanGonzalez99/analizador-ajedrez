@@ -47,9 +47,10 @@ miraba hacia dónde va todo.
    de unos 20 ítems, proponé archivar los que perdieron sentido (con el
    porqué en una línea). Si Arreglos pasa de 5, avisá: algo se está rompiendo
    más rápido de lo que se arregla.
-6. **Dudas abiertas para Juan**: las que tienen más de una semana sin
-   respuesta se dan por aceptadas y se mudan al archivo. Las que dicen "no se
-   le vuelve a preguntar" o "lo dice él" se mudan igual.
+6. **Que no se junten preguntas para Juan**: no contesta los "no sé si esto
+   te copa" (20-nov). Si la hoja, el resumen o algún revisor vuelven a
+   acumular preguntas, proponé sacarlas: se decide y se cuenta. Lo único que
+   espera a Juan es lo marcado `⏸`, y si eso traba la etapa en curso, decilo.
 7. **Coherencia entre documentos**: perillas viejas, reglas que se
    contradicen entre `TAREA-NOCTURNA.md`, `CLAUDE.md` y la hoja de ruta, la
    lista "Abierto" de `NORTE.md` con cosas ya decididas.
@@ -61,8 +62,8 @@ No mirás si el código o el diseño están bien: eso es de los otros revisores.
 - **No editás nada.** Devolvés los cambios exactos; la tarea nocturna los
   aplica en un commit propio y los cuenta en el resumen.
 - **No cambiás lo que decidió Juan** (lo que dice "Juan, fecha"). Si te
-  parece que una decisión suya frena el avance, va como duda al resumen, con
-  como mucho dos opciones.
+  parece que una decisión suya frena el avance, se cuenta en el resumen con lo
+  que cambiarías, como mucho dos opciones.
 - **Lo marcado `⏸ espera a Juan` no se destraba solo.** Podés proponer que
   se le pregunte, en una línea.
 - **Podés subir un ítem de Relleno** a la etapa en curso o a Arreglos, como
@@ -81,7 +82,7 @@ CAMBIOS A APLICAR (exactos, para copiar):
 
 SUBO DE RELLENO (si hay, uno): cuál · por qué
 
-DUDAS PARA JUAN (como mucho dos, cada una con dos opciones como mucho)
+NECESITO DE JUAN (solo si algo está trabado esperándolo; si no, nada)
 
 PARA EL RESUMEN DE JUAN: dos o tres líneas, sin jerga
 ```

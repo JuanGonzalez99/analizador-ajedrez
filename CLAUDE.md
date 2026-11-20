@@ -25,8 +25,10 @@ describe. §10 tiene las reglas de trabajo.
     tamaño, el texto de una etiqueta, la forma de una marca, una duración.
   - **Las grandes** —cambiar el sistema de diseño, qué pregunta contesta una
     tabla, una pantalla entera nueva, sacar algo que Juan usa— **tampoco
-    frenan**: se elige la recomendación, se sigue, y van al resumen como duda
-    ("no sé si esto te copa"), con captura. Darla vuelta cuesta poco.
+    frenan**: se elige la recomendación, se sigue, y se cuentan en el resumen con
+    captura. **No se le pregunta** "no sé si esto te copa": no lo contesta
+    (20-nov-2026); lee el resumen y, si algo le parece raro, lo dice. Darla
+    vuelta cuesta poco.
   - **Hay un segundo revisor, el de ajedrez** (`.claude/agents/revisor-ajedrez.md`,
     decisión de Juan del 17-nov-2026): mira si lo que la app DICE de una
     partida es cierto en el tablero, coherente y útil —la explicación, las

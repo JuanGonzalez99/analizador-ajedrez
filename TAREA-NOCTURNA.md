@@ -51,8 +51,7 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    Lanzá el agente `revisor-rumbo` (`.claude/agents/revisor-rumbo.md`).
    Aplicá los cambios que devuelva en un commit propio, antes de elegir el
    trabajo de la noche (puede cambiar cuál es el primero). En el resumen de la
-   mañana va una sección **"El rumbo"** con sus dos o tres líneas, y sus dudas
-   en "Dudas". No cuenta como ítem de la noche.
+   mañana va una sección **"El rumbo"** con sus dos o tres líneas. No cuenta como ítem de la noche.
 1. **Arrancar.** El hook deja el checkout en `main`; confirmalo con
    `git status` (si no, `git checkout -B main origin/main`). **Y confirmá que
    estás en la punta de verdad**: `git fetch origin main` y que `git log -1`
@@ -80,7 +79,7 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    estructura y no solo tamaños. El revisor elige una, la elige con un
    ajuste, o dice **ninguna** y qué probar: en ese caso, otra tanda con esa
    dirección. Como mucho dos tandas; si sigue en "ninguna", no se aplica nada
-   y va al resumen como duda, con las tiras. Lo que se aplica va igual al
+   y se cuenta en el resumen, con las tiras. Lo que se aplica va igual al
    resumen **con la tira de todas y cuál ganó**, para que Juan pueda elegir
    otra.
    **Lo que no se aplica por respetar una decisión anterior de Juan** (el
@@ -95,7 +94,7 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    - *después de cada cambio*: antes de pushear cada versión, lanzá el
      subagente `revisor-ux` con qué cambió y qué versión es. Si devuelve
      "corregir", corregí y volvé a pasarlo (como mucho dos vueltas; si sigue,
-     va al resumen como duda).
+     no se pushea y se cuenta en el resumen).
    - *una vez al final*: una sola pasada sobre todo lo de la noche, antes del
      último push.
    **Si el revisor frena porque es un parche** sobre algo que pide lavado de
@@ -109,7 +108,8 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    además, con las mismas reglas de vueltas, cuando el cambio toca lo que la
    app dice de una partida: la explicación, las categorías, los cuadritos, las
    tablas del Mes o el análisis. Si el cambio es solo visual, no.
-   Lo que el revisor deja en "dudas para Juan" va al resumen. **Lo que deja en
+   Lo que el revisor deja en "dudas para Juan" lo decidís vos con su
+   recomendación, y va a "Qué elegí por vos" en una línea. **Lo que deja en
    "lavado de cara" va a `HOJA-DE-RUTA.md`** como ítem nuevo sin tachar, al
    final de **"Relleno"** (o de "Arreglos" si es un error), con lo que dijo el
    revisor; y al resumen, en una línea. **No entra a la etapa en curso** salvo
@@ -119,12 +119,14 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    verde. Si el push falla, no insistas más de cuatro veces y ponelo primero en
    el resumen.
 7. **Cerrar.** Tachá en `HOJA-DE-RUTA.md` lo hecho (el revisor de rumbo lo
-   muda los sábados a `HOJA-DE-RUTA-HECHO.md`), agregá las dudas nuevas a
-   "Dudas abiertas", commit y push.
+   muda los sábados a `HOJA-DE-RUTA-HECHO.md`), commit y push. Las
+   dudas no se guardan en la hoja (Juan, 20-nov).
 
 ## El resumen de la mañana
 
-Es el **último mensaje de la sesión**, y es lo único que Juan lee. Corto, en
+Es el **último mensaje de la sesión**, y es lo único que Juan lee. **Cuenta,
+no pregunta**: Juan no contesta los "no sé si esto te copa" (20-nov); lee lo
+que se hizo y, si algo le parece raro, lo dice. Corto, en
 castellano rioplatense, sin jerga de código, en este orden:
 
 ```
@@ -143,9 +145,10 @@ castellano rioplatense, sin jerga de código, en este orden:
 **Lavados de cara que vio el revisor** (si hay): qué zona, en una línea;
 van a Relleno
 
-**Dudas** (lo que quiero que mires)
-- "no sé si esto te copa": qué, y como mucho dos opciones
-- (si hay capturas, mandalas con SendUserFile, a 2x, y nombralas acá)
+**Necesito de vos** (solo si algo quedó trabado esperándote; si no, no va)
+- qué, y como mucho dos opciones
+
+(Las capturas van con SendUserFile, a 2x, y se nombran donde corresponda.)
 
 **Lo que sigue** la próxima noche: una línea.
 ```
@@ -156,7 +159,7 @@ sin terminar), va **arriba de todo**, antes de la versión.
 ## Lo que no se hace de noche
 
 - Nada que la hoja de ruta marque `⏸ espera a Juan`.
-- Cambiar el sistema de diseño (`DISENO.md` §1): se propone como duda.
+- Cambiar el sistema de diseño (`DISENO.md` §1): se propone en el resumen y no se aplica.
 - Subir el número mayor. **La única excepción es la v1.0**, que Juan ya
   decidió (20-nov): sale con el ítem "Cierre: v1.0" de la hoja de ruta. La
   v2.0 y las siguientes las decide él.

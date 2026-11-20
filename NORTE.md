@@ -49,7 +49,7 @@ Juan es el director: define hacia dónde va y decide lo grande. Claude planifica
 
 - **De noche:** una tarea programada en la nube avanza cada noche con lo siguiente de la hoja de ruta. De día, Juan puede decir "seguí" cuando quiera.
 - **Decisiones de Juan:** Claude elige su recomendación y sigue. Como cada push es deploy y nadie más depende de la app, darla vuelta cuesta poco.
-- **A la mañana:** un resumen en la sesión con qué hizo, qué eligió y, aparte, sus dudas del tipo "no sé si esto te copa". Juan mira sólo eso.
+- **A la mañana:** un resumen en la sesión con qué hizo y qué eligió. Cuenta, no pregunta: Juan lo lee y, si algo le parece raro, lo dice (20-nov-2026). Solo se le pregunta lo que de verdad no puede seguir sin él.
 - **El revisor:** revisa después de cada cambio, a prueba. Si el consumo se come el tope semanal, pasa a revisar una vez al final de la noche.
 - **Decisiones visuales chicas:** dejan de esperar el ok de Juan; las toma el revisor contra el sistema de diseño.
 - **Que la app sume cosas nuevas** (20-nov-2026): los lavados de cara y retoques que levantan los revisores van a una lista de relleno y no frenan la etapa en curso; los errores de lo que la app dice van a una lista de arreglos, uno por noche como mucho. Los sábados, un revisor de rumbo mira la hoja de ruta y estos documentos con mirada global y los ordena, porque Juan no los va a revisar.
