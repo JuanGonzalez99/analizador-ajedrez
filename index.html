@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.177 · 20-11";
+  window.VERSION = "v0.177.1 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6511,7 +6511,12 @@ $("meses").onchange = seguro("mes", () => cargarMes($("meses").value));
    Devuelve false si no se pudo, y el que llama decide qué hacer con eso. */
 async function juntarTodo() {
   if (!MESES.length) { estado("Primero buscá un usuario."); return false; }
-  ocupado(true);
+  /* SI YA HABÍA ALGO CORRIENDO NO SE TOCA `ocupado` (v0.177.1, revisor): elegir
+     "Todo" o mover el dial de mate a mitad del análisis del mes escondía
+     "Detener", prendía los botones y hacía parpadear la barra. El barrido son
+     milisegundos y no toca el motor, así que convive con el análisis. */
+  const ajeno = OCUPADO;
+  if (!ajeno) ocupado(true);
   const t0 = performance.now();
   let bien = true;
   try {
@@ -6530,8 +6535,7 @@ async function juntarTodo() {
      vacía, y el `progreso(0)` de después la volvía a mostrar, vacía, como una
      franja gris suelta bajo "Listo" —el mismo error que se arregló en la v26,
      vuelto por este camino—. Lo vio Juan al terminar de juntar "todo". */
-  ocupado(false);
-  estado("");
+  if (!ajeno) { ocupado(false); estado(""); }
   return bien;
 }
 
@@ -6559,6 +6563,9 @@ function pintarFuente() {
     o.value = u; o.textContent = nombreMes(u);
     grupo.appendChild(o);
   });
+  /* Otro mes mientras se analiza lanzaría un segundo análisis encima del
+     primero (v0.177.1): los meses quedan apagados; "Todo" sigue. */
+  if (grupo) grupo.disabled = OCUPADO;
   sel.value = FUENTE === "todo" ? "todo" : $("meses").value;
 }
 
@@ -6570,6 +6577,7 @@ $("fuente").onchange = seguro("fuente", async () => {
      caché sale al instante y lo que no, se analiza con la barra de siempre. */
   /* Y el mes que ya está cargado pero sin analizar (se miraba "todo" sin haber
      analizado nada) va por el mismo camino, sin volver a bajarlo. */
+  if (v !== "todo" && OCUPADO) { pintarFuente(); return; }
   if (v !== "todo" && (v !== $("meses").value || !MES)) {
     FUENTE = "mes";
     $("capMes").textContent = `Cargando ${nombreMes(v).toLowerCase()}…`;
@@ -6765,6 +6773,8 @@ function ocupado(si) {
   TRABAJANDO = si;
   OCUPADO = si;
   ver("detener", si);
+  const meses = $("fuente").querySelector("optgroup");
+  if (meses) meses.disabled = si;
   pintarBotonMes();
   mostrarVista();
   if (si) CANCELAR = false;

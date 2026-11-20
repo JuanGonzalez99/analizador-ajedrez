@@ -3781,3 +3781,14 @@ test("la clavada de la dama va antes que salvar un peón (v0.177)", () => {
   assert.equal(A.explicarJugada(f, null, true, null, obs),
                "Clava la dama de d7 contra el rey. Salva tu peón de a4, que estaba sin defender.");
 });
+
+test("juntar lo analizado no suelta un análisis que ya corría (v0.177.1)", () => {
+  const j = html.slice(html.indexOf("async function juntarTodo"), html.indexOf("const NOMBRES_MES"));
+  assert.ok(j.includes("if (!ajeno) ocupado(true);"));
+  assert.ok(j.includes("if (!ajeno) { ocupado(false); estado(\"\"); }"));
+  assert.ok(!/\n  ocupado\((true|false)\);/.test(j), "ningún ocupado() sin la guarda");
+  const ocu = html.slice(html.indexOf("function ocupado(si)"), html.indexOf("$(\"detener\").onclick"));
+  assert.ok(ocu.includes("meses.disabled = si"), "los meses se apagan mientras se trabaja");
+  const fuente = html.slice(html.indexOf("$(\"fuente\").onchange"), html.indexOf("let CARGA = 0;"));
+  assert.ok(fuente.includes("if (v !== \"todo\" && OCUPADO) { pintarFuente(); return; }"));
+});

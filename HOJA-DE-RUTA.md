@@ -140,8 +140,8 @@ tanto va a Arreglos o a Relleno, **no acá**.
 Errores verificados de lo que la app dice o hace. Como mucho uno por noche
 (perilla "Por noche"), el primero de la lista.
 
-- [ ] **Elegir "Todo", otro mes o mover el dial de mate MIENTRAS se analiza el
-      mes** (revisor, v0.109; leído en el código, no probado): `juntarTodo`
+- [x] ~~**Elegir "Todo", otro mes o mover el dial de mate MIENTRAS se analiza el
+      mes**~~ (hecho en la v0.177.1) (revisor, v0.109; leído en el código, no probado): `juntarTodo`
       hace su propio `ocupado(true/false)`, así que esconde "Detener", prende
       los botones y la barra parpadea; y otro mes en el selector lanzaría un
       segundo análisis encima del primero. O se apagan `#fuente` y `#mateVista`

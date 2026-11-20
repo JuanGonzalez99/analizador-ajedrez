@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.177**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.177.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4756,6 +4756,18 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.177.1, juntar "todo" no suelta el análisis que corre** (revisor,
+v0.109; estaba en Arreglos). `juntarTodo` hacía su propio
+`ocupado(true/false)`: elegir "Todo" o mover el dial de mate a mitad del
+análisis del mes escondía "Detener", prendía los botones y hacía parpadear la
+barra. Ahora, si `OCUPADO` ya estaba, no lo toca (el barrido no toca el motor
+y convive). Y otro mes en `#fuente` lanzaba un segundo análisis encima: el
+`<optgroup>` de los meses queda `disabled` mientras se trabaja (lo pone
+`ocupado` y lo repite `pintarFuente`, que rearma el selector), "Todo" sigue
+elegible, y el `onchange` se ataja igual por si acaso. Probado solo con la
+prueba estática: con la API falsa el mes se analiza instantáneo y no hay
+ventana para tocar.
 
 **v0.177, dos frases y un veredicto** (revisor de ajedrez, v0.163 y v0.168).
 - **Un mate es un mate**: con dos mates en 1, el que no elegía el motor salía
