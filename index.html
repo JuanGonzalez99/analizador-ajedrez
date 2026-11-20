@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.175 · 20-11";
+  window.VERSION = "v0.176 · 20-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4801,16 +4801,24 @@ const MATE_VISTA = () => +$("mateVista").value || MATE_A_LA_VISTA;
 
 /* ============ aperturas ============ */
 let LIBRO = null;
-async function cargarLibro() {
-  if (LIBRO) return LIBRO;
-  try {
-    const d = await (await fetch("./aperturas.json")).json();
-    LIBRO = { pos: new Set(d.posiciones), nombres: d.nombres };
-  } catch (e) {
-    window.LOG.add("!", "sin libro de aperturas: " + (e.message || e));
-    LIBRO = { pos: new Set(), nombres: {} };
-  }
-  return LIBRO;
+/* SE PIDE UNA SOLA VEZ (v0.176): `buscar` lo arranca sin esperarlo, en
+   paralelo con las partidas, porque desde la v0.175 la lista del inicio lo
+   necesita para la precisión y bajarlo recién ahí (~1 MB) la demoraba con
+   datos móviles. Quien llegue mientras baja espera la misma promesa, en vez
+   de pedirlo de nuevo. */
+let LIBRO_PEDIDO = null;
+function cargarLibro() {
+  if (LIBRO) return Promise.resolve(LIBRO);
+  return LIBRO_PEDIDO = LIBRO_PEDIDO || (async () => {
+    try {
+      const d = await (await fetch("./aperturas.json")).json();
+      LIBRO = { pos: new Set(d.posiciones), nombres: d.nombres };
+    } catch (e) {
+      window.LOG.add("!", "sin libro de aperturas: " + (e.message || e));
+      LIBRO = { pos: new Set(), nombres: {} };
+    }
+    return LIBRO;
+  })();
 }
 
 /* ============ análisis de una partida ============ */
@@ -6398,6 +6406,7 @@ $("buscar").onclick = seguro("buscar", async () => {
   if (!u) return;
   USUARIO = u.toLowerCase();
   $("buscar").disabled = true;
+  cargarLibro();   /* sin esperarlo: baja mientras llegan las partidas */
   ["zonaAnalizar", "zonaRevision", "zonaResumen", "zonaPartidas", "zonaMes"].forEach(z => ver(z, false));
   try {
     const r = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`);

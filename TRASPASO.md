@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.175**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.176**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4756,6 +4756,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.176, el libro baja en paralelo, y cómo se buscan los saltos** (Juan,
+20-nov: *"¿hay algo más en la app que salte con el tiempo y no tenga
+aviso?"*).
+- **Cómo se buscó, para repetirlo**: un `PerformanceObserver` de
+  `layout-shift` en un `addInitScript`, con el mes de prueba copiado a 12
+  partidas (3 analizadas), `aperturas.json` demorado 1,5 s y el JSON del mes
+  1,2 s con `pg.route`. Recorrido: arranque con usuario guardado, tocar
+  Estadísticas, volver, abrir una analizada, abrir una sin analizar, cambiar
+  de mes. Cada salto viene con el elemento que se movió y si hubo un toque
+  en los 500 ms anteriores (`hadRecentInput`). Es una maqueta: no se
+  commitea.
+- **Lo que salió**: después de un toque, solo 8 px de la tarjeta cuando
+  desaparece el botón del mes (corre algo y la barra lo dice). Sin toque,
+  solo el "Cargando…" que se va cuando llega la lista, que no corre nada que
+  se esté leyendo. Pero **la lista esperaba al libro**: desde la v0.175 la
+  precisión lo necesita, y se pedía recién al terminar de bajar el mes.
+- **`buscar` arranca `cargarLibro()` sin esperarlo**, en paralelo con las
+  partidas, y `cargarLibro` guarda la promesa (`LIBRO_PEDIDO`) para que quien
+  llegue mientras baja no lo pida de nuevo. Con las demoras de arriba, la
+  lista sale a los **1,6 s en vez de 2,8**.
 
 **v0.175, la lista del inicio sale de una vez** (Juan, 20-nov, con dos
 capturas: *"arranca con la 1, y después de unos segundos pasa a la 2. Sin
