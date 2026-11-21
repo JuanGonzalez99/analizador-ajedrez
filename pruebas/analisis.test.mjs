@@ -1842,11 +1842,21 @@ test("la tira se centra sola en la jugada actual", () => {
      al medio. Reemplaza al scroll de la lista vertical, que hasta la v0.73
      tenía además un caso especial para que el cierre se viera en la última. */
   assert.ok(html.includes("function centrarTira()"));
-  assert.ok(html.includes("sc.scrollLeft = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;"));
+  assert.ok(html.includes("let x = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;"));
+  assert.ok(html.includes("sc.scrollLeft = x;"));
   /* y el scroll se mueve a mano, no con scrollIntoView, que arrastra la página */
   const cuerpo = html.slice(html.indexOf("function centrarTira()"),
                             html.indexOf("function irA(i)"));
   assert.ok(!cuerpo.includes("scrollIntoView"));
+});
+
+test("con una variante la tira no corta una jugada contra ‹ ni pega la elegida a › (v0.182)", () => {
+  /* el corte del borde izquierdo se corre al borde de una jugada, y al final
+     el hueco de la cola se estira lo que falta; `mirar` lo mide en el navegador */
+  const cuerpo = html.slice(html.indexOf("function centrarTira()"), html.indexOf("function irA(i)"));
+  assert.ok(cuerpo.includes('classList.contains("conVariante")'));
+  assert.ok(cuerpo.includes('sc.style.setProperty("--colaVar", (F + sig - max) + "px");'));
+  assert.ok(html.includes('#zonaRevision.conVariante #tiraSc::after { content: ""; flex: 0 0 var(--colaVar, 24px); }'));
 });
 
 test("la tipografía se mide en el navegador, no se escriben números fijos", () => {

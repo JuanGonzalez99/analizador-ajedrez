@@ -88,8 +88,8 @@ tanto va a Arreglos o a Relleno, **no acá**.
       jugada mientras no se piden. Sin que la lista ni "‹ ›" salten. Con variantes.
 - [ ] **Tres retoques chicos, sin variantes** (una versión para el celu y otra
       para la compu, como siempre: PC en commits separados):
-  - [ ] **Retoque: cómo empieza y termina la tira de la variante en "la
-        lista abajo"** (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
+  - [x] ~~**Retoque: cómo empieza y termina la tira de la variante en "la
+        lista abajo"**~~ (hecho en la v0.182) (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
         cortado de la jugada anterior y la elegida queda pegada a "›". Ya
         estaba, pero ahora es la forma que Juan usa.
   - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por

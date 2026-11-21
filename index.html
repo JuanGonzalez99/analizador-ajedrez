@@ -940,6 +940,10 @@
   .tira .jg.inv { color: var(--inventada); }
   /* la que todavía está en la cola: se ve, pero no dice un veredicto que no tiene */
   .tira .jg.inv.pend { color: var(--tenue); }
+  /* la última de la variante —la recién probada— sale del desvanecido de 24
+     del borde derecho: sin esto quedaba pegada a "›" (v0.182; en la compu
+     desde la v0.171, con la misma medida). */
+  #zonaRevision.conVariante #tiraSc::after { content: ""; flex: 0 0 var(--colaVar, 24px); }
   .tira .corte { flex: 0 0 0; width: 0; height: 17px; align-self: center;
                  border-left: 2px dashed var(--inventada); margin: 0 5px; }
   /* LA LISTA LATERAL (v0.80). Es la lista vertical que vivió de la v28 a la
@@ -1242,9 +1246,6 @@
        2700 px. Ancho 0 y mínimo el de la columna. */
     .pmedio > .tira { width: 0; min-width: 100%; }
     #zonaRevision:not(.conVariante) .lateral #tiraSc { display: none; }
-    /* la última de la variante —la recién probada— sale del desvanecido de 24
-       del borde derecho */
-    .lateral #tiraSc::after { content: ""; flex: 0 0 24px; }
     /* LOS GALONES DEL TABLERO NO VAN EN LA COMPU (revisor, v0.125): con el
        mouse una flecha a los costados se lee como "clic acá" y es dibujo desde
        la v0.66; el paso a paso lo hacen "‹ ›" al pie de la lista. */
@@ -1562,7 +1563,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.181 · 21-11";
+  window.VERSION = "v0.182 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6127,7 +6128,37 @@ function medirTira() {
    vertical, anotada desde la v28. */
 function centrarTira() {
   const sc = $("tiraSc"), sel = sc.querySelector(".sel");
-  if (sel) sc.scrollLeft = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;
+  if (!sel) return;
+  let x = sel.offsetLeft - (sc.clientWidth - sel.offsetWidth) / 2;
+  /* CON UNA VARIANTE, EL BORDE IZQUIERDO CAE ENTRE DOS JUGADAS (v0.182,
+     revisor): centrando a secas, junto a "‹" asomaba un pedazo de la anterior
+     —un "5" suelto del "15."—. Se corre el scroll al borde de la que quedaba
+     cortada, para un lado o para el otro, siempre que la elegida siga entera
+     fuera de los desvanecidos de 24. */
+  if ($("zonaRevision").classList.contains("conVariante")) {
+    const F = 24;
+    sc.style.setProperty("--colaVar", F + "px");
+    const max = sc.scrollWidth - sc.clientWidth;
+    x = Math.max(0, Math.min(x, max));
+    const hijos = [...sc.children].filter(h => h.offsetWidth);
+    const k = hijos.findIndex(h => h.offsetLeft < x && h.offsetLeft + h.offsetWidth > x);
+    if (k >= 0) {
+      const entra = (y, tope) => y >= 0 && y <= tope && sel.offsetLeft >= y + F &&
+                                 sel.offsetLeft + sel.offsetWidth <= y + sc.clientWidth - F;
+      const sig = hijos[k + 1] ? hijos[k + 1].offsetLeft : -1;
+      const cand = [hijos[k].offsetLeft, sig]
+        .filter(y => entra(y, max)).sort((a, b) => Math.abs(a - x) - Math.abs(b - x));
+      if (cand.length) x = cand[0];
+      /* al final de la tira el scroll no da para correrse a la siguiente:
+         se estira el hueco del final lo que falta (menos de una jugada), y la
+         elegida queda con más aire a la derecha, que ahí dice "acá termina" */
+      else if (sig > max && entra(sig, Infinity)) {
+        sc.style.setProperty("--colaVar", (F + sig - max) + "px");
+        x = sig;
+      }
+    }
+  }
+  sc.scrollLeft = x;
 }
 
 /* `i` va de -1 —la posición inicial, antes de la primera jugada (v0.124)— a la

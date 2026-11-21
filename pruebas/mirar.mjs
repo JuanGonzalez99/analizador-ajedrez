@@ -263,6 +263,22 @@ else {
        arranque con data-v="0" hasta la v0.71, que le sacó ese eslabón. */
     await pg.click('#tiraSc .jg.inv[data-v="1"]');
     await foto("prueba-6-volviendo");
+    /* LOS BORDES DE LA TIRA CON VARIANTE (v0.182): ninguna jugada cortada
+       contra "‹" y la elegida fuera del desvanecido de 24 de cada lado, en la
+       primera de la variante y en la última */
+    const bordes = () => pg.evaluate(() => {
+      const sc = document.getElementById("tiraSc"), sel = sc.querySelector(".sel");
+      const x = sc.scrollLeft;
+      const cortada = [...sc.children].some(h => h.offsetWidth && h.offsetLeft < x - 1 && h.offsetLeft + h.offsetWidth > x + 1);
+      return { cortadaALaIzq: cortada,
+               aireDerecha: Math.round(x + sc.clientWidth - sel.offsetLeft - sel.offsetWidth),
+               aireIzquierda: Math.round(sel.offsetLeft - x) };
+    });
+    const enLaPrimera = await bordes();
+    while (!(await pg.locator("#sig").isDisabled())) await pg.click("#sig");
+    console.log("tira con variante:", JSON.stringify({ primera: enLaPrimera, ultima: await bordes() }),
+                "(sin cortada y con aire de 24 o más)");
+    await pg.click('#tiraSc .jg.inv[data-v="1"]');
   }
   console.log("prueba:  ", JSON.stringify(await pg.locator("#pTit").textContent()),
               JSON.stringify(await pg.locator("#pSub").textContent()),

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.181**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.182**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4820,6 +4820,18 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.182, los bordes de la tira con variante** (revisor, v0.160; celu).
+Con la variante en la tira, junto a "‹" asomaba un pedazo de la jugada
+anterior (un "5" del "15.") y la última probada quedaba pegada a "›". Dos
+cosas, solo con `.conVariante`: un hueco de 24 al final (`::after`, el que
+la compu tenía desde la v0.171, ahora para los dos) y `centrarTira()` corre
+el borde izquierdo al de la jugada que quedaba cortada —para el lado que
+deje a la elegida entera fuera de los desvanecidos—; al final de la tira,
+donde el scroll no da, estira ese hueco lo que falta (`--colaVar`, menos de
+una jugada). Sin variante la tira centra como siempre: las capturas del celu
+sin variante salen iguales al byte. `mirar` lo mide ("tira con variante":
+sin cortada, aire ≥ 24).
 
 **v0.181, [PC] pensando, tres filas fantasma** (Juan, sobre la variante A
 de la v0.180). Mientras el motor busca las tres mejores, en vez del botón
