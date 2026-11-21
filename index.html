@@ -1558,7 +1558,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.180 · 21-11";
+  window.VERSION = "v0.180.1 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2228,15 +2228,56 @@ function piezasComidas(fen) {
   return { w: faltan("w"), b: faltan("b"), dif };
 }
 
-/* ¿la pieza parada en `sq` se la llevan sin devolución? */
+/* ¿la jugada `m` le deja la dama propia a tiro de algo que no es una dama?
+   (v0.180.1, revisor de ajedrez) Es la clavada contra la dama: chess.js solo
+   frena la pieza clavada contra el rey, así que un peón de e6 que come en d5
+   y destapa la dama de e8 a la torre de e1 contaba como una captura más. Se
+   compara contra los ataques de antes, con el turno dado vuelta: lo que ya
+   estaba atacado no es culpa de esta jugada. La dama que se mueve ella misma
+   no entra: su riesgo ya lo cuenta el cambio.
+   Devuelve null, o la pieza más barata que ahora ataca la dama y si la dama
+   está defendida (o sea, si comerla le cuesta esa pieza). */
+function destapaLaDama(fen, m) {
+  if (m.piece === "q") return null;
+  const atacan = f => new Chess(f).moves({ verbose: true })
+    .filter(x => x.captured === "q" && x.piece !== "q");
+  const j = new Chess(fen);
+  try { if (!j.move(m)) return null; } catch (e) { return null; }
+  const despues = atacan(j.fen());
+  if (!despues.length) return null;
+  const p = fen.split(" ");
+  p[1] = p[1] === "w" ? "b" : "w"; p[3] = "-";
+  let antes;
+  try { antes = new Set(atacan(p.join(" ")).map(x => x.from + x.to)); } catch (e) { antes = new Set(); }
+  const nuevas = despues.filter(x => !antes.has(x.from + x.to))
+    .sort((a, b) => (a.piece === "k" ? 100 : VALOR[a.piece]) - (b.piece === "k" ? 100 : VALOR[b.piece]));
+  if (!nuevas.length) return null;
+  const x = nuevas[0], j2 = new Chess(j.fen());
+  j2.move(x);
+  return { pieza: x.piece, defendida: j2.moves({ verbose: true }).some(y => y.to === x.to) };
+}
+/* LA CAPTURA QUE ENTREGA LA DAMA NO CUENTA solo si lo que come, más lo que
+   cuesta cobrarle la dama, no llega a una dama (revisor de ajedrez, v0.180.1):
+   Qd5?? exd5 Rxe8+ Kxe8 deja al negro una torre arriba, así que exd5 sigue
+   siendo una captura de verdad y "queda comible" se sigue diciendo. */
+function entregaLaDama(fen, m) {
+  const d = destapaLaDama(fen, m);
+  if (!d) return false;
+  return (VALOR[m.captured] || 0) + (d.defendida && d.pieza !== "k" ? VALOR[d.pieza] : 0) < VALOR.q;
+}
+
+/* ¿la pieza parada en `sq` se la llevan sin devolución? Ni la captura ni la
+   devolución cuentan si entregan la dama (`entregaLaDama`). */
 function quedaComible(fenDespues, sq) {
   const j = new Chess(fenDespues);
-  const capturas = j.moves({ verbose: true }).filter(m => m.to === sq);
+  const capturas = j.moves({ verbose: true })
+    .filter(m => m.to === sq && !entregaLaDama(fenDespues, m));
   if (!capturas.length) return false;
   for (const c of capturas) {
     const j2 = new Chess(fenDespues);
     j2.move(c);
-    if (!j2.moves({ verbose: true }).some(m => m.to === sq)) return true;
+    const f2 = j2.fen();
+    if (!j2.moves({ verbose: true }).some(m => m.to === sq && !entregaLaDama(f2, m))) return true;
   }
   return false;
 }
@@ -2245,7 +2286,8 @@ function quedaComible(fenDespues, sq) {
    mueve en `fen` cambiando en `sq`, con la jugada que más le conviene en cada
    paso y pudiendo parar cuando seguir le cuesta. Es el "static exchange" de
    los motores: se come siempre con la pieza más barata (el rey, la última), y
-   la legalidad la pone chess.js, así que una pieza clavada no recaptura.
+   la legalidad la pone chess.js, así que una pieza clavada no recaptura, y
+   desde la v0.180.1 tampoco la clavada contra su dama (`entregaLaDama`).
    `quedaComible` contesta otra pregunta —¿hay recaptura?— y por eso con
    Qe1 Rxe1 Kxe1 daba falso aunque el cambio pierda la dama por una torre.
    Devuelve el neto y la línea de capturas. */
@@ -2255,7 +2297,8 @@ function cambioEn(fen, sq, prof = 0) {
   const j = new Chess(fen);
   const caras = t => t === "k" ? 100 : (VALOR[t] || 0);
   const capt = j.moves({ verbose: true })
-    .filter(m => m.to === sq && m.captured && (!m.promotion || m.promotion === "q"))
+    .filter(m => m.to === sq && m.captured && (!m.promotion || m.promotion === "q") &&
+                 !entregaLaDama(fen, m))
     .sort((a, b) => caras(a.piece) - caras(b.piece));
   if (!capt.length) return nada;
   const m = capt[0];

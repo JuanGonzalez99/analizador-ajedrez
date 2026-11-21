@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.180**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.180.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4820,6 +4820,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.180.1, la clavada contra la dama** (revisor de ajedrez, v0.178;
+Arreglos). chess.js solo frena la pieza clavada contra el rey, así que
+`cambioEn` y `quedaComible` contaban como buena una captura que deja la dama
+propia a tiro. `destapaLaDama(fen, m)` dice si la jugada deja la dama a tiro de
+algo que no es una dama y antes no la atacaba (se compara con el turno dado
+vuelta; la dama que se mueve sola no entra, su riesgo ya lo cuenta el cambio).
+Las dos funciones la filtran en cada paso con `entregaLaDama`, que **le
+cobra la dama en vez de descartar**: la captura no cuenta solo si lo que come,
+más la pieza que cuesta comer la dama si está defendida, no llega a 9. Lo
+marcó el revisor de ajedrez en la primera vuelta: descartar toda captura que
+destapa la dama callaba Qd5?? en `4qk2/8/4p3/8/8/3Q4/8/4R1K1 w` (exd5 Rxe8+
+Kxe8 deja al negro una torre arriba). El jaque no se filtra: con jaque el
+rival no puede comer la dama. Dos efectos, verificados con
+chess.js: "queda comible" deja de salir cuando la única captura del rival le
+entrega la dama (`4q1k1/8/4p3/3N4/8/8/8/4R1K1 b`, exd5 y Rxe8+), y la
+recaptura clavada ya no salva la pieza (`4r1k1/8/8/6p1/5N2/4P3/8/4Q1K1 b`,
+gxf4: neto 3 y no 2). No se buscó un caso con motor que llegara a la tarjeta
+(la frase pide pérdida ≥ 0,5): el arreglo era corto y `quedaComible` llega sin
+corte a la fila "Dejé comible la pieza que moví" del Mes, donde el falso
+positivo sí contaba.
 
 **v0.180, [PC] las tres mejores debajo de la curva, sin caja** (Juan,
 17-nov, y revisor, v0.151; etapa 1). Sin pedirlas eran ~115 px de tarjeta con

@@ -19,6 +19,34 @@ test("quedaComible: dama sola en casilla atacada por un peón", () => {
   assert.equal(A.quedaComible("4k3/8/4p3/3Q4/8/8/8/4K3 b - - 0 1", "d5"), true);
 });
 
+/* v0.180.1: la clavada contra la dama (chess.js solo frena la clavada al rey) */
+test("quedaComible: la captura que destapa la dama propia no cuenta", () => {
+  /* exd5 deja la dama de e8 a tiro de la torre de e1 */
+  assert.equal(A.quedaComible("4q1k1/8/4p3/3N4/8/8/8/4R1K1 b - - 0 1", "d5"), false);
+  assert.equal(A.quedaComible("4q1k1/8/4p3/3N4/8/8/8/6K1 b - - 0 1", "d5"), true);
+});
+test("cambioEn: la recaptura clavada contra la dama no cuenta", () => {
+  /* exf4 destapa la dama de e1 a la torre de e8: el caballo se pierde entero */
+  const c = A.cambioEn("4r1k1/8/8/6p1/5N2/4P3/8/4Q1K1 b - - 0 1", "f4");
+  assert.equal(c.neto, 3);
+  assert.deepEqual(c.linea.map(m => m.san), ["gxf4"]);
+  assert.equal(A.cambioEn("4r1k1/8/8/6p1/5N2/4P3/8/6K1 b - - 0 1", "f4").neto, 2);
+  assert.equal(A.quedaComible("4r1k1/8/8/6p1/5N2/4P3/8/4Q1K1 b - - 0 1", "f4"), true);
+});
+test("destapaLaDama: la dama que ya estaba atacada no es culpa de la jugada", () => {
+  /* la torre de e1 ya mira la dama de e4; mover el peón de a7 no destapa nada */
+  assert.equal(A.destapaLaDama("6k1/p7/8/8/4q3/8/8/4R1K1 b - - 0 1", { from: "a7", to: "a6", piece: "p", color: "b" }), null);
+  /* la dama que se mueve sola no entra: su riesgo lo cuenta el cambio */
+  assert.equal(A.destapaLaDama("4q1k1/8/8/8/8/8/8/4R1K1 b - - 0 1", { from: "e8", to: "e5", piece: "q", color: "b" }), null);
+});
+test("la captura que gana más de lo que entrega sigue contando (revisor, v0.180.1)", () => {
+  /* Qd5?? exd5 Rxe8+ Kxe8: el negro gana dama y torre por su dama */
+  const f = "4qk2/8/4p3/3Q4/8/8/8/4R1K1 b - - 0 1";
+  assert.equal(A.quedaComible(f, "d5"), true);
+  assert.equal(A.cambioEn(f, "d5").neto, 9);
+  /* con una torre: torre + torre por la dama, todavía +1 */
+  assert.equal(A.quedaComible("4qk2/8/4p3/3R4/8/8/8/4R1K1 b - - 0 1", "d5"), true);
+});
 test("quedaComible: no lo es si toda captura queda recapturada", () => {
   /* peón blanco en d5 defendido por peón en c4; el peón negro en e6 que lo coma
      queda recapturado, así que no cuenta como comible */

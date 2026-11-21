@@ -123,7 +123,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       coronación que se pierde. Juan propuso "tu peón coronado": **"Tu peón
       coronado queda comible en c8."**, y sin la frase de "Coronás" cuando la
       pieza coronada cuelga o se pierde en el cambio. Revisor de ajedrez sí.
-- [ ] **El cambio no ve las clavadas contra la dama** (revisor de ajedrez,
+- [x] ~~**El cambio no ve las clavadas contra la dama**~~ (hecho en la v0.180.1) (revisor de ajedrez,
       v0.178; Juan lo pasó a Arreglos el 20-nov). `cambioEn` (y `quedaComible`,
       de antes) cuenta como buena una recaptura con una pieza clavada contra
       su propia dama: un peón de e6 que recaptura y deja la dama de e8 a tiro
@@ -425,6 +425,13 @@ archiva los que pierden sentido.
       ajedrez, v0.178.4). Si coronar desvía una pieza y gana, la cuenta del
       cambio la ve "perdida" y la tarjeta calla "Coronás" (bien), pero no dice
       qué gana. Pide entender la táctica; va con "Que la tarjeta cuente ideas".
+
+- [ ] **El cambio que entrega la dama no la resta** (revisor de ajedrez,
+      v0.180.1; borde). `entregaLaDama` deja pasar la captura que vale la
+      pena, pero `cambioEn` no descuenta la dama que destapa: en
+      `4qk2/8/4p3/3Q4/8/2N5/8/4R1K1 b`, d5 da neto 8 (exd5 Nxd5, "tu dama por
+      un peón") y en el tablero, con Rxe8+ Kxe8 Nxd5, es 4. No es falso en
+      d5, pero cuenta la mitad.
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 
