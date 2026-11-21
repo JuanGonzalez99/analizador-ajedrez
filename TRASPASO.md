@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.3**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -265,6 +265,53 @@ lo que hay que mirar.
   adentro la corta al medio.** Pasó escribiendo un comentario en el código del
   worker: el error que tira node es `SyntaxError` en una línea que se ve
   perfecta, y no dice nada de comillas.
+
+### El cuarto chequeo: el mono (v0.178.3)
+
+```bash
+npm run mono                       # 12 recorridos, ~10 min
+npm run mono -- --n 3              # una pasada corta, ~2-3 min
+npm run mono -- --semilla 1234     # repetir uno que falló
+npm run mono -- --regla "barra sin trabajo" --html viejo.html
+```
+
+`pruebas/mono.mjs` usa la app al azar —analizar el mes, Parar, tocar filas,
+volver, cambiar de mes, recargar, esperar— con el motor y la red tardando
+desparejo (el motor entre 0 y 25 ms, y uno de cada veinte hasta 400; los
+meses entre 0 y 1,5 s, o sea que llegan fuera de orden), tres motores y la
+mitad de las veces la caché llena. Mientras tanto vigila, cada 50 ms y desde
+adentro de la página, **reglas que tienen que cumplirse siempre**: sin nada
+corriendo no hay barra ni "Analizando"; Analizar y Parar no se ven juntos; el
+conteo no se pasa; el botón "faltan N" coincide con las filas "sin analizar";
+el conteo dice "de N" si el botón decía "faltan N"; la pantalla del inicio no
+salta sola (`layout-shift` ≥ 0,05 sin un toque, un cambio de trabajo o de
+pantalla, ni la lista recién llegada en los 600 ms anteriores); ni errores
+en la consola; y al final, Parar para en 15 s. Una regla rota cuenta si
+sigue rota 300 ms.
+
+**Por qué**: los errores de la v0.175 (la lista empujada al cargar) y la
+v0.178.2 (Parar dejaba la barra andando) vivían entre foto y foto, y el
+arnés de capturas solo recorre el camino feliz. **Se validó contra las dos
+versiones de antes de cada arreglo** y los encontró solo, sin decirle dónde
+mirar: "barra sin trabajo", "analizando sin trabajo" y "conteo vs botón" en la
+de antes de la v0.178.2; "pantalla que salta" (0,078, `zonaPartidas`) en la de
+antes de la v0.175, que necesita la caché llena. En la primera corrida sobre la
+versión de hoy encontró uno nuevo, arreglado en la v0.178.3: al cambiar de mes
+quedaba el botón del mes anterior mientras decía "Cargando…".
+
+**La app es un módulo**, así que el mono no ve `OCUPADO` ni `PREC`: todo se
+lee de la pantalla (ocupado ⇔ Parar sin `.oculto`; la vista, por las clases
+del body). Es a propósito: lo que importa es lo que se ve.
+
+**Cuánto cuesta**: en tokens, casi nada —imprime una línea si todo está bien
+y tres por cada regla rota—; en tiempo, ~45 s por recorrido. No va en
+`npm test` por eso. La semilla repite el recorrido casi igual pero no byte a
+byte: el reloj de verdad mete ruido.
+
+**Cuando aparece un error que el mono no vio**, la pregunta es qué regla
+rompió, y se suma a `REGLAS` en `mono.mjs` con su porqué. Si una regla salta
+sin error de verdad, se ajusta la regla, no se la apaga: el pie que bajaba 19
+px durante "Cargando…" (0,007) es por qué el corte de saltos está en 0,05.
 
 ---
 
@@ -4756,6 +4803,12 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.178.3, el mono, y el botón del mes anterior** (Juan, 21-nov). Llegó
+`pruebas/mono.mjs` (§2, "El cuarto chequeo"). En su primera pasada sobre la
+versión de hoy encontró que `cargarMes` dejaba a la vista el botón del mes que
+se iba ("faltan 12" sobre "Cargando…"), y tocarlo analizaba las partidas
+viejas: ahora llama a `pintarBotonMes()` apenas pone `ESCANEADO = false`.
 
 **v0.178.2, Parar para de verdad, y el conteo es de las que faltan** (Juan,
 20-nov). Dos cosas del mes. (1) Tras Parar, la barra y "Analizando 1 de 40"

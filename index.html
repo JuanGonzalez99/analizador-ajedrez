@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.178.2 · 21-11";
+  window.VERSION = "v0.178.3 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -6682,6 +6682,10 @@ let CARGA = 0;
 async function cargarMes(url) {
   const yo = ++CARGA;
   PREC.clear(); ESCANEADO = false;
+  /* el botón del mes se va mientras carga (v0.178.3, lo encontró el mono):
+     quedaba el del mes anterior, "faltan 12" sobre una lista que decía
+     "Cargando…", y tocarlo analizaba las partidas del mes que ya no se ve */
+  pintarBotonMes();
   $("partidas").innerHTML = "<div>Cargando…</div>";
   $("partidasMarcador").textContent = ""; ver("partidasMarcador", false);
   ver("zonaPartidas", true);

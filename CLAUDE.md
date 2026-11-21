@@ -195,6 +195,11 @@ credencial. Si alguna vez hace falta un PR, se saca el `deny`.
   **En una sesión remota hay que correr `npm install` primero** —el repo se
   clona limpio y Playwright no viene—; son 2 segundos, pero sin eso `mirar`
   explota con `ERR_MODULE_NOT_FOUND` y se pierde una corrida en descubrirlo.
+- `npm run mono` usa la app al azar, con el motor y la red lentos, y vigila
+  reglas que tienen que cumplirse siempre (§2 del traspaso, "El cuarto
+  chequeo"). Tarda ~45 s por recorrido y cuesta una línea de salida: correrlo
+  (`-- --n 3`) después de tocar algo que corre solo —el mes, Parar, la carga,
+  cambiar de pantalla—. Si se escapa un error, se suma la regla que rompió.
 - **Se pushea derecho a `main`, sin rama ni PR**, así que **cada push es un
   deploy en vivo**.
 - **La rama `claude/*` que asigna la sesión se ignora**, no se pregunta por ella
