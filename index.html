@@ -1212,6 +1212,17 @@
     .colLista { display: block; }
     .lateral { display: flex; flex-direction: column; height: calc(100% - var(--e-3)); margin-top: var(--e-3); }
     .lateral .jugadas { flex: 1 1 auto; min-height: 0; max-height: none; }
+    /* CUANDO LA LISTA NO ENTRA, UN FUNDIDO DICE QUE SIGUE (v0.179, lavado de
+       cara del revisor, v0.149): a 1600×900 asomaba media fila cortada contra
+       el borde. Se dibujaron cuatro: hoy, el fundido, la caja a filas enteras
+       (parecía que la partida terminaba ahí, y "‹ ›" dejaba de terminar con la
+       curva) y un pie "▾ 7 jugadas más" (sumaba texto que cambia al scrollear).
+       Eligió el fundido, de 32 (menos de una fila, §1.5), sin transición y
+       solo abajo; `marcarMas()` pone `.hayMas` mientras quede lista abajo, y
+       `--fundido` crece si asoma poco (`fundidoDe`). */
+    .lateral .jugadas.hayMas::after { content: ""; position: sticky; bottom: 0; display: block;
+      height: var(--fundido, 32px); margin-top: calc(-1 * var(--fundido, 32px)); pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--superficie)); }
     /* LA TIRA SE MUDA AL PIE DE LA LISTA (`pintarRevision`, por DOM): con la
        lista a la vista repetía las mismas jugadas, así que queda solo "‹ ›",
        como los botones de chess.com bajo su lista. Los galones del tablero no
@@ -1539,7 +1550,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.178.4 · 21-11";
+  window.VERSION = "v0.179 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -8593,6 +8604,26 @@ function filaDeArranque() {
     evalTexto: ev ? textoEval(ev, turno) : ""
   };
 }
+/* ¿queda lista abajo del borde? Prende el fundido de la compu (v0.179). Sin
+   lista abajo —al final, o con la partida entera a la vista— no va. */
+function marcarMas(lista) {
+  lista.classList.toggle("hayMas", lista.scrollTop + lista.clientHeight < lista.scrollHeight - 1);
+  lista.style.setProperty("--fundido", fundidoDe(lista) + "px");
+}
+/* EL ALTO DEL FUNDIDO DEPENDE DE CUÁNTO ASOMA (revisor, v0.179): el
+   auto-scroll alinea arriba a renglón entero, así que abajo asoma siempre el
+   resto de dividir la caja por la fila. A 1600×900 eran 14 px, que caían en lo
+   más tapado de un fundido de 32 y la lista se leía terminada. Si asoman menos
+   de 20, el fundido toma además la última fila entera, que queda fantasma
+   (legible pero apagada, como a 1366): eso es lo que dice "sigue". Con +20 no
+   alcanzaba: el texto de esa fila cae donde el degradé casi no tapa. */
+function fundidoDe(lista) {
+  const fila = lista.firstElementChild ? lista.firstElementChild.offsetHeight : 0;
+  if (!fila) return 32;
+  const asoma = lista.clientHeight % fila;
+  return asoma < 20 ? asoma + fila : 32;
+}
+
 function pintarRevision() {
   const enInicio = IDX < 0;
   const f = enInicio ? filaDeArranque() : R.filas[IDX];
@@ -9028,17 +9059,26 @@ function pintarRevision() {
     if (sel) {
       const fila = sel.parentElement;
       if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
-      else if (fila.offsetTop + fila.offsetHeight > lista.scrollTop + lista.clientHeight) {
+      else if (fila.offsetTop + fila.offsetHeight + fundidoDe(lista) >
+               lista.scrollTop + lista.clientHeight) {
         /* y que arriba no quede medio renglón (revisor, v0.135): se baja hasta
            el borde del renglón siguiente. Medio renglón abajo se acepta, avisa
            que hay más. */
-        const tope = fila.offsetTop + fila.offsetHeight - lista.clientHeight;
+        /* la elegida queda arriba del fundido (v0.179). La última jugada no
+           pasa por acá: la línea de abajo lleva la lista hasta el fondo. */
+        const tope = fila.offsetTop + fila.offsetHeight + fundidoDe(lista) - lista.clientHeight;
         const borde = [...lista.children].find(d => d.offsetTop >= tope);
         lista.scrollTop = borde ? Math.min(borde.offsetTop, fila.offsetTop) : tope;
       }
     }
     if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
     if (enInicio && !PRUEBA) lista.scrollTop = 0;
+    if (!lista.dataset.mas) {
+      lista.dataset.mas = "1";
+      lista.addEventListener("scroll", () => marcarMas(lista), { passive: true });
+      if (window.ResizeObserver) new ResizeObserver(() => marcarMas(lista)).observe(lista);
+    }
+    marcarMas(lista);
     /* LA LISTA NO PUEDE SER MÁS ALTA QUE LA COLUMNA DE AL LADO (v0.88), y esto
        es lo que paga que la curva cruce las dos columnas. La curva pasó a ser
        una fila propia de la grilla, así que ARRANCA DEBAJO DE LA MÁS ALTA de las

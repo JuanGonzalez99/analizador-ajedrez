@@ -74,8 +74,8 @@ el revisor en "ninguna", se tacha "sin cambio, ver Relleno" y lo que se
 intentó va al final de Relleno: no frena la v1.0.** Lo que se levante mientras
 tanto va a Arreglos o a Relleno, **no acá**.
 
-- [ ] **[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
-      entra entera** (revisor, v0.149; ya estaba). A 1600×900 la lista se
+- [x] ~~**[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
+      entra entera**~~ (hecho en la v0.179: un fundido de 32 abajo) (revisor, v0.149; ya estaba). A 1600×900 la lista se
       corta a mitad de una fila contra el borde de abajo (asoma la 14). Variantes:
       cortar en una fila completa, un fundido, una sombra que diga "hay más".
 - [ ] **[PC] Lavado de cara: la caja vacía de las tres mejores debajo de la
@@ -379,7 +379,17 @@ archiva los que pierden sentido.
       que se sume (los puzzles de lichess de la etapa 5), el link del profe.
       Antes de eso es una pantalla para tres líneas que no se leen nunca.
 
-### Limpieza de código
+- [ ] **[PC] Las filas de la lista sin reloj ni precisión** (revisor, v0.179).
+      Cada media jugada termina en un "·" suelto: 26 puntitos en dos columnas
+      que no dicen nada. ¿Nada, con la columna que se cierra, o un lugar
+      reservado que no parezca un glifo? Con variantes.
+- [ ] **[PC] La barra de evaluación y la curva pesan más que la tarjeta**
+      (revisor, v0.179). En crema casi blanco son lo más luminoso de la
+      pantalla, más que el veredicto (la regla de "la barra de progreso casi
+      blanca", `DISENO.md`). ¿Cuánto tiene que pesar la evaluación? Con
+      variantes; toca el sistema de diseño si cambia el color.
+
+### Limpieza de código### Limpieza de código
 
 - [ ] **Recortar los comentarios de historia del CSS**, en tres noches por
       tramos (renglones 6–500, 500–1000 y el bloque de PC) (revisor de

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.4**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.179**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4803,6 +4803,27 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.179, [PC] el fundido al pie de la lista** (lavado de cara del revisor,
+v0.149; etapa 1). A 1600×900 la lista de jugadas se cortaba a mitad de una
+fila (asomaba la 14). Cuatro variantes dibujadas sobre la app: hoy; un
+fundido; la caja a filas enteras (parecía que la partida terminaba ahí, y
+"‹ ›" dejaba de terminar a la altura de la curva); un pie "▾ 7 jugadas más"
+(texto que cambia al scrollear y le come una fila). El revisor eligió el
+fundido con ajustes: 32 px (menos de una fila), solo abajo, sin transición,
+sin atajar clics, y fuera cuando ya no queda lista abajo. `marcarMas()` pone
+`.hayMas` en `#jugadas` (al pintar, al scrollear y con un `ResizeObserver`), y
+el CSS vive en la media query de la compu (`.lateral .jugadas.hayMas::after`,
+sticky). El auto-scroll de `pintarRevision` deja la elegida 32 por encima del
+borde. **El alto del fundido depende de cuánto asoma** (segunda vuelta del
+revisor): como el auto-scroll alinea arriba a renglón entero, abajo asoma
+siempre el resto de dividir la caja por la fila; a 1600×900 eran 13 px, que
+caían en lo más tapado del degradé y la lista se leía terminada. `fundidoDe()`
+da 32, o lo que asoma más una fila entera si asoman menos de 20 (49 a
+1600×900: la última fila entera queda fantasma; con +20 no se notaba, el texto
+cae donde el degradé casi no tapa), y lo deja en `--fundido`; el auto-scroll
+usa el mismo número. Medido a 1600×900, 1366×768 y 1000×900: la elegida queda a 39–62 del
+fondo (a 1600, desde 49), nunca bajo el fundido. Celu byte a byte.
 
 **v0.178.4, el peón coronado** (Juan, 20-nov, de Arreglos). Con c8=Q Rxc8
 (`3r3k/2P5/8/8/8/8/8/6K1 w`) la tarjeta decía "Tu peón queda comible en c8.
