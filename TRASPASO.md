@@ -279,23 +279,38 @@ npm run mono -- --regla "barra sin trabajo" --html viejo.html
 volver, cambiar de mes, recargar, esperar— con el motor y la red tardando
 desparejo (el motor entre 0 y 25 ms, y uno de cada veinte hasta 400; los
 meses entre 0 y 1,5 s, o sea que llegan fuera de orden), tres motores y la
-mitad de las veces la caché llena. Mientras tanto vigila, cada 50 ms y desde
-adentro de la página, **reglas que tienen que cumplirse siempre**: sin nada
-corriendo no hay barra ni "Analizando"; Analizar y Parar no se ven juntos; el
-conteo no se pasa; el botón "faltan N" coincide con las filas "sin analizar";
-el conteo dice "de N" si el botón decía "faltan N"; la pantalla del inicio no
-salta sola (`layout-shift` ≥ 0,05 sin un toque, un cambio de trabajo o de
-pantalla, ni la lista recién llegada en los 600 ms anteriores); ni errores
-en la consola; y al final, Parar para en 15 s. Una regla rota cuenta si
-sigue rota 300 ms.
+mitad de las veces la caché llena, y el ancho al azar entre 386 y 412.
+Mientras tanto vigila **diez principios que valen para cualquier pantalla**
+(generalizados el 21-nov a pedido de Juan: la primera tanda nombraba la barra
+y el botón del mes, y atajaba un error y su primo):
+
+1. Sin trabajo, nada dice que trabaja (barra, "Analizando", "Cargando…" más de 4 s).
+2. Lo que se repite, cuadra (y un "x de y" nunca se pasa).
+3. Nada se contradice: empezar y Parar no se ofrecen juntos.
+4. Sin trabajo, nada se mueve solo (`layout-shift` ≥ 0,05, en todas las pantallas).
+5. Nada se sale del ancho.
+6. Todo lo que se toca responde (algo cambia en 1,5 s).
+7. Ir y volver no cambia nada (sin las precisiones si en el medio corrió algo).
+8. Recargar no pierde nada (con las precisiones).
+9. Todo trabajo termina, y Parar para en 15 s.
+10. Ningún error en la consola.
+
+Lo específico de la app queda en dos listas chicas de `mono.mjs`: `EN_CURSO`
+(las palabras con que dice que trabaja) y `CUADRAN` (los números que se
+repiten en dos lugares: faltan/sin analizar, el recuento y las filas,
+ganadas + tablas + perdidas). Una pantalla nueva entra sola a casi todo; si
+dice "Bajando…" o repite un número, se suma a la lista. Una regla rota
+cuenta si sigue rota 300 ms (o su plazo). "Trabajo" es Parar a la vista, y se
+cuenta con el valor viejo de cada cambio de clase: una partida de la caché lo
+prende y apaga en el mismo instante y mirando el estado no se veía.
 
 **Por qué**: los errores de la v0.175 (la lista empujada al cargar) y la
 v0.178.2 (Parar dejaba la barra andando) vivían entre foto y foto, y el
 arnés de capturas solo recorre el camino feliz. **Se validó contra las dos
 versiones de antes de cada arreglo** y los encontró solo, sin decirle dónde
-mirar: "barra sin trabajo", "analizando sin trabajo" y "conteo vs botón" en la
-de antes de la v0.178.2; "pantalla que salta" (0,078, `zonaPartidas`) en la de
-antes de la v0.175, que necesita la caché llena. En la primera corrida sobre la
+mirar: la barra y "Analizando" sin trabajo y "conteo vs botón" en la de antes
+de la v0.178.2; "se mueve solo" (0,078, `zonaPartidas`) en la de antes de la
+v0.175, en 8 de 10 recorridos con los principios generales. En la primera corrida sobre la
 versión de hoy encontró uno nuevo, arreglado en la v0.178.3: al cambiar de mes
 quedaba el botón del mes anterior mientras decía "Cargando…".
 
@@ -305,7 +320,8 @@ del body). Es a propósito: lo que importa es lo que se ve.
 
 **Cuánto cuesta**: en tokens, casi nada —imprime una línea si todo está bien
 y tres por cada regla rota—; en tiempo, ~45 s por recorrido. No va en
-`npm test` por eso. La semilla repite el recorrido casi igual pero no byte a
+`npm test` por eso: se corre una pasada corta después de tocar algo que corre
+solo, y **los miércoles la tarea nocturna corre 30** (`TAREA-NOCTURNA.md`). La semilla repite el recorrido casi igual pero no byte a
 byte: el reloj de verdad mete ruido.
 
 **Cuando aparece un error que el mono no vio**, la pregunta es qué regla

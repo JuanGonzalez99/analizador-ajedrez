@@ -43,7 +43,7 @@ const PASOS = +arg("pasos", 22);
 /* --regla "nombre": mira solo esa (las otras no cortan el recorrido). Sirve
    para validar una regla contra una versión vieja que rompe varias. */
 const SOLO = arg("regla", null);
-const PUERTO = 8097;
+const PUERTO = +arg("puerto", 8097);
 
 /* ---------- azar con semilla (mulberry32) ---------- */
 const azar = s => () => {
@@ -107,9 +107,29 @@ const srv = http.createServer((req, res) => {
 await new Promise(r => srv.listen(PUERTO, r));
 
 /* ---------- las reglas que se miran todo el tiempo ----------
+   SON PRINCIPIOS, NO CASOS (v0.180). La primera tanda (v0.178.3) nombraba
+   cosas de la app —la barra, "Analizando", el botón del mes— y por eso cada
+   regla atajaba un error y su primo. Ahora cada una es un principio que vale
+   para cualquier pantalla, y lo específico de la app queda en dos listas
+   chicas: qué palabras dicen "estoy trabajando" (EN_CURSO) y qué números se
+   repiten en dos lugares (CUADRAN). Una pantalla nueva entra sola a casi
+   todas; si dice "Bajando…" o repite un número, se suma a la lista.
+
+   Los principios, y cuáles miran desde afuera (en el recorrido, más abajo):
+   1. Sin trabajo, nada dice que trabaja.          (adentro)
+   2. Lo que se repite, cuadra.                     (adentro, y el conteo vs el botón afuera)
+   3. Nada se contradice: empezar y parar no se ofrecen juntos. (adentro)
+   4. Sin trabajo, nada se mueve solo.              (adentro, todas las pantallas)
+   5. Nada se sale del ancho.                       (adentro; el ancho va al azar entre 386 y 412)
+   6. Todo lo que se toca responde.                 (afuera)
+   7. Ir y volver no cambia nada.                   (afuera)
+   8. Recargar no pierde nada.                      (afuera)
+   9. Todo trabajo termina, y Parar para.           (afuera)
+   10. Ningún error en la consola.                  (afuera)
+
    Corren ADENTRO de la página cada 50 ms. Una regla rota cuenta recién si
-   sigue rota 300 ms: entre dos líneas de código la pantalla puede estar a
-   medio pintar y eso no es un error. Cada una devuelve un texto si está rota. */
+   sigue rota un rato (300 ms, o lo que diga): entre dos líneas de código la
+   pantalla puede estar a medio pintar y eso no es un error. */
 const VIGIA = () => {
   /* la app es un módulo: su estado no se ve desde afuera, así que todo se lee
      de la pantalla, que es además lo que importa */
@@ -121,26 +141,74 @@ const VIGIA = () => {
   const vista = () => document.body.classList.contains("enPartida") ? "partida"
     : document.body.classList.contains("enVista") ? "mes" : "inicio";
   window.__vista = vista;
-  const REGLAS = {
-    /* Parar (v0.178.2): sin nada corriendo, la barra no está */
-    "barra sin trabajo": () => !ocupado() && !$("barra").classList.contains("oculto") && "la barra se ve sin nada corriendo",
-    /* ni el estado dice que está analizando */
-    "analizando sin trabajo": () => !ocupado() && /Analizando/.test(texto("estado") + texto("revEstado")) && `el estado dice "${texto("estado") || texto("revEstado")}" sin nada corriendo`,
-    /* o se analiza o se ofrece analizar, nunca las dos */
-    "analizar y parar a la vez": () => vis("analizarMes") && vis("detener") && "se ven a la vez Analizar el mes y Parar",
-    /* el conteo no se pasa del total */
-    "conteo pasado": () => { const m = texto("estado").match(/Analizando (\d+) de (\d+)/); return m && +m[1] > +m[2] && `dice "${m[0]}"`; },
-    /* el botón y la lista cuentan lo mismo */
-    "botón vs lista": () => {
+  /* el texto que se VE (innerText ignora lo oculto), de la pantalla entera */
+  const visible = () => document.body.innerText;
+
+  /* LAS DOS LISTAS DE LA APP. EN_CURSO: las palabras con las que la app dice
+     que está haciendo algo. "Cargando…" no va con Parar (cargar un mes no es
+     `ocupado`), así que tiene su propio plazo: la red falsa tarda hasta 1,5 s. */
+  const EN_CURSO = [
+    { re: /Analizando|Levantando el motor|Deteniendo|Juntando/, plazo: 300 },
+    { re: /Cargando…|Pensando…/, plazo: 4000 },
+  ];
+  /* CUADRAN: dos lugares que dicen el mismo número. Cada uno devuelve
+     [lo que dice uno, lo que dice el otro, de qué se trata] o null si hoy no
+     se ve. */
+  const filas = () => [...document.querySelectorAll("#partidas div[data-i]")];
+  const CUADRAN = [
+    /* el botón "faltan N" y las filas "sin analizar" (v0.178.3) */
+    () => {
       const m = texto("analizarMes").match(/faltan (\d+)/);
-      if (!m || $("analizarMes").classList.contains("oculto") || vista() !== "inicio") return false;
-      const f = [...document.querySelectorAll("#partidas div[data-i]")].filter(d => /sin analizar/.test(d.textContent)).length;
-      return +m[1] !== f && `el botón dice faltan ${m[1]} y la lista tiene ${f} sin analizar`;
+      if (!m || !vis("analizarMes") || vista() !== "inicio") return null;
+      return [+m[1], filas().filter(d => /sin analizar/.test(d.textContent)).length, "faltan del botón y filas sin analizar"];
+    },
+    /* el recuento "40 partidas · …" y las filas de la lista */
+    () => {
+      const m = texto("partidasMarcador").match(/(\d+) partidas?/);
+      if (!m || vista() !== "inicio" || !filas().length) return null;
+      return [+m[1], filas().length, "partidas del recuento y filas de la lista"];
+    },
+    /* ganadas + tablas + perdidas = partidas, en el mismo renglón */
+    () => {
+      const t = texto("partidasMarcador");
+      const n = (t.match(/(\d+) partidas?/) || [])[1];
+      const g = (t.match(/(\d+) ganadas?/) || [])[1], e = (t.match(/(\d+) tablas?/) || [])[1], p = (t.match(/(\d+) perdidas?/) || [])[1];
+      if (n == null || g == null || p == null || vista() !== "inicio") return null;
+      return [+n, +g + +(e || 0) + +p, "partidas del recuento y ganadas + tablas + perdidas"];
+    },
+  ];
+
+  const REGLAS = {
+    /* 1. SIN TRABAJO, NADA DICE QUE TRABAJA. Atajó el de Parar (v0.178.2): la
+       barra y "Analizando 1 de 40" seguían con todo quieto. Con el plazo largo
+       ataja además una carga que se cuelga en "Cargando…". */
+    "dice que trabaja sin trabajo": () => {
+      if (ocupado()) return false;
+      if (!$("barra").classList.contains("oculto")) return "la barra de progreso se ve sin nada corriendo";
+      const t = visible();
+      for (const { re, plazo } of EN_CURSO) { const m = t.match(re); if (m) return { que: `dice "${m[0]}" sin nada corriendo`, plazo, clave: re.source }; }
+      return false;
+    },
+    /* 2. LO QUE SE REPITE, CUADRA, y un "x de y" nunca se pasa */
+    "no cuadra": () => {
+      for (const f of CUADRAN) { const r = f(); if (r && r[0] !== r[1]) return { que: `${r[2]}: ${r[0]} contra ${r[1]}`, clave: r[2] }; }
+      const m = visible().match(/(\d+) de (\d+)/g) || [];
+      for (const x of m) { const [, a, b] = x.match(/(\d+) de (\d+)/); if (+a > +b) return { que: `dice "${x}"`, clave: "x de y" }; }
+      return false;
+    },
+    /* 3. NADA SE CONTRADICE: se ofrece empezar o parar, no las dos */
+    "se contradice": () => ocupado() && ["analizarMes", "seguirMes"].some(vis) && "ofrece empezar y Parar a la vez",
+    /* 5. NADA SE SALE DEL ANCHO: sin scroll de costado */
+    "se sale del ancho": () => {
+      const d = document.scrollingElement;
+      return d.scrollWidth > innerWidth + 1 && { que: `la página mide ${d.scrollWidth} de ancho en ${innerWidth}`, plazo: 500 };
     },
   };
   const desde = {};
   window.__rotas = [];
   window.__marca = 0;   /* la última vez que el mono tocó algo, o que empezó/terminó un trabajo */
+  window.__mut = 0;     /* cuántos cambios hubo en la pantalla: para "todo lo que se toca responde" */
+  window.__trabajo = 0; /* cuántas veces empezó un trabajo: "ir y volver" solo compara si no corrió nada */
   let ocupadoAntes = null, vistaAntes = null, listaAntes = null;
   /* también cuenta como un cambio que se espera que la lista APAREZCA (de
      "Cargando…" a las filas): lo de abajo se corre porque llegó, y eso está
@@ -153,7 +221,15 @@ const VIGIA = () => {
       window.__marca = performance.now(); ocupadoAntes = o; vistaAntes = v; listaAntes = l;
     }
   };
-  new MutationObserver(mirarCambio).observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ["class"] });
+  /* un trabajo empezó cada vez que Parar dejó de estar oculto. Se cuenta con
+     el valor viejo de cada cambio y no mirando cómo quedó: una partida que
+     sale de la caché prende y apaga Parar en el mismo instante, y mirando el
+     estado no se veía (y "ir y volver" acusaba una precisión que sí llegó) */
+  new MutationObserver(ms => {
+    window.__mut += ms.length;
+    for (const m of ms) if (m.target.id === "detener" && m.attributeName === "class" && /oculto/.test(m.oldValue || "")) window.__trabajo++;
+    mirarCambio();
+  }).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeOldValue: true });
   setInterval(() => {
     const ahora = performance.now();
     mirarCambio();
@@ -161,26 +237,29 @@ const VIGIA = () => {
       let r = false;
       try { r = regla(); } catch (e) { r = false; }
       if (!r) { delete desde[nombre]; continue; }
-      desde[nombre] = desde[nombre] || ahora;
-      if (ahora - desde[nombre] >= 300 && !window.__rotas.some(x => x.regla === nombre)) window.__rotas.push({ regla: nombre, que: r, t: ahora });
+      if (typeof r === "string") r = { que: r };
+      const k = nombre + "|" + (r.clave || "");
+      if (desde[nombre] && desde[nombre].k !== k) delete desde[nombre];
+      desde[nombre] = desde[nombre] || { t: ahora, k };
+      if (ahora - desde[nombre].t >= (r.plazo || 300) && !window.__rotas.some(x => x.regla === nombre)) window.__rotas.push({ regla: nombre, que: r.que, t: ahora });
     }
   }, 50);
-  /* LA PANTALLA NO SE MUEVE SOLA (v0.175): un salto de lo que se ve sin que
-     el usuario haya tocado nada en los últimos 600 ms, ni haya empezado o
-     terminado un trabajo, ni cambiado de pantalla. Es el `layout-shift` del
-     navegador, el mismo que mide el CLS. Solo en el inicio: en el Mes y la
-     Partida los números llegan mientras se analiza y eso es lo que se espera.
+  /* 4. SIN TRABAJO, NADA SE MUEVE SOLO (v0.175): un salto de lo que se ve
+     sin un toque en los últimos 600 ms, ni un trabajo que empiece o termine,
+     ni un cambio de pantalla. Es el `layout-shift` del navegador, el mismo
+     que mide el CLS. En todas las pantallas, pero solo sin trabajo: mientras
+     se analiza, en el Mes y la Partida los números llegan y eso se espera.
      Desde 0,05 (la mitad de lo que el navegador llama "bueno" para toda una
      visita): el pie que baja 19 px mientras dice "Cargando…" da 0,007 y no es
-     lo que se busca; la lista empujada de la v0.175 da bastante más. */
+     lo que se busca; la lista empujada de la v0.175 da 0,078. */
   try {
     new PerformanceObserver(l => {
       for (const e of l.getEntries()) {
-        if (e.value < 0.05 || vista() !== "inicio") continue;
+        if (e.value < 0.05 || ocupado()) continue;
         if (performance.now() - window.__marca < 600) continue;
         const quien = (e.sources || []).map(s => s.node && (s.node.id || s.node.className || s.node.nodeName)).filter(Boolean).slice(0, 3).join(", ");
-        if (!window.__rotas.some(x => x.regla === "pantalla que salta"))
-          window.__rotas.push({ regla: "pantalla que salta", que: `se movió solo (${quien || "?"}), ${e.value.toFixed(3)}`, t: performance.now() });
+        if (!window.__rotas.some(x => x.regla === "se mueve solo"))
+          window.__rotas.push({ regla: "se mueve solo", que: `en ${vista()} se movió (${quien || "?"}), ${e.value.toFixed(3)}`, t: performance.now() });
       }
     }).observe({ type: "layout-shift", buffered: false });
   } catch (e) { /* sin layout-shift */ }
@@ -200,16 +279,35 @@ const ACCIONES = [
   { nombre: "esperar", peso: 2, esperar: true },
 ];
 
+/* la primera diferencia entre dos firmas, en una línea */
+function resumir(a, b) {
+  const A = JSON.parse(a), B = JSON.parse(b);
+  for (const k of Object.keys(A)) {
+    const x = JSON.stringify(A[k]), y = JSON.stringify(B[k]);
+    if (x === y) continue;
+    if (Array.isArray(A[k])) {
+      const i = A[k].findIndex((v, j) => v !== B[k][j]);
+      return `${k}[${i + 1}]: "${A[k][i]}" → "${B[k][i]}"`;
+    }
+    return `${k}: "${A[k]}" → "${B[k]}"`;
+  }
+  return "?";
+}
+
 async function recorrido(sem, nav) {
   const r = azar(sem);
   RED = azar(sem ^ 0x9e3779b9);
   MOTOR = motor(sem);
-  const ctx = await nav.newContext({ viewport: { width: 412, height: 760 } });
+  /* el ancho, al azar entre el del celu de Juan (386) y el de las capturas (412) */
+  const ancho = 386 + Math.floor(r() * 27);
+  const ctx = await nav.newContext({ viewport: { width: ancho, height: 760 } });
   /* tres motores, como un celu de cuatro núcleos */
-  await ctx.addInitScript(() => {
+  /* el usuario es el que juega con blancas en la partida de prueba: con otro,
+     las filas dicen "X vs Y · analizada" y la precisión no se ve nunca */
+  await ctx.addInitScript(u => {
     Object.defineProperty(navigator, "hardwareConcurrency", { get: () => 4 });
-    try { localStorage.setItem("usuario", "Blancas"); } catch (e) { /* nada */ }
-  });
+    try { localStorage.setItem("usuario", u); } catch (e) { /* nada */ }
+  }, P.cabPgn("White", "Blancas"));
   await ctx.addInitScript(`window.addEventListener("load", ${VIGIA.toString()});`);
   /* chess.com: la lista de meses, también con demora */
   await ctx.route("https://api.chess.com/**", ro => setTimeout(() =>
@@ -221,6 +319,7 @@ async function recorrido(sem, nav) {
   const rotas = [];
   const push0 = rotas.push.bind(rotas);
   rotas.push = x => (SOLO && x.regla !== SOLO) ? rotas.length : push0(x);
+  /* 10. NINGÚN ERROR EN LA CONSOLA */
   pg.on("pageerror", e => rotas.push({ regla: "error de la página", que: e.message }));
   pg.on("console", m => { if (m.type() === "error" && !/favicon|404/.test(m.text())) rotas.push({ regla: "error en la consola", que: m.text().slice(0, 160) }); });
 
@@ -229,6 +328,24 @@ async function recorrido(sem, nav) {
     try { for (const x of await pg.evaluate(() => window.__rotas || [])) if (!rotas.some(y => y.regla === x.regla)) rotas.push(x); } catch (e) { /* recargando */ }
   };
   const marcar = () => pg.evaluate(() => { window.__marca = performance.now(); }).catch(() => {});
+  const leer = (f, x) => pg.evaluate(f, x).catch(() => null);
+  /* LA FIRMA DEL INICIO: lo que dice la lista, el recuento, el botón y el mes.
+     Es lo que "ir y volver" y "recargar" comparan. `sinPrec` borra las
+     precisiones, para cuando en el medio corrió un análisis (que sí las cambia). */
+  const firma = sinPrec => leer(sp => {
+    const $ = id => document.getElementById(id);
+    if (document.body.classList.contains("enVista")) return null;
+    const filas = [...document.querySelectorAll("#partidas div[data-i]")].map(d => d.innerText.replace(/\s+/g, " ").trim());
+    if (!filas.length) return null;
+    const limpiar = t => sp ? t.replace(/sin analizar|analizada|prec\. \d+|solo libro/g, "·") : t;
+    const boton = $("analizarMes").classList.contains("oculto") ? "" : $("analizarMes").textContent;
+    return JSON.stringify({ filas: filas.map(limpiar), recuento: $("partidasMarcador").textContent,
+                            boton: sp ? "" : boton, mes: $("meses").value });
+  }, sinPrec);
+  const quieto = () => leer(() => document.getElementById("detener").classList.contains("oculto"));
+  const ultimoMes = API["/api/archives"].archives.at(-1);
+  /* lo de "ir y volver": la firma al salir del inicio, y cuántos trabajos iban */
+  let alSalir = null;
 
   await pg.goto(`http://localhost:${PUERTO}/index.html`);
   anotar("abrir (con usuario guardado)");
@@ -261,8 +378,27 @@ async function recorrido(sem, nav) {
     for (const p of posibles) { x -= p.peso; if (x <= 0) { a = p; break; } }
     try {
       if (a.esperar) { const ms = 300 + r() * 4000; anotar(`esperar ${Math.round(ms)} ms`); await pg.waitForTimeout(ms); continue; }
-      if (a.recargar) { await juntar(); anotar("recargar"); await pg.reload(); continue; }
+      if (a.recargar) {
+        await juntar();
+        /* 8. RECARGAR NO PIERDE NADA: con todo quieto, en el inicio y en el
+           último mes (que es el que abre la app), lo que se ve después de
+           recargar es lo mismo que antes. Con las precisiones incluidas. */
+        const antes = (await quieto()) ? await firma(false) : null;
+        anotar("recargar"); await pg.reload(); alSalir = null;
+        if (antes && JSON.parse(antes).mes === ultimoMes) {
+          const ok = await pg.waitForFunction(() => document.querySelector("#partidas div[data-i]") && !/Cargando/.test(document.body.innerText), null, { timeout: 8000 }).then(() => true).catch(() => false);
+          await pg.waitForTimeout(1500);
+          const despues = ok && (await quieto()) ? await firma(false) : null;
+          if (despues && despues !== antes) rotas.push({ regla: "recargar pierde", que: `antes ${resumir(antes, despues)}` });
+        }
+        continue;
+      }
       await marcar();
+      const mut0 = await leer(() => window.__mut);
+      const vista0 = await leer(() => window.__vista());
+      /* 7. IR Y VOLVER: la firma al irse del inicio con todo quieto */
+      if (vista0 === "inicio" && !a.mes && (await quieto()))
+        alSalir = { firma: await firma(false), libre: await firma(true), trabajo: await leer(() => window.__trabajo) };
       if (a.mes) {
         const ops = await pg.locator("#meses option").evaluateAll(os => os.map(o => o.value));
         const v = ops[Math.floor(r() * ops.length)];
@@ -282,6 +418,20 @@ async function recorrido(sem, nav) {
         await pg.click(a.sel, { timeout: 2000 });
       }
       await marcar();
+      /* 6. TODO LO QUE SE TOCA RESPONDE: algo cambia en la pantalla en 1,5 s */
+      const respondio = await pg.waitForFunction(m => window.__mut !== m, mut0, { timeout: 1500 }).then(() => true).catch(() => false);
+      if (!respondio && mut0 != null) rotas.push({ regla: "no responde", que: `tocar "${a.nombre}" no cambió nada en 1,5 s` });
+      /* 7. IR Y VOLVER NO CAMBIA NADA: de vuelta en el inicio, la misma firma.
+         Si en el medio corrió un trabajo, sin las precisiones (eso sí cambia). */
+      if (alSalir && vista0 !== "inicio" && (await leer(() => window.__vista())) === "inicio") {
+        await pg.waitForTimeout(600);
+        const corrio = (await leer(() => window.__trabajo)) !== alSalir.trabajo;
+        const ahora = await firma(corrio);
+        const antes = corrio ? alSalir.libre : alSalir.firma;
+        if (ahora && antes && ahora !== antes && (await quieto()))
+          rotas.push({ regla: "ir y volver cambia", que: resumir(antes, ahora) + (process.env.DEPURAR ? ` [trabajos ${alSalir.trabajo}→${await leer(() => window.__trabajo)}]` : "") });
+        alSalir = null;
+      }
       /* el conteo cierra con el botón (v0.178.2): se mira al primer "Analizando" */
       if (prometio != null) {
         const m = await pg.waitForFunction(() => (document.getElementById("estado").textContent.match(/Analizando \d+ de (\d+)/) || [])[1], null, { timeout: 3000 })
@@ -300,6 +450,7 @@ async function recorrido(sem, nav) {
     await juntar();
     if (await pg.locator("#detener").isVisible().catch(() => false)) { anotar("parar (cierre)"); await pg.click("#detener").catch(() => {}); }
     const quieto = await pg.waitForFunction(() => document.getElementById("detener").classList.contains("oculto"), null, { timeout: 15000 }).then(() => true).catch(() => false);
+    /* 9. TODO TRABAJO TERMINA, Y PARAR PARA */
     if (!quieto) rotas.push({ regla: "no para", que: "15 s después de Parar sigue ocupado" });
     await pg.waitForTimeout(1200);   /* lo que llegue tarde, como en el error de Parar */
     await juntar();

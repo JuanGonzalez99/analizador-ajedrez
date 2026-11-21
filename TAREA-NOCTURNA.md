@@ -47,6 +47,14 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    nuevo" de la hoja); actualizá en la perilla qué zona sigue. En el
    resumen de la mañana, una línea sin jerga ("Lo que vio el revisor de
    código"). No edita nada ni cuenta como ítem de la noche.
+   **Y los miércoles, también: la tanda larga del mono** (decisión de Juan,
+   21-nov-2026). `npm run mono -- --n 30` (~25 min, en segundo plano mientras
+   se trabaja). Si no rompe nada, una línea en el resumen ("El mono: 30
+   recorridos, nada roto"). Si rompe una regla, la falla entra a "Arreglos"
+   de `HOJA-DE-RUTA.md` con la regla, la semilla y los pasos, y va al resumen
+   en una línea sin jerga. Si la regla saltó sin un error de verdad, se
+   ajusta la regla esa misma noche (§2 del traspaso, "El cuarto chequeo"). No
+   cuenta como ítem de la noche.
    **Los sábados: la revisión de rumbo** (decisión de Juan, 20-nov-2026).
    Lanzá el agente `revisor-rumbo` (`.claude/agents/revisor-rumbo.md`).
    Aplicá los cambios que devuelva en un commit propio, antes de elegir el
