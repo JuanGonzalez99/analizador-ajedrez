@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.178.1 · 20-11";
+  window.VERSION = "v0.178.2 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2958,21 +2958,32 @@ async function repartir(items, obreros, tarea, onProg, opc) {
   const n = Math.max(1, Math.min(obreros.length, items.length));
   const usados = obreros.slice(0, n);
   let hechas = 0;
-  const anotar = () => { hechas++; if (onProg) onProg(hechas, items.length); };
+  /* CUANDO UNO FALLA, LOS DEMÁS SE CALLAN (v0.178.2). `Promise.all` corta con
+     el primer error —el "cancelado" de Parar—, pero los otros motores terminan
+     la posición que tenían en la mano y seguían avisando el progreso DESPUÉS
+     de `ocupado(false)`: la barra volvía a aparecer y el estado quedaba en
+     "Analizando 1 de 40" con el botón ya a la vista (Juan, 20-nov-2026). */
+  let roto = false;
+  const hacer = async (o, i) => {
+    try { res[i] = await tarea(o, items[i], i); }
+    catch (e) { roto = true; throw e; }
+    if (roto) return;
+    hechas++; if (onProg) onProg(hechas, items.length);
+  };
 
   if (opc && opc.bloques) {
     const tam = Math.ceil(items.length / n);
     await Promise.all(usados.map(async (o, k) => {
       const fin = Math.min(items.length, (k + 1) * tam);
-      for (let i = k * tam; i < fin; i++) { res[i] = await tarea(o, items[i], i); anotar(); }
+      for (let i = k * tam; i < fin && !roto; i++) await hacer(o, i);
     }));
   } else {
     let sig = 0;
     await Promise.all(usados.map(async o => {
-      for (;;) {
+      while (!roto) {
         const i = sig++;
         if (i >= items.length) return;
-        res[i] = await tarea(o, items[i], i); anotar();
+        await hacer(o, i);
       }
     }));
   }
@@ -6947,19 +6958,29 @@ async function correrMes(desdeCero, soloCache) {
   const hasta = soloCache ? PARTIDAS.length : Math.min(PARTIDAS.length, desde + TOPE_MES);
   const t0 = performance.now();
   window.LOG.add("·", `mes: partidas ${desde + 1} a ${hasta} a profundidad ${prof}`);
+  /* EL CONTEO ES DE LAS QUE FALTAN, no de las del mes (v0.178.2): con el botón
+     diciendo "faltan 8", "Analizando 1 de 40" no cerraba (Juan). Las que ya
+     están en la caché pasan al toque y no cuentan ni mueven la barra; si no
+     falta ninguna (las estadísticas desde la caché), se cuenta todo. */
+  const yaEsta = g => PREC.has(idPartida(g));
+  const pend = PARTIDAS.slice(desde, hasta).filter(g => !yaEsta(g)).length;
+  const deTodas = soloCache || !pend;
+  const total = deTodas ? hasta - desde : pend;
+  let n = 0;
 
   try {
     for (let i = desde; i < hasta; i++) {
       if (CANCELAR) break;
       const g = PARTIDAS[i];
-      if (soloCache && !PREC.has(idPartida(g))) { MES.hechas = i + 1; continue; }
+      if (soloCache && !yaEsta(g)) { MES.hechas = i + 1; continue; }
+      const cuenta = deTodas || !yaEsta(g);
+      const base = n;
+      if (cuenta) { n++; estado(`Analizando ${n} de ${total}`); }
       const tp = performance.now();
-      estado(`Analizando ${i + 1} de ${hasta}`);
       let r = null;
       try {
-        r = await analizarPartida(g.pgn, prof, idPartida(g), (hechas, total) => {
-          estado(`Analizando ${i + 1} de ${hasta}`);
-          progreso((i - desde + hechas / total) / (hasta - desde));
+        r = await analizarPartida(g.pgn, prof, idPartida(g), (hechas, t) => {
+          if (cuenta) progreso((base + hechas / t) / total);
         }, opcionesDePantalla());
       } catch (e) {
         if (CANCELAR) break;
@@ -6973,7 +6994,7 @@ async function correrMes(desdeCero, soloCache) {
           `${Math.round(performance.now() - tp)} ms${r.deCache ? " (de caché)" : ""}`);
       }
       MES.hechas = i + 1;
-      progreso((i - desde + 1) / (hasta - desde));
+      progreso(n / total);
       pintarMes(prof);
       HAY.mes = true;
       if (!fui) { fui = true; irAPantalla("mes"); } else mostrarVista();

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4756,6 +4756,17 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.178.2, Parar para de verdad, y el conteo es de las que faltan** (Juan,
+20-nov). Dos cosas del mes. (1) Tras Parar, la barra y "Analizando 1 de 40"
+volvían con el botón ya a la vista: `Promise.all` de `repartir` corta con el
+primer "cancelado", pero los otros motores terminaban su posición y seguían
+llamando a `onProg` después de `ocupado(false)`. Ahora `repartir` tiene un
+`roto`: con el primer error nadie más avisa ni toma posiciones nuevas. Vale
+para la partida suelta también. (2) `correrMes` contaba sobre todas las del
+tramo ("1 de 40") cuando el botón decía "faltan 8"; ahora cuenta y mueve la
+barra solo con las que no están en `PREC`, y las de la caché pasan calladas.
+Si no falta ninguna (estadísticas desde la caché), cuenta todo como antes.
 
 **v0.178.1, el cambio sin nada del rival no se dice** (Juan, 20-nov). La
 v0.178 decía "queda comible" cuando del rival no se iba nada en el cambio, y
