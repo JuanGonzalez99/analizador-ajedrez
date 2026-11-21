@@ -16,7 +16,7 @@ Tampoco es un producto público: cada push a main es deploy en vivo, y está bie
 
 ## Módulos
 
-Cinco módulos, con una regla común: nada de topes diarios. El orden en que se arman está sin definir.
+Cinco módulos, con una regla común: nada de topes diarios. El orden está en `HOJA-DE-RUTA.md`; el primero es Posiciones (20-nov-2026).
 
 | Módulo | Qué hace | Referencia |
 | --- | --- | --- |
@@ -57,6 +57,4 @@ Juan es el director: define hacia dónde va y decide lo grande. Claude planifica
 
 ## Abierto
 
-- [x] Qué módulo va primero: **Posiciones** (reordenamiento del 20-nov-2026, después de cerrar la etapa visual con la v1.0 y de partir index.html).
 - [ ] Análisis automático, con dos caminos sin decidir. Uno: un proceso que corre afuera (tipo acción de GitHub), analiza y le pasa los resultados a la app, sin tocar el resto del stack. Otro: la app nativa, que resuelve que el navegador suspenda la pestaña pero cambia todo el stack; el repo la marca como proyecto aparte.
-- [x] Partir index.html: se hace (Juan lo dejó a criterio de Claude, 20-nov-2026), sola en su tanda, después de la v1.0 y antes de Posiciones: cada módulo nuevo lo agranda.

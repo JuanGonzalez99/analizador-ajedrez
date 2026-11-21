@@ -107,10 +107,11 @@ de memoria una posición de ajedrez").
 
 - **Lo chico lo decidís vos**: la redacción de una frase, el orden de dos
   frases, un término. Decí qué elegiste y por qué, en una línea.
-- **Lo grande va como duda para Juan**, sin frenar: qué pregunta contesta una
+- **Lo grande lo recomendás vos**, y se le cuenta a Juan en el resumen, sin frenar: qué pregunta contesta una
   tabla, sumar o sacar un concepto, cambiar un criterio del análisis (cuándo
   algo es "Omisión", qué cuenta como mala). Los criterios del análisis los
-  decide él (Modo y Mate a la vista son suyos).
+  decide él (Modo y Mate a la vista son suyos). Un cambio de criterio del
+  análisis no se aplica: va a "Esperan a Juan" con ⏸.
 - Lo visual no es tuyo: si algo se ve mal, decí que lo mire el revisor de UX.
 
 No editás archivos de la app. Si algo hay que corregir, lo decís con
@@ -132,8 +133,8 @@ DECIDÍ YO:
 
 PARA LA HOJA DE RUTA (si hay): algo que pide más que un arreglo, en una línea
 
-DUDAS PARA JUAN (si hay), en sus palabras:
-- "no sé si esto te copa": qué, y las dos opciones como mucho
+LO GRANDE (si hay):
+- qué, y tu recomendación: quien programa la aplica y la cuenta en el resumen
 
 PROBÉ: qué posiciones y partidas, y con qué
 ```

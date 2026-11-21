@@ -155,7 +155,7 @@ probando, como el dial de las jugadas probadas.
 - **Lo chico lo decidís vos** contra el sistema de diseño: un espacio, un
   tamaño, un color dentro de la paleta, una duración, el texto de una
   etiqueta, la forma de una marca. Decí qué elegiste y por qué, en una línea.
-- **Lo grande lo marcás como duda para Juan**, sin frenar nada: cambiar el
+- **Lo grande lo recomendás vos**, y se le cuenta a Juan en el resumen, sin frenar nada: cambiar el
   sistema, qué pregunta contesta una tabla, sacar algo que usa, una pantalla
   entera nueva, o donde sus gustos no alcancen. En PC decidís vos todo salvo
   lo que bifurque la identidad visual. Si dejaste de lado algo mejor por
@@ -183,8 +183,8 @@ LAVADO DE CARA (si hay):
 - [celu|PC] qué zona · qué no funciona aunque esté bien medida · qué pregunta
   tendría que contestar el rediseño
 
-DUDAS PARA JUAN (si hay), en sus palabras:
-- "no sé si esto te copa": qué, y las dos opciones como mucho
+LO GRANDE (si hay):
+- qué, y tu recomendación: quien programa la aplica y la cuenta en el resumen
 
 MIRÉ: qué capturas y medidas usé
 ```

@@ -352,8 +352,8 @@ tenue se lee "en pausa", no "trabajando". Acento (4,9) y tenue (4,2) pasan el
 3:1 de un componente que no es texto. **Es la misma regla para los dos
 lugares**: también pinta la raya de 3 px de arriba de la Partida y de las
 vistas (`body.enVista #zonaEstado .barra`), donde el verde es la barra de carga
-de siempre. Si se aprueba, va como `.barra > i { background: var(--acento) }`
-y una fila en la tabla de §1.1. El revisor estuvo de acuerdo (11-nov).
+de siempre. Va como `.barra > i { background: var(--acento) }`
+y una fila en la tabla de §1.1 (aplicado en la v0.127). El revisor estuvo de acuerdo (11-nov).
 
 ### 1.11 Cómo se usa esto
 
@@ -363,7 +363,8 @@ y una fila en la tabla de §1.1. El revisor estuvo de acuerdo (11-nov).
 - **El revisor decide contra esto.** Un cambio que usa un valor que no está acá
   es un hallazgo, salvo que el commit diga por qué.
 - **Cambiar el sistema no se hace de noche** (`TAREA-NOCTURNA.md`): se propone
-  como duda.
+  en el resumen de la mañana, con captura, y no se aplica (no se guarda como
+  duda).
 
 ---
 

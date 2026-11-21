@@ -6,6 +6,60 @@ hace falta saber cómo se llegó a algo. Lo mudó acá el reordenamiento del
 
 ---
 
+## Desde el reordenamiento (20-nov-2026)
+
+Lo que el revisor de rumbo mudó los sábados, tal cual estaba en la hoja.
+
+### Cierre de la etapa 1 (mudado el 21-nov)
+
+- [x] ~~**Dos frases y un veredicto, en una versión**~~ (hecho en la v0.177):
+  - [x] **Con dos mates en 1, el que no es el del motor sale "Excelente"**
+        (revisor de ajedrez, v0.168; ya venía de antes). En
+        `6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`, Ra8# con la del motor Rd8# y
+        pérdida 0 sale Excelente y no Mejor: un mate es un mate. Revisor de
+        ajedrez.
+  - [x] **El orden de las frases fuertes** (revisor de ajedrez, v0.163; leve).
+        En `4k3/3q4/8/8/P7/8/8/4KB2 w` f1b5 sale primero "Salva tu peón de a4"
+        y después "Clava la dama de d7 contra el rey", que gana la dama. La que
+        gana más va primero.
+- [x] ~~**Con algunas jugadas que dan jaque, la tarjeta no ve nada**~~ (v0.178:
+      no era un error —la clavada ya estaba—, pero el jaque sí inventaba
+      clavadas que se comen al que clava, y eso se arregló) (revisor de
+      ajedrez, v0.163; ya estaba). En `7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w`, d4f6
+      (Bxf6+), `observarJugada` devuelve todo vacío: ni la clavada nueva del
+      caballo de e4. La misma jugada sin jaque (rey en g8) sí la detecta, y
+      con Nc7+ anda. Buscar la causa.
+- [x] ~~**Lo que se pierde en el cambio y la mejor marcada Error**~~ (hecho en
+      la v0.178) (revisor de
+      ajedrez; si no entran juntos, son dos versiones de la misma noche):
+  - [x] **"Pierde material en el cambio" como mecanismo** (revisor de ajedrez,
+        v0.163). Con Qe1 Rxe1 Kxe1 (`4k3/8/8/8/4r3/8/5K2/Q7 w`, a1e1) la dama no
+        queda "comible" porque hay recaptura, así que la tarjeta de un grave
+        dice "Toma la columna abierta e." y no que se cambia dama por torre.
+        Hace falta decir lo que se pierde cuando `quedaComible` da falso por la
+        recaptura y aun así el cambio pierde.
+  - [x] La jugada que era la mejor y sale marcada Error (falla de la v0.95, ya
+        diagnosticada en §8 del traspaso). Ya estaba hecha desde la v0.134.
+
+### Arreglos (mudado el 21-nov)
+
+- [x] ~~**Elegir "Todo", otro mes o mover el dial de mate MIENTRAS se analiza el
+      mes**~~ (hecho en la v0.177.1) (revisor, v0.109; leído en el código, no probado): `juntarTodo`
+      hace su propio `ocupado(true/false)`, así que esconde "Detener", prende
+      los botones y la barra parpadea; y otro mes en el selector lanzaría un
+      segundo análisis encima del primero. O se apagan `#fuente` y `#mateVista`
+      mientras se trabaja, o `juntarTodo` no toca `ocupado` si ya había algo
+      corriendo.
+
+### Esperan a Juan · lo que ya estaba hecho (mudado el 21-nov)
+
+- [x] ~~Las frases chicas que no mueven números: el ataque doble que nombra
+      dos veces la misma pieza, "Ataca… con un peón" después de coronar, y el
+      eco "lo cobraba / Había X".~~ Hecho en la v0.133.1.
+- [x] ~~Los que mueven las tablas: H1, H2 y H4.~~ Hechos en la v0.134.
+
+---
+
 ## Etapa 1 · Identidad visual (copia tal cual al 20-nov-2026)
 
 Los ítems sin tachar de esta copia se mudaron a la hoja nueva: al cierre de la

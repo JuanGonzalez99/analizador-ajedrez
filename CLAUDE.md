@@ -25,7 +25,8 @@ describe. §10 tiene las reglas de trabajo.
     tamaño, el texto de una etiqueta, la forma de una marca, una duración.
   - **Las grandes** —cambiar el sistema de diseño, qué pregunta contesta una
     tabla, una pantalla entera nueva, sacar algo que Juan usa— **tampoco
-    frenan**: se elige la recomendación, se sigue, y se cuentan en el resumen con
+    frenan** (salvo cambiar el sistema de diseño de noche: eso se propone en
+    el resumen y no se aplica, `TAREA-NOCTURNA.md`): se elige la recomendación, se sigue, y se cuentan en el resumen con
     captura. **No se le pregunta** "no sé si esto te copa": no lo contesta
     (20-nov-2026); lee el resumen y, si algo le parece raro, lo dice. Darla
     vuelta cuesta poco.

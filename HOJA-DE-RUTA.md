@@ -68,55 +68,27 @@ avanzamos más, nos quedamos en correcciones de lo hecho"*. La regla:
 
 La identidad visual está hecha y aplicada en toda la app (56 ítems, en
 `HOJA-DE-RUTA-HECHO.md`). Antes de cerrarla, Juan pidió terminar los errores
-de lo que dice la app y los retoques que quedaban (20-nov). Son seis ítems y
-uno de cierre; cuenta estimada: 4 o 5 noches. Lo que se levante mientras
+de lo que dice la app y los retoques que quedaban (20-nov). Quedan tres ítems y el cierre (lo demás salió en la v0.177 y la v0.178);
+cuenta estimada: 2 o 3 noches. **Si un lavado de acá termina dos tandas con
+el revisor en "ninguna", se tacha "sin cambio, ver Relleno" y lo que se
+intentó va al final de Relleno: no frena la v1.0.** Lo que se levante mientras
 tanto va a Arreglos o a Relleno, **no acá**.
 
-- [x] ~~**Dos frases y un veredicto, en una versión**~~ (hecho en la v0.177):
-  - [x] **Con dos mates en 1, el que no es el del motor sale "Excelente"**
-        (revisor de ajedrez, v0.168; ya venía de antes). En
-        `6k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`, Ra8# con la del motor Rd8# y
-        pérdida 0 sale Excelente y no Mejor: un mate es un mate. Revisor de
-        ajedrez.
-  - [x] **El orden de las frases fuertes** (revisor de ajedrez, v0.163; leve).
-        En `4k3/3q4/8/8/P7/8/8/4KB2 w` f1b5 sale primero "Salva tu peón de a4"
-        y después "Clava la dama de d7 contra el rey", que gana la dama. La que
-        gana más va primero.
-- [x] ~~**Con algunas jugadas que dan jaque, la tarjeta no ve nada**~~ (v0.178:
-      no era un error —la clavada ya estaba—, pero el jaque sí inventaba
-      clavadas que se comen al que clava, y eso se arregló) (revisor de
-      ajedrez, v0.163; ya estaba). En `7k/8/4qr2/8/3Bn3/8/8/4Q1K1 w`, d4f6
-      (Bxf6+), `observarJugada` devuelve todo vacío: ni la clavada nueva del
-      caballo de e4. La misma jugada sin jaque (rey en g8) sí la detecta, y
-      con Nc7+ anda. Buscar la causa.
-- [x] ~~**Lo que se pierde en el cambio y la mejor marcada Error**~~ (hecho en
-      la v0.178) (revisor de
-      ajedrez; si no entran juntos, son dos versiones de la misma noche):
-  - [x] **"Pierde material en el cambio" como mecanismo** (revisor de ajedrez,
-        v0.163). Con Qe1 Rxe1 Kxe1 (`4k3/8/8/8/4r3/8/5K2/Q7 w`, a1e1) la dama no
-        queda "comible" porque hay recaptura, así que la tarjeta de un grave
-        dice "Toma la columna abierta e." y no que se cambia dama por torre.
-        Hace falta decir lo que se pierde cuando `quedaComible` da falso por la
-        recaptura y aun así el cambio pierde.
-  - [x] La jugada que era la mejor y sale marcada Error (falla de la v0.95, ya
-        diagnosticada en §8 del traspaso). Ya estaba hecha desde la v0.134.
 - [ ] **[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
       entra entera** (revisor, v0.149; ya estaba). A 1600×900 la lista se
-      corta a mitad de una fila contra el borde de abajo (asoma la 14). ¿Se
-      corta en una fila completa, o sigue con un fundido o una sombra que diga
-      "hay más"? Con variantes.
+      corta a mitad de una fila contra el borde de abajo (asoma la 14). Variantes:
+      cortar en una fila completa, un fundido, una sombra que diga "hay más".
 - [ ] **[PC] Lavado de cara: la caja vacía de las tres mejores debajo de la
       curva** (Juan, 17-nov, sobre la v0.150; revisor, v0.151). Sin pedirlas
       son ~115 px de tarjeta con un rótulo y un botón suelto: se lee como un
       hueco. **No se calculan solas** (Juan: *"dudo que uno quiera ver las 3
-      mejores de cada movimiento"*; lo tentaba solo el cuadro vacío). La
-      pregunta es la forma: ¿las tres filas marcadas en tenue en vez del
-      botón suelto (lo que propuso el revisor)? ¿una caja que solo reserva
-      el alto, sin borde? ¿otra cosa de la jugada mientras no se piden?
-      Sin que la lista ni "‹ ›" salten. Con variantes.
+      mejores de cada movimiento"*; lo tentaba solo el cuadro vacío).
+      Variantes: las tres filas en tenue en vez del botón suelto (la del
+      revisor), una caja que solo reserva el alto sin borde, y otra cosa de la
+      jugada mientras no se piden. Sin que la lista ni "‹ ›" salten. Con variantes.
 - [ ] **Tres retoques chicos, sin variantes** (una versión para el celu y otra
       para la compu, como siempre: PC en commits separados):
-  - [ ] **Lavado de cara: cómo empieza y termina la tira de la variante en "la
+  - [ ] **Retoque: cómo empieza y termina la tira de la variante en "la
         lista abajo"** (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
         cortado de la jugada anterior y la elegida queda pegada a "›". Ya
         estaba, pero ahora es la forma que Juan usa.
@@ -143,14 +115,6 @@ tanto va a Arreglos o a Relleno, **no acá**.
 Errores verificados de lo que la app dice o hace. Como mucho uno por noche
 (perilla "Por noche"), el primero de la lista.
 
-- [x] ~~**Elegir "Todo", otro mes o mover el dial de mate MIENTRAS se analiza el
-      mes**~~ (hecho en la v0.177.1) (revisor, v0.109; leído en el código, no probado): `juntarTodo`
-      hace su propio `ocupado(true/false)`, así que esconde "Detener", prende
-      los botones y la barra parpadea; y otro mes en el selector lanzaría un
-      segundo análisis encima del primero. O se apagan `#fuente` y `#mateVista`
-      mientras se trabaja, o `juntarTodo` no toca `ocupado` si ya había algo
-      corriendo.
-
 - [ ] **La dama recién coronada que se pierde habla de un peón** (Juan,
       20-nov, sobre la v0.178). En `3r3k/2P5/8/8/8/8/8/6K1 w`, c8=Q (Rxc8 y
       no hay recaptura) dice "Tu peón queda comible en c8. Coronás: el peón
@@ -164,7 +128,10 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       su propia dama: un peón de e6 que recaptura y deja la dama de e8 a tiro
       de la torre de e1. Hoy lo frena el corte de pérdida ≥ 0,5 del motor;
       primero buscar con chess.js un caso que llegue a la tarjeta, y que la
-      recaptura que entrega la dama no cuente como recaptura.
+      recaptura que entrega la dama no cuente como recaptura. Si no aparece
+      un caso que llegue a la tarjeta, se anota en §8 del traspaso y pasa a
+      Relleno. Si entran juntos, va en la misma versión que el de abajo (los
+      dos son `cambioEn`).
 
 - [ ] **La cuenta del cambio no ve lo que deja la pieza que recaptura**
       (Juan, 20-nov, sobre la v0.178.1). `cambioEn` solo mira la casilla: en
@@ -361,13 +328,9 @@ Lo que salió de la revisión de los veredictos y de las frases de la tarjeta
 El jaque en los detectores y la nueva definición de "a salvo" ya están hechos
 (v0.133). Lo que queda:
 
-- [x] ~~Las frases chicas que no mueven números: el ataque doble que nombra
-      dos veces la misma pieza, "Ataca… con un peón" después de coronar, y el
-      eco "lo cobraba / Había X".~~ Hecho en la v0.133.1.
 - [ ] ⏸ espera a Juan · Las engañosas: "Toma la columna abierta" cuando la
       torre ya estaba ahí, "Tu X queda comible" cuando acaba de comer algo que
       vale lo mismo o más, y una frase de mérito en las tarjetas de error.
-- [x] ~~Los que mueven las tablas: H1, H2 y H4.~~ Hechos en la v0.134.
 - [ ] ⏸ espera a Juan · H3: "Genial, era la única" con la segunda ganando igual
       (medir el hueco en probabilidad de ganar y no en centipeones).
 - [ ] ⏸ espera a Juan · **Que la tarjeta cuente ideas e intenciones**, no solo
@@ -406,8 +369,8 @@ archiva los que pierden sentido.
       celu y PC). "El tablero" tiene un solo renglón, "Cómo se ve la partida"
       dos, y "La explicación" queda vacía cuando se elijan los diales a prueba.
       Un título con raya para un renglón pesa más de lo que vale. ¿Grupos, una
-      lista corta sin títulos, o dos grupos como mucho? Cuando se vayan los
-      diales.
+      lista corta sin títulos, o dos grupos como mucho? Depende de
+      "La variante como modo" (⏸, el dial): no se toma hasta que Juan elija.
 - [ ] **Pantalla propia de "Acerca de"** (Juan, 15-nov, al mudar los créditos
       a Ajustes en la v0.143: la pensaba así, "más a futuro"). Hoy la
       atribución de las piezas vive al pie de la hoja de Ajustes y alcanza.
@@ -426,6 +389,8 @@ archiva los que pierden sentido.
       antes de borrar. Verificación: el CSS sin comentarios idéntico antes y
       después, `npm test` y capturas byte a byte. Ahorro: 6.000–8.000 tokens
       por lectura del CSS.
+
+### La tarjeta y las tablas (revisor de ajedrez)
 
 - [ ] **El orden de las frases con lo que de verdad gana la clavada**
       (revisor de ajedrez, v0.177). Hoy la clavada vale lo que la pieza
@@ -460,9 +425,10 @@ Pendientes que estaban anotados solo en el traspaso.
 
 - [ ] **El "0s" de la primera jugada de cada lado** (§4duotrigies): chess.com
       escribe el reloj inicial intacto y Pensó da 0 aunque se haya pensado; lo
-      honesto es "·", como sin reloj. **Juan cree que ya está resuelto**:
-      verificar primero en la app (comentario de `segundosPensados`) y, si
-      está, tachar y corregir el traspaso.
+      honesto es "·", como sin reloj. **No está resuelto** (mirado el
+      21-nov: el comentario de `segundosPensados` dice que la primera de cada
+      lado "da 0 aunque se haya pensado una décima", y el código recorta en
+      0). Falta mostrar "·" en esa jugada.
 - [ ] **"regla de 50 jugadas · 61 jugadas"** (§6, "Dos pendientes"): "jugadas"
       dos veces con dos significados. De las cuatro salidas dibujadas, la que
       no fuerza nada es callar el largo en ese caso.
