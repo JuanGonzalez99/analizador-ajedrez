@@ -1325,6 +1325,10 @@
        color propio —el verde ya dice cuál era la mejor— */
     .alt .aj { margin-left: 6px; color: var(--tenue); font-size: var(--t-leyenda); }
     .altNota { font-size: 12.5px; color: var(--tenue); }
+    /* las filas fantasma de "pensando" (v0.181): mismo renglón que las de
+       verdad —el número les da el alto—, barras en el color de las líneas */
+    .alt.fant { opacity: .5; pointer-events: none; }
+    .alt.fant i { display: inline-block; height: 9px; border-radius: 4px; background: var(--linea); }
     /* los 22 de abajo la alinean con el tablero y no con su caja: el SVG lleva
        un margen propio de 15 unidades para las coordenadas, y sin esto el grupo
        de abajo quedaba a la altura de las letras en vez de la fila 1 */
@@ -1558,7 +1562,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.180.1 · 21-11";
+  window.VERSION = "v0.181 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5733,12 +5737,18 @@ function pintarAlternativas() {
   const fen = base.fen, clave = claveAlt(fen);
   const ev = ALTERNATIVAS.get(clave);
   const pensando = ALT_PIDIENDO === clave;
-  /* "PENSANDO…" EN EL LUGAR DEL BOTÓN (v0.180), deshabilitado: con el mismo
-     alto no salta nada, y la lista queda vacía hasta que llegan las filas */
-  ver("btnAlts", !ev);
-  bot.disabled = TRABAJANDO || pensando;
-  bot.textContent = pensando ? "Pensando…" : "Ver las tres mejores";
-  if (pensando) { lista.innerHTML = ""; return; }
+  /* PENSANDO, TRES FILAS FANTASMA donde van a caer las jugadas (v0.181, Juan
+     sobre la variante A de la v0.180). Para la caja vacía se descartó (un
+     esqueleto dice "ya viene algo" cuando no viene nada); mientras el motor
+     piensa sí viene, y las filas entran en el mismo lugar, sin salto. */
+  ver("btnAlts", !ev && !pensando);
+  bot.disabled = TRABAJANDO;
+  if (pensando) {
+    lista.innerHTML = `<div role="status" aria-label="Pensando…">` + [46, 38, 42].map((a, i) =>
+      `<div class="alt fant" aria-hidden="true"><span class="an">${i + 1}</span>` +
+      `<span><i style="width:${a}px"></i></span><span class="ae"><i style="width:34px"></i></span></div>`).join("") + `</div>`;
+    return;
+  }
   if (!ev) { lista.innerHTML = ""; return; }
   if (ev.error) { lista.innerHTML = `<div class="altNota">No se pudo: ${ev.error}</div>`; return; }
   const turno = fen.split(" ")[1];

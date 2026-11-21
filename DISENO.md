@@ -374,6 +374,11 @@ Cada entrada: qué, si le copa o no, y el porqué con sus palabras cuando las
 hay. Las primeras salen del historial del traspaso.
 
 ### Le copa
+- **Las filas fantasma mientras el motor piensa** (v0.181): sobre la variante
+  A de la caja de las tres mejores, *"creo que la A quedaría bien para cuando
+  está cargando"* (21-nov-2026). Tres filas tenues donde van a caer las
+  jugadas. Vale para la carga y no para el lugar vacío: sin pedir, un
+  esqueleto promete algo que no viene (por eso ahí ganó "sin caja").
 - **La variante adentro de la planilla de la compu, como lichess** (v0.171):
   *"lo de la compu está bueno"* (19-nov-2026). Un párrafo con sangría y
   punteado violeta debajo de la jugada de donde sale; la planilla sigue

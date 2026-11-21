@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.180.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.181**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4820,6 +4820,15 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.181, [PC] pensando, tres filas fantasma** (Juan, sobre la variante A
+de la v0.180). Mientras el motor busca las tres mejores, en vez del botón
+deshabilitado con "Pensando…" van tres filas tenues (números y barras del
+color de las líneas, `.alt.fant`) en el mismo renglón que las de verdad: el
+número les da el alto, así que caen al píxel donde después entran las
+jugadas (753/784/814 a 1000×900, las tres de 31). Para la caja sin pedir se
+había descartado (promete algo que no viene); en la carga sí viene. Para el
+lector de pantalla, un `role="status"` con "Pensando…".
 
 **v0.180.1, la clavada contra la dama** (revisor de ajedrez, v0.178;
 Arreglos). chess.js solo frena la pieza clavada contra el rey, así que
