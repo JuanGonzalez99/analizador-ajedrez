@@ -1867,6 +1867,11 @@ test("en la compu el orden de Tab sigue al de lectura, sin tabindex positivos (v
   assert.ok(!/tabindex="[1-9]/.test(html));
 });
 
+test("el cuadrito Mejor no corta \"la jugada\": si no entra dice \"esta\" (v0.182.2)", () => {
+  assert.ok(html.includes('if ($("mMejor").textContent === "la jugada" && $("mMejor").scrollWidth > $("mMejor").clientWidth)'));
+  assert.ok(html.includes('$("mMejor").textContent = "esta";'));
+});
+
 test("la tipografía se mide en el navegador, no se escriben números fijos", () => {
   /* `system-ui` es Roboto en Android y otra cosa en cada aparato, así que un
      número fijo alinearía bien en uno y mal en el resto. Y la base del renglón

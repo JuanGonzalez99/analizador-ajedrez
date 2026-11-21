@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.182.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.182.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4820,6 +4820,13 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.182.2, [PC] el cuadrito Mejor ya no corta "la juga…"** (revisor,
+v0.150). A 1000 de ancho el valor queda 1 px corto (62 contra 61, medido).
+Si "la jugada" no entra (`scrollWidth > clientWidth`), dice "esta"; donde
+entra —el celu a 386 y 412, la compu desde ~1010— sigue "la jugada", que es
+también como lo marcan las tres mejores. Se decide al pintar: agrandar la
+ventana no lo cambia hasta la jugada siguiente.
 
 **v0.182.1, [PC] el orden de Tab de la Partida** (revisor, v0.153). Con el
 HTML del celu el Tab saltaba volver → tuerca → Girar (abajo) → las tres

@@ -1563,7 +1563,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.182.1 · 21-11";
+  window.VERSION = "v0.182.2 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -9035,6 +9035,12 @@ function pintarRevision() {
     : !mejorVista ? "\u2014"
     : mejorVista === uciAzul ? "la jugada"
     : (sanDeUci(fenDeLaMejor, mejorVista) || mejorVista);
+  /* "la juga…" no se lee (revisor, v0.150): a 1000 de ancho el cuadrito queda
+     1 px corto. Si no entra, "esta", que entra siempre; donde entra (el celu,
+     y la compu desde ~1010) sigue diciendo "la jugada", como las tres
+     mejores (v0.182.2) */
+  if ($("mMejor").textContent === "la jugada" && $("mMejor").scrollWidth > $("mMejor").clientWidth)
+    $("mMejor").textContent = "esta";
 
   /* por defecto solo se pintan las jugadas propias: las del rival distraen de
      lo que el usuario vino a mirar. Con "Rival" prendido se ven todas. */
