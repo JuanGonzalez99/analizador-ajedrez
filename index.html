@@ -1186,19 +1186,27 @@
        `ubicarAlts()`. Debajo del tablero, que es donde se dibujan sus flechas,
        y la lista de la derecha gana esos renglones (10 a 16 a 1000×900). LA
        CAJA NO CAMBIA DE ALTO entre pedidas y sin pedir (revisor): si no, la
-       lista y "‹ ›" saltaban 81 px de una jugada a la otra. Sin pedir, el
-       rótulo arriba y el botón centrado en lo que queda. Sin margen abajo, así
-       termina en la misma línea que "‹ ›". */
+       lista y "‹ ›" saltaban 81 px de una jugada a la otra. Sin margen abajo,
+       así termina en la misma línea que "‹ ›".
+       SIN CAJA (v0.180, revisor sobre cuatro variantes): con fondo y borde,
+       sin pedirlas eran ~115 px de tarjeta con un botón suelto, que se leía
+       como un hueco. Sin caja el lugar se lee como el final de la columna: el
+       rótulo y el botón arriba a la izquierda, al borde de la curva, y las
+       filas igual cuando llegan. 12 + 139 = los 151 de antes, que es lo que
+       cuenta el `padding-bottom` de arriba. */
     #zonaRevision.altsAbajo { grid-template-rows: auto auto auto 1fr auto auto;
       padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab) - 62px - 151px)); }
     #zonaRevision.altsAbajo > .colLista { grid-row: 4 / 7; }
-    #zonaRevision.altsAbajo > .alts { grid-column: 1; grid-row: 6; box-sizing: border-box; height: 135px;
-      margin: var(--e-4) 0 0 var(--izqCurva, var(--mTab));
+    #zonaRevision.altsAbajo > .alts { grid-column: 1; grid-row: 6; box-sizing: border-box; height: 139px;
+      margin: var(--e-3) 0 0 var(--izqCurva, var(--mTab));
+      background: none; border: 0; border-radius: 0; padding: 0;
       width: calc(100% - var(--izqCurva, var(--mTab)) - var(--mTab));
       display: flex; flex-direction: column; }
-    #zonaRevision.altsAbajo > .alts:has(.altLista:empty) .altCab { flex: 1; flex-direction: column;
-      align-items: flex-start; }
-    #zonaRevision.altsAbajo > .alts:has(.altLista:empty) #btnAlts { margin: auto; }
+    #zonaRevision.altsAbajo > .alts:has(.altLista:empty) .altCab { flex-direction: column;
+      align-items: flex-start; gap: var(--e-2); }
+    /* el número de cada fila al borde del rótulo; el relleno queda para el
+       fondo del hover */
+    #zonaRevision.altsAbajo > .alts .alt { margin: 0 -4px; }
     /* MÍNIMO CUATRO RENGLONES de lista (300 son las alternativas, cuatro
        renglones, "‹ ›" y sus márgenes): con el tablero limitado por el ancho
        —de 950 a ~1000— quedaban dos. Ahí el panel se pasa del pie de las
@@ -1550,7 +1558,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.179 · 21-11";
+  window.VERSION = "v0.180 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5682,9 +5690,12 @@ function pintarAlternativas() {
   const fen = base.fen, clave = claveAlt(fen);
   const ev = ALTERNATIVAS.get(clave);
   const pensando = ALT_PIDIENDO === clave;
-  ver("btnAlts", !ev && !pensando);
-  bot.disabled = TRABAJANDO;
-  if (pensando) { lista.innerHTML = `<div class="altNota">Pensando…</div>`; return; }
+  /* "PENSANDO…" EN EL LUGAR DEL BOTÓN (v0.180), deshabilitado: con el mismo
+     alto no salta nada, y la lista queda vacía hasta que llegan las filas */
+  ver("btnAlts", !ev);
+  bot.disabled = TRABAJANDO || pensando;
+  bot.textContent = pensando ? "Pensando…" : "Ver las tres mejores";
+  if (pensando) { lista.innerHTML = ""; return; }
   if (!ev) { lista.innerHTML = ""; return; }
   if (ev.error) { lista.innerHTML = `<div class="altNota">No se pudo: ${ev.error}</div>`; return; }
   const turno = fen.split(" ")[1];

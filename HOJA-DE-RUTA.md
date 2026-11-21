@@ -78,8 +78,8 @@ tanto va a Arreglos o a Relleno, **no acá**.
       entra entera**~~ (hecho en la v0.179: un fundido de 32 abajo) (revisor, v0.149; ya estaba). A 1600×900 la lista se
       corta a mitad de una fila contra el borde de abajo (asoma la 14). Variantes:
       cortar en una fila completa, un fundido, una sombra que diga "hay más".
-- [ ] **[PC] Lavado de cara: la caja vacía de las tres mejores debajo de la
-      curva** (Juan, 17-nov, sobre la v0.150; revisor, v0.151). Sin pedirlas
+- [x] ~~**[PC] Lavado de cara: la caja vacía de las tres mejores debajo de la
+      curva**~~ (hecho en la v0.180: sin caja, el revisor eligió entre cuatro) (Juan, 17-nov, sobre la v0.150; revisor, v0.151). Sin pedirlas
       son ~115 px de tarjeta con un rótulo y un botón suelto: se lee como un
       hueco. **No se calculan solas** (Juan: *"dudo que uno quiera ver las 3
       mejores de cada movimiento"*; lo tentaba solo el cuadro vacío).

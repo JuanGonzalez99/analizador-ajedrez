@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.179**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.180**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -361,7 +361,8 @@ por DOM al pie de la lista. Desde la v0.135, si sobra alto (ventanas angostas
 y altas) la curva baja debajo del tablero: `.curvaAbajo`, que pone
 `ubicarCurva()`. Desde la v0.150, si además entra entera, la caja de las tres
 mejores (`#alts`) se muda por DOM debajo de la curva: `.altsAbajo`, que pone
-`ubicarAlts()`. Lo que sigue en este párrafo es la historia.
+`ubicarAlts()`; desde la v0.180 ahí va sin caja (sin fondo ni borde).
+Lo que sigue en este párrafo es la historia.
 Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
 **de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
 con `minmax`; de 700 a 949 es una columna con el tablero que crece; §7, v0.118): `.principal` es la de siempre, de 700, y `.lateral` es
@@ -4819,6 +4820,25 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.180, [PC] las tres mejores debajo de la curva, sin caja** (Juan,
+17-nov, y revisor, v0.151; etapa 1). Sin pedirlas eran ~115 px de tarjeta con
+un rótulo y un botón suelto: se leía como un hueco. Cuatro variantes dibujadas
+sobre la app a 1000×900: hoy; tres filas fantasma en tenue con el botón en la
+cabecera (descartada: es un esqueleto de carga, dice "ya viene algo" cuando no
+viene nada); sin caja; y "lo que ya se sabe" —la mejor y la jugada con sus
+evaluaciones, que salen del análisis sin motor, y "Ver las otras dos"—
+(descartada: repite el cuadrito Mejor y la zona cambia de forma según la
+jugada, la regla de la v0.172). El revisor eligió **sin caja**: el lugar se lee
+como el final de la columna y no como una tarjeta que espera. Sin caja también
+pedidas. Medido: rótulo y botón al píxel con el borde de la curva (77 a
+1000×900), 12 de margen + 139 de alto = los 151 de antes (el `padding-bottom`
+de `.altsAbajo` no cambia), el contenedor termina en la línea de "‹ ›" y nada
+salta entre vacía, pensando y pedidas. Las filas llevan `margin: 0 -4px` para
+que el número caiga al borde del rótulo sin perder el relleno del hover.
+**"Pensando…" pasó al botón** (en las dos disposiciones): deshabilitado y con
+el mismo alto, en vez de una nota en la lista que hacía saltar la cabecera.
+Celu idéntico byte a byte salvo la versión.
 
 **v0.179, [PC] el fundido al pie de la lista** (lavado de cara del revisor,
 v0.149; etapa 1). A 1600×900 la lista de jugadas se cortaba a mitad de una
