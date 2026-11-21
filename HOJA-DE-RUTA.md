@@ -92,7 +92,7 @@ tanto va a Arreglos o a Relleno, **no acá**.
         lista abajo"**~~ (hecho en la v0.182) (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
         cortado de la jugada anterior y la elegida queda pegada a "›". Ya
         estaba, pero ahora es la forma que Juan usa.
-  - [ ] **[PC] El orden de Tab en la Partida** (revisor, v0.153). Salta por
+  - [x] ~~**[PC] El orden de Tab en la Partida**~~ (hecho en la v0.182.1) (revisor, v0.153). Salta por
         la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
         las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que
         seguir el de lectura: volver, tuerca, Mejor, las tres mejores, lista,

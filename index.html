@@ -1563,7 +1563,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.182 · 21-11";
+  window.VERSION = "v0.182.1 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -8596,7 +8596,9 @@ function ubicarAlts() {
   }
   if (abajo === z.classList.contains("altsAbajo")) return;
   z.classList.toggle("altsAbajo", abajo);
-  if (abajo) c.after(a); else $("lateral").prepend(a);
+  /* abajo va detrás de Mejor y no de la curva: en la grilla tiene su lugar
+     fijo, y así el Tab la toma antes que la lista (v0.182) */
+  if (abajo) document.querySelector("#zonaRevision > .pabajo").after(a); else $("lateral").prepend(a);
 }
 window.addEventListener("resize", ubicarCurva);
 /* EL RESUMEN, DE LA COLUMNA a AL BORDE DEL PANEL (v0.137). En píxeles de la
@@ -8617,8 +8619,24 @@ function ubicarResumen() {
   document.body.style.setProperty("--resAncho", (der - s.left - m) + "px");
 }
 window.addEventListener("resize", ubicarResumen);
+/* EL ORDEN DE TAB DE LA COMPU SIGUE AL DE LECTURA (v0.182, revisor): con el
+   HTML del celu saltaba volver → tuerca → Girar (abajo de todo) → las tres
+   mejores → lista → "‹ ›" → Mejor (arriba). En la compu cada bloque tiene su
+   lugar fijo en la grilla, así que cambiarlos de orden en el HTML no mueve
+   nada en la pantalla: Mejor (`.pabajo`) sube detrás de las tarjetas y el
+   tablero con Girar (`.pmedio`) va al final. En el celu se vuelve al orden de
+   siempre, que es también el de lectura. Sin `tabindex` positivos. */
+function ordenDeTab(compu) {
+  const z = $("zonaRevision"), hijo = c => z.querySelector(":scope > ." + c);
+  const ta = hijo("tarjetas"), pm = hijo("pmedio"), pb = hijo("pabajo");
+  const [segundo, ultimo] = compu ? [pb, pm] : [pm, pb];
+  if (ta.nextElementSibling !== segundo) ta.after(segundo);
+  if (z.lastElementChild !== ultimo) z.append(ultimo);
+}
+
 function ubicarGirar(f) {
   ubicarCurva();
+  ordenDeTab(window.matchMedia(CORTE_ANCHO).matches);
   const b = $("btnGirarTab"), svg = $("tablero").querySelector("svg.tab");
   if (!svg) return b.classList.add("oculto");
   const s = svg.getBoundingClientRect(), r = b.parentElement.getBoundingClientRect();

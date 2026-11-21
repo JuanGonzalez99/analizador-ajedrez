@@ -1859,6 +1859,14 @@ test("con una variante la tira no corta una jugada contra ‹ ni pega la elegida
   assert.ok(html.includes('#zonaRevision.conVariante #tiraSc::after { content: ""; flex: 0 0 var(--colaVar, 24px); }'));
 });
 
+test("en la compu el orden de Tab sigue al de lectura, sin tabindex positivos (v0.182.1)", () => {
+  assert.ok(html.includes("function ordenDeTab(compu)"));
+  assert.ok(html.includes("ordenDeTab(window.matchMedia(CORTE_ANCHO).matches);"));
+  /* las tres mejores, debajo de la curva, van detrás de Mejor en el HTML */
+  assert.ok(html.includes('if (abajo) document.querySelector("#zonaRevision > .pabajo").after(a);'));
+  assert.ok(!/tabindex="[1-9]/.test(html));
+});
+
 test("la tipografía se mide en el navegador, no se escriben números fijos", () => {
   /* `system-ui` es Roboto en Android y otra cosa en cada aparato, así que un
      número fijo alinearía bien en uno y mal en el resto. Y la base del renglón

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.182**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.182.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4820,6 +4820,20 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.182.1, [PC] el orden de Tab de la Partida** (revisor, v0.153). Con el
+HTML del celu el Tab saltaba volver → tuerca → Girar (abajo) → las tres
+mejores → lista → "‹ ›" → Mejor (arriba). Como en la compu cada hijo de
+`#zonaRevision` tiene `grid-row`/`grid-column` fijos, `ordenDeTab(compu)`
+(desde `ubicarGirar`) los reordena en el HTML sin mover un píxel: `.pabajo`
+(Mejor) detrás de `.tarjetas` y `.pmedio` (tablero y Girar) al final; en el
+celu vuelve al orden de siempre (parriba, tarjetas, pmedio, colLista, curva,
+pabajo). `#alts`, cuando baja debajo de la curva, va detrás de `.pabajo` y
+no de la curva. Queda: volver, tuerca, Mejor, las tres mejores, lista,
+"‹ ›", Girar (`mirar` lo recorre: "orden de tab"). Capturas de PC y de celu
+iguales al byte, salvo la versión. **Ojo si se suma un hijo a
+`#zonaRevision`**: en la compu tiene que llevar lugar fijo en la grilla, o el
+orden del HTML lo mueve.
 
 **v0.182, los bordes de la tira con variante** (revisor, v0.160; celu).
 Con la variante en la tira, junto a "‹" asomaba un pedazo de la jugada

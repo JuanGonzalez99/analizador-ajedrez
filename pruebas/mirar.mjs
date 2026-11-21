@@ -826,6 +826,21 @@ console.log("tres columnas: ", JSON.stringify(tres));
 await pg.setViewportSize({ width: 1280, height: 800 });
 await pg.waitForTimeout(300);
 
+/* EL ORDEN DE TAB DE LA PARTIDA EN LA COMPU (v0.182.1): el de lectura, de
+   arriba a abajo del panel y Girar al final. Se recorre con Tab de verdad
+   desde "volver" y se anotan los que se cruzan. */
+{
+  await pg.focus("#volverDeLaPartida");
+  const pasos = ["volverDeLaPartida"];
+  for (let i = 0; i < 7; i++) {
+    await pg.keyboard.press("Tab");
+    pasos.push(await pg.evaluate(() => document.activeElement.id || document.activeElement.tagName));
+  }
+  console.log("orden de tab:  ", pasos.join(" > "),
+              "(volver, tuerca, Mejor, las tres mejores, lista, ‹ ›, Girar)");
+  await pg.evaluate(() => document.activeElement.blur());
+}
+
 /* LAS TRES FORMAS DE LA EVALUACIÓN Y CUÁNTO TABLERO CUESTA CADA UNA (v0.86).
    En una compu el tablero está limitado por el alto, así que la barra que se
    suma arriba se le descuenta al lado. Se mide, no se estima. */
