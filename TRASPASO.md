@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.3**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.178.4**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4803,6 +4803,21 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v0.178.4, el peón coronado** (Juan, 20-nov, de Arreglos). Con c8=Q Rxc8
+(`3r3k/2P5/8/8/8/8/8/6K1 w`) la tarjeta decía "Tu peón queda comible en c8.
+Coronás: el peón vuelve como dama.": un peón que ya no está y una coronación
+que se pierde. Ahora `explicarJugada` nombra la pieza que coronó como **"tu
+peón coronado"** (o "el peón coronado") y calla "Coronás" cuando la pieza
+movida cuelga (`cuelga`, la misma regla que calla la clavada de la que cuelga,
+v0.163) o cuando tiene defensa pero la recaptura no conviene y se pierde el
+peón: `observarJugada` da `coronaPerdida` (neto de `cambioEn` menos lo que
+ganó la coronación ≥ 1; c8=Q Rbxc8 Qxc8 Rxc8 en `1r1r3k/2P5/8/8/8/8/2Q5/6K1
+w`). "Pierde material en el cambio" no aplica a una coronación: al descontar
+lo coronado, `pierde` no pasa de 1 y no llega al corte de 2 (revisor de
+ajedrez). Y la subcoronación vuelve como lo que se eligió ("el peón vuelve
+como caballo"; antes decía dama siempre). El ayudante `mirar` de las pruebas
+ahora pasa la coronación.
 
 **v0.178.3, el mono, y el botón del mes anterior** (Juan, 21-nov). Llegó
 `pruebas/mono.mjs` (§2, "El cuarto chequeo"). En su primera pasada sobre la

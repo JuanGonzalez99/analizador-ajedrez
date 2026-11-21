@@ -115,7 +115,8 @@ tanto va a Arreglos o a Relleno, **no acá**.
 Errores verificados de lo que la app dice o hace. Como mucho uno por noche
 (perilla "Por noche"), el primero de la lista.
 
-- [ ] **La dama recién coronada que se pierde habla de un peón** (Juan,
+- [x] ~~**La dama recién coronada que se pierde habla de un peón**~~ (hecho en
+      la v0.178.4, con la subcoronación y la defendida que igual se pierde) (Juan,
       20-nov, sobre la v0.178). En `3r3k/2P5/8/8/8/8/8/6K1 w`, c8=Q (Rxc8 y
       no hay recaptura) dice "Tu peón queda comible en c8. Coronás: el peón
       vuelve como dama.": nombra un peón que ya no está y festeja una
@@ -409,6 +410,11 @@ archiva los que pierden sentido.
       respuesta cae el caballo o la dama), y la tarjeta solo dice "El rival
       tiene Qxf6", que suena a que se pierde el alfil. Decir "el caballo de e4
       sigue clavado y cae" cuando la jugada la aprovecha. Revisor de ajedrez sí.
+
+- [ ] **La coronación que es un sacrificio que funciona** (revisor de
+      ajedrez, v0.178.4). Si coronar desvía una pieza y gana, la cuenta del
+      cambio la ve "perdida" y la tarjeta calla "Coronás" (bien), pero no dice
+      qué gana. Pide entender la táctica; va con "Que la tarjeta cuente ideas".
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 

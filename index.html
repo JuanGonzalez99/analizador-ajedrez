@@ -1539,7 +1539,7 @@
 </div>
 
 <script>
-  window.VERSION = "v0.178.3 · 21-11";
+  window.VERSION = "v0.178.4 · 21-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3149,7 +3149,12 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
                  marca: "50 jugadas" };
   }
   if (!f || f.forzada) return tablas ? [tablas] : [];
-  const pieza = (mio ? PIEZA_TU : PIEZA_EL)[f.pieza] || "la pieza";
+  /* EL PEÓN QUE CORONA YA NO ES UN PEÓN (Juan, 20-nov, sobre la v0.178): con
+     c8=Q Rxc8 la tarjeta decía "Tu peón queda comible en c8", y en c8 hay una
+     dama. "Tu peón coronado" nombra las dos cosas: lo que era y que ya coronó. */
+  const corono = f.pieza === "p" && (f.uci || "").length > 4;
+  const pieza = corono ? `${mio ? "tu" : "el"} peón coronado`
+                       : (mio ? PIEZA_TU : PIEZA_EL)[f.pieza] || "la pieza";
   const donde = (f.uci || "").slice(2, 4);
   const suya = t => (mio ? PIEZA_TU : PIEZA_EL)[t] || "la pieza";
 
@@ -3343,8 +3348,13 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
                    marca: "pasado", sq: donde });
   /* "Coronás." a secas es demasiado seco —criterio del usuario—, así que la
      frase dice además qué pasa: el peón vuelve, y vuelve dama. */
-  if (o.corona)
-    fuertes.push({ txt: `${mio ? "Coronás" : "Corona"}: el peón vuelve como dama.`,
+  /* …y si la pieza coronada se pierde en la jugada siguiente, la coronación
+     no se festeja (Juan, 20-nov): es lo mismo que la clavada de la que cuelga.
+     `coronaPerdida` cubre la defendida cuya recaptura no conviene (revisor de
+     ajedrez). Y vuelve como la pieza que eligió: c8=N no "vuelve como dama". */
+  if (o.corona && !cuelga && !o.coronaPerdida)
+    fuertes.push({ txt: `${mio ? "Coronás" : "Corona"}: el peón vuelve como ` +
+                        `${({ n: "caballo", b: "alfil", r: "torre" })[(f.uci || "")[4]] || "dama"}.`,
                    marca: mio ? "Coronás" : "Corona", sq: donde });
   if (o.aislado)
     fuertes.push({ txt: `El peón de ${o.aislado} queda aislado.`,
@@ -4208,7 +4218,7 @@ function observarJugada(f, fenAntes = null) {
        igual me cuesta. Se resta lo que la jugada comió, y solo cuenta desde
        dos peones netos: menos que eso es ruido de la cuenta (un alfil por un
        caballo, un peón de más o de menos). */
-    let cambio = null;
+    let cambio = null, coronaPerdida = false;
     const ca = cambioEn(f.fen, donde);
     if (ca.linea.length) {
       const comio = fenAntes ? new Chess(fenAntes).get(donde) : null;
@@ -4218,6 +4228,11 @@ function observarJugada(f, fenAntes = null) {
       const corono = f.uci.length > 4 ? (VALOR[f.uci[4]] || 0) - VALOR.p : 0;
       const pierde = ca.neto - corono -
                      (comio && comio.color !== mio ? (VALOR[comio.type] || 0) : 0);
+      /* LA CORONACIÓN QUE SE PIERDE AUNQUE TENGA DEFENSA (revisor de ajedrez,
+         v0.178.4): c8=Q Rbxc8 Qxc8 Rxc8 en `1r1r3k/2P5/8/8/8/8/2Q5/6K1 w`.
+         No queda comible y el cambio nunca llega a 2 (la cuenta descuenta lo
+         que ganó la coronación), pero se va el peón: no se festeja. */
+      coronaPerdida = corono > 0 && pierde >= 1;
       if (pierde >= 2)
         cambio = { pierde,
                    mias: ca.linea.filter((_, k) => k % 2 === 0)
@@ -4229,7 +4244,7 @@ function observarJugada(f, fenAntes = null) {
     return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
              semiabierta, aislado, doblados, pasadoContra, pareja, septima,
              sinDamas, conectadas, plantado, corona, enroque, pierdeEnroque,
-             legalesRival, atrapada, descubierto, descubierta, cambio };
+             legalesRival, atrapada, descubierto, descubierta, cambio, coronaPerdida };
   } catch (e) { return vacio; }
 }
 

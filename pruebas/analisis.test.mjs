@@ -3076,7 +3076,7 @@ test("torres conectadas: devuelve las casillas, y nada en el medio", () => {
    ninguna posición se afirma de memoria (§10). */
 const mirar = (antes, uci) => {
   const j = new Chess(antes);
-  const m = j.move({ from: uci.slice(0, 2), to: uci.slice(2, 4) });
+  const m = j.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: uci[4] });
   assert.ok(m, `la jugada ${uci} tiene que ser legal en ${antes}`);
   return A.observarJugada({ fen: j.fen(), uci, turno: m.color, pieza: m.piece,
                             san: m.san }, antes);
@@ -3848,6 +3848,42 @@ test("coronar y perder la dama en el cambio no es perder material (20-nov)", () 
   const j = new Chess(antes); const m = j.move({ from: "d7", to: "d8", promotion: "q" });
   const obs = A.observarJugada({ fen: j.fen(), uci: "d7d8q", turno: "w", pieza: "p", san: m.san }, antes);
   assert.equal(obs.cambio, null);
+});
+
+test("la dama recién coronada que se pierde es 'tu peón coronado', sin festejo (Juan, 20-nov)", () => {
+  /* c8=Q Rxc8 y no hay recaptura: en c8 hay una dama, no un peón, y la
+     coronación se pierde en la jugada siguiente. */
+  const antes = "3r3k/2P5/8/8/8/8/8/6K1 w - - 0 1";
+  const evs = [{ cp: 0, mate: null, mejor: "g1f2", segunda: { cp: -20, mate: null } },
+               { cp: 500, mate: null, mejor: "d8c8", segunda: null }];
+  const f = unaFila(antes, "c8=Q+", evs);
+  assert.equal(f.colgada, true);
+  const t = A.explicarJugada(f, "Kf2", true, "Rxc8", mirar(antes, "c7c8q"));
+  assert.ok(t.startsWith("Tu peón coronado queda comible en c8."), t);
+  assert.ok(!t.includes("Coronás"), t);
+  /* del rival: "el peón coronado" */
+  const t2 = A.explicarJugada(f, "Kf2", false, "Rxc8", mirar(antes, "c7c8q"));
+  assert.ok(t2.startsWith("El peón coronado queda comible en c8."), t2);
+  /* y la coronación que se queda sí se festeja */
+  const libre = "7k/2P5/8/8/8/8/8/6K1 w - - 0 1";
+  const fl = unaFila(libre, "c8=Q+", [{ cp: 800, mate: null, mejor: "c7c8q", segunda: { cp: 700, mate: null } },
+                                       { cp: -800, mate: null, mejor: "h8h7", segunda: null }]);
+  assert.ok(A.explicarJugada(fl, null, true, null, mirar(libre, "c7c8q")).includes("Coronás"));
+  /* la subcoronación vuelve como lo que se eligió (revisor de ajedrez) */
+  const libreN = "7k/2P5/8/8/8/8/P7/6K1 w - - 0 1";
+  const fn = unaFila(libreN, "c8=N", [{ cp: 800, mate: null, mejor: "c7c8q", segunda: { cp: 700, mate: null } },
+                                      { cp: -300, mate: null, mejor: "h8h7", segunda: null }]);
+  const tn = A.explicarJugada(fn, null, true, null, mirar(libreN, "c7c8n"));
+  assert.ok(tn.includes("el peón vuelve como caballo"), tn);
+  /* la defendida que igual se pierde: Rbxc8 Qxc8 Rxc8 */
+  const def = "1r1r3k/2P5/8/8/8/8/2Q5/6K1 w - - 0 1";
+  const od = mirar(def, "c7c8q");
+  assert.equal(od.coronaPerdida, true);
+  const fd = unaFila(def, "c8=Q", [{ cp: 0, mate: null, mejor: "g1f2", segunda: { cp: -20, mate: null } },
+                                    { cp: 100, mate: null, mejor: "b8c8", segunda: null }]);
+  assert.ok(!A.explicarJugada(fd, "Kf2", true, "Rbxc8", od).includes("Coronás"));
+  /* y la que gana en el cambio (d8=Q+ Rxd8 Rxd8+) sigue festejándose */
+  assert.equal(mirar("2r4k/3P4/8/8/8/8/8/3R2K1 w - - 0 1", "d7d8q").coronaPerdida, false);
 });
 
 test("si en el cambio el rival no entrega nada, la tarjeta no lo dice (v0.178.1)", () => {
