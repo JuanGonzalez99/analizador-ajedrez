@@ -155,6 +155,25 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       g7."**; si la pieza se fue, "Saca…" como hoy. Con "a tiro de" (atacada
       por algo que vale menos) la cola sigue siendo esa. Revisor de ajedrez sí.
 
+- [ ] **"Se queda con la pareja de alfiles" a mitad de un cambio** (revisor
+      de ajedrez, pasada del 22-nov sobre las partidas del repo). En
+      `r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b kq - 1 12`,
+      Bxg5 lo dice, pero sigue Nxg5 y quedan uno y uno. `hayPareja` mira solo
+      la posición de después: que no lo diga si el alfil que comió puede ser
+      recapturado (o que mire después de `mejorRival`). Revisor de ajedrez sí.
+- [ ] **"Queda sin defender" cuando nunca tuvo defensa** (revisor de
+      ajedrez, 22-nov). En `r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b KQkq - 0 6`,
+      Nc6 da "El peón de g7 queda sin defender": no tenía defensores antes
+      ni después; lo nuevo es que el caballo destapó la dama (Qxg7). Si antes
+      no tenía defensores: "Destapa el peón de g7: queda a tiro de la dama."
+- [ ] **La grave que no nombra la dama que se pierde** (revisor de ajedrez,
+      22-nov). En `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5`,
+      h4 (pérdida 10,4) dice "Había Qxb8, que se llevaba el caballo." y nada
+      de la dama de c7, que sigue colgada (Qxc7). Si una pieza ya colgada
+      sigue colgada y la pérdida es grande: "Tu dama sigue comible en c7."
+      primero. Misma familia que el de la pareja: la tarjeta mira una sola
+      posición y no lo que sigue.
+
 ## Etapa 2 · Partir `index.html`
 
 El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
@@ -447,6 +466,21 @@ archiva los que pierden sentido.
       `4qk2/8/4p3/3Q4/8/2N5/8/4R1K1 b`, d5 da neto 8 (exd5 Nxd5, "tu dama por
       un peón") y en el tablero, con Rxe8+ Kxe8 Nxd5, es 4. No es falso en
       d5, pero cuenta la mitad.
+
+- [ ] **Atacar una pieza sin defensa con algo que vale igual o más**
+      (revisor de ajedrez, 22-nov). 10.Bg5 en
+      `r1b1k2r/ppp2p1p/2np1n2/8/2B1P3/2N5/PPP2PPP/R1B1K2R w KQkq - 0 10` solo
+      dice "El rival tiene Nd7." (la respuesta a una amenaza que no nombra);
+      el caballo de f6 está sin defensa. Ídem 7.Qxg7 con la torre de h8.
+      Propuesta: "Ataca el caballo de f6, que está sin defender." Va contra
+      la regla de §4octodecies (atacar algo que vale igual o menos es oferta
+      de cambio): sin defensa no lo es.
+- [ ] **"El rival tiene Kg8." cuando es su única jugada legal** (revisor de
+      ajedrez, 22-nov; tras 15.Qh5+ en
+      `r1bq1r2/ppp1nppk/3p4/3P3Q/2B4R/8/PP3PPP/R5K1 b - - 1 15`). Callarla.
+- [ ] **"Ganaba 2 peones en el cambio" cuando es la calidad** (revisor de
+      ajedrez, 22-nov). En `1nbqkbnr/1ppppppp/r7/p6Q/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 2 3`
+      había Bxa6 (torre por alfil): decir "ganaba la calidad".
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 
