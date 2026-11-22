@@ -254,6 +254,24 @@ recuperación, definición— y hay cuatro desplomes de una sola jugada, porque 
 ellos ninguna categoría mala se dispara y la curva sale sin marcas, que es justo
 lo que hay que mirar.
 
+**Los estados que faltaban (22-nov-2026, `APRENDIZAJES.md`).** Nueve de
+catorce lavados de la etapa 1 se escaparon porque la zona se miraba en el único
+estado, ancho o pantalla que traía el arnés. Desde entonces `mirar` suma, con
+capturas **nuevas** (las de antes quedaron iguales al byte):
+`ancho-barra-horizontal`, `ancho-lista-abajo` (la lista de 1600×900 bajada
+hasta el final), `ancho-mes-hover` (el título de una sección con el puntero
+encima) y un Mes de **cinco partidas** al final (`ancho-inicio-varias`,
+`ancho-mes-varias`, `mes-varias`), que es lo único que cambia la API falsa y
+por eso va después de todas las demás. Y cuatro renglones que se leen sin
+mirar: **"texto cortado"** (todo lo que sale con "…" salvo nombres y
+aperturas, a 386, 1000 y 1280, en la Partida y el Mes: tiene que dar `[]`),
+**"lista, 1600×900"** (cuánto asoma de una fila cortada arriba y abajo, con la
+lista arriba y bajada), **"mes, hover"** y **"bordes en la compu"**, que pone
+en una línea dónde abren y cierran la Partida, el Mes y el inicio a 1000 y a
+1280. Medido la primera vez: la Partida abre 9 px más adentro que el Mes con
+la barra horizontal (108 contra 99 a 1280) y 11 más afuera con la vertical
+(88), que es la de fábrica; va a Relleno para que lo juzgue el revisor.
+
 **Dos trampas que ya costaron tiempo, las dos anotadas en el archivo:**
 - `load_pgn` devuelve `false` y **no tira**. Un PGN de prueba escrito a mano con
   una jugada 19 imposible entró como una partida de cero jugadas y el arnés se

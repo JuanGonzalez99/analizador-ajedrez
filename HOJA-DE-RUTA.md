@@ -422,6 +422,12 @@ archiva los que pierden sentido.
 - [ ] **El renglón técnico de la cabecera del Mes** (revisor, v1.0; celu):
       "1 partida · 18 jugadas · prof 16 · crítico" arriba de lo que más se
       mira. ¿Hace falta a la vista, o va adentro de "Cómo se leen…"?
+- [ ] **[PC] La Partida no abre en el borde del Mes y el inicio** (arnés,
+      22-nov: lo mostró el renglón nuevo "bordes en la compu"). A 1280 el Mes
+      y el inicio van de 99 a 1171; la Partida, de 88 a 1192 con la barra
+      vertical (la de fábrica) y de 108 a 1172 con la horizontal. Pasar de una
+      pantalla a otra corre el borde. ¿Mismo ancho total, o la Partida es otra
+      grilla a propósito? Que lo juzgue el revisor con las tres capturas.
 
 ### Limpieza de código
 

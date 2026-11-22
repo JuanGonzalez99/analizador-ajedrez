@@ -21,6 +21,7 @@
    Motor y contesta de una tabla FEN → evaluación armada de antemano con
    chess.js. LAS EVALUACIONES SON INVENTADAS: los veredictos de la pantalla no
    significan nada, la disposición sí. Para juzgar un veredicto está el celu. */
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Chess } from "../chess.js";
@@ -1064,6 +1065,72 @@ marcado.menuCancelado = await pg.evaluate(() => {
 console.log("marcas:        ", JSON.stringify(marcado));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 
+/* LOS ESTADOS QUE FALTABAN (APRENDIZAJES.md, 22-nov-2026). Nueve de catorce
+   lavados de la etapa 1 se escaparon porque la zona se juzgaba en el único
+   estado, ancho o pantalla que traía el arnés (causas A, B y F). Acá se suman
+   esos estados, con capturas NUEVAS —ninguna de las de arriba cambia, así que
+   la comparación byte a byte sigue valiendo— y medidas que se leen sin mirar:
+   - todo texto cortado con "…" (salvo nombres y aperturas) a 386, 1000 y 1280;
+   - [PC] la lista de jugadas bajada hasta el final (caso v0.179: el fundido se
+     eligió mirando la lista solo arriba de todo);
+   - [PC] la barra horizontal en una captura propia (caso 1);
+   - los bordes de la Partida, que se comparan al final con los del Mes y el
+     inicio (casos 2 y 10).
+   El dial en "la lista abajo" (caso 7) ya tiene la suya: prueba-forma-abajo. */
+const NO_SE_CORTA = ".rival, .cabTit .l2, #yaUsuarioNombre, #partidas, #mesLista";
+const cortados = () => pg.evaluate(salvo => [...document.querySelectorAll("body *")].filter(e => {
+  if (!e.getClientRects().length || e.closest(salvo)) return false;
+  if (getComputedStyle(e).textOverflow !== "ellipsis") return false;
+  return e.scrollWidth > e.clientWidth + 1;
+}).map(e => (e.id ? "#" + e.id : e.classList[0] ? "." + e.classList[0] : e.tagName.toLowerCase()) +
+            " «" + e.textContent.trim().replace(/\s+/g, " ").slice(0, 24) + "»"), NO_SE_CORTA);
+const BORDES = {};
+const bordesDe = (sels) => pg.evaluate(sels => {
+  const rs = sels.map(s => [...document.querySelectorAll(s)]).flat()
+    .filter(e => e.getClientRects().length).map(e => e.getBoundingClientRect());
+  return rs.length ? [Math.round(Math.min(...rs.map(r => r.left))), Math.round(Math.max(...rs.map(r => r.right)))] : null;
+}, sels);
+{
+  const cortes = {};
+  for (const [w, h] of [[386, 760], [1000, 800], [1280, 800]]) {
+    await pg.setViewportSize({ width: w, height: h });
+    await pg.waitForTimeout(250);
+    cortes[w] = await cortados();
+    if (w > 900) BORDES["partida " + w] = await bordesDe(["#zonaRevision .principal", "#lateral"]);
+  }
+  console.log("texto cortado, partida:", JSON.stringify(cortes), "(tiene que ser todo [])");
+
+  await elegir("#verEval", "horizontal");
+  await pg.waitForTimeout(250);
+  await pg.evaluate(() => { document.getElementById("zonaRevision").scrollIntoView({ block: "start" }); window.scrollBy(0, -10); });
+  await foto("ancho-barra-horizontal");
+  await elegir("#verEval", "barra");
+
+  /* la lista no entra a 1600×900: se la baja hasta el final y se mira el
+     borde de ARRIBA, que es el que no veía nadie */
+  await pg.setViewportSize({ width: 1600, height: 900 });
+  await pg.waitForTimeout(300);
+  await pg.evaluate(() => { document.getElementById("zonaRevision").scrollIntoView({ block: "start" }); window.scrollBy(0, -10); });
+  const listaEn = async donde => {
+    await pg.evaluate(d => { const l = document.getElementById("jugadas"); l.scrollTop = d === "abajo" ? l.scrollHeight : 0;
+                             l.dispatchEvent(new Event("scroll")); }, donde);
+    await pg.waitForTimeout(200);
+    return pg.evaluate(() => {
+      const l = document.getElementById("jugadas"), f = l.firstElementChild ? l.firstElementChild.offsetHeight : 1;
+      return { noEntra: l.scrollHeight > l.clientHeight + 1, hayMas: l.classList.contains("hayMas"),
+               arribaAsoma: Math.round(l.scrollTop % f), abajoAsoma: Math.round((l.scrollTop + l.clientHeight) % f) };
+    });
+  };
+  const arriba = await listaEn("arriba");
+  const abajo = await listaEn("abajo");
+  await foto("ancho-lista-abajo");
+  await listaEn("arriba");
+  console.log("lista, 1600×900:", JSON.stringify({ arriba, abajo }),
+              "(arribaAsoma/abajoAsoma: px de una fila cortada contra ese borde; 0 es fila entera)");
+  await pg.setViewportSize({ width: 1280, height: 800 });
+  await pg.waitForTimeout(250);
+}
+
 /* LA VISTA DEL MES, en el celu (v0.105). Hasta acá ninguna captura la
    mostraba: la v0.98 la miró con una maqueta descartable, y en la v0.104 los
    campos pasaron a 44 sin que nadie viera cómo quedaban los dos selects de
@@ -1114,6 +1181,31 @@ if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").
   await pg.waitForTimeout(150);
   mesPc.fijoAlBajar = await pg.evaluate(() => Math.round(document.querySelector(".mesIzq").getBoundingClientRect().top));
   console.log("mes en la compu:", JSON.stringify(mesPc));
+  /* [PC] EL HOVER SOBRE UN TÍTULO DE SECCIÓN (caso 3 de APRENDIZAJES.md: la
+     banda del hover se vio recién en la v0.146 porque el arnés nunca pasaba
+     el mouse por ahí). Recorte del título con el puntero encima, y la banda
+     medida contra la columna. */
+  {
+    const sum = pg.locator("#zonaMes .mesDer details.seccion > summary").first();
+    await sum.scrollIntoViewIfNeeded();
+    await sum.hover();
+    await pg.waitForTimeout(250);
+    await sum.screenshot({ path: path.join(SALIDA, "ancho-mes-hover.png") });
+    console.log("mes, hover:    ", JSON.stringify(await pg.evaluate(() => {
+      const s = document.querySelector("#zonaMes .mesDer details.seccion > summary"), cs = getComputedStyle(s);
+      const r = s.getBoundingClientRect(), col = document.querySelector(".mesDer").getBoundingClientRect();
+      return { fondo: cs.backgroundColor, sobraIzq: Math.round(col.left - r.left), sobraDer: Math.round(r.right - col.right) };
+    })), "(la banda no sale de la columna: los dos en ≤ 0)");
+    await pg.mouse.move(2, 2);
+  }
+  const cortesMes = {};
+  for (const [w, h] of [[1000, 800], [1280, 900], [386, 760]]) {
+    await pg.setViewportSize({ width: w, height: h });
+    await pg.waitForTimeout(250);
+    cortesMes[w] = await cortados();
+    if (w > 900) BORDES["mes " + w] = await bordesDe(["#zonaMes .mesIzq", "#zonaMes .mesDer"]);
+  }
+  console.log("texto cortado, mes:", JSON.stringify(cortesMes), "(tiene que ser todo [])");
   await pg.setViewportSize({ width: 412, height: 760 });
 }
 
@@ -1188,5 +1280,53 @@ for (const [w, h] of [[1280, 800], [1500, 900], [1000, 700]]) {
 console.log("inicio, bordes:", JSON.stringify(bordes), "(a 1280: 99–499 y 531–1171, como el Mes)");
 await pg.setViewportSize({ width: 412, height: 760 });
 
+/* LOS BORDES DE LAS TRES PANTALLAS EN LA COMPU, EN UNA LÍNEA (casos 2, 9, 10
+   y 13 de APRENDIZAJES.md: lo que vive en dos pantallas se miraba en una, y
+   el inicio quedó corrido dos meses sin que nadie comparara). Y con un Mes de
+   VARIAS partidas, que es el de verdad: hasta acá la API falsa traía una sola,
+   y una fila o una tabla que se rompe con dos no se veía nunca. Va al final y
+   con capturas nuevas para no cambiar ni una de las de arriba. */
+for (const [w, h] of [[1000, 700], [1280, 800]]) {
+  await pg.setViewportSize({ width: w, height: h });
+  await pg.waitForTimeout(150);
+  BORDES["inicio " + w] = await bordesDe(["#meses", "#partidas"]);
+}
+{
+  const otras = ["ahogado", "mate", "doble", "reloj"].map((cual, i) => {
+    const pgn = fs.readFileSync(new URL(`./partida-${cual}.pgn`, import.meta.url), "utf8");
+    const res = (pgn.match(/\[Result "([^"]*)"/) || [, "1-0"])[1];
+    const g = JSON.parse(JSON.stringify(FALSA.API["/api/mes/2026/10"].games[0]));
+    g.url = "https://www.chess.com/game/live/" + (i + 2); g.pgn = pgn; g.end_time += (i + 1) * 3600;
+    g.white.result = res === "1-0" ? "win" : res === "0-1" ? "resigned" : "stalemate";
+    g.black.result = res === "0-1" ? "win" : res === "1-0" ? "resigned" : "stalemate";
+    return g;
+  });
+  FALSA.API["/api/mes/2026/10"].games.push(...otras);
+  await pg.setViewportSize({ width: 1280, height: 800 });
+  await pg.reload();
+  await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+  await pg.waitForTimeout(300);
+  const filas = await pg.locator("#partidas div[data-i]").count();
+  await foto("ancho-inicio-varias");
+  await pg.evaluate(() => document.getElementById("analizarMes").click());
+  await pg.waitForSelector("#zonaMes:not(.oculto)", { timeout: 90000 });
+  /* el mes analiza las que no están en la caché: se espera a que termine */
+  await pg.waitForFunction(() => document.getElementById("barra").classList.contains("oculto"), null, { timeout: 120000 });
+  await pg.waitForTimeout(500);
+  await pg.evaluate(() => document.querySelectorAll("#zonaMes details.seccion").forEach(d => d.open = true));
+  await foto("ancho-mes-varias");
+  const varias = await pg.evaluate(() => ({
+    desbordan: [...document.querySelectorAll("#zonaMes .tw")].filter(t => t.scrollWidth > t.clientWidth + 1).length,
+    desborde: document.documentElement.scrollWidth > innerWidth }));
+  const cortes = await cortados();
+  await pg.setViewportSize({ width: 412, height: 760 });
+  await pg.waitForTimeout(250);
+  await foto("mes-varias");
+  console.log("mes de varias: ", JSON.stringify({ filas, ...varias, cortados: cortes,
+              cortados386: (await pg.setViewportSize({ width: 386, height: 760 }), await pg.waitForTimeout(200), await cortados()) }),
+              "(filas = 5; nada desborda ni se corta)");
+}
+console.log("bordes en la compu:", JSON.stringify(BORDES),
+            "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");
 console.log("listo: capturas/");
 await cerrar();

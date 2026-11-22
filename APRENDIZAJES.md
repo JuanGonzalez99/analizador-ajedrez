@@ -54,16 +54,8 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-- [ ] **`mirar.mjs` fotografía y mide los estados que faltaban** (casos 1, 3,
-      6, 7 y la v0.179 de abajo): la lista de jugadas de la compu bajada hasta
-      el final; el hover sobre un título de sección del Mes; la barra
-      horizontal en la compu; el dial en "la lista abajo". Y un chequeo que
-      imprima todo texto cortado con "…" (`scrollWidth > clientWidth`), salvo
-      nombres y aperturas, a 386, 1000 y 1280. Sin cambiar las capturas que ya
-      hay (la comparación byte a byte sigue valiendo).
-- [ ] **`mirar.mjs` compara los bordes de inicio, Mes y Partida en la compu**
-      en una línea, y el Mes de prueba trae varias partidas y no una (casos 2,
-      9, 10 y 13: lo que vive en dos pantallas se miraba en una).
+(Ninguna: las dos del 22-nov se hicieron esa misma tarde y están en el
+registro.)
 
 ## Registro
 
@@ -75,24 +67,24 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 - **Fundido de la lista solo abajo** · v0.179 → v1.0 · A+B: el ítem decía
   "el borde de abajo" y el arnés fotografía la lista solo arriba de todo; el
   revisor eligió las variantes en ese único estado · los estados de la zona
-  en `revisor-ux.md` y la lista bajada en `mirar.mjs` (pendiente).
+  en `revisor-ux.md` y la lista bajada en `mirar.mjs`.
 - 1 · [PC] La barra horizontal no se alineaba con la columna · v0.125 →
   v0.132 · A: se midió con la vertical, la de fábrica · estados de la zona
   (cada opción de Ajustes).
 - 2 · [PC] El inicio corrido a la izquierda · v0.122 → v0.145 · G: la Partida
   se rehízo después y nadie comparó bordes · bordes entre pantallas en
-  `mirar.mjs` (pendiente).
+  `mirar.mjs`.
 - 3 · [PC] La banda del hover en los títulos del Mes · → v0.146 · A+C: el
-  arnés nunca hace hover ahí · hover en `mirar.mjs` (pendiente).
+  arnés nunca hace hover ahí · hover en `mirar.mjs`.
 - 4 · "48 %" y "48.0%" en la misma pantalla · v0.156 → v0.157 · D · regla
   nueva obliga a barrer (`TAREA-NOCTURNA.md`).
 - 5 · [PC] La lista cortada a mitad de fila · v0.135 → v0.149 · E: "medio
   renglón se acepta" · lo aceptado vence (`revisor-rumbo.md`).
 - 6 · [PC] "la juga…" a 1000 · v0.125 → v0.150 · A: el corte se movió a 1000
   y a 1000 justo no se midió · anchos de corte en los estados; chequeo de "…"
-  (pendiente).
+ .
 - 7 · Los bordes de la tira en "la lista abajo" · → v0.160 · A+C: opción
-  que no era de fábrica · estados de la zona; dial en `mirar.mjs` (pendiente).
+  que no era de fábrica · estados de la zona; dial en `mirar.mjs`.
 - 8 · [PC] La caja vacía de las tres mejores · v0.150 → v0.151 · E: se vio
   vacía y se aceptó · lo aceptado vence.
 - 9 · [PC] El "·" suelto en las filas sin reloj · → v0.179 · F · "¿dónde más
@@ -109,3 +101,8 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 - 14 · [PC] La barra y la curva brillan más que la tarjeta · → v0.179 · B: la
   regla era de la barra de progreso y no se aplicó a las otras · regla nueva
   obliga a barrer.
+- **Prevenciones de los casos 1–3, 6, 7, 9, 10, 13 y v0.179, hechas** ·
+  22-nov · `mirar.mjs` suma las capturas y medidas de los estados que
+  faltaban y el Mes de cinco partidas (§2 del traspaso, "Los estados que
+  faltaban"). El caso 7 ya tenía la suya (`prueba-forma-abajo`). Lo primero
+  que mostró: la Partida no abre en el borde del Mes (a Relleno).
