@@ -1327,5 +1327,12 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
 }
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");
+/* y no queda en un número que hay que acordarse de leer: si a un mismo ancho
+   las pantallas no coinciden (más de 2 px), lo dice con OJO, como el resto */
+for (const w of [1000, 1280]) {
+  const b = ["partida", "mes", "inicio"].map(n => BORDES[n + " " + w]).filter(Boolean);
+  const dif = Math.max(...[0, 1].map(k => Math.max(...b.map(x => x[k])) - Math.min(...b.map(x => x[k]))));
+  if (dif > 2) console.log(`OJO: a ${w} las pantallas no abren y cierran en el mismo borde (${dif} px)`);
+}
 console.log("listo: capturas/");
 await cerrar();

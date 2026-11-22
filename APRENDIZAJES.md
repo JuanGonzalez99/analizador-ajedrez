@@ -112,3 +112,10 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   de que se descuente lo comido · regla en `revisor-ajedrez.md` (jugar la
   respuesta obvia y la del motor; recorrer todas las legales de las PGN
   antes y después) y los dos a Arreglos con sus FEN.
+- **[PC] La Partida no abre en el borde del Mes y el inicio** · el inicio
+  se alineó con el Mes en la v0.145/v0.154 y la Partida nunca entró en esa
+  comparación → lo mostró el arnés el 22-nov · F+B: la regla "mismo borde"
+  se aplicó a las dos pantallas donde nació y no se buscó dónde más valía
+  (la Partida tiene su propia grilla, 680 + 380) · el renglón "bordes en la
+  compu" de `mirar.mjs`, que además avisa con OJO si a un mismo ancho las
+  tres pantallas difieren en más de 2 px; el arreglo, en Relleno.
