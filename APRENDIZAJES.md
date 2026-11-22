@@ -1,0 +1,111 @@
+# Aprendizajes: por qué se escapó lo que se escapó
+
+Pedido de Juan (22-nov-2026, después de la v1.0): *"que no solamente diga
+'che, hay que cambiar esto', sino también 'y por qué el que lo hizo no se dio
+cuenta'. Así se evitan futuros errores del mismo estilo"*. Y que se mejoren
+solos, sin que él tenga que pedirlo.
+
+## El circuito
+
+1. **Todo hallazgo trae su porqué.** Cualquier revisor (UX, ajedrez, código,
+   rumbo) o el mono, cuando encuentra algo que **ya estaba** o que quien
+   programó no vio antes de la revisión, dice además **por qué no se vio**:
+   una causa de la lista de abajo y **qué cambiar para que no vuelva a
+   pasar**, con el archivo y el texto exacto. Si se le escapó a un revisor en
+   una revisión anterior, también: el que se equivocó puede ser él.
+2. **La prevención se aplica esa misma noche**, sin preguntarle a Juan y sin
+   contar como ítem (`TAREA-NOCTURNA.md`, paso 5bis). Puede ser:
+   - una regla en el archivo del agente que no lo vio (`.claude/agents/*.md`);
+   - una captura o una medida nueva en el arnés (`pruebas/mirar.mjs`), para
+     que el caso quede a la vista siempre y no dependa de que alguien se
+     acuerde;
+   - un chequeo en `npm test` o una regla del mono;
+   - un paso en `TAREA-NOCTURNA.md`, si el que no lo vio es quien programa.
+   **Mejor una medida que una regla escrita**: lo que mide el arnés no se
+   olvida; lo que dice un archivo, a veces sí.
+3. **Se anota acá abajo**, una línea por caso, en el mismo commit que la
+   prevención. Y va al resumen de la mañana, en "Lo que aprendimos".
+4. **Los domingos se mira si funcionó.** La revisión del criterio
+   (`TAREA-NOCTURNA.md`, paso 0) lee este registro: **una causa que se repite
+   quiere decir que la prevención anterior no alcanzó**, y se cambia por una
+   más fuerte (casi siempre: pasar de regla escrita a medida del arnés). Y
+   junta los casos en principios para que los archivos no crezcan sin fin.
+
+## Las causas
+
+- **A. Estado no mirado.** Se miró la zona en un solo estado: otro scroll,
+  otra jugada, abierta o cerrada, con o sin datos, hover o foco, otra opción
+  de Ajustes, otro ancho.
+- **B. Encuadre heredado.** El ítem decía qué mirar y se miró solo eso; o una
+  regla nueva se aplicó solo donde nació.
+- **C. El arnés no tenía el caso.** `mirar.mjs` no lo fotografía ni lo mide.
+- **D. Criterio que faltaba.** La regla que lo hace malo no estaba escrita
+  todavía.
+- **E. Aceptado a sabiendas.** Se vio, se dejó a propósito y nadie lo volvió a
+  juzgar.
+- **F. Revisión estrecha.** Se revisó lo que cambió y no lo que lo rodea, o
+  no se miró dónde más vive lo mismo (otra pantalla, otro rótulo).
+- **G. Un vecino cambió después.** Estaba bien cuando se hizo y lo dejó mal un
+  cambio posterior en otra zona.
+
+## Prevenciones pendientes
+
+Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
+antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
+quedan en el registro.
+
+- [ ] **`mirar.mjs` fotografía y mide los estados que faltaban** (casos 1, 3,
+      6, 7 y la v0.179 de abajo): la lista de jugadas de la compu bajada hasta
+      el final; el hover sobre un título de sección del Mes; la barra
+      horizontal en la compu; el dial en "la lista abajo". Y un chequeo que
+      imprima todo texto cortado con "…" (`scrollWidth > clientWidth`), salvo
+      nombres y aperturas, a 386, 1000 y 1280. Sin cambiar las capturas que ya
+      hay (la comparación byte a byte sigue valiendo).
+- [ ] **`mirar.mjs` compara los bordes de inicio, Mes y Partida en la compu**
+      en una línea, y el Mes de prueba trae varias partidas y no una (casos 2,
+      9, 10 y 13: lo que vive en dos pantallas se miraba en una).
+
+## Registro
+
+Una línea por caso: qué se escapó, en qué versión se hizo y en cuál se vio,
+la causa y qué se cambió. Los catorce primeros salieron del análisis del
+22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
+zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
+
+- **Fundido de la lista solo abajo** · v0.179 → v1.0 · A+B: el ítem decía
+  "el borde de abajo" y el arnés fotografía la lista solo arriba de todo; el
+  revisor eligió las variantes en ese único estado · los estados de la zona
+  en `revisor-ux.md` y la lista bajada en `mirar.mjs` (pendiente).
+- 1 · [PC] La barra horizontal no se alineaba con la columna · v0.125 →
+  v0.132 · A: se midió con la vertical, la de fábrica · estados de la zona
+  (cada opción de Ajustes).
+- 2 · [PC] El inicio corrido a la izquierda · v0.122 → v0.145 · G: la Partida
+  se rehízo después y nadie comparó bordes · bordes entre pantallas en
+  `mirar.mjs` (pendiente).
+- 3 · [PC] La banda del hover en los títulos del Mes · → v0.146 · A+C: el
+  arnés nunca hace hover ahí · hover en `mirar.mjs` (pendiente).
+- 4 · "48 %" y "48.0%" en la misma pantalla · v0.156 → v0.157 · D · regla
+  nueva obliga a barrer (`TAREA-NOCTURNA.md`).
+- 5 · [PC] La lista cortada a mitad de fila · v0.135 → v0.149 · E: "medio
+  renglón se acepta" · lo aceptado vence (`revisor-rumbo.md`).
+- 6 · [PC] "la juga…" a 1000 · v0.125 → v0.150 · A: el corte se movió a 1000
+  y a 1000 justo no se midió · anchos de corte en los estados; chequeo de "…"
+  (pendiente).
+- 7 · Los bordes de la tira en "la lista abajo" · → v0.160 · A+C: opción
+  que no era de fábrica · estados de la zona; dial en `mirar.mjs` (pendiente).
+- 8 · [PC] La caja vacía de las tres mejores · v0.150 → v0.151 · E: se vio
+  vacía y se aceptó · lo aceptado vence.
+- 9 · [PC] El "·" suelto en las filas sin reloj · → v0.179 · F · "¿dónde más
+  vive esto?" en `revisor-ux.md`.
+- 10 · [PC] "Partida por partida" estirada a 640 · v0.148.1 → v1.0 · F: la
+  maqueta se armó solo sobre el inicio y la fila es la misma en el Mes ·
+  "¿dónde más vive esto?".
+- 11 · El renglón técnico de la cabecera del Mes · v0.108 → v1.0 · E · lo
+  aceptado vence.
+- 12 · La precisión "84.6" y "85" · v0.158 → v1.0 · B: el barrido de las
+  tasas no tocó la precisión · regla nueva obliga a barrer.
+- 13 · "Mediana 0.00" sin decir de qué · v0.174 → v1.0 · F: cambió el cálculo
+  y no se miró el rótulo · "¿dónde más vive esto?".
+- 14 · [PC] La barra y la curva brillan más que la tarjeta · → v0.179 · B: la
+  regla era de la barra de progreso y no se aplicó a las otras · regla nueva
+  obliga a barrer.

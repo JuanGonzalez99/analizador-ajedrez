@@ -7710,6 +7710,17 @@ La solución de verdad es una aplicación nativa. Es un proyecto aparte.
     contesta; lee el resumen y, si ve algo raro, lo dice): las decisiones se
     toman y se cuentan, y la sección "Dudas abiertas" de la hoja se fue al
     archivo. Solo espera a Juan lo marcado `⏸`.
+  - **Todo hallazgo trae su porqué** (Juan, 22-nov-2026, después de la v1.0).
+    El fundido de la v0.179 lo había elegido "solo abajo" el mismo revisor
+    que en la v1.0 marcó el corte de arriba: el ítem hablaba del borde de
+    abajo y el arnés fotografía la lista solo arriba de todo. Revisados 14
+    lavados de la etapa 1, 9 se escaparon igual: la zona se juzgaba en un
+    solo estado, ancho o pantalla (causas A, B y F). Ahora cada revisor dice,
+    por cada hallazgo, por qué no se vio y qué lo evita; la tarea lo aplica
+    esa noche (paso 5bis de `TAREA-NOCTURNA.md`) y lo anota en
+    `APRENDIZAJES.md`, que tiene las causas, el registro y las prevenciones
+    pendientes. Los domingos se mira si una causa se repite. Quien programa
+    mira los estados de la zona antes de pasársela al revisor.
   - **No se parcha lo que hay que rehacer** (Juan, 9-nov-2026, después de la
     v0.118, que agrandó el tablero en la compu y dejó la curva colgando debajo
     de una franja vacía). Lo que se ve mal en la pantalla frena la versión

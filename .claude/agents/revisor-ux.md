@@ -79,6 +79,16 @@ cambió.
    (rival, apertura), el caso vacío (sin jugada, sin reloj, sin analizar, la
    posición inicial) y el ancho de 386. Si el arnés no trae el caso, armalo con
    `pruebas/falso.mjs`.
+   **Y en cada estado que tenga la zona que se construyó o se tocó**, no
+   solo en el que trae el arnés (`APRENDIZAJES.md`: 5 de 15 lavados se
+   escaparon por mirar un solo estado). Antes de aprobar: con el scroll
+   arriba de todo y abajo de todo; abierta y cerrada; con el mouse encima y
+   con el foco; con cada opción de Ajustes o del dial que la cambia, no solo
+   la de fábrica; a 386 y a los dos lados de cada corte de ancho (999 y
+   1000, 1109 y 1110). Si el ítem habla de un borde, mirá también el otro.
+   **Y preguntate "¿dónde más vive esto?"**: la misma fila en otra pantalla,
+   el rótulo de un número que cambió, una regla nueva que vale en otros
+   lugares. Lo que se usa en dos pantallas se mira en las dos.
 3. Las capturas quedan en `capturas/`. Las del celu salen a 824×1520 (412×760
    CSS a 2x); las de PC empiezan con `ancho` y `tres`. **No las mires a 2x**:
    bajalas a escala CSS (la mitad) con Python/PIL. **Esa es la escala para
@@ -192,7 +202,13 @@ LAVADO DE CARA (si hay):
 LO GRANDE (si hay):
 - qué, y tu recomendación: quien programa la aplica y la cuenta en el resumen
 
-MIRÉ: qué capturas y medidas usé
+POR QUÉ NO SE VIO (por cada cosa de arriba que ya estaba, o que quien
+programó tendría que haber visto antes de pasártela):
+- qué · causa (A–G de `APRENDIZAJES.md`) · prevención: qué archivo cambiar
+  y cómo (mejor una medida en `mirar.mjs` que una regla escrita). Si se te
+  escapó a vos en una revisión anterior, decilo igual: la regla va acá.
+
+MIRÉ: qué capturas y medidas usé, y en qué estados de la zona
 ```
 
 Sin listas largas: si hay más de cinco cosas para corregir, las cinco más

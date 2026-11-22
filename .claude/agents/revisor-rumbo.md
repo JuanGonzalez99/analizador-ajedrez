@@ -19,6 +19,7 @@ miraba hacia dónde va todo.
 ## Qué leés
 
 - `NORTE.md` entero (es corto) y `HOJA-DE-RUTA.md` entera.
+- `APRENDIZAJES.md`: las causas y lo que se anotó en la semana.
 - `git log --since="8 days ago" --oneline` y, de ahí, qué versiones salieron.
 - `TAREA-NOCTURNA.md` y `CLAUDE.md`, por encima: solo para ver si contradicen
   a la hoja de ruta.
@@ -79,6 +80,11 @@ LA SEMANA: N versiones · etapa en curso: N · arreglos: N · relleno: N
 
 CAMBIOS A APLICAR (exactos, para copiar):
 - archivo · qué mover, tachar, borrar o reescribir · por qué en una línea
+
+APRENDIZAJES (de `APRENDIZAJES.md`): ¿alguna causa se repitió en la semana
+pese a su prevención? Cuál, y qué prevención más fuerte proponés. ¿Quedó
+algo **aceptado a sabiendas** (en el traspaso: "se acepta", "queda así") que
+con lo que la app es hoy ya no conviene? Va a Relleno.
 
 SUBO DE RELLENO (si hay, uno): cuál · por qué
 

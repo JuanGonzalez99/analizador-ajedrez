@@ -46,6 +46,12 @@ describe. §10 tiene las reglas de trabajo.
     algo nuevo o solo corrigió lo hecho, ítems trabados o fuera de lugar,
     preguntas para Juan que se acumulan, documentos que se contradicen— y la tarea los ordena.
     Existe porque la etapa 1 se alargó semanas sin que nadie lo viera.
+  - **Todo hallazgo trae su porqué, y la app aprende sola** (Juan,
+    22-nov-2026): cualquier revisor que encuentra algo que ya estaba dice
+    también por qué no se vio (causas A–G) y qué lo evita, y la prevención
+    se aplica esa misma noche —regla en el agente que no lo vio, o mejor una
+    medida en `mirar.mjs`— y se anota en `APRENDIZAJES.md`. De día vale
+    igual. Los domingos se mira si alguna causa se repitió.
   - **Lo que levantan los revisores no frena lo nuevo** (Juan, 20-nov-2026):
     los lavados de cara y retoques van a "Relleno" y los errores a
     "Arreglos" de `HOJA-DE-RUTA.md`, nunca a la etapa en curso. La regla

@@ -94,7 +94,9 @@ PARA LA HOJA DE RUTA, de lo que más rinde a lo que menos (cinco como mucho):
   cómo se verifica que no rompe nada · [toca lo que se ve | toca lo que dice | interno]
 
 ERRORES (si hay), aparte, con su prueba:
-- qué falla · caso concreto · cómo lo probé
+- qué falla · caso concreto · cómo lo probé · por qué no lo agarró
+  `npm test` ni el mono, y qué prueba o regla lo habría agarrado
+  (`APRENDIZAJES.md`)
 
 PARA EL RESUMEN DE JUAN: una línea, sin jerga ("sacar ~3.000 tokens de
 comentarios viejos en la tarjeta", "una prueba que no probaba nada")

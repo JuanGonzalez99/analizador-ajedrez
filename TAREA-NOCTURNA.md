@@ -25,6 +25,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    no se revisa a sí mismo) que lea `DISENO.md` §2 y §3, lo que se agregó en la
    semana (`git log --since="8 days ago" -- DISENO.md HOJA-DE-RUTA.md`) y
    `.claude/agents/revisor-ux.md`, y proponga **principios** en vez de casos:
+   (desde el 22-nov también lee `APRENDIZAJES.md` y los archivos de los
+   cuatro revisores: **una causa que se repitió pese a su prevención** pide
+   una prevención más fuerte —casi siempre, de regla escrita a medida del
+   arnés—, y los casos del registro se juntan en principios para que los
+   archivos no crezcan sin fin)
    qué reglas generales salen de los gustos y de los errores, cuáles del
    criterio actual sobran o se contradicen. Aplicá lo que proponga a
    `revisor-ux.md` en un commit propio, y en el resumen de la mañana va como
@@ -94,10 +99,24 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    revisor propone algo que contradice algo que él eligió) va al resumen
    igual, **con una captura de cómo quedaba**: se le muestra para que decida,
    no se le aplica sin él.
+3bis. **Prevenciones pendientes de `APRENDIZAJES.md`**: si hay, se hacen
+   antes del ítem, en su propio commit, y no cuentan como ítem. Son lo que
+   evita que vuelva a escaparse algo que ya se escapó.
 4. **Construir.** Con las reglas de siempre: un cambio invasivo por tanda,
    `npm test` verde, versión de `index.html` que sube, traspaso actualizado en
    el mismo commit, PC en commits separados, y la comparación byte a byte de
    las capturas del celu contra las de antes del cambio.
+   **Antes de pasárselo al revisor, mirá vos lo que él va a mirar** (22-nov):
+   la zona en todos sus estados (scroll arriba y abajo, abierta y cerrada,
+   hover y foco, cada opción de Ajustes, 386 y los dos lados de cada corte)
+   y "¿dónde más vive esto?" (`revisor-ux.md`, "Cómo mirás"). Lo que el
+   revisor encuentre que vos podías ver también es un aprendizaje, y tuyo.
+   **Si el cambio agrega una regla a `DISENO.md`**, en la misma versión se
+   busca en toda la app dónde más vale; lo que aparezca va a Relleno (causa
+   B de `APRENDIZAJES.md`: las reglas se aplicaban solo donde nacían).
+   **Si algo se acepta a sabiendas** ("se acepta", "queda así"), se escribe
+   en el traspaso con esa palabra y su porqué: el revisor de rumbo lo vuelve a
+   juzgar los sábados (causa E).
 5. **Revisar.** Según la perilla "Revisor" de `HOJA-DE-RUTA.md`:
    - *después de cada cambio*: antes de pushear cada versión, lanzá el
      subagente `revisor-ux` con qué cambió y qué versión es. Si devuelve
@@ -123,6 +142,18 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    revisor; y al resumen, en una línea. **No entra a la etapa en curso** salvo
    que sea un parche sobre lo que el mismo ítem construye (regla "Cómo entra
    lo nuevo", 20-nov: así se alargó la etapa 1).
+5bis. **Aprender** (Juan, 22-nov: *"que no solamente diga 'hay que cambiar
+   esto', sino también 'y por qué el que lo hizo no se dio cuenta'"*). Todo
+   revisor devuelve, por cada hallazgo sobre algo que ya estaba o que quien
+   programó podía ver, **por qué no se vio** y **qué prevención** lo evita.
+   Esa misma noche: la prevención se aplica (la regla al archivo del agente
+   que no lo vio, la captura o la medida a `mirar.mjs`, la prueba a
+   `npm test`, el paso a este archivo), se anota una línea en el registro de
+   `APRENDIZAJES.md`, todo en un commit propio, y va al resumen en "Lo que
+   aprendimos". Si la prevención es código y no entra en la noche, va a
+   "Prevenciones pendientes" de `APRENDIZAJES.md`, que la noche siguiente
+   hace primero. No cuenta como ítem. Vale igual para el mono y para las
+   pasadas de los domingos, miércoles y sábados.
 6. **Pushear a `main`.** Cada push es un deploy en vivo, así que solo con todo
    verde. Si el push falla, no insistas más de cuatro veces y ponelo primero en
    el resumen.
@@ -149,6 +180,9 @@ castellano rioplatense, sin jerga de código, en este orden:
 - lo que no apliqué por respetar algo que elegiste vos, con captura
 
 **El rumbo** (solo los sábados): lo que dijo el revisor de rumbo
+
+**Lo que aprendimos** (si hubo): qué se escapó, por qué, y qué se cambió
+para que no vuelva, en una línea cada cosa
 
 **Lavados de cara que vio el revisor** (si hay): qué zona, en una línea;
 van a Relleno

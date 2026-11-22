@@ -136,6 +136,12 @@ PARA LA HOJA DE RUTA (si hay): algo que pide más que un arreglo, en una línea
 LO GRANDE (si hay):
 - qué, y tu recomendación: quien programa la aplica y la cuenta en el resumen
 
+POR QUÉ NO SE VIO (por cada cosa de arriba que ya estaba en la app):
+- qué · por qué no lo agarró nadie antes (la prueba que faltaba, la
+  posición que nadie miró, el caso que la regla no cubre, o se te escapó a
+  vos) · prevención: la prueba de unidad o el chequeo a sumar, o la regla
+  para tu archivo. Ver `APRENDIZAJES.md`.
+
 PROBÉ: qué posiciones y partidas, y con qué
 ```
 
