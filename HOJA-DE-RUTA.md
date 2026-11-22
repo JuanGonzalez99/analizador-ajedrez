@@ -197,7 +197,7 @@ limpieza: lo que está muerto no se parte.
 
 - [ ] **Limpieza antes de partir, en una o dos versiones** (revisor de código,
       18-nov; interno, sin cambios que se vean):
-  - [ ] **Sacar los restos de "la lista adentro" de la v0.160** (revisor de
+  - [x] ~~**Sacar los restos de "la lista adentro" de la v0.160**~~ (hecho en la v1.0.1) (revisor de
         código, 18-nov; interno). `tiraDeLaVariante()`, la rama
         `fp.lista === "adentro"`, el `<div id="pLinea">`, el CSS `.vlinea` /
         `.vj` / `#pLinea`, el campo `reemplaza` de `FORMAS_PRUEBA` (siempre

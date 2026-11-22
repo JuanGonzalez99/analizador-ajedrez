@@ -2978,18 +2978,19 @@ test("el dial de la prueba: dos formas desde la v0.160", () => {
   assert.ok(cuerpo, "está FORMAS_PRUEBA");
   const F = new Function("return " + cuerpo[1])();
   assert.deepEqual(Object.keys(F), ["sinLista", "abajo"], "Juan descartó adentro y dos");
-  assert.ok(Object.values(F).every(f => f.reemplaza), "las dos reemplazan la tarjeta real");
+  assert.deepEqual(Object.values(F).map(f => f.lista), ["no", "abajo"], "sin lista, o la lista abajo");
   assert.ok(/let FORMA_PRUEBA = "sinLista";/.test(html), "por defecto, sin la lista");
   assert.ok(html.includes('<select id="formaPrueba"'), "y el dial existe en la pantalla");
 });
 
 test("con una prueba abierta la tarjeta real se esconde", () => {
-  /* El pedido del usuario: una tarjeta, no dos. Que dependa de `fp.reemplaza`
-     es lo que hace que la forma "dos" siga pudiendo mostrarlas juntas. */
-  assert.ok(html.includes('$("veredicto").classList.toggle("oculto", !!PRUEBA && fp.reemplaza);'),
+  /* El pedido del usuario: una tarjeta, no dos. Desde la v0.160 vale en las
+     dos formas del dial, así que no depende de la forma (v1.0.1). Y la tira
+     adentro de la tarjeta, que fue una forma, no vuelve en silencio. */
+  assert.ok(html.includes('$("veredicto").classList.toggle("oculto", !!PRUEBA);'),
     "se esconde la real, y solo con una prueba abierta");
-  assert.ok(html.includes('const tira = fp.lista === "adentro" ? tiraDeLaVariante() : "";'),
-    "y la lista adentro de la tarjeta solo va en la forma que la pide");
+  assert.ok(!html.includes('id="pLinea"') && !html.includes("function tiraDeLaVariante"),
+    "y la tarjeta de la variante no tiene lista adentro");
 });
 
 test("el chevron de la tira se dibuja, no se escribe", () => {

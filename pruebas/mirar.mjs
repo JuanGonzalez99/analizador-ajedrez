@@ -249,7 +249,6 @@ else {
       console.log("forma " + forma.padEnd(9),
         JSON.stringify(await pg.evaluate(() => ({
           tarjetaReal: !document.getElementById("veredicto").classList.contains("oculto"),
-          listaAdentro: !document.getElementById("pLinea").classList.contains("oculto"),
           probadasAbajo: document.querySelectorAll("#tiraSc .jg.inv").length,
           elegidaAbajo: (document.querySelector("#tiraSc .jg.sel") || {}).textContent || null
         }))));

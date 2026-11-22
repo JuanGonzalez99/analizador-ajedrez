@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4838,6 +4838,17 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0.1, fuera los restos de "la lista adentro"** (revisor de código,
+18-nov; primer paso de la limpieza antes de partir, etapa 2). Desde la v0.160
+ninguna forma del dial pide la variante adentro de la tarjeta, y quedaba lo
+que la dibujaba: `tiraDeLaVariante()`, `<div id="pLinea">` con su fila
+`linea` en la grilla de `#prueba` (gap 0, así que no medía nada), el CSS
+`.vlinea`/`.vj` y el campo `reemplaza` de `FORMAS_PRUEBA`, siempre `true`: la
+tarjeta real se esconde con cualquier prueba abierta, sin preguntar la forma.
+No cambia nada que se vea: capturas del celu y de la compu iguales al byte,
+salvo la versión. La prueba que protegía el renglón muerto ahora pide que la
+tarjeta no tenga lista adentro.
 
 **v1.0, cierre de la etapa 1** (22-nov-2026; Juan decidió el número el
 20-nov). No cambia nada que se vea salvo el número: es la v0.182.2 con la

@@ -794,20 +794,6 @@
      pantalla que la necesita, y así no hay un botón esperando en la fila de
      abajo para algo que casi nunca está pasando. */
   .veredicto.prueba > .chico { flex: 0 0 auto; align-self: flex-start; }
-  /* La tira de la variante. Envuelve en vez de scrollear: una variante de diez
-     jugadas entra en dos renglones, y un carrusel horizontal adentro de una
-     tarjeta que ya vive adentro de una página que scrollea son tres scrolls
-     encimados. */
-  .vlinea { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-  /* SIN RECUADRO, igual que la tira de la partida: son la misma clase de cosa
-     —dónde estoy en una línea de jugadas— y tenerlas dibujadas distinto hacía
-     que la variante pareciera otro tipo de control. La actual se marca con el
-     20% de su color, que es lo que la app usa para "estás acá" desde la v28. */
-  .vlinea .vj { font-size: var(--t-leyenda); padding: 3px 7px; border-radius: var(--r-chico);
-                cursor: pointer; user-select: none; white-space: nowrap; }
-  .vlinea .vj.sel { background: color-mix(in srgb, currentColor 20%, transparent);
-                    box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
-  .vlinea .vj .sm { font-weight: 700; margin-right: 3px; }
   .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
   /* LA TARJETA DEL VEREDICTO NO CAMBIA DE ALTO (v0.149, lavado de cara; Juan,
      16-nov: "es medio molesto" que el tablero baje 19 px cuando la frase no
@@ -846,7 +832,7 @@
      explicación reservados (--rExp), aunque esté pensando o no haya frase.
      #pExp ya no se esconde: vacío, guarda su lugar. */
   #prueba { display: grid; grid-template-columns: auto 1fr auto; gap: 0; align-items: center;
-            grid-template-areas: "ico tit btn" "sub sub sub" "exp exp exp" "linea linea linea"; }
+            grid-template-areas: "ico tit btn" "sub sub sub" "exp exp exp"; }
   #prueba > .txt { display: contents; }
   #pIco { grid-area: ico; font-size: var(--t-cuerpo); min-width: 0; margin-right: var(--e-2); }
   #pTit { grid-area: tit; min-width: 0; }
@@ -858,7 +844,6 @@
   #prueba > .chico::after { content: ""; position: absolute; inset: -10px -6px; }
   #pSub { grid-area: sub; min-height: 1lh; margin-top: 2px; align-self: start; }
   #pExp { grid-area: exp; min-height: calc(var(--rExp, 2) * 1lh); align-self: start; }
-  #pLinea { grid-area: linea; }
   svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: var(--e-2) auto 0; }
   /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
      horizontal, porque son lo mismo contado de dos maneras. Va pegada arriba de
@@ -1477,7 +1462,7 @@
        subrayado no hay confusión posible a ninguna intensidad, porque son dos
        cosas distintas: el relleno es dónde estás, el subrayado es dónde está el
        mouse. Por eso tampoco se tiñe el renglón: ese tono ya significa "acá". */
-    .tira .jg:hover, .jugadas .jg:hover, .vlinea .vj:hover {
+    .tira .jg:hover, .jugadas .jg:hover {
       box-shadow: inset 0 -2px 0 color-mix(in srgb, currentColor 45%, transparent); }
     .alt:hover { background: color-mix(in srgb, currentColor 8%, transparent); }
     .tocable:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
@@ -1563,7 +1548,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0 · 22-11";
+  window.VERSION = "v1.0.1 · 22-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -1953,8 +1938,7 @@
   <div class="veredicto prueba oculto" id="prueba">
     <div class="ico" id="pIco"></div>
     <div class="txt"><div class="tit" id="pTit"></div><div class="sub" id="pSub"></div>
-      <div class="exp" id="pExp"></div>
-      <div class="vlinea oculto" id="pLinea"></div></div>
+      <div class="exp" id="pExp"></div></div>
     <button class="chico" id="btnProbar">Volver</button>
   </div>
   <div class="veredicto" id="veredicto">
@@ -5386,19 +5370,19 @@ let NOMBRE_AP = "cambia";
    resolvió margen contra gris en la v0.48 con un interruptor que duró dos
    versiones.
 
-   Dos ejes, y de ahí salen las cuatro:
-   - ¿la punteada REEMPLAZA a la real, o conviven? (`reemplaza`)
-   - ¿las probadas van adentro de la tarjeta, abajo en la tira, o no van?
+   Eran dos ejes —¿la punteada reemplaza a la real o conviven? ¿las probadas
+   van adentro de la tarjeta, abajo en la tira, o no van?— y quedó uno: desde
+   la v0.160 la punteada siempre reemplaza a la real y lo único que cambia es
+   si las probadas van abajo, en la tira de la partida.
 
    POR DEFECTO VA "sin la lista", que es la más limpia: pedido del usuario.
    Cuando esté elegida, se queda una y el dial se va. */
 const FORMAS_PRUEBA = {
-  sinLista: { nombre: "sin la lista",     reemplaza: true,  lista: "no" },
-  abajo:    { nombre: "la lista abajo",   reemplaza: true,  lista: "abajo" }
+  sinLista: { nombre: "sin la lista",   lista: "no" },
+  abajo:    { nombre: "la lista abajo", lista: "abajo" }
   /* "la lista adentro" y "las dos tarjetas" se fueron en la v0.160 (Juan:
-     "las otras dos sí son malas"). Quien las tenía guardadas cae en "sin la
-     lista" (`aplicarFormaPrueba`). Las ramas que las dibujaban quedan, porque
-     viven mezcladas con las que siguen (`fp.reemplaza`, `fp.lista`). */
+     "las otras dos sí son malas"), y sus ramas en la v1.0.1. Quien las tenía
+     guardadas cae en "abajo" (`aplicarFormaPrueba`). */
 };
 let FORMA_PRUEBA = "sinLista";
 function formaPrueba() { return FORMAS_PRUEBA[FORMA_PRUEBA] || FORMAS_PRUEBA.sinLista; }
@@ -6504,31 +6488,9 @@ function textoPrueba(prof) {
            exp: "", color: "var(--inventada)" };
 }
 
-/* La tira de la variante: cada jugada inventada, para ir y volver de un toque.
-   Es la misma idea que la tira de jugadas de la partida —el símbolo dice la
-   categoría y el color la refuerza— pero de la variante, y por eso vive adentro
-   de su tarjeta y no al lado de la otra.
-
-   NO tiene un eslabón para la posición de arranque. Lo tuvo en la v0.66 —decía
-   "◂ desde acá"— y lo sacó el usuario: para volver al arranque ya están el
-   botón `‹` y el deslizamiento, así que era un tercer camino para lo mismo
-   ocupando el lugar más visible de la tira. Parado en el arranque no hay ningún
-   eslabón marcado, que se lee solo. */
-function tiraDeLaVariante() {
-  const p = PRUEBA;
-  if (!p || !p.linea.length) return "";
-  /* Una jugada que todavía está en la cola SE DIBUJA IGUAL, en gris y con "…"
-     en lugar del símbolo: es lo que deja encadenar viendo lo que ya jugaste. */
-  return p.linea.map((x, i) => {
-    const c = x.fila ? presentar(x.fila) : null;
-    const col = c ? `var(--c-${c.clave})` : "var(--tenue)";
-    return `<span class="vj ${i + 1 === p.ver ? "sel" : ""}" data-v="${i + 1}" ` +
-           `style="color:${col}"><span class="sm">${c ? c.icono : "\u2026"}</span>${x.san}</span>`;
-  }).join("");
-}
 /* La variante EN LA TIRA DE LA PARTIDA (dial de la v0.76, forma "abajo"). Son
-   los mismos eslabones que `tiraDeLaVariante` pero con la clase de la tira de
-   abajo, así heredan el tamaño, el relleno medido y el fondo de la elegida.
+   eslabones de la variante con la clase de la tira de la partida, así
+   heredan el tamaño, el relleno medido y el fondo de la elegida.
    El corte dice dónde deja de ser la partida y empieza lo inventado. */
 function laVarianteEnLaTira() {
   const p = PRUEBA;
@@ -9274,8 +9236,8 @@ function pintarRevision() {
      contra lo que se jugó de verdad ya viaja en la punteada —"pierde 0.00 · en
      la partida exd4 pierde 0.12"— y de la segunda jugada de la variante en
      adelante no hay contra qué comparar, así que ahí la real no decía nada.
-     La forma "dos" del dial es la única que las deja convivir. */
-  $("veredicto").classList.toggle("oculto", !!PRUEBA && fp.reemplaza);
+     Desde la v0.160 es así en las dos formas del dial. */
+  $("veredicto").classList.toggle("oculto", !!PRUEBA);
   if (PRUEBA) {
     const t = textoPrueba(R.profBase || +$("prof").value || 16);
     $("prueba").style.borderLeftColor = t.color;
@@ -9284,12 +9246,6 @@ function pintarRevision() {
     $("pTit").textContent = t.tit;
     $("pSub").textContent = t.sub;
     $("pExp").textContent = t.exp;   /* vacía y a la vista: guarda su lugar (v0.164) */
-    const tira = fp.lista === "adentro" ? tiraDeLaVariante() : "";
-    $("pLinea").innerHTML = tira;
-    $("pLinea").classList.toggle("oculto", !tira);
-    $("pLinea").querySelectorAll("span[data-v]").forEach(sp => {
-      sp.onclick = () => verDeLaVariante(+sp.dataset.v);
-    });
   }
   /* EL BOTÓN NOMBRA LA JUGADA que reemplaza —"En vez de Re1"—: sin eso no dice
      desde qué posición arranca, y el tablero saltando una jugada atrás al
