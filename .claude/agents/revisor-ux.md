@@ -40,10 +40,18 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
      o por palabra), y un glifo que hay que descifrar no ahorra nada ("½-½",
      "Ganada 89"). Si para que se entienda hubo que sumar palabras, decilo
      como "cumple, no es lo ideal": queda abierto a una forma más limpia.
-   - **El tablero no se tapa ni se mueve**: lo que va encima es
-     semitransparente, y nada lo hace saltar.
-   - **Quieto antes que animado.** El cambio de pantalla es seco y llega
-     quieto; un movimiento se justifica o no va.
+     Un hueco no se llena con un dato que nadie pidió: se le cambia la
+     forma. Un esqueleto solo vale mientras carga algo que viene.
+   - **Lo fijo queda fijo.** El tablero no se tapa ni se mueve: lo que va
+     encima es semitransparente, y nada lo hace saltar mientras uno encadena
+     jugadas (un salto al cambiar de modo, que lo hace uno, se tolera). Una
+     zona que está en toda la partida no cambia de forma según la jugada: una
+     contradicción leve con un dato secundario se arregla adentro del valor
+     o se deja. Antes de rearmar una zona por un dato, preguntate si Juan lo usa.
+   - **Quieto antes que animado.** Todo cambio de estado, por un toque o
+     solo, es seco y llega quieto; un movimiento se justifica o no va. La
+     excepción es lo pegado a un gesto continuo (el arrastre): acompaña al
+     dedo sin saltos, y se juzga moviéndolo, nunca en una foto.
 2. **El sistema de diseño de `DISENO.md` §1.** Colores, tipografía, espacios,
    botones y movimiento salen de ahí. Si un cambio se aparta, es un hallazgo.
 3. **Las 10 heurísticas de Nielsen**, con el lenguaje del ajedrez y de
@@ -69,9 +77,7 @@ cambió.
    suele contestar la mitad.
    **Mirá con los datos difíciles, no con los cómodos**: el nombre más largo
    (rival, apertura), el caso vacío (sin jugada, sin reloj, sin analizar, la
-   posición inicial) y el ancho de 386. Varios lavados de la semana salieron
-   de ahí (la apertura de subtítulo con nombres largos, la fila sin jugada,
-   "Pensó" sin reloj). Si el arnés no trae el caso, armalo con
+   posición inicial) y el ancho de 386. Si el arnés no trae el caso, armalo con
    `pruebas/falso.mjs`.
 3. Las capturas quedan en `capturas/`. Las del celu salen a 824×1520 (412×760
    CSS a 2x); las de PC empiezan con `ancho` y `tres`. **No las mires a 2x**:
