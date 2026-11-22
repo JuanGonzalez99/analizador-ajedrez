@@ -100,6 +100,16 @@ de memoria una posición de ajedrez").
   El usuario te lo pasa quien te lanza. Recorrés las tarjetas de muchas
   jugadas buscando lo que suene mal, y cada hallazgo lo verificás con
   chess.js antes de reportarlo.
+- **Toda frase de material sobrevive a la respuesta del rival** (22-nov,
+  causa D: Qxf6 decía "queda comible" en un cambio de damas, y "Atrapa la
+  dama" con el alfil que atrapa comible). Cuando la tarjeta dice que algo se
+  pierde, se gana, queda comible o queda atrapado, jugá la respuesta obvia
+  del rival —comer la pieza de la que habla la frase, o la que la logra— y la
+  mejor del motor (`mejorRival`), y fijate si la frase sigue siendo cierta.
+  Y contá lo que la jugada comió: un cambio parejo no es "queda comible".
+  Al revisar un cambio en una frase, recorré todas las jugadas legales de las
+  posiciones de `pruebas/*.pgn` comparando la tarjeta de antes con la de
+  ahora: así salieron los casos de la v1.0.2.
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 

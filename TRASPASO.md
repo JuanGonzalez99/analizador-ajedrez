@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4838,6 +4838,38 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0.2, la cuenta del cambio ve lo que deja la pieza que come** (Juan,
+20-nov, sobre la v0.178.1; Arreglos). `cambioEn` miraba solo la casilla: en
+`r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`, Bh6 Nxh6 daba "pierdo
+el alfil", pero el caballo de g8 cuidaba la dama de f6 y sigue Qxf6 (igual
+Bxf7+ Qxf7 Qxh8). Ahora, en la **primera** captura —la del rival sobre la
+pieza que se movió— el que movió puede recapturar o cobrar lo que esa captura
+dejó colgado (`loQueDeja`, junto a `cambioEn`), y se prueban todas las
+capturas, no solo la más barata. "Colgado por esa captura" se mide contra la
+misma posición con la pieza que comió de vuelta en su casilla: dar vuelta el
+turno de la posición de antes (como `destapaLaDama`) fallaba con jaque, porque
+el rey en jaque no podía recapturar en la cuenta. Lo que se cobra afuera va
+entre las piezas del rival de la frase (`cobra`): Ne5 Nxe5 cxd4 es "tu caballo
+por un peón". **Solo en la primera captura, a propósito**: mirarlo en cada
+recaptura sumaba pérdidas que la línea no nombra (Na3 Bxa3 bxa3 dxc3 salía
+"tu caballo por un alfil", un cambio parejo que perdía un peón) y costaba
+diez veces más. Así cuesta ~1,3 ms más por jugada (medido sobre las 3.634
+jugadas legales de las posiciones de las PGN de prueba: 2,8 contra 1,5 ms) y
+cambia 6 de ellas, todas a la baja (Bh6, Bxf7+, Bf4 en esa posición; Ba3
+porque bxa3 deja Nxc3; dos que pierden un peón y no una pieza). Con eso,
+lo que pedía el ítem: el cambio sin nada del rival vuelve a decir "queda
+comible" (la v0.178.1 lo callaba) y el corte baja de dos peones a uno.
+Exd5 en `4qk2/8/4p3/3Q4/8/8/8/4R1K1 b` pasa de 9 a 5: destapa la e (Rxe8+
+Kxe8), y la cuenta da lo neto. Dos correcciones del revisor de ajedrez antes de salir:
+lo cobrado afuera se nombra solo si es la pieza **entera** (si con la pieza
+en su casilla ahí ya se ganaba algo, suma la diferencia y no se nombra: Ng5
+Nxg5 con bxc3 posible desde antes decía "tu caballo por un alfil", un cambio
+parejo), y **con un solo peón la frase sale solo si la mejor del motor para
+el rival (`mejorRival`) come en esa casilla** (`cambioDice`): recorriendo
+todas las legales de las PGN, en 7 de 16 posiciones el corte de 1 señalaba un
+peón cuando lo que se perdía era otra cosa (g4 con la dama colgada en d7; d5
+donde comer es un error por Bb4+). Desde dos peones, como antes.
 
 **v1.0.1, fuera los restos de "la lista adentro"** (revisor de código,
 18-nov; primer paso de la limpieza antes de partir, etapa 2). Desde la v0.160

@@ -134,7 +134,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       Relleno. Si entran juntos, va en la misma versión que el de abajo (los
       dos son `cambioEn`).
 
-- [ ] **La cuenta del cambio no ve lo que deja la pieza que recaptura**
+- [x] ~~**La cuenta del cambio no ve lo que deja la pieza que recaptura**~~ (hecho en la v1.0.2)
       (Juan, 20-nov, sobre la v0.178.1). `cambioEn` solo mira la casilla: en
       `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`, Bh6 Nxh6 da "pierdo
       el alfil", pero el caballo cuidaba la torre de h8 y sigue Qxh8+ (igual
@@ -173,6 +173,17 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       sigue colgada y la pérdida es grande: "Tu dama sigue comible en c7."
       primero. Misma familia que el de la pareja: la tarjeta mira una sola
       posición y no lo que sigue.
+- [ ] **"Queda comible" en un cambio parejo** (revisor de ajedrez, 22-nov,
+      ya estaba). En `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 0 1`,
+      Qxf6 (pérdida 0,81) dice "Tu dama queda comible en f6.", y es Qxf6
+      Nxf6: un cambio de damas. `colgada` (`quedaComible`) no descuenta lo
+      que la jugada comió: que exija que el cambio menos lo comido sea ≥ 1,
+      con su prueba. Revisor de ajedrez sí.
+- [ ] **"Atrapa la dama" con la pieza que atrapa comible** (revisor de
+      ajedrez, 22-nov, ya estaba). En `r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9`,
+      Bg5 dice "Atrapa la dama de d8: no tiene salida.", y Nxg5 se come el
+      alfil. Que no se diga si se puede comer la pieza que atrapa (sin
+      perder en el cambio), con su prueba. Revisor de ajedrez sí.
 
 ## Etapa 2 · Partir `index.html`
 

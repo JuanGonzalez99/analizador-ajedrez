@@ -106,3 +106,9 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   faltaban y el Mes de cinco partidas (§2 del traspaso, "Los estados que
   faltaban"). El caso 7 ya tenía la suya (`prueba-forma-abajo`). Lo primero
   que mostró: la Partida no abre en el borde del Mes (a Relleno).
+- **Qxf6 "queda comible" en un cambio de damas, y "Atrapa la dama" con el
+  alfil comible** · ya estaban; los vio el revisor de ajedrez en la v1.0.2
+  · D: no había regla de que la frase sobreviva a la respuesta del rival ni
+  de que se descuente lo comido · regla en `revisor-ajedrez.md` (jugar la
+  respuesta obvia y la del motor; recorrer todas las legales de las PGN
+  antes y después) y los dos a Arreglos con sus FEN.

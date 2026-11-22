@@ -43,10 +43,50 @@ test("la captura que gana más de lo que entrega sigue contando (revisor, v0.180
   /* Qd5?? exd5 Rxe8+ Kxe8: el negro gana dama y torre por su dama */
   const f = "4qk2/8/4p3/3Q4/8/8/8/4R1K1 b - - 0 1";
   assert.equal(A.quedaComible(f, "d5"), true);
-  assert.equal(A.cambioEn(f, "d5").neto, 9);
+  /* 9 hasta la v1.0.1; desde la v1.0.2 la cuenta ve que exd5 destapa la e
+     (Rxe8+ Kxe8) y da lo neto: dama y torre por la dama, 5 */
+  assert.equal(A.cambioEn(f, "d5").neto, 5);
   /* con una torre: torre + torre por la dama, todavía +1 */
   assert.equal(A.quedaComible("4qk2/8/4p3/3R4/8/8/8/4R1K1 b - - 0 1", "d5"), true);
 });
+test("la cuenta del cambio ve lo que deja la pieza que come (v1.0.2)", () => {
+  /* Bh6 Nxh6?? Qxf6: el caballo de g8 cuidaba la dama. Y Bxf7+ Qxf7 Qxh8: la
+     dama de f6 cuidaba la torre (con el rey en jaque, la cuenta de antes
+     daba la torre por colgada desde antes) */
+  const f = "r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 0 1";
+  for (const san of ["Bh6", "Bxf7+"]) {
+    const j = new Chess(f); const m = j.move(san);
+    assert.equal(A.cambioEn(j.fen(), m.to).neto, 0, san);
+  }
+  /* lo que ya estaba colgado no es culpa de la captura: Rxe7 sigue ganando
+     la dama aunque el peón de a7 esté a tiro desde antes */
+  assert.equal(A.cambioEn("4r1k1/p3Q3/8/8/8/8/8/R5K1 b - - 0 1", "e7").neto, 9);
+  /* y "queda comible" vuelve cuando del rival no se va nada: Nd5 exd5 y
+     recapturar con la torre pierde la torre (cxd5) */
+  const d5 = mirar("4k3/8/2p1p3/8/8/2N5/8/3RK3 w - - 0 1", "c3d5");
+  assert.deepEqual(d5.cambio && d5.cambio.suyas, []);
+  const evs = [{ cp: 0, mate: null, mejor: "e1e2", segunda: { cp: -10, mate: null } },
+               { cp: 300, mate: null, mejor: "e6d5", segunda: null }];
+  const fd5 = "4k3/8/2p1p3/8/8/2N5/8/3RK3 w - - 0 1";
+  assert.ok(A.explicarJugada(unaFila(fd5, "Nd5", evs), null, true, null, d5).startsWith("Tu caballo queda comible en d5."));
+  /* lo que se cobra afuera se nombra: Ne5 Nxe5 deja el peón de d4 (cxd4) */
+  const ne5 = mirar("r1bqk2r/pppp1ppp/2n2n2/2b5/2BpP3/2P2N2/PP3PPP/RNBQK2R w KQkq - 0 6", "f3e5");
+  assert.deepEqual(ne5.cambio, { pierde: 2, mias: ["n"], suyas: ["p"] });
+  /* revisor de ajedrez: lo que ya se podía comer no se nombra entero. Ng5
+     Nxg5 con bxc3 posible desde antes decía "tu caballo por un alfil" */
+  const c3 = "r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9";
+  for (const uci of ["f3g5", "c1g5"]) assert.deepEqual(mirar(c3, uci).cambio.suyas, [], uci);
+  /* y con un solo peón, la frase solo si el motor come ahí: g4 con la dama
+     colgada en d7 (el motor juega Qxd7) no dice "queda comible en g4" */
+  const g4 = "1nbq1bnr/1p1Qpkp1/5p1r/7p/7P/4P3/PPPP1PP1/RNB1KBNR w KQ - 1 7";
+  const og4 = mirar(g4, "g2g4");
+  assert.equal(og4.cambio && og4.cambio.pierde, 1);
+  const evg = rival => [{ cp: 0, mate: null, mejor: "d7c8", segunda: { cp: -10, mate: null } },
+                        { cp: 1500, mate: null, mejor: rival, segunda: null }];
+  assert.ok(!A.explicarJugada(unaFila(g4, "g4", evg("d8d7")), null, true, null, og4).includes("g4"));
+  assert.ok(A.explicarJugada(unaFila(g4, "g4", evg("h5g4")), null, true, null, og4).startsWith("Tu peón queda comible en g4."));
+});
+
 test("quedaComible: no lo es si toda captura queda recapturada", () => {
   /* peón blanco en d5 defendido por peón en c4; el peón negro en e6 que lo coma
      queda recapturado, así que no cuenta como comible */

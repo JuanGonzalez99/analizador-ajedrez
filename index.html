@@ -1548,7 +1548,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.1 · 22-11";
+  window.VERSION = "v1.0.2 · 22-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2279,8 +2279,20 @@ function quedaComible(fenDespues, sq) {
    desde la v0.180.1 tampoco la clavada contra su dama (`entregaLaDama`).
    `quedaComible` contesta otra pregunta —¿hay recaptura?— y por eso con
    Qe1 Rxe1 Kxe1 daba falso aunque el cambio pierda la dama por una torre.
-   Devuelve el neto y la línea de capturas. */
-function cambioEn(fen, sq, prof = 0) {
+   Devuelve el neto y la línea de capturas.
+
+   LO QUE DEJA LA PIEZA QUE COME (v1.0.2, Juan sobre la v0.178.1): la cuenta
+   miraba solo la casilla. En `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`,
+   Bh6 Nxh6 daba "pierde el alfil", pero el caballo de g8 cuidaba la dama de
+   f6 y sigue Qxf6. Ahora, en la PRIMERA captura (la del rival sobre la pieza
+   que se movió), el que movió puede recapturar o cobrar lo que esa captura
+   dejó colgado (`loQueDeja`), lo que le dé más; y como la más barata ya no es
+   siempre la mejor, se prueban todas. Si cobra afuera, `cobra` dice qué
+   pieza: la frase la nombra entre las del rival. Solo en la primera, a
+   propósito: más abajo una pérdida que se suma por lo que deja una
+   recaptura no la nombraría la línea, y la frase diría un cambio parejo.
+   Y es lo que cuesta: con todas las capturas costaba diez veces más. */
+function cambioEn(fen, sq, prof = 0, mirarDeja = true) {
   const nada = { neto: 0, linea: [] };
   if (prof > 12) return nada;
   const j = new Chess(fen);
@@ -2289,12 +2301,49 @@ function cambioEn(fen, sq, prof = 0) {
     .filter(m => m.to === sq && m.captured && (!m.promotion || m.promotion === "q") &&
                  !entregaLaDama(fen, m))
     .sort((a, b) => caras(a.piece) - caras(b.piece));
-  if (!capt.length) return nada;
-  const m = capt[0];
-  j.move(m);
-  const r = cambioEn(j.fen(), sq, prof + 1);
-  const neto = (VALOR[m.captured] || 0) - r.neto;
-  return neto > 0 ? { neto, linea: [m, ...r.linea] } : nada;
+  const deja = mirarDeja && prof === 0;
+  let mejor = nada;
+  for (const m of deja ? capt : capt.slice(0, 1)) {
+    const j2 = new Chess(fen);
+    j2.move(m);
+    const r = cambioEn(j2.fen(), sq, prof + 1, false);
+    const afuera = deja && (VALOR[m.captured] || 0) - r.neto > mejor.neto ? loQueDeja(j2.fen(), m) : null;
+    const neto = (VALOR[m.captured] || 0) - Math.max(r.neto, afuera ? afuera.neto : 0);
+    if (neto > mejor.neto)
+      mejor = afuera && afuera.neto > r.neto ? { neto, linea: [m], cobra: afuera.entera ? afuera.pieza : null }
+                                             : { neto, linea: [m, ...r.linea] };
+  }
+  return mejor;
+}
+/* ¿qué dejó colgado la captura `m`, que llevó a `despues`, fuera de la
+   casilla del cambio? Lo más que el que mueve en `despues` gana cambiando en
+   otra casilla, contra lo que ganaba ahí con la pieza que comió todavía en su
+   casilla de salida: así cuenta solo lo que esa pieza cuidaba (o tapaba), y
+   no lo que ya estaba colgado. Se compara así y no dando vuelta el turno de
+   la posición de antes porque con un jaque esa posición no es legal (Bxf7+:
+   el rey en jaque no podía recapturar en la cuenta, y la torre parecía
+   colgada desde antes). Solo se miran las casillas que el otro puede comer.
+   Devuelve null o { neto, pieza }. */
+function loQueDeja(despues, m) {
+  const j = new Chess(despues), yo = j.turn() === "w" ? "b" : "w";
+  const blancos = [...new Set(j.moves({ verbose: true })
+    .filter(x => x.captured && x.captured !== "k" && x.to !== m.to).map(x => x.to))];
+  if (!blancos.length) return null;
+  const sinMover = new Chess(despues);
+  sinMover.remove(m.to);
+  sinMover.put({ type: m.piece, color: yo }, m.from);
+  const fenSin = sinMover.fen();
+  let peor = null;
+  for (const x of blancos) {
+    const ahora = cambioEn(despues, x, 1, false).neto;
+    if (ahora <= (peor ? peor.neto : 0)) continue;
+    const gana = ahora - cambioEn(fenSin, x, 1, false).neto;
+    /* `entera`: con la pieza en su casilla ahí no se ganaba nada. Si ya se
+       ganaba algo (revisor de ajedrez: Ng5 Nxg5 con bxc3 ya posible), lo que
+       suma es la diferencia y la pieza no se nombra entera */
+    if (gana > (peor ? peor.neto : 0)) peor = { neto: gana, pieza: j.get(x).type, entera: gana === ahora };
+  }
+  return peor;
 }
 
 /* ganancia estimada de una captura: lo que como menos lo que me pueden devolver */
@@ -3213,6 +3262,12 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
      vuelve una lista. El corte de 0,5 es el mismo que ya usan las señales: un
      mecanismo que no costó nada no es un hallazgo, es una coincidencia. */
   let mecanismo = null;
+  /* CON UN SOLO PEÓN, SOLO SI EL MOTOR COME AHÍ (revisor de ajedrez, v1.0.2):
+     el corte bajó a uno y la cuenta estática a veces señala un peón cuando lo
+     que se pierde es otra cosa (g4 con la dama ya colgada; d5 donde comer es
+     un error). Desde dos peones, como antes. */
+  const cambioDice = !!(obs && obs.cambio && f.perdida >= 0.5 &&
+    (obs.cambio.pierde >= 2 || (f.mejorRival || "").slice(2, 4) === donde));
   if (f.mateContra)
     mecanismo = { txt: `Deja mate forzado en ${f.mateContra} en contra.`,
                   marca: "mate forzado" };
@@ -3222,10 +3277,14 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   /* Tiene recaptura, pero el cambio pierde (20-nov, revisor de ajedrez): con
      Qe1 Rxe1 Kxe1 la tarjeta de un grave decía "Toma la columna abierta e." y
      no que se cambiaba la dama por una torre. Se nombra lo que se va de cada
-     lado. SI DEL RIVAL NO SE VA NADA, NO SE DICE (v0.178.1): la cuenta solo
-     mira esa casilla, y en Bh6 Nxh6 Qxh8+ el caballo que come dejaba la torre;
-     decir "queda comible" era engañoso. Antes de la v0.178 tampoco se decía. */
-  else if (obs && obs.cambio && obs.cambio.suyas.length && f.perdida >= 0.5) {
+     lado. SI DEL RIVAL NO SE VA NADA, "queda comible": la v0.178.1 lo
+     callaba porque la cuenta miraba solo esa casilla (en Bh6 Nxh6 el caballo
+     dejaba la dama de f6), y desde la v1.0.2 mira también lo que deja la
+     pieza que come (`loQueDeja`). */
+  else if (cambioDice && !obs.cambio.suyas.length)
+    mecanismo = { txt: `${mayus(pieza)} queda comible en ${donde}.`,
+                  marca: "queda comible", sq: donde };
+  else if (cambioDice) {
     const nom = (ts, tabla) => ts.map(t => tabla[t] || "una pieza").join(" y ");
     mecanismo = { txt: `Pierde material en el cambio: ${nom(obs.cambio.mias, mio ? PIEZA_TU : PIEZA_EL)}` +
                        ` por ${nom(obs.cambio.suyas, PIEZA_UN)}.`,
@@ -4268,7 +4327,9 @@ function observarJugada(f, fenAntes = null) {
        que moví tiene recaptura —así que no "queda comible"— pero cambiar ahí
        igual me cuesta. Se resta lo que la jugada comió, y solo cuenta desde
        dos peones netos: menos que eso es ruido de la cuenta (un alfil por un
-       caballo, un peón de más o de menos). */
+       caballo, un peón de más o de menos). Desde la v1.0.2, desde UNO: el
+       corte de dos casi no cambiaba nada (medido en la v0.178.1) y lo que
+       fallaba era lo que dejaba la pieza que recaptura, que ya se cuenta. */
     let cambio = null, coronaPerdida = false;
     const ca = cambioEn(f.fen, donde);
     if (ca.linea.length) {
@@ -4284,12 +4345,13 @@ function observarJugada(f, fenAntes = null) {
          No queda comible y el cambio nunca llega a 2 (la cuenta descuenta lo
          que ganó la coronación), pero se va el peón: no se festeja. */
       coronaPerdida = corono > 0 && pierde >= 1;
-      if (pierde >= 2)
+      if (pierde >= 1)
         cambio = { pierde,
                    mias: ca.linea.filter((_, k) => k % 2 === 0)
                            .map((m, k) => k === 0 && corono ? "p" : m.captured),
                    suyas: [...(comio && comio.color !== mio ? [comio.type] : []),
-                           ...ca.linea.filter((_, k) => k % 2 === 1).map(m => m.captured)] };
+                           ...ca.linea.filter((_, k) => k % 2 === 1).map(m => m.captured),
+                           ...(ca.cobra ? [ca.cobra] : [])] };
     }
 
     return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
