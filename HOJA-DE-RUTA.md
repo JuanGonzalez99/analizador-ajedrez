@@ -103,7 +103,7 @@ tanto va a Arreglos o a Relleno, **no acá**.
         cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:
         un texto más corto ("esta") o que entre entero. Arreglo chico, sin
         variantes.
-- [ ] **Cierre: v1.0.** Cuando lo de arriba esté tachado: una pasada del
+- [x] ~~**Cierre: v1.0.**~~ (hecho el 22-nov: el revisor no marcó errores; cinco retoques a Relleno) Cuando lo de arriba esté tachado: una pasada del
       revisor de UX sobre la app entera, celu y PC (como la de la v0.104),
       y lo que marque va a Relleno salvo que sea un error. La versión que
       sale esa noche es la **v1.0** (Juan lo decidió el 20-nov; es la única
@@ -388,8 +388,23 @@ archiva los que pierden sentido.
       pantalla, más que el veredicto (la regla de "la barra de progreso casi
       blanca", `DISENO.md`). ¿Cuánto tiene que pesar la evaluación? Con
       variantes; toca el sistema de diseño si cambia el color.
+- [ ] **La precisión del Mes, entera en todos lados** (revisor, v1.0). El
+      cuadro dice "84.6" (`prec.toFixed(1)`, index.html ~8470) y "Partida por
+      partida" e inicio dicen "85": el mismo dato de dos maneras en la misma
+      pantalla. Entera, por §1.4 (no prometer un decimal que no se tiene).
+- [ ] **"Mediana 0.00" del Mes no dice de qué** (revisor, v1.0): solo se
+      entiende abriendo "Cómo se leen estos números". ¿Qué palabra la explica?
+- [ ] **[PC] El fundido de la lista también arriba** (revisor, v1.0): bajada
+      hasta el final, la fila de arriba queda cortada por la mitad; el fundido
+      de la v0.179 está solo abajo.
+- [ ] **[PC] La fila de "Partida por partida" estirada a 640** (revisor,
+      v1.0): "Ganada" y "prec. 85" flotan lejos del nombre y la fecha. ¿Ancho
+      tope, o columnas alineadas con las tablas de abajo?
+- [ ] **El renglón técnico de la cabecera del Mes** (revisor, v1.0; celu):
+      "1 partida · 18 jugadas · prof 16 · crítico" arriba de lo que más se
+      mira. ¿Hace falta a la vista, o va adentro de "Cómo se leen…"?
 
-### Limpieza de código### Limpieza de código
+### Limpieza de código
 
 - [ ] **Recortar los comentarios de historia del CSS**, en tres noches por
       tramos (renglones 6–500, 500–1000 y el bloque de PC) (revisor de

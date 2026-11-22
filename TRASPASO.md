@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v0.182.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4820,6 +4820,17 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0, cierre de la etapa 1** (22-nov-2026; Juan decidió el número el
+20-nov). No cambia nada que se vea salvo el número: es la v0.182.2 con la
+pasada del revisor de UX sobre la app entera, celu (412 y 386) y PC (1280 y
+1500), como la de la v0.104. No encontró nada pegado, cortado, encimado ni
+que desborde (a 386 el ancho de la página es el de la pantalla, en la Partida
+y en el Mes). Lo que marcó como retoque fue a Relleno: la precisión del Mes
+con un decimal en el cuadro ("84.6") y entera en la fila ("85"), "Mediana"
+sin decir de qué, el fundido de la lista de la compu solo abajo, la fila del
+Mes estirada a 640 en la compu y el renglón técnico de la cabecera del Mes.
+Desde acá la hoja de ruta sigue con la etapa 2 (partir `index.html`).
 
 **v0.182.2, [PC] el cuadrito Mejor ya no corta "la juga…"** (revisor,
 v0.150). A 1000 de ancho el valor queda 1 px corto (62 contra 61, medido).
