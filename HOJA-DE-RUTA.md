@@ -216,7 +216,7 @@ limpieza: lo que está muerto no se parte.
         adentro desde la v0.160. ~1.200 tokens. Reescribir la prueba "con una
         prueba abierta la tarjeta real se esconde" (protege el renglón muerto
         palabra por palabra). Capturas de la variante byte a byte.
-  - [ ] **Sacar las marcas de la curva que ya no se usan ("punto" y "raya")**
+  - [x] ~~**Sacar las marcas de la curva que ya no se usan ("punto" y "raya")**~~ (hecho en la v1.0.3)
         (revisor de código, 18-nov; interno). `MARCAS_CURVA`, `MARGEN_MARCA`,
         la rama `modo === "raya"` y el `aro` del punto grande en
         `dibujarCurva`: Juan eligió "punto chico" en la v0.160. ~1.300 tokens.

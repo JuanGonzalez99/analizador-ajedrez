@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.3**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -1863,8 +1863,8 @@ vive donde viven las otras dos y las tres se mudan juntas cuando exista.
 
 **`MARGEN_MARCA` no es un número mágico:** es cuánto hay que correr la marca
 para adentro cuando la curva está pegada al borde, y sale de su medio tamaño
-sobre los 46 px de la tira. El punto con aro mide 10 px de punta a punta, o sea
-11%. Media marca cortada se leería como una marca más chica, y ahí el tamaño
+sobre los 46 px de la tira. Desde la v1.0.3 queda solo el punto chico, de 6 px:
+el margen es 7%. Media marca cortada se leería como una marca más chica, y ahí el tamaño
 dejaría de significar lo mismo en todas.
 
 ### Qué es puro y qué no
@@ -4839,6 +4839,18 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**v1.0.3, fuera las marcas de la curva que no se usan** (revisor de código,
+18-nov; segundo paso de la limpieza antes de partir, etapa 2). Desde la
+v0.160 la curva marca siempre con el punto chico, y `dibujarCurva` seguía
+sabiendo el punto con aro y la raya: se fueron `MARCAS_CURVA`, `MARCA_CURVA`,
+la rama de la raya, el aro y el parámetro `forma`. `MARGEN_MARCA` pasa a ser
+un número (7). Las pruebas que usaban la raya como límite se reescribieron
+sobre el punto. No cambia nada que se vea: las capturas con curva salen
+iguales al byte; difieren las que muestran la versión, `encadenadas` (ruido
+conocido) y `mes-varias`/`ancho-mes-varias`, donde la barra de carga del Mes
+sale en otro punto según cuándo cae la foto (también ruido: la misma barra a
+mitad de camino, comparada píxel a píxel).
+
 **v1.0.2, la cuenta del cambio ve lo que deja la pieza que come** (Juan,
 20-nov, sobre la v0.178.1; Arreglos). `cambioEn` miraba solo la casilla: en
 `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`, Bh6 Nxh6 daba "pierdo
@@ -5534,8 +5546,8 @@ revisor sobre la v0.159: los diales a prueba se veían igual que los ajustes
 de verdad). Le pasé la lista con una propuesta por ajuste y contestó uno por
 uno. Lo del análisis (Modo, Mate a la vista) queda como está.
 - **Marcas de la curva: se fue**, queda el **punto chico** (Juan: *"dejá punto
-  chico"*). `MARCA_CURVA` es una constante; `dibujarCurva` sigue sabiendo las
-  tres formas.
+  chico"*). Las otras dos formas (punto con aro y raya) se sacaron del código
+  en la v1.0.3.
 - **Las jugadas de al lado (compu): se fue**, queda la **planilla** ("no lo uso
   en la compu"). Se fue también la forma "una por renglón" y su CSS.
 - **Al probar una jugada: queda, con dos formas**, "sin la lista" y "la lista

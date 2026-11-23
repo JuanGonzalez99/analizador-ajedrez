@@ -1548,7 +1548,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.2 · 22-11";
+  window.VERSION = "v1.0.3 · 23-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -5203,51 +5203,26 @@ const PIEZAS = `<g id="cb-wk"><g fill="none" fill-rule="evenodd" stroke="#000" s
 
    `preserveAspectRatio="none"` porque la tira se estira al ancho que haya y no
    es un dibujo con forma propia. El precio es que todo se deforma en el eje x,
-   y por eso NO hay ni un círculo acá: la línea y las marcas llevan
+   y por eso NO hay ni un círculo acá: las líneas llevan
    `vector-effect="non-scaling-stroke"`, que deja el grosor en píxeles de
-   pantalla, así que una marca vertical se ve igual de fina con 20 jugadas que
-   con 200. */
-/* Tres formas de marcar las categorías encima de la curva, y ninguna gana sola.
-   Se eligen y se guardan, igual que el tema del tablero y el modo de eval.
-
-   - "punto": un punto de 7 px con un aro claro. El aro es lo que lo despega del
-     fondo oscuro —los rojos de Error grave y Omisión son casi de su mismo tono—
-     y además separa dos marcas pegadas.
-   - "puntoChico": el mismo punto de 6 px y sin aro. Más limpio, y las que caen
-     sobre la parte oscura pierden contraste.
-   - "raya": una raya vertical corta, del color de la categoría y con halo claro.
-     Es la de la v0.58, con la mitad del alto que tenía: con 28 unidades y una
-     partida de 77 jugadas tapaba la curva y la tira se leía como un código de
-     barras.
-
-   La diferencia de fondo entre el punto y la raya no es estética: una raya
-   vertical dice "acá pasa algo en todo este momento" y un punto dice "acá, en
-   esta jugada". Lo segundo es lo que la marca significa, y además deja la raya
-   vertical para una sola cosa, el "estás acá". */
-const MARCAS_CURVA = {
-  punto:      "punto",
-  puntoChico: "punto chico",
-  raya:       "raya"
-};
-/* EL AJUSTE SE FUE EN LA v0.160 (Juan, al repasar la hoja: "dejá punto
-   chico"). Las tres formas siguen dibujándose —`dibujarCurva` las sabe— pero
-   la curva usa siempre el punto chico. */
-const MARCA_CURVA = "puntoChico";
+   pantalla, así que el "estás acá" se ve igual de fino con 20 jugadas que con
+   200. */
+/* Las categorías se marcan encima de la curva con un punto de 6 px sin aro
+   (Juan, v0.160: "dejá punto chico"). Hasta ahí se elegía entre ese, uno de
+   7 con aro y una raya vertical (§4quaterdecies); las otras dos formas se
+   sacaron en la v1.0.3. Un punto dice "acá, en esta jugada", que es lo que la
+   marca significa, y deja la raya vertical para una sola cosa, el "estás acá". */
 
 /* Cuánto hay que correr una marca para adentro cuando la curva está pegada al
-   borde. Media marca cortada se lee como una marca más chica, y entonces el
-   tamaño dejaría de significar lo mismo en todas.
-   Los puntos se miden en píxeles y la tira tiene 46 de alto, así que el margen
-   es (radio + aro) / 46: para el de 7 con aro son 5 px, o sea 11%. La raya se
-   mide en unidades del SVG y su margen ES su medio alto. */
-const MARGEN_MARCA = { punto: 11, puntoChico: 7, raya: 7 };
+   borde: media marca cortada se lee como una marca más chica. El punto se mide
+   en píxeles sobre una tira de 46 de alto, así que el margen es su radio más un
+   poco, en porcentaje: 7. */
+const MARGEN_MARCA = 7;
 
-function dibujarCurva(filas, idx, lado, verAmbos, forma) {
+function dibujarCurva(filas, idx, lado, verAmbos) {
   const { puntos, marcas } = curvaVentaja(filas, lado, verAmbos);
   if (!puntos.length) return "";
-  const modo = MARCAS_CURVA[forma] ? forma : "punto";
-  const margen = MARGEN_MARCA[modo];
-  const dentro = y => Math.max(margen, Math.min(100 - margen, y));
+  const dentro = y => Math.max(MARGEN_MARCA, Math.min(100 - MARGEN_MARCA, y));
   const xy = p => `${p.x.toFixed(2)} ${p.y.toFixed(2)}`;
   const linea = puntos.map((p, i) => (i ? "L " : "M ") + xy(p)).join(" ");
   let s = `<svg viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">`;
@@ -5275,21 +5250,6 @@ function dibujarCurva(filas, idx, lado, verAmbos, forma) {
   /* LAS MARCAS VAN DESPUÉS DEL "ESTÁS ACÁ", siempre. Si no, la marca de la
      jugada que se está mirando queda tapada justo por la raya que dice que la
      estás mirando, que es la única que nunca puede desaparecer. */
-  if (modo === "raya") {
-    /* La raya lleva un halo CLARO abajo, por lo mismo que el aro del punto:
-       sobre el fondo oscuro los rojos se pierden. Sobre el relleno claro el halo
-       no se ve —es el mismo color— y ahí contrasta el color de la categoría. */
-    for (const m of marcas) {
-      const c = dentro(m.y);
-      const y1 = (c - 7).toFixed(2), y2 = (c + 7).toFixed(2), x = m.x.toFixed(2);
-      s += `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="var(--eval-blancas)"
-             stroke-width="5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`;
-      s += `<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}"
-             stroke="var(--c-${m.clave})" stroke-width="3" stroke-linecap="round"
-             vector-effect="non-scaling-stroke"/>`;
-    }
-    return s + `</svg>`;
-  }
   /* LOS PUNTOS NO PUEDEN IR ADENTRO DEL SVG. Con preserveAspectRatio="none" el
      dibujo se estira al ancho que haya, así que un <circle> sale óvalo y de un
      ancho distinto en cada partida según cuántas jugadas tenga. Van como
@@ -5297,11 +5257,9 @@ function dibujarCurva(filas, idx, lado, verAmbos, forma) {
      contra el contenedor, que no está deformado, y un border-radius de CSS es
      un círculo de verdad.
      Van después del SVG en el HTML, así que quedan encima sin z-index. */
-  const aro = modo === "punto" ? ";box-shadow:0 0 0 1.5px var(--eval-blancas)" : "";
-  const d = modo === "punto" ? 7 : 6;
   return s + `</svg>` + marcas.map(m =>
     `<i class="pt" style="left:${m.x.toFixed(2)}%;top:${dentro(m.y).toFixed(2)}%;` +
-    `width:${d}px;height:${d}px;background:var(--c-${m.clave})${aro}"></i>`).join("");
+    `width:6px;height:6px;background:var(--c-${m.clave})"></i>`).join("");
 }
 
 /* Temas de tablero. Las casillas ya se pintaban con var(--claro)/var(--oscuro),
@@ -9086,7 +9044,7 @@ function pintarRevision() {
   /* El número de jugada acompaña a la de las BLANCAS, como se escribe una
      partida. La primera de la tira lo lleva igual aunque sea de las negras, o
      no se sabría en qué jugada arranca lo que se está viendo. */
-  $("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS, MARCA_CURVA);
+  $("curva").innerHTML = dibujarCurva(R.filas, IDX, lado, VER_AMBOS);
   /* CON LA FORMA "abajo" LA TIRA CORTA donde se abrió la prueba y sigue con lo
      inventado, en violeta: una sola tira y un solo sistema de navegación. Lo
      jugado de verdad queda a la izquierda del corte y se llega scrolleando,
