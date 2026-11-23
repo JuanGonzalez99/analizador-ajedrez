@@ -498,6 +498,11 @@ archiva los que pierden sentido.
 - [ ] **"Ganaba 2 peones en el cambio" cuando es la calidad** (revisor de
       ajedrez, 22-nov). En `1nbqkbnr/1ppppppp/r7/p6Q/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 2 3`
       había Bxa6 (torre por alfil): decir "ganaba la calidad".
+- [ ] **"Tapa el ataque" sin decir de quién** (revisor de ajedrez, v1.0.4;
+      opcional). Con g6 en
+      `r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3`
+      el peón de f7 lo atacan la dama y el alfil: "Tapa el ataque de la dama
+      a tu peón de f7" dice cuál se cortó.
 
 ### Que se sienta bien (la vieja etapa 3: animaciones)
 

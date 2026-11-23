@@ -127,3 +127,9 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   anterior · `npm run frases` hace ese recorrido en un comando (2.312
   jugadas, ~25 s) y lista lo que la tarjeta dice distinto; paso nuevo en
   `TAREA-NOCTURNA.md` (4) antes de pasar al revisor de ajedrez.
+- **"Defiende… a tiro de un peón" en cxd4** · v1.0.4, segunda vuelta → el
+  mismo revisor de ajedrez en la tercera · B: el arreglo que propuso ("sigue
+  atacada") no se cruzó con el motivo "menor", y las partidas del repo no
+  tienen ese caso, así que el recorrido no podía verlo · regla en
+  `revisor-ajedrez.md`: los criterios de "sigue atacada" se prueban con cada
+  motivo y con el atacante comido mientras queda otro; y la prueba de unidad.

@@ -109,7 +109,14 @@ de memoria una posición de ajedrez").
   Y contá lo que la jugada comió: un cambio parejo no es "queda comible".
   Al revisar un cambio en una frase, recorré todas las jugadas legales de las
   posiciones de `pruebas/*.pgn` comparando la tarjeta de antes con la de
-  ahora: así salieron los casos de la v1.0.2.
+  ahora: así salieron los casos de la v1.0.2. Desde la v1.0.4 eso es
+  `npm run frases` (`-- ref` para comparar contra otro commit).
+- **Todo criterio que dependa de que una pieza "siga atacada" (o no) se
+  prueba con cada motivo de peligro** ("sinDefensa" y "menor") y con un
+  atacante comido mientras queda otro, verificando con chess.js qué ataca y
+  qué defiende después de la jugada (v1.0.4, causa B: el arreglo que propuse
+  en la primera vuelta dejaba "Defiende… a tiro de un peón" en cxd4, y las
+  partidas del repo no tienen ningún caso así).
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 
