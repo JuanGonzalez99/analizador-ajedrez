@@ -7,13 +7,22 @@ import { Chess } from "../chess.js";
 const INICIO = "/* ============ evaluación ============ */";
 const FIN = "/* ===================== fin del bloque de análisis";
 
+/* `desde(html)` arma el bloque de cualquier versión de index.html: lo usa
+   `frases.mjs` para comparar la tarjeta contra la versión anterior. */
+function partes(html) {
+  const ini = html.indexOf(INICIO), fin = html.indexOf(FIN);
+  if (ini < 0 || fin < 0) throw new Error("no están los marcadores del bloque de análisis");
+  const bloque = html.slice(ini, fin);
+  const nombres = [...bloque.matchAll(/^(?:function|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)]
+    .map(m => m[1]);
+  return { bloque, nombres };
+}
+export function desde(html) {
+  const { bloque, nombres } = partes(html);
+  return new Function("Chess", bloque + `\nreturn { ${nombres.join(", ")} };`)(Chess);
+}
+
 const html = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
-const ini = html.indexOf(INICIO), fin = html.indexOf(FIN);
-if (ini < 0 || fin < 0) throw new Error("no están los marcadores del bloque de análisis");
-
-const bloque = html.slice(ini, fin);
-const nombres = [...bloque.matchAll(/^(?:function|const|let|class)\s+([A-Za-z_$][\w$]*)/gm)]
-  .map(m => m[1]);
-
-export default new Function("Chess", bloque + `\nreturn { ${nombres.join(", ")} };`)(Chess);
+const { nombres } = partes(html);
+export default desde(html);
 export { nombres };

@@ -119,3 +119,11 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   (la Partida tiene su propia grilla, 680 + 380) · el renglón "bordes en la
   compu" de `mirar.mjs`, que además avisa con OJO si a un mismo ancho las
   tres pantallas difieren en más de 2 px; el arreglo, en Relleno.
+- **"Defiende" cuando se comió al atacante, y en el enroque** · v1.0.4 (antes
+  de salir) → revisor de ajedrez · A+C: la frase nueva se probó solo en las
+  posiciones que pensó quien la escribió (Bh6, Bb5, d3), y Bxd4 —que come al
+  peón que atacaba al caballo— estaba entre las legales de la partida de
+  prueba; el revisor lo vio recorriendo todas las legales contra la versión
+  anterior · `npm run frases` hace ese recorrido en un comando (2.312
+  jugadas, ~25 s) y lista lo que la tarjeta dice distinto; paso nuevo en
+  `TAREA-NOCTURNA.md` (4) antes de pasar al revisor de ajedrez.

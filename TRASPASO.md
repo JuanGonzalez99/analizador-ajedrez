@@ -146,7 +146,11 @@ toca el DOM ni el motor al cargarse, así que se sacan del HTML y corren en node
 
 **Los cuatro marcadores son contrato: si se mueven, se rompe el arnés.** Los
 extractores detectan solos qué exportar, así que agregar una función no obliga
-a tocar nada.
+a tocar nada. `extraer.mjs` además exporta `desde(html)`, que arma el bloque de
+cualquier versión: lo usa **`npm run frases`** (`pruebas/frases.mjs`, v1.0.4)
+para recorrer las 2.312 jugadas legales de las partidas de prueba y listar lo
+que la tarjeta dice distinto del último commit, sin motor (cubre
+`observarJugada`, no lo que depende de la evaluación).
 
 `pruebas/tira.mjs` es la cuarta pieza y no se corre sola: son funciones que
 usan las maquetas y `mirar.mjs` para comparar variantes de un pedazo de
@@ -4857,7 +4861,9 @@ va antes que defender, porque la que se interpone suele cuidarla también. Con
 vuelta, que decidía "defiende" por la pieza movida: Bxd4 (come al peón que
 atacaba al caballo de e5, partida de prueba) decía "Defiende tu caballo", y
 el enroque que salva la torre de h1 decía "Defiende tu torre de h1", con h1
-vacía. La torre del enroque cuenta ahora como que se fue (`hacia`, la marca va
+vacía; y en la segunda, "defiende" con "a tiro de" (cxd4 en
+`4k3/8/3p4/2p1n3/3P4/8/7Q/4K3 b`, que come al peón atacante): con motivo
+"menor" no hay "defiende", porque defender no saca del peligro. La torre del enroque cuenta ahora como que se fue (`hacia`, la marca va
 en f1 o d1); antes ya decía "Salva" con la casilla mal. El caso de la v0.177 (Bb5 contra la dama de d7 y el peón de a4)
 pasó a decir "Tapa el ataque a tu peón de a4", que es lo que hace.
 

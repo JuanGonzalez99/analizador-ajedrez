@@ -8,7 +8,8 @@
     "mirar:mate": "node pruebas/mirar.mjs mate",
     "mirar:ahogado": "node pruebas/mirar.mjs ahogado",
     "mirar:reloj": "node pruebas/mirar.mjs reloj",
-    "mono": "node pruebas/mono.mjs"
+    "mono": "node pruebas/mono.mjs",
+    "frases": "node pruebas/frases.mjs"
   },
   "devDependencies": {
     "playwright": "^1.49.1"
