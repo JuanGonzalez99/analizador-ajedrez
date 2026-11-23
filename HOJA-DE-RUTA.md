@@ -144,7 +144,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       dos peones a uno (medido en §6, v0.178.1: el corte casi no cambia nada).
       Revisor de ajedrez sí.
 
-- [ ] **"Salva" exagera cuando la jugada solo defiende** (Juan, 20-nov,
+- [x] ~~**"Salva" exagera cuando la jugada solo defiende**~~ (hecho en la v1.0.4) (Juan, 20-nov,
       sobre la v0.178.1). Hoy toda pieza que deja de estar en peligro sin
       moverse sale "Salva tu X de Y, que estaba sin defender", aunque siga
       atacada y el rival pueda cambiarla (Bh6 en

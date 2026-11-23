@@ -2434,9 +2434,62 @@ test("lo que la jugada SALVA es el espejo, y es lo que faltaba para el rival", (
     [{ cp: 100, mate: null, mejor: "d2d3", segunda: { cp: 80, mate: null } },
      { cp: -100, mate: null, mejor: "f6d5", segunda: null }]);
   const obs = A.observarJugada(f, antes);
-  assert.deepEqual(obs.salvadas, [{ sq: "e4", pieza: "p", motivo: "sinDefensa", por: "n", seFue: false }]);
+  assert.deepEqual(obs.salvadas, [{ sq: "e4", pieza: "p", motivo: "sinDefensa", por: "n", seFue: false,
+                                     como: "defiende" }]);
+  /* desde la v1.0.4 dice cómo: el peón de d3 lo cuida (Juan, "Salva" exageraba) */
   assert.equal(A.explicarJugada(f, null, true, null, obs),
-    "Salva tu peón de e4, que estaba sin defender.");
+    "Defiende tu peón de e4, que estaba solo.");
+});
+
+test("'Salva' no exagera: dice si la jugada defiende, tapa o saca (v1.0.4)", () => {
+  /* Juan, 20-nov: Bh6 cuida la dama de g7, pero Qxg7 Bxg7 cambia damas;
+     "Salva tu dama" prometía de más. Tres verbos según cómo. */
+  const frase = (antes, uci) => {
+    const j = new Chess(antes);
+    const m = j.move({ from: uci.slice(0, 2), to: uci.slice(2, 4) });
+    const f = { fen: j.fen(), uci, turno: m.color, pieza: m.piece, san: m.san, cat: "buena", mejor: uci };
+    const obs = mirar(antes, uci);
+    return { obs, txt: A.explicarJugada(f, null, true, null, obs) };
+  };
+  const bh6 = frase("r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 0 1", "c1h6");
+  assert.equal(bh6.obs.salvadas[0].sq, "g7");
+  assert.equal(bh6.obs.salvadas[0].como, "defiende");
+  assert.ok(bh6.txt.includes("Defiende tu dama de g7, que estaba sola."), bh6.txt);
+  assert.ok(!bh6.txt.includes("Salva"), bh6.txt);
+  /* interponerse: el alfil de b5 corta la dama de d7 contra el peón de a4 */
+  const tapa = frase("4k3/3q4/8/8/P7/8/8/4KB2 w - - 0 1", "f1b5");
+  assert.equal(tapa.obs.salvadas[0].como, "tapa");
+  assert.ok(tapa.txt.includes("Tapa el ataque a tu peón de a4."), tapa.txt);
+  /* el peón va en masculino: "solo" */
+  const solo = frase("4k3/8/5n2/8/4P3/8/3P4/4K3 w - - 0 1", "d2d3");
+  assert.ok(solo.txt.includes("Defiende tu peón de e4, que estaba solo."), solo.txt);
+  /* revisor de ajedrez, v1.0.4: comer al atacante es "Salva", aunque la
+     pieza que come quede cuidándola (Bxd4 en la partida de prueba) */
+  const bxd4 = frase("r1bqk1nr/pppp1ppp/8/2b1n3/2BPP3/8/PPP2PPP/RNBQK2R b KQkq d3 0 5", "c5d4");
+  assert.ok(bxd4.txt.includes("Salva tu caballo de e5"), bxd4.txt);
+  /* con "a tiro de" nunca "Defiende": cxd4 come al peón y la dama sigue
+     mirando e5 (revisor, segunda vuelta) */
+  const cxd4 = frase("4k3/8/3p4/2p1n3/3P4/8/7Q/4K3 b - - 0 1", "c5d4");
+  assert.ok(cxd4.txt.includes("Salva el caballo de e5, que estaba a tiro de un peón.") ||
+            cxd4.txt.includes("Salva tu caballo de e5, que estaba a tiro de un peón."), cxd4.txt);
+  /* clavar al atacante, también */
+  const rd5 = frase("3R4/8/8/k1p5/3N4/8/8/4K3 w - - 0 1", "d8d5");
+  assert.ok(!rd5.txt.includes("Defiende"), rd5.txt);
+  /* la defensa destapada con cambio parejo es "Defiende", como Bh6 */
+  const nd3 = frase("3qk3/8/8/8/RN1Q4/8/8/4K3 w - - 0 1", "b4d3");
+  assert.ok(nd3.txt.includes("Defiende tu dama de d4, que estaba sola."), nd3.txt);
+  /* el enroque saca la torre: "Saca", y la marca va adonde fue */
+  const ant = "b3k3/8/8/8/8/8/8/4K2R w K - 0 1";
+  const oo = mirar(ant, "e1g1");
+  assert.equal(oo.salvadas[0].como, "saca");
+  assert.equal(oo.salvadas[0].hacia, "f1");
+  const j = new Chess(ant); j.move("O-O");
+  const txtOO = A.explicarJugada({ fen: j.fen(), uci: "e1g1", turno: "w", pieza: "k", san: "O-O",
+                                   cat: "buena", mejor: "e1g1" }, null, true, null, oo);
+  assert.ok(txtOO.includes("Saca tu torre de h1, que estaba a tiro de un alfil."), txtOO);
+  /* y la que se va sigue siendo "Saca" */
+  const saca = frase("4k3/8/5n2/8/4P3/8/8/4K3 w - - 0 1", "e4e5");
+  assert.ok(saca.txt.startsWith("Saca tu peón de e4"), saca.txt);
 });
 
 test("sacar la pieza colgada no es lo mismo que defenderla", () => {
@@ -3401,7 +3454,7 @@ test("una pieza defendida pero a tiro de una menor se dice 'a tiro', no 'sin def
      al sacarlo de ahí, la tarjeta dice por qué estaba en peligro */
   const antes = "4k3/8/8/2p5/3B4/4P3/8/4K3 w - - 0 1";
   const o = mirar(antes, "d4f6");
-  assert.deepEqual(o.salvadas, [{ sq: "d4", pieza: "b", motivo: "menor", por: "p", seFue: true }]);
+  assert.deepEqual(o.salvadas, [{ sq: "d4", pieza: "b", motivo: "menor", por: "p", seFue: true, como: "saca" }]);
 });
 
 test("sacar una pieza en peligro a otra casilla en peligro no es sacarla", () => {
@@ -3864,7 +3917,7 @@ test("la clavada de la dama va antes que salvar un peón (v0.177)", () => {
   const j = new Chess(antes); j.move({ from: "f1", to: "b5" });
   const f = { fen: j.fen(), uci: "f1b5", turno: "w", pieza: "b", cat: "mejor", mejor: "f1b5" };
   assert.equal(A.explicarJugada(f, null, true, null, obs),
-               "Clava la dama de d7 contra el rey. Salva tu peón de a4, que estaba sin defender.");
+               "Clava la dama de d7 contra el rey. Tapa el ataque a tu peón de a4.");
 });
 
 test("juntar lo analizado no suelta un análisis que ya corría (v0.177.1)", () => {

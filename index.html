@@ -1548,7 +1548,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.3 · 23-11";
+  window.VERSION = "v1.0.4 · 23-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3317,12 +3317,24 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   let salvada = null;
   if (obs && obs.salvadas && obs.salvadas.length) {
     const s = obs.salvadas[0];
-    salvada = { txt: `${s.seFue ? "Saca" : "Salva"} ${suya(s.pieza)} de ${s.sq}, ` +
-                     (s.motivo === "menor"
-                       ? `que estaba a tiro de ${PIEZA_UN[s.por] || "una pieza"}.`
-                       : `que estaba sin defender.`),
-                marca: s.motivo === "menor" ? "a tiro" : "sin defender",
-                sq: s.seFue ? donde : s.sq };
+    const aTiro = `que estaba a tiro de ${PIEZA_UN[s.por] || "una pieza"}.`;
+    const pieza = `${suya(s.pieza)} de ${s.sq}`;
+    /* Tres verbos según cómo (v1.0.4): "Salva" solo cuando la pieza ya no
+       corre peligro por otra cosa; si apenas quedó defendida o tapada, el
+       rival todavía puede cambiarla y "salvar" prometía de más. */
+    if (s.como === "tapa")
+      salvada = s.motivo === "menor"
+        ? { txt: `Tapa el ataque a ${pieza}, ${aTiro}`, marca: "Tapa el ataque", sq: s.sq }
+        : { txt: `Tapa el ataque a ${pieza}.`, marca: "Tapa el ataque", sq: s.sq };
+    else if (s.como === "defiende") {
+      const sola = s.pieza === "q" || s.pieza === "r" ? "sola" : "solo";
+      salvada = { txt: `Defiende ${pieza}, que estaba ${sola}.`, marca: sola, sq: s.sq };
+    }
+    else
+      salvada = { txt: `${s.seFue ? "Saca" : "Salva"} ${pieza}, ` +
+                       (s.motivo === "menor" ? aTiro : `que estaba sin defender.`),
+                  marca: s.motivo === "menor" ? "a tiro" : "sin defender",
+                  sq: s.seFue ? (s.hacia || donde) : s.sq };
   }
 
   /* 3. QUÉ HABÍA en su lugar. */
@@ -4099,10 +4111,38 @@ function observarJugada(f, fenAntes = null) {
       const llegaEnPeligro = todasMias.some(c => c.sq === donde);
       const comida = new Chess(fenAntes).get(donde);
       const valeComida = comida && comida.color !== mio ? (VALOR[comida.type] || 0) : 0;
+      /* CÓMO SE SALVÓ (v1.0.4, Juan): "Salva" exageraba cuando la jugada solo
+         la defiende —Bh6 cuida la dama de g7, pero Qxg7 Bxg7 cambia damas—.
+         `como`: "saca" si la pieza se fue (también la torre del enroque, que
+         no sale de `deDonde`: `hacia` dice adónde fue); "tapa" si la que se
+         movió quedó en medio de una pieza de línea que la atacaba; "defiende"
+         si sigue atacada y ya no corre peligro, o sea que la jugada le dio una
+         defensa (directa o destapada); null si ya nadie la ataca (se comió o
+         se clavó al atacante), y ahí "Salva" es cierto. Con motivo "menor"
+         nunca "defiende": defenderla no la saca del peligro, así que si se
+         salvó fue porque el atacante barato se fue (cxd4 con la dama de h2
+         mirando e5, revisor). Tapar va antes que
+         defender: la que se interpone suele cuidarla también, pero lo que
+         cambió es que el ataque ya no llega. (Revisor de ajedrez, v1.0.4: con
+         "defiende" por la pieza movida, Bxd4 que come al peón atacante decía
+         "Defiende tu caballo", y el enroque, "Defiende tu torre de h1".) */
+      const tabAntes = new Chess(fenAntes).board(), tabDespues = new Chess(f.fen).board();
+      const rivalDe = mio === "w" ? "b" : "w";
+      const fila = mio === "w" ? "1" : "8";
+      const torreEnroque = /^O-O-O/.test(f.san || "") ? ["a" + fila, "d" + fila]
+                         : /^O-O/.test(f.san || "") ? ["h" + fila, "f" + fila] : null;
+      const comoSeSalva = c =>
+        c.sq === deDonde || (torreEnroque && c.sq === torreEnroque[0]) ? "saca" :
+        atacantesDe(tabAntes, c.sq, rivalDe).some(a => "brq".includes(a.pieza) &&
+          enElMedio(a.sq, donde, c.sq)) ? "tapa" :
+        c.motivo === "sinDefensa" && atacantesDe(tabDespues, c.sq, rivalDe).length ? "defiende" : null;
+      const deEnroque = c => torreEnroque && c.sq === torreEnroque[0];
       salvadas = /#$/.test(f.san || "") ? [] :
         antes.filter(c => !son.has(c.sq) && c.sq !== donde)
-             .map(c => ({ ...c, seFue: c.sq === deDonde }))
-             .filter(c => !(c.seFue && llegaEnPeligro))
+             .map(c => ({ ...c, seFue: c.sq === deDonde || !!deEnroque(c), como: comoSeSalva(c),
+                          ...(deEnroque(c) ? { hacia: torreEnroque[1] } : {}) }))
+             .filter(c => !(deEnroque(c) && todasMias.some(x => x.sq === torreEnroque[1])))
+             .filter(c => !(c.seFue && !deEnroque(c) && llegaEnPeligro))
              .filter(c => valeComida < (VALOR[c.pieza] || 0));
     }
     /* 3. LO QUE SE VE EN LA POSICIÓN, y que no es ni material ni amenaza.

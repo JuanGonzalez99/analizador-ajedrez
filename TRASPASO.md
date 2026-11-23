@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.3**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.4**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2071,7 +2071,9 @@ De ahí salen dos frases nuevas, y son espejo una de la otra:
 | frase | cuándo |
 |---|---|
 | "Tu peón de e4 queda sin defender." | estaba defendido y **esta jugada** lo dejó solo |
-| "Salva tu peón de e4, que estaba sin defender." | estaba colgado y **esta jugada** lo defendió |
+| "Defiende tu peón de e4, que estaba solo." | estaba colgado y la pieza movida **ahora lo cuida** (v1.0.4; antes decía "Salva") |
+| "Tapa el ataque a tu peón de a4." | estaba colgado y la pieza movida **se interpuso** (v1.0.4) |
+| "Salva tu peón de e4, que estaba sin defender." | estaba colgado y dejó de estarlo por otra cosa (se comió al atacante, se destapó una defensa) |
 | "Saca tu peón de e4, que estaba sin defender." | estaba colgado y la jugada **lo movió**, que no es lo mismo que defenderlo |
 
 La segunda es la que faltaba para poder decir algo de **las jugadas del rival**:
@@ -4838,6 +4840,26 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0.4, "Salva" dice cómo** (Juan, 20-nov, sobre la v0.178.1; Arreglos).
+Toda pieza que dejaba de estar en peligro sin moverse salía "Salva tu X de Y,
+que estaba sin defender", aunque siguiera atacada y el rival pudiera
+cambiarla: Bh6 en `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w` cuida
+la dama de g7, pero Qxg7 Bxg7 cambia damas. Ahora `observarJugada` le pone a
+cada salvada `como`: **"saca"** (se fue: "Saca…", como antes), **"tapa"** (la
+pieza movida quedó en medio de un alfil, torre o dama que la atacaba: "Tapa
+el ataque a tu peón de a4."), **"defiende"** (sigue atacada pero ya no corre
+peligro: la jugada le dio una defensa, directa o destapada: "Defiende tu dama
+de g7, que estaba sola.", "solo" para peón, caballo y alfil) o null (ya nadie
+la ataca porque se comió o se clavó al atacante: ahí "Salva" es cierto). Tapar
+va antes que defender, porque la que se interpone suele cuidarla también. Con
+"a tiro de" la cola sigue siendo esa. El revisor de ajedrez frenó la primera
+vuelta, que decidía "defiende" por la pieza movida: Bxd4 (come al peón que
+atacaba al caballo de e5, partida de prueba) decía "Defiende tu caballo", y
+el enroque que salva la torre de h1 decía "Defiende tu torre de h1", con h1
+vacía. La torre del enroque cuenta ahora como que se fue (`hacia`, la marca va
+en f1 o d1); antes ya decía "Salva" con la casilla mal. El caso de la v0.177 (Bb5 contra la dama de d7 y el peón de a4)
+pasó a decir "Tapa el ataque a tu peón de a4", que es lo que hace.
 
 **v1.0.3, fuera las marcas de la curva que no se usan** (revisor de código,
 18-nov; segundo paso de la limpieza antes de partir, etapa 2). Desde la
