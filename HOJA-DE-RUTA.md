@@ -155,7 +155,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       g7."**; si la pieza se fue, "Saca…" como hoy. Con "a tiro de" (atacada
       por algo que vale menos) la cola sigue siendo esa. Revisor de ajedrez sí.
 
-- [ ] **"Se queda con la pareja de alfiles" a mitad de un cambio** (revisor
+- [x] ~~**"Se queda con la pareja de alfiles" a mitad de un cambio**~~ (hecho en la v1.0.6, también con el otro alfil colgado) (revisor
       de ajedrez, pasada del 22-nov sobre las partidas del repo). En
       `r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b kq - 1 12`,
       Bxg5 lo dice, pero sigue Nxg5 y quedan uno y uno. `hayPareja` mira solo
@@ -184,6 +184,13 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       Bg5 dice "Atrapa la dama de d8: no tiene salida.", y Nxg5 se come el
       alfil. Que no se diga si se puede comer la pieza que atrapa (sin
       perder en el cambio), con su prueba. Revisor de ajedrez sí.
+- [ ] **"Se planta" a mitad de un cambio** (revisor de ajedrez, v1.0.6; ya
+      estaba). En `r4rk1/pppbbppp/q4n2/4N3/8/3B4/PP3PPP/RNB1K2R w KQ - 0 1`,
+      Nxd7 dice "El caballo de d7 se planta" y sigue Nfxd7. El `cuelga` de la
+      tarjeta solo calla lo logrado si la pieza queda comible o pierde en el
+      cambio, no en un cambio parejo. Mismo arreglo que la pareja
+      (`seLaLlevan`), y mirar con `npm run frases -- --frase planta`.
+      Revisor de ajedrez sí.
 
 ## Etapa 2 · Partir `index.html`
 

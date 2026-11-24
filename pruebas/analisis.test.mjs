@@ -3199,6 +3199,28 @@ test("la pareja de alfiles es tener dos cuando el rival ya no", () => {
   assert.equal(A.hayPareja(tabl("2b1kb2/8/8/8/8/8/8/2B1KB2 w - - 0 1"), "w"), false);
 });
 
+test("la pareja de alfiles no se dice a mitad de un cambio", () => {
+  /* v1.0.6 (revisor de ajedrez, pasada del 22-nov): Bxg5 dejaba dos contra
+     uno, pero sigue Nxg5 y quedan uno y uno. `mirar` está más abajo: se usa
+     cuando el test corre, no cuando se define. */
+  const antes = "r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b kq - 1 12";
+  assert.equal(mirar(antes, "f6g5").pareja, false);
+  /* sin el caballo de f3 nadie recaptura y la pareja sí queda */
+  assert.equal(mirar("r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/8/PP3PPP/R2Q2K1 b kq - 1 12",
+                     "f6g5").pareja, true);
+  /* y si el alfil que come está defendido por un peón y solo lo puede tomar
+     la dama, el rival pierde tomándolo (Qxc5 bxc5): la pareja queda */
+  assert.equal(mirar("2b1k3/2q5/8/2b5/1P6/8/5B2/4KB2 w - - 0 1", "f2c5").pareja, true);
+  /* y tampoco si el que se pierde es el OTRO alfil (revisor, segunda vuelta,
+     partida-doble): Nxc4 y dxc5 se lleva el de c5 sin recaptura */
+  assert.equal(mirar("r1bqk1nr/pppp1ppp/8/2b1n3/2BPP3/8/PPP2PPP/RNBQK2R b KQkq d3 0 5",
+                     "e5c4").pareja, false);
+  /* pero un cambio parejo del otro que ya se podía no la corta: tras Qxd4,
+     Nxc4 Qxc4 era posible desde antes */
+  assert.equal(mirar("r1bqk1nr/pppp1ppp/8/4n3/2BbP3/8/PPP2PPP/RNBQK2R w KQkq - 0 6",
+                     "d1d4").pareja, true);
+});
+
 test("torres conectadas: devuelve las casillas, y nada en el medio", () => {
   /* devuelve las dos casillas y no un sí, porque la frase las señala */
   assert.deepEqual(A.torresConectadas(tabl("4k3/8/8/8/8/8/8/K2R3R w - - 0 1"), "w"),

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.5**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.6**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2576,7 +2576,7 @@ pintar la tarjeta.
 | `Las torres quedan conectadas.` | se ven, sin nada en el medio |
 | `Toma la columna semiabierta d.` | sin peones míos, con peones del rival |
 | `Queda un peón pasado en contra en b5.` | `esPasado` mirando los del rival |
-| `Te quedás con la pareja de alfiles.` | dos míos y el rival ya sin los dos |
+| `Te quedás con la pareja de alfiles.` | dos míos y el rival ya sin los dos; no si uno de mis alfiles se pierde en la jugada siguiente (`seLaLlevan`, v1.0.6) |
 | `Al rival le quedan 2 jugadas: ojo con el ahogado.` | jugadas legales del rival, sin jaque |
 
 Tres decisiones adentro de esa tabla, que no son obvias:
@@ -4844,6 +4844,23 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0.6, la pareja de alfiles no se dice a mitad de un cambio** (revisor
+de ajedrez, pasada del 22-nov; Arreglos). En
+`r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b`, Bxg5 decía "Te
+quedás con la pareja de alfiles", y sigue Nxg5: uno y uno. `hayPareja` mira
+una sola posición; ahora se recorren mis alfiles y `seLaLlevan(fen, sq,
+estricto)` pregunta si el rival tiene una captura ahí que no pierda en el
+cambio (lo comido menos lo que el otro recupera con `cambioEn`; la que
+entrega la dama no cuenta). Para el alfil de la casilla de llegada alcanza
+un cambio parejo (≥ 0: Bxg5 Nxg5); para los otros tiene que ganar (> 0),
+porque un cambio parejo que ya se podía es elección del rival (6.Qxd4 de
+partida-doble, con Nxc4 Qxc4 posible desde antes, sigue diciendo la pareja).
+El revisor de ajedrez frenó la primera vuelta, que miraba solo el alfil que
+comió: Nxc4 en `r1bqk1nr/pppp1ppp/8/2b1n3/2BPP3/8/PPP2PPP/RNBQK2R b` decía la
+pareja y sigue dxc5. Defendido por un peón y atacado solo por la dama, sí se
+dice (Qxc5 bxc5 pierde la dama). `npm run frases`: de 2.312 legales cambian
+Bxg5 y Nxc4, que quedan sin frase.
 
 **v1.0.5, fuera el CSS muerto de la fila de Girar** (revisor de código,
 18-nov; tercer paso de la limpieza antes de partir, etapa 2). Se fueron

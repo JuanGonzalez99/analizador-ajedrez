@@ -1524,7 +1524,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.5 · 24-11";
+  window.VERSION = "v1.0.6 · 24-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3981,6 +3981,24 @@ function hayPareja(tablero, color) {
   return mios >= 2 && suyos < 2;
 }
 
+/* ¿el que mueve en `fen` se puede llevar la pieza de `sq` sin perder en el
+   cambio? (v1.0.6, revisor de ajedrez) Es lo que corta "Se queda con la
+   pareja de alfiles" a mitad de un cambio: Bxg5 Nxg5 deja uno y uno. Una
+   captura que entrega la dama no cuenta, como en `cambioEn`. Con `estricto`
+   tiene que GANAR (> 0): para los alfiles que no se movieron un cambio
+   parejo ya se podía antes y es elección del rival, no la pareja que se
+   deshace (revisor de ajedrez, v1.0.6). */
+function seLaLlevan(fen, sq, estricto = false) {
+  const j = new Chess(fen);
+  return j.moves({ verbose: true }).some(m => {
+    if (m.to !== sq || !m.captured || entregaLaDama(fen, m)) return false;
+    const j2 = new Chess(fen);
+    j2.move(m);
+    const gana = (VALOR[m.captured] || 0) - cambioEn(j2.fen(), sq, 1, false).neto;
+    return estricto ? gana > 0 : gana >= 0;
+  });
+}
+
 /* Torres conectadas: las dos se ven, sin nada en el medio. Se contesta
    caminando la fila o la columna que comparten. */
 function torresConectadas(tablero, color) {
@@ -4245,7 +4263,16 @@ function observarJugada(f, fenAntes = null) {
       pasadoContra = sq; break;
     }
 
-    const pareja = hayPareja(tablero, mio) && !(tAntes && hayPareja(tAntes, mio));
+    /* y no si en la jugada siguiente se pierde uno de los dos: el que comió,
+       aunque sea en un cambio parejo (Bxg5 Nxg5), u otro que quedó colgado
+       (Nxc4 dxc5) (`seLaLlevan`, v1.0.6) */
+    let pareja = hayPareja(tablero, mio) && !(tAntes && hayPareja(tAntes, mio));
+    for (let r = 0; r < 8 && pareja; r++) for (let c = 0; c < 8 && pareja; c++) {
+      const q = tablero[r][c];
+      if (!q || q.type !== "b" || q.color !== mio) continue;
+      const sq = "abcdefgh"[c] + (8 - r);
+      if (seLaLlevan(f.fen, sq, sq !== donde)) pareja = false;
+    }
     const septima = f.pieza === "r" && esLaSeptima(donde, mio) ? donde : null;
     const sinDamas = !hayDamas(tablero) && !!(tAntes && hayDamas(tAntes));
     const conectadas = tAntes && torresConectadas(tAntes, mio)
