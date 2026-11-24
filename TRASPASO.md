@@ -150,7 +150,9 @@ a tocar nada. `extraer.mjs` además exporta `desde(html)`, que arma el bloque de
 cualquier versión: lo usa **`npm run frases`** (`pruebas/frases.mjs`, v1.0.4)
 para recorrer las 2.312 jugadas legales de las partidas de prueba y listar lo
 que la tarjeta dice distinto del último commit, sin motor (cubre
-`observarJugada`, no lo que depende de la evaluación).
+`observarJugada`, no lo que depende de la evaluación). Con `--frase texto`
+(v1.0.6) lista además todas las jugadas donde la tarjeta de ahora dice ese
+texto, cambien o no.
 
 `pruebas/tira.mjs` es la cuarta pieza y no se corre sola: son funciones que
 usan las maquetas y `mirar.mjs` para comparar variantes de un pedazo de

@@ -205,6 +205,8 @@ credencial. Si alguna vez hace falta un PR, se saca el `deny`.
 - `npm run frases` recorre todas las jugadas legales de las partidas de
   prueba y lista lo que la tarjeta dice distinto del último commit (`-- ref`
   para otro). ~25 s; correrlo después de tocar la explicación (v1.0.4).
+  Con `-- --frase texto` lista además todas las jugadas donde sale ese texto
+  (v1.0.6): para mirar entera la frase que se arregla.
 - `npm run mono` usa la app al azar, con el motor y la red lentos, y vigila
   reglas que tienen que cumplirse siempre (§2 del traspaso, "El cuarto
   chequeo"). Tarda ~45 s por recorrido y cuesta una línea de salida: correrlo

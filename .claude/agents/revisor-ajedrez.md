@@ -117,6 +117,12 @@ de memoria una posición de ajedrez").
   qué defiende después de la jugada (v1.0.4, causa B: el arreglo que propuse
   en la primera vuelta dejaba "Defiende… a tiro de un peón" en cxd4, y las
   partidas del repo no tienen ningún caso así).
+- **Una frase de estado que dura** ("te quedás con", "se planta", "toma la
+  columna") **se prueba contra todas las piezas que la sostienen**, no solo
+  contra la que se movió (v1.0.6, causa B: en el ítem de la pareja de alfiles
+  encuadré el problema sobre el alfil que comió, y Nxc4 dejaba colgado el
+  otro). Al revisar el arreglo de una frase, `npm run frases -- --frase
+  <texto>` lista todas las jugadas donde sale, cambien o no.
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 

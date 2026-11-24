@@ -115,7 +115,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    ajedrez: `npm run frases` (todas las jugadas legales de las partidas de
    prueba, contra el último commit; `-- HEAD~1` si ya se commiteó) y mirar en
    el tablero cada familia de frases que cambió (v1.0.4: así se escapaba
-   "Defiende" con el atacante comido).
+   "Defiende" con el atacante comido). **Si se arregla una frase**, además
+   `-- --frase <texto>`: lista todas las jugadas donde sale ahora, cambien o
+   no, y cada una se mira contra todas las piezas que la sostienen (v1.0.6:
+   la pareja de alfiles con el otro alfil colgado decía lo mismo antes y
+   después, y la lista de diferencias no podía mostrarla).
    **Si el cambio agrega una regla a `DISENO.md`**, en la misma versión se
    busca en toda la app dónde más vale; lo que aparezca va a Relleno (causa
    B de `APRENDIZAJES.md`: las reglas se aplicaban solo donde nacían).

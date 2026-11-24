@@ -133,3 +133,12 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   tienen ese caso, así que el recorrido no podía verlo · regla en
   `revisor-ajedrez.md`: los criterios de "sigue atacada" se prueban con cada
   motivo y con el atacante comido mientras queda otro; y la prueba de unidad.
+- **"Te quedás con la pareja de alfiles" con el otro alfil colgado** · ya
+  estaba; lo vio el revisor de ajedrez en la v1.0.6 (antes de salir) · B+C:
+  el ítem (escrito por el mismo revisor) hablaba del alfil que comió y el
+  arreglo miró solo ese; Nxc4 decía lo mismo antes y después, así que
+  `npm run frases`, que lista diferencias, no podía mostrarlo · `--frase` en
+  `frases.mjs` (todas las jugadas donde sale la frase), paso en
+  `TAREA-NOCTURNA.md` (4), regla en `revisor-ajedrez.md` (las frases de estado
+  se prueban contra todas las piezas que las sostienen) y la prueba de unidad.
+  "Se planta", con la misma falla, a Arreglos.

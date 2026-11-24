@@ -11,6 +11,13 @@
    revisor. Cada diferencia se mira en el tablero: que cambie no es que esté
    mal, pero cada una es una posición que la frase nueva tiene que aguantar.
 
+   CON `--frase texto` (v1.0.6) lista además TODAS las jugadas donde la
+   tarjeta de ahora dice ese texto, cambien o no. Por qué: el arreglo de la
+   pareja de alfiles se probó con lo que cambiaba, y Nxc4 de partida-doble
+   —que la decía antes y después, con el otro alfil colgado— no podía salir
+   en la lista de diferencias (APRENDIZAJES.md, v1.0.6). Una frase que se
+   arregla se mira entera: npm run frases -- --frase pareja
+
    Sin motor: la fila se arma como "buena" y sin pérdida, así que cubre lo que
    sale de mirar la posición (`observarJugada`: colgadas, salvadas, clavadas,
    ataques, estructura) y no lo que depende de la evaluación. */
@@ -19,7 +26,10 @@ import { execSync } from "node:child_process";
 import { Chess } from "../chess.js";
 import A, { desde } from "./extraer.mjs";
 
-const ref = process.argv[2] || "HEAD";
+const args = process.argv.slice(2);
+const iF = args.indexOf("--frase");
+const frase = iF >= 0 ? args.splice(iF, 2)[1] : null;
+const ref = args[0] || "HEAD";
 const viejo = desde(execSync(`git show ${ref}:index.html`, { maxBuffer: 1 << 26 }).toString());
 const dir = new URL("./", import.meta.url);
 const pgns = fs.readdirSync(dir).filter(n => n.endsWith(".pgn"));
@@ -33,7 +43,7 @@ const decir = (M, antes, m, despues) => {
   } catch (e) { return "ERROR: " + e.message; }
 };
 
-let jugadas = 0, distintas = 0;
+let jugadas = 0, distintas = 0, conFrase = 0;
 const vistas = new Set();
 for (const n of pgns) {
   const { fens } = A.prepararPartida(fs.readFileSync(new URL(n, dir), "utf8"));
@@ -46,6 +56,10 @@ for (const n of pgns) {
       const despues = k.fen();
       jugadas++;
       const a = decir(viejo, antes, m, despues), b = decir(A, antes, m, despues);
+      if (frase && b.includes(frase)) {
+        conFrase++;
+        console.log(`[${frase}] ${antes}  ${m.san}\n  ${b}`);
+      }
       if (a === b) continue;
       distintas++;
       console.log(`${antes}  ${m.san}\n  antes: ${a}\n  ahora: ${b}`);
@@ -53,4 +67,5 @@ for (const n of pgns) {
   }
 }
 console.log(`\n${jugadas} jugadas legales en ${vistas.size} posiciones de ${pgns.length} partidas; ` +
-            `${distintas} dicen otra cosa que ${ref}.`);
+            `${distintas} dicen otra cosa que ${ref}.` +
+            (frase ? ` "${frase}" sale en ${conFrase}.` : ""));
