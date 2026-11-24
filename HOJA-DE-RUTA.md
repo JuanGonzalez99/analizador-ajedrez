@@ -222,7 +222,7 @@ limpieza: lo que está muerto no se parte.
         `dibujarCurva`: Juan eligió "punto chico" en la v0.160. ~1.300 tokens.
         Ojo: las pruebas de analisis.test.mjs ~1496, 1528 y 1542–1559 usan esa
         rama como límite; se reescriben en el mismo cambio.
-  - [ ] **CSS muerto en la fila de Girar** (revisor de código, 18-nov;
+  - [x] ~~**CSS muerto en la fila de Girar**~~ (hecho en la v1.0.5) (revisor de código, 18-nov;
         interno). `.soloAncho` (nadie la lleva desde la v0.160),
         `.acciones > button.prendido`, el `:not(.revcab)`, `.acciones`
         declarada dos veces seguidas, y comentarios que hablan de "Siempre la

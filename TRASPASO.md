@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.4**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.5**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4844,6 +4844,21 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0.5, fuera el CSS muerto de la fila de Girar** (revisor de código,
+18-nov; tercer paso de la limpieza antes de partir, etapa 2). Se fueron
+`.soloAncho` (nadie la lleva desde la v0.160: era el dial de la lista),
+`.acciones > button.prendido` (el estado prendido de "Siempre la mejor", que
+pasó a ser el cuadrito Mejor en la v0.117), el `:not(.revcab)` de la carga
+(`.revcab` se fue antes) y la segunda declaración de `.acciones`, que se
+juntó con la primera (`display: none` y la grilla en una sola regla). Los
+comentarios de la fila ya no hablan de "Siempre la mejor". La regla de
+`max-width: 359px` que esconde el ícono de Girar se queda. Las dos pruebas
+que buscaban `.colLista, .soloAncho { display: none; }` buscan
+`.colLista { display: none; }`. No cambia nada que se vea: las capturas salen
+iguales al byte salvo las que muestran la versión (recortadas y comparadas:
+solo el número) y `mes-varias`/`ancho-mes-varias`, el ruido conocido de la
+barra de carga.
 
 **v1.0.4, "Salva" dice cómo** (Juan, 20-nov, sobre la v0.178.1; Arreglos).
 Toda pieza que dejaba de estar en peligro sin moverse salía "Salva tu X de Y,

@@ -504,7 +504,7 @@
      volver y el progreso en la cabecera, y nada más: lo de abajo sería la
      partida anterior. */
   #zonaRevision.cargando > :not(.parriba),
-  #zonaRevision.cargando > .parriba > :not(.cabvista):not(.revcab) { display: none !important; }
+  #zonaRevision.cargando > .parriba > :not(.cabvista) { display: none !important; }
   body:has(#zonaRevision.cargando:not(.oculto)) .pie { display: none; }
   /* EL PASO DE PANTALLA ES SECO (v0.111). La v0.110 tenía un fundido de
      120 ms y a Juan no le copó: *"brusco, medio violento"*, y la pantalla
@@ -681,28 +681,15 @@
                                     vertical-align: baseline; fill: currentColor; stroke: currentColor; }
   .metricas .tocable.activo .et { color: var(--acento); }
   .metricas .tocable.activo .flechaMejor { color: var(--f-mejor); }
-  /* LOS BOTONES VAN EN LA MISMA GRILLA QUE LOS CUADRITOS (v0.106). Eran una
-     fila de tres anchos distintos (134, 108, 115) que no compartía columnas
-     con los cuatro cuadritos de arriba, y a Juan le parecían "medio raros".
-     Se dibujaron cuatro variantes y el revisor eligió esta: cuatro columnas
-     iguales con el mismo 8, "Siempre la mejor" en dos (abajo de Mejor y
-     Pérdida), "Girar" y "Rival" en una cada uno. Con columnas de ~90 la
-     palabra ya no puede cambiar al prenderse ("Pintar solo las mías" no
-     entra), así que EL ESTADO VA POR COLOR, igual que el cuadrito encendido.
-     "Girar" no se prende: es una acción y el tablero ya muestra el estado.
-     "Siempre" separa el botón —una preferencia que sigue en todas las
-     jugadas— del cuadrito, que la muestra solo en esta. */
-  .acciones { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--e-2);
+  /* LA FILA DE GIRAR. Va en la misma grilla de cuatro columnas que los
+     cuadritos (v0.106). Desde la v0.117 Girar es lo único que queda en ella
+     (Rival se fue a la hoja en la v0.114 y "Siempre la mejor" pasó a ser el
+     cuadrito Mejor), y Girar vive al costado del tablero: la fila no se
+     dibuja salvo cuando el canal no le alcanza (`body.girarEnFila`). */
+  .acciones { display: none; grid-template-columns: repeat(4, 1fr); gap: var(--e-2);
               margin-top: var(--e-2); }
   .acciones > button { width: 100%; margin: 0; padding-left: 4px; padding-right: 4px; }
-  /* v0.114: en el celu la fila queda con "Siempre la mejor" sola (Girar va al
-     costado del tablero y Rival a la hoja). En la compu, al lado del tablero
-     están las piezas comidas, así que Girar sigue en la fila. */
   .acciones > #btnGirar { display: none; }
-  /* v0.117: "Siempre la mejor" se fue de la fila (el cuadrito Mejor es el
-     interruptor), así que en el celu la fila queda vacía y no se dibuja; vuelve
-     solo cuando Girar baja a ella (canal angosto, o la compu). */
-  .acciones { display: none; }
   .revtab { position: relative; }
   /* Al costado de la fila 1, entre el borde de las casillas y el de la
      pantalla (~40 px en el celu, donde a media altura vive el chevrón ›). La
@@ -719,8 +706,8 @@
                         left: 0; right: -3px; }
   #btnGirarTab.pestana::after { right: 0; }
   /* Cuando el canal no alcanza ni para la pestaña (menos de 24),
-     `ubicarGirar()` lo dice con esta clase y Girar vuelve a la fila, al lado
-     de "Siempre la mejor". Medido en la v0.116, entra desde 360 de ancho. */
+     `ubicarGirar()` lo dice con esta clase y Girar vuelve a la fila. Medido
+     en la v0.116, entra desde 360 de ancho. */
   body.girarEnFila .acciones > #btnGirar { display: flex; }
   body.girarEnFila .acciones { display: grid; }
   /* el corte de la compu, escrito así para que no se confunda con el bloque
@@ -736,22 +723,14 @@
     #btnGirarTab { width: 32px; height: 32px; }
     #btnGirarTab > svg { width: 20px; height: 20px; }
   }
-  /* CON ÍCONO Y TEXTO (v0.113). El lavado de "dónde viven las preferencias
-     del tablero" dibujó cuatro: esta fila con íconos (A), una fila de
-     pastillas al pie del tablero (B, empujaba 43 px), Girar como ícono en el
-     canal del tablero y lo demás a la hoja (C) o a la fila (D). El revisor
-     eligió A: lo que Juan usa sigue a un toque, Girar conserva el texto que a
-     él le gustó con el ícono, y en el canal de 25 px no entra un toque de 48.
-     La flecha de "Siempre la mejor" es del verde de la flecha que pinta. El
-     margen negativo deja el ícono de 18 sin agrandar el renglón: sin él, la
-     fila crecía 4 px. */
+  /* CON ÍCONO Y TEXTO (v0.113): Girar conserva el texto que a Juan le gustó,
+     con el ícono. El margen negativo deja el ícono de 18 sin agrandar el
+     renglón: sin él, la fila crecía 4 px. */
   .acciones > button { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .acciones > button > svg { width: 18px; height: 18px; flex: none; margin: -2px 0; }
-  /* En un celu de 320 "Siempre la mejor" con ícono no entra en sus 142 px y el
-     renglón se partía en dos (56 de alto): por debajo de 360 manda el texto. */
+  /* Por debajo de 360 manda el texto (v0.113: con ícono, un botón de la fila
+     se partía en dos renglones en un celu de 320). */
   @media (max-width: 359px) { .acciones > button > svg { display: none; } }
-  .acciones > button.prendido { border-color: var(--acento);
-                                background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
   /* el margen de arriba lo trae la tarjeta y no el bloque de arriba: desde la
      v0.74 arriba hay una barra de evaluación, que no tenía margen abajo, y las
      dos quedaban pegadas. Mover un elemento le cambia los márgenes a sus DOS
@@ -990,10 +969,10 @@
                            color: var(--inventada); vertical-align: middle; }
   .jugadas > div.var .jg.pend { color: var(--tenue); }
 
-  /* Fuera de pantalla ancha no hay ni columna ni dial. VA ANTES de la media
-     query: a igual especificidad gana la última regla, y puesto después le
-     ganaba al `display` de adentro y la lista no se veía nunca. */
-  .colLista, .soloAncho { display: none; }
+  /* Fuera de pantalla ancha no hay columna. VA ANTES de la media query: a
+     igual especificidad gana la última regla, y puesto después le ganaba al
+     `display` de adentro y la lista no se veía nunca. */
+  .colLista { display: none; }
 
   /* EN PANTALLA ANCHA, DOS COLUMNAS (v0.80). Hasta acá el archivo entero tenía
      UNA media query y era la de claro contra oscuro: la app era la misma
@@ -1239,9 +1218,6 @@
       flex: 1 1 0; background: var(--superficie); border: 1px solid var(--linea);
       border-radius: var(--r-control); color: var(--texto); transform: none; }
     #zonaRevision:not(.conVariante) .lateral > .tira > button:disabled { color: var(--tenue); opacity: .5; }
-    /* el dial de la lista no existe en el celular: elige entre cosas que ahí no
-       se ven, y esa fila de controles ya viene cargada. */
-    .soloAncho { display: flex; }
     /* EL LADO DEL TABLERO: lo manda el alto —la pantalla menos la cabecera y
        los márgenes— y, si la ventana es angosta, el ancho que dejan el panel
        y la barra (120 desde la v0.132, que sacó los 64 de la columna de las
@@ -1548,7 +1524,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.4 · 23-11";
+  window.VERSION = "v1.0.5 · 24-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
