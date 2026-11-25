@@ -129,9 +129,11 @@ archivo, sin la trampa de la caché de módulos de versiones distintas.
   es juntar sus `src/`); si no, avisa y sale con error. Corre igual desde una
   ruta con espacios o un enlace simbólico. Las cuatro cosas las probó el
   revisor de código en clones (25-nov) y se corrigieron antes del push.
-- **El chequeo 0bis mantiene honesto este mapa**: cada nombre entre comillas
-  invertidas de una fila del §3 tiene que aparecer en ese pedazo (el revisor
-  encontró "el arrastre" en `tablero.js`, y vive en `revision.js`).
+- **El chequeo 0bis cuida este mapa**: cada pedazo de `ORDEN` tiene su
+  fila, y cada nombre entre comillas invertidas de una fila del §3 aparece en
+  ese pedazo. Solo eso: el texto suelto no lo mira (el revisor encontró "el
+  arrastre", escrito suelto, en la fila de `tablero.js`; vive en
+  `revision.js`), así que lo que importa ubicar va entre comillas invertidas.
 - **`npm test`, `mirar`, `mono` y `frases` juntan antes de correr**, así que
   lo que se prueba es lo de `src/`. Y el chequeo estático 0 exige que
   `index.html` sea exactamente lo que sale de juntar.

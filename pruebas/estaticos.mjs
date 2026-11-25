@@ -15,7 +15,7 @@ const chequear = (nombre, malas) => {
 /* 0. index.html es exactamente lo que sale de juntar src/ (etapa 2, v1.0.9).
       Las sesiones editan los pedazos de src/; si index.html se editó a mano,
       o se tocó src/ sin juntar, lo que se pushea no es lo que se probó. */
-import { juntar } from "../juntar.mjs";
+import { juntar, ORDEN } from "../juntar.mjs";
 chequear("index.html sale de src/", juntar() === html ? [] : ["no coincide: correr npm run juntar (y si index.html se editó a mano, pasar el cambio a src/)"]);
 
 /* 0bis. El mapa del §3 del traspaso dice la verdad (revisor de código,
@@ -26,6 +26,10 @@ chequear("index.html sale de src/", juntar() === html ? [] : ["no coincide: corr
   const tras = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");
   const sec = tras.slice(tras.indexOf("## 3. Mapa del archivo"), tras.indexOf("El **menú de ajustes**"));
   const malas = [];
+  /* una fila por pedazo: si no encuentra el mapa (otro título) o falta la
+     fila de un pedazo nuevo, rojo; sin esto daba verde sin mirar nada */
+  const conFila = new Set([...sec.matchAll(/^\| `([\w.-]+)` \|/gm)].map(m => m[1]));
+  for (const f of ORDEN) if (!conFila.has(f)) malas.push(`${f} sin fila en el mapa`);
   for (const [, f, desc] of sec.matchAll(/^\| `([\w.-]+)` \| (.*) \|$/gm)) {
     const u = new URL(`../src/${f}`, import.meta.url);
     if (!fs.existsSync(u)) { malas.push(`${f} no existe`); continue; }
