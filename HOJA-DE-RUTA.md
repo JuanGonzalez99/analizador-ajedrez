@@ -587,6 +587,16 @@ Pendientes que estaban anotados solo en el traspaso.
       `URL.createObjectURL` de Descargar sin liberar. Interno.
 - [ ] (Menor) El redondeo de la precisión repetido en `pintarFilas` (~6957)
       y `pintarLista` (~8552): que viva en `filaDePartida`. Interno.
+- [ ] **Comentarios huérfanos que el corte dejó a la vista** (revisor de
+      código, 25-nov, sobre la etapa 2). `src/mes.js` termina con "Por debajo
+      de esta cantidad de jugadas no se muestra porcentaje…", que ya es falso
+      (`tablas.js` abre con "Ya no hay mínimo para los porcentajes (v0.50)");
+      y al principio de `tablas.js`, "Una fila por mecanismo…", pegado a otro:
+      confirmar si le falta su código antes de borrarlo. Interno.
+- [ ] (Menor) **Partir `src/revision.js`** (revisor de código, 25-nov): es el
+      pedazo más grande (~20.000 tokens) y de ~749 a ~1230 son todo gestos y
+      teclado: un `gestos.js` aparte, sumado a `ORDEN`. Interno, armado
+      idéntico al byte.
 
 ### Ideas de los revisores para más adelante
 

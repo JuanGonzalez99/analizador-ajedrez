@@ -117,7 +117,7 @@ Son los dos más grandes del repo y los dos se pagan en contexto:
   `tira.mjs` no junta: `npm run juntar` antes). Qué hay en cada pedazo: el mapa del §3 del
   traspaso. **Los pedazos tampoco se leen enteros** si son grandes
   (`revision.js`, `estilos.css`, `tablero.js` y los `analisis-*.js` son de
-  13.000 a 20.000 tokens): se grepea y se leen los renglones de alrededor.
+  9.000 a 20.000 tokens): se grepea y se leen los renglones de alrededor.
 
 - **`aperturas.json` es una sola línea de 942 KB** (`wc -l` da 0, no es un
   error). O sea que **cualquier `grep` que matchee devuelve el archivo entero**

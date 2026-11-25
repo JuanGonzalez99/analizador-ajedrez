@@ -43,10 +43,10 @@ de distinta manera, o si una prueba da verde sin probar nada.
       `analisis-posicion.js`): la explicación, `observarJugada`, las aperturas;
    5. motor, caché y `analizarPartida` (`motor.js`);
    6. bloque de tablas (`tablas.js`, `mes-pintar.js`);
-   7. interfaz: tablero SVG, arrastre, marcas (`tablero.js`);
-   8. interfaz: `pintarRevision`, la tarjeta, la variante (`revision.js`,
-      `variante.js`);
-   9. interfaz: inicio, Mes, ajustes, teclado, pantallas (`interfaz.js`,
+   7. interfaz: tablero SVG, marcas, la previa, las tres mejores (`tablero.js`);
+   8. interfaz: `pintarRevision`, la tarjeta, la variante, los gestos y el
+      teclado (`revision.js`, `variante.js`);
+   9. interfaz: inicio, Mes, ajustes, pantallas (`interfaz.js`,
       `inicio.js`, `mes.js`, `cuerpo.html`);
    10. las pruebas (`pruebas/analisis.test.mjs`, `estaticos.mjs`, `mirar.mjs`)
        y `juntar.mjs`.

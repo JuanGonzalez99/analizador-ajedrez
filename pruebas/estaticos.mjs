@@ -18,6 +18,24 @@ const chequear = (nombre, malas) => {
 import { juntar } from "../juntar.mjs";
 chequear("index.html sale de src/", juntar() === html ? [] : ["no coincide: correr npm run juntar (y si index.html se editó a mano, pasar el cambio a src/)"]);
 
+/* 0bis. El mapa del §3 del traspaso dice la verdad (revisor de código,
+      25-nov; causa F): cada nombre entre comillas invertidas de una fila
+      `| \`pedazo\` | … |` aparece en ese pedazo (salvo las etiquetas, `<head>`…). El mapa es lo que evita leer
+      el código, y una fila mandaba a buscar el arrastre al pedazo equivocado. */
+{
+  const tras = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");
+  const sec = tras.slice(tras.indexOf("## 3. Mapa del archivo"), tras.indexOf("El **menú de ajustes**"));
+  const malas = [];
+  for (const [, f, desc] of sec.matchAll(/^\| `([\w.-]+)` \| (.*) \|$/gm)) {
+    const u = new URL(`../src/${f}`, import.meta.url);
+    if (!fs.existsSync(u)) { malas.push(`${f} no existe`); continue; }
+    const t = fs.readFileSync(u, "utf8");
+    for (const [, n] of desc.matchAll(/`([^`]+)`/g))
+      for (const parte of n.split("/")) if (!parte.startsWith("<") && !t.includes(parte.replace(/\(.*$/, ""))) malas.push(`${f}: ${parte}`);
+  }
+  chequear("el mapa del §3 dice dónde vive cada cosa", malas);
+}
+
 /* 1. Todo id referenciado en JS existe en el HTML. */
 const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]));
 const usados = new Set([

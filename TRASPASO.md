@@ -123,8 +123,15 @@ archivo, sin la trampa de la caché de módulos de versiones distintas.
   es la lista `ORDEN` de `juntar.mjs`; un pedazo nuevo se suma ahí, y `juntar`
   falla si en `src/` hay uno que no está en la lista.
 - **Se edita `src/`, nunca `index.html`.** `juntar` no pisa un `index.html`
-  editado a mano: lo pisa solo si es lo que escribió la última vez (sello en
-  `.git/juntado`) o lo del último commit, y si no, avisa y sale con error.
+  editado a mano: lo pisa solo si es lo que escribió la última vez (un sello
+  en `git rev-parse --git-path juntado`, que anda también en un worktree) o
+  lo del último commit siempre que ese commit sea coherente (su `index.html`
+  es juntar sus `src/`); si no, avisa y sale con error. Corre igual desde una
+  ruta con espacios o un enlace simbólico. Las cuatro cosas las probó el
+  revisor de código en clones (25-nov) y se corrigieron antes del push.
+- **El chequeo 0bis mantiene honesto este mapa**: cada nombre entre comillas
+  invertidas de una fila del §3 tiene que aparecer en ese pedazo (el revisor
+  encontró "el arrastre" en `tablero.js`, y vive en `revision.js`).
 - **`npm test`, `mirar`, `mono` y `frases` juntan antes de correr**, así que
   lo que se prueba es lo de `src/`. Y el chequeo estático 0 exige que
   `index.html` sea exactamente lo que sale de juntar.
@@ -411,14 +418,14 @@ el orden en que se juntan:
 | `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
 | `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`; y `aperturaEs`. Cierra el bloque de análisis |
 | `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
-| `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes`, la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas, `dibujar` y el arrastre |
+| `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes`, la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas (`svgMarcas`), `dibujar` |
 | `interfaz.js` | el estado global (`PARTIDAS`, `R`, `IDX`…), la tira (`medirTira`, `centrarTira`), `irA` |
 | `variante.js` | probar jugadas: `abrirPrueba`, `probarJugada`, la tira y la planilla de la variante |
 | `inicio.js` | preferencias guardadas, cuántos motores, el usuario y "cambiar", `cargarMes`, el recuento, `filaDePartida`, `pintarFilas`, `abrirPartida`, `analizarElegida` |
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
-| `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, el teclado. Cierra el `try` del arranque |
+| `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
 El **menú de ajustes** (v0.91, §4untrigies) es la excepción a "todo cuelga de su

@@ -158,3 +158,8 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 - **`npm run frases` no veía las frases de la jugada mala** · v1.0.4 → v1.0.7
   · C: la fila iba sin pérdida, y "no cambia nada" se leyó como cobertura en
   el traspaso · `frases.mjs` dice cada jugada como buena y como error.
+- **El mapa del §3 mandaba el arrastre a `tablero.js`** · etapa 2 → visto la
+  misma noche (revisor de código) · F: la fila se escribió con el encabezado
+  y las funciones de cada pedazo, sin buscar dónde se enganchan los eventos ·
+  chequeo 0bis de `estaticos.mjs`: cada nombre de una fila del mapa tiene que
+  estar en ese pedazo.
