@@ -126,6 +126,8 @@ await new Promise(r => srv.listen(PUERTO, r));
    8. Recargar no pierde nada.                      (afuera)
    9. Todo trabajo termina, y Parar para.           (afuera)
    10. Ningún error en la consola.                  (afuera)
+   11. Sin error de verdad, no hay cartel de error. (adentro; uno de cada
+       cuatro recorridos demora chess.js 7 s, como un celu con mala señal)
 
    Corren ADENTRO de la página cada 50 ms. Una regla rota cuenta recién si
    sigue rota un rato (300 ms, o lo que diga): entre dos líneas de código la
@@ -198,6 +200,15 @@ const VIGIA = () => {
     },
     /* 3. NADA SE CONTRADICE: se ofrece empezar o parar, no las dos */
     "se contradice": () => ocupado() && ["analizarMes", "seguirMes"].some(vis) && "ofrece empezar y Parar a la vez",
+    /* 11. SIN ERROR DE VERDAD, NO HAY CARTEL DE ERROR (25-nov, revisor de
+       código; APRENDIZAJES.md, causa C). Con la red lenta el temporizador
+       de 6 s del script clásico pintaba "el módulo no arrancó" con los tres
+       archivos respondiendo 200, y el cartel quedaba aunque el módulo
+       arrancara. Los errores reales los atajan "error de la página" y
+       "error en la consola"; esta mira el cartel con el módulo ya andando. */
+    "cartel de error falso": () => window.MODULO_OK &&
+      (!$("errores").classList.contains("oculto") || document.documentElement.classList.contains("hubo-error")) &&
+      { que: "con el módulo arrancado se ve el cartel rojo: " + ($("errores").textContent || "").slice(0, 80), plazo: 500 },
     /* 5. NADA SE SALE DEL ANCHO: sin scroll de costado */
     "se sale del ancho": () => {
       const d = document.scrollingElement;
@@ -312,6 +323,11 @@ async function recorrido(sem, nav) {
   /* chess.com: la lista de meses, también con demora */
   await ctx.route("https://api.chess.com/**", ro => setTimeout(() =>
     ro.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(API["/api/archives"]) }), RED() * 1500));
+  /* LA RED LENTA PARA LOS ARCHIVOS DE LA APP (regla 11): uno de cada cuatro
+     recorridos, chess.js tarda 7 s, más que los 6 del temporizador del
+     script clásico. Hasta acá solo tardaban la API y el motor. */
+  const lenta = r() < 0.25;
+  if (lenta) await ctx.route("**/chess.js", ro => setTimeout(() => ro.continue().catch(() => {}), 7000));
   const pg = await ctx.newPage();
   const pasos = [];
   const t0 = Date.now();
@@ -348,7 +364,7 @@ async function recorrido(sem, nav) {
   let alSalir = null;
 
   await pg.goto(`http://localhost:${PUERTO}/index.html`);
-  anotar("abrir (con usuario guardado)");
+  anotar("abrir (con usuario guardado)" + (lenta ? ", chess.js lento" : ""));
   /* LA MITAD ARRANCA CON LA CACHÉ LLENA: se analiza el mes entero y se
      recarga. Con la caché vacía no hay nada que mirar al cargar, y el error de
      la v0.175 (la lista empujada al terminar de mirarla) no podía pasar. */

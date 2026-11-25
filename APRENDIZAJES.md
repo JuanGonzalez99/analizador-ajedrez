@@ -54,12 +54,7 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-- **El mono demora los archivos de la app** (revisor de código, 25-nov;
-  causa C). En `mono.mjs`, uno de cada tres o cuatro recorridos demora
-  `chess.js` más de 6 s con `ctx.route`, y una regla nueva: "con el módulo
-  arrancado, `#errores` oculta y sin `hubo-error`, salvo error real". Hoy el
-  mono solo frena la API de chess.com y el motor. Hacerla junto con (o antes
-  de) el arreglo del cartel rojo falso, para que la regla nazca en rojo.
+(Ninguna por ahora.)
 
 ## Registro
 
@@ -148,8 +143,9 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   "Se planta", con la misma falla, a Arreglos.
 - **El cartel rojo falso con la red lenta** · ya estaba → visto el 25-nov
   (revisor de código) · C: el mono frena la API y el motor, pero los
-  archivos de la app llegan siempre al toque · prevención pendiente: el mono
-  demora `chess.js` y vigila `#errores`.
+  archivos de la app llegan siempre al toque · el mono demora `chess.js` 7 s
+  en uno de cada cuatro recorridos y vigila el cartel (regla 11); nació en
+  rojo con la semilla 1.
 - **Dos funciones muertas (`entregaMaterial`, `atacadaPor`)** · v0.134 y
   antes → 25-nov · G: el uso se mudó a otra función y la vieja quedó; una
   prueba exigía que existiera · chequeo 6bis de `estaticos.mjs` (toda función

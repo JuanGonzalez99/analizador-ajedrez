@@ -304,8 +304,10 @@ npm run mono -- --regla "barra sin trabajo" --html viejo.html
 volver, cambiar de mes, recargar, esperar— con el motor y la red tardando
 desparejo (el motor entre 0 y 25 ms, y uno de cada veinte hasta 400; los
 meses entre 0 y 1,5 s, o sea que llegan fuera de orden), tres motores y la
-mitad de las veces la caché llena, y el ancho al azar entre 386 y 412.
-Mientras tanto vigila **diez principios que valen para cualquier pantalla**
+mitad de las veces la caché llena, y el ancho al azar entre 386 y 412. Y
+desde el 25-nov, uno de cada cuatro recorridos con `chess.js` tardando 7 s
+(un celu con mala señal: el temporizador del script clásico es de 6).
+Mientras tanto vigila **once principios que valen para cualquier pantalla**
 (generalizados el 21-nov a pedido de Juan: la primera tanda nombraba la barra
 y el botón del mes, y atajaba un error y su primo):
 
@@ -319,6 +321,9 @@ y el botón del mes, y atajaba un error y su primo):
 8. Recargar no pierde nada (con las precisiones).
 9. Todo trabajo termina, y Parar para en 15 s.
 10. Ningún error en la consola.
+11. Sin error de verdad, no hay cartel de error (`#errores` oculta y sin
+    `hubo-error` con el módulo arrancado; 25-nov, revisor de código). Nació
+    en rojo (semilla 1, antes del arreglo del cartel falso).
 
 Lo específico de la app queda en dos listas chicas de `mono.mjs`: `EN_CURSO`
 (las palabras con que dice que trabaja) y `CUADRAN` (los números que se
