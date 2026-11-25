@@ -1328,7 +1328,6 @@ test("capturar en OTRA casilla sigue siendo omisión", () => {
 test("capturaGanadora se fue, porque ya no la usa nadie", () => {
   assert.ok(!html.includes("capturaGanadora"));
   assert.ok("gananciaDeCaptura" in A, "esta sí se sigue usando");
-  assert.ok("entregaMaterial" in A);
 });
 
 test("capturar otra cosa ya no tapa la omisión", () => {

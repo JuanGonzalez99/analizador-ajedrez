@@ -93,6 +93,20 @@ else {
 }
 chequear("el módulo parsea", malSintaxis);
 
+/* 6bis. Ninguna función de nivel superior sin quien la llame (25-nov,
+      APRENDIZAJES.md, causa G). `entregaMaterial` vivió diez versiones
+      reemplazada por `enPeligro`, y `atacadaPor` sin uso desde que llegó
+      `atacantesDe`: código muerto que cada sesión paga en tokens y que una
+      prueba de "existe" sostenía. Se cuenta el nombre fuera de los
+      comentarios (también pasado como valor, como `adelgazar`); con una sola
+      aparición —la definición— no la llama nadie. */
+const sinComentarios = html.replace(/\/\*[\s\S]*?\*\//g, " ")
+  .replace(/<!--[\s\S]*?-->/g, " ").replace(/^\s*\/\/.*$/gm, " ");
+chequear("toda función tiene quien la llame",
+  [...html.matchAll(/^(?:async\s+)?function\*?\s+([\w$]+)\s*\(/gm)].map(m => m[1])
+    .filter(n => (sinComentarios.match(new RegExp(
+      "(?<![\\w$.])" + n.replace(/\$/g, "\\$") + "(?![\\w$])", "g")) || []).length < 2));
+
 /* 7. El traspaso dice en qué versión está al día. Si el HTML subió de versión
       y el documento no, alguien cambió algo y no lo anotó (§10). */
 const doc = fs.readFileSync(new URL("../TRASPASO.md", import.meta.url), "utf8");

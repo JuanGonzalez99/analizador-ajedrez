@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.7**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.8**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -169,7 +169,8 @@ Lo que no se puede probar así es el motor y el DOM. Para eso está
 5. Toda tabla vive dentro de un contenedor que scrollea.
 6. El `<script type="module">` entero parsea. Los extractores solo miran dos
    pedazos, así que un error de sintaxis en la interfaz o en el motor no lo
-   agarraba nada y aparecía como pantalla en blanco en el celu.
+   agarraba nada y aparecía como pantalla en blanco en el celu. Y (6bis,
+   v1.0.8) toda función de nivel superior tiene quien la llame.
 7. El traspaso dice en qué versión está al día, y coincide con el HTML.
 8. **Ningún `/* … */` adentro de un `innerHTML = \`…\``.** Ahí no es un
    comentario, es texto, y se imprime en la pantalla. Rompió cinco tablas en la
@@ -4883,6 +4884,15 @@ marcas de la explicación: ahora busca el `data-sq="${sq}"` del tablero.
 Comprobado al revés: borrando esos dos renglones de `index.html`, las dos
 fallan (antes seguían en verde). Solo cambian las pruebas: la versión no sube.
 
+**v1.0.8, fuera dos funciones que nadie llamaba** (revisor de código, 25-nov;
+prevención de `APRENDIZAJES.md`, causa G). `entregaMaterial` (reemplazada por
+`enPeligro` en la v0.134, la sostenía una prueba que solo pedía que
+existiera) y `atacadaPor` (el uso pasó a `atacantesDe`). Y un chequeo
+estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
+tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
+pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
+ellas. Interno: nada que se vea.
+
 **v1.0.6, la pareja de alfiles no se dice a mitad de un cambio** (revisor
 de ajedrez, pasada del 22-nov; Arreglos). En
 `r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b`, Bxg5 decía "Te
@@ -6436,7 +6446,7 @@ conteos de las tablas**; la precisión no cambia.
 - **H2: el sacrificio se mide con `enPeligro`**: la pieza que movió queda en
   peligro de verdad y lo que comió vale menos que ella. Una recaptura no es
   sacrificio. **Un peón sí puede ser Brillante** (Juan, 15-nov).
-  `entregaMaterial` queda definida pero ya no la usa la categoría.
+  `entregaMaterial` quedó definida sin uso hasta la v1.0.8, que la borró.
 - Medido en 1.075 jugadas, modo crítico: omisión → grave 20, imprecisión →
   mejor 13, error → mejor 3, imprecisión → genial 6 (eran mejores con hueco que
   la imprecisión tapaba), brillante → mejor 1 (15… Bxd6). En amigable, omisión

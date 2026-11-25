@@ -60,15 +60,6 @@ quedan en el registro.
   arrancado, `#errores` oculta y sin `hubo-error`, salvo error real". Hoy el
   mono solo frena la API de chess.com y el motor. Hacerla junto con (o antes
   de) el arreglo del cartel rojo falso, para que la regla nazca en rojo.
-- **Funciones sin quien las llame** (revisor de código, 25-nov; causa G).
-  Una regla en `estaticos.mjs`: ninguna función de nivel superior de
-  `index.html` sin quien la llame (contando las que se pasan como valor,
-  como `adelgazar` y `pedirAlternativas`). En el mismo commit se sacan las
-  dos que encontró: `entregaMaterial` (~2362, reemplazada por `enPeligro` en
-  la v0.134; con la prueba ~1331 que solo exige que exista y la mención de
-  `TRASPASO.md` ~2722) y `atacadaPor` (~3853, el uso pasó a `atacantesDe`).
-  Rojo con `atacadaPor` adentro, verde sin ella; `npm run frases` sin
-  diferencias. Toca `index.html`: sube el tercer número.
 
 ## Registro
 
@@ -161,8 +152,8 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   demora `chess.js` y vigila `#errores`.
 - **Dos funciones muertas (`entregaMaterial`, `atacadaPor`)** · v0.134 y
   antes → 25-nov · G: el uso se mudó a otra función y la vieja quedó; una
-  prueba exigía que existiera · prevención pendiente: la regla de `estaticos.mjs`
-  de funciones sin quien las llame, junto con sacarlas.
+  prueba exigía que existiera · chequeo 6bis de `estaticos.mjs` (toda función
+  de nivel superior tiene quien la llame), y las dos fuera en la v1.0.8.
 - **"Destapa" cuando la jugada desclavaba al atacante** · v1.0.7 → visto en
   la misma noche (revisor de ajedrez) · D+B: la regla se pensó para la línea
   abierta del ítem y "antes nadie atacaba" no distingue cómo apareció el

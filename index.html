@@ -1524,7 +1524,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.7 · 25-11";
+  window.VERSION = "v1.0.8 · 25-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2359,15 +2359,6 @@ function capturaBuena(fen, mejorUci) {
   return hecho ? { san: hecho.san, gana, comida: hecho.captured } : null;
 }
 
-/* ¿la jugada entrega material? (queda comible, o come algo que vale menos) */
-function entregaMaterial(fen, mov) {
-  const j = new Chess(fen);
-  const hecho = j.move(mov);
-  if (!hecho) return false;
-  if (hecho.captured) return gananciaDeCaptura(fen, mov) < 0;
-  return quedaComible(j.fen(), hecho.to);
-}
-
 /* ============ categorías ============ */
 const CATEGORIAS = {
   brillante:  { nombre: "Brillante",   icono: "!!", desc: "Un sacrificio que además es la mejor jugada." },
@@ -2889,8 +2880,8 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
       oportunidad = { tipo: "material", san: capB.san, gana: capB.gana,
                       comida: capB.comida };
 
-    /* EL SACRIFICIO SE MIDE CON `enPeligro` (v0.134, H2). `entregaMaterial`
-       miraba un solo ply: si lo que comía se podía recapturar, daba la pieza
+    /* EL SACRIFICIO SE MIDE CON `enPeligro` (v0.134, H2). La función de antes
+       (`entregaMaterial`, borrada en la v1.0.8) miraba un solo ply: si lo que comía se podía recapturar, daba la pieza
        por perdida aunque la recuperaras. 15… Bxd6 —un peón comido con el
        alfil, y si Rxd6, Qxd6— salía Brillante con "Entrega material".
        Ahora: la pieza que movió queda en peligro de verdad (sin defensa, o a
@@ -3854,17 +3845,6 @@ function ataca(tablero, desde, hasta) {
   for (let c = cd + pc, f = fd + pf; c !== ch || f !== fh; c += pc, f += pf)
     if (tablero[f][c]) return false;
   return true;
-}
-
-/* ¿Alguna pieza de `color` ataca esta casilla? Es el filtro barato que va antes
-   de cualquier cosa que cargue un FEN. */
-function atacadaPor(tablero, casilla, color) {
-  for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
-    const q = tablero[r][c];
-    if (q && q.color === color && ataca(tablero, "abcdefgh"[c] + (8 - r), casilla))
-      return true;
-  }
-  return false;
 }
 
 /* ¿La casilla `medio` está en la línea que va de `desde` a `hasta`? Es lo que
