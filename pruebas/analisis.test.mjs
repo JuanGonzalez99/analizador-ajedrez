@@ -4101,3 +4101,15 @@ test("si en el cambio el rival no entrega nada, la tarjeta no lo dice (v0.178.1)
   const t = A.explicarJugada(f, "Bxf7+", true, "Nxh6", mirar(antes, "c1h6"));
   assert.ok(!t.includes("comible") && !t.includes("en el cambio"), t);
 });
+
+test("a los 6 s sin módulo no hay cartel rojo si los archivos responden bien (v1.0.9)", () => {
+  /* Con mala señal el módulo arranca después de los 6 s del temporizador, y
+     el cartel salía con los tres archivos respondiendo 200 y no se iba. La
+     regla 11 del mono lo mira andando; esto, que el código siga así. */
+  const t = html.slice(html.indexOf("A LOS 6 S SIN MÓDULO"), html.indexOf("}, 6000);"));
+  assert.ok(t.includes('fetch(f, { method: "HEAD" })'), "pide con HEAD, sin bajar aperturas.json entero");
+  assert.ok(t.includes('" · el módulo tarda…"'), "la línea dice que tarda");
+  assert.ok(/else LOG\.add\("!", f \+ " responde "/.test(t), "lo que responde bien va al registro, no al cartel");
+  assert.ok(!/window\.mostrarError\(f, r\.ok/.test(t), "no hay cartel con r.ok");
+  assert.ok(t.includes("if (window.MODULO_OK) return;"), "con el módulo ya andando, un HEAD que falla no saca el cartel");
+});

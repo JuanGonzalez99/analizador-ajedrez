@@ -1,4 +1,4 @@
-  window.VERSION = "v1.0.8 · 25-11";
+  window.VERSION = "v1.0.9 · 25-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -145,16 +145,35 @@
   window.addEventListener("unhandledrejection", function (ev) {
     window.mostrarError("promesa rechazada", ev.reason);
   });
+  /* A LOS 6 S SIN MÓDULO NO ES UN ERROR TODAVÍA (v1.0.9; revisor de código,
+     25-nov). Con mala señal el módulo arranca más tarde (a 200 kbps, a los
+     10,7 s), y esto pintaba el cartel rojo con los tres archivos respondiendo
+     bien, y no se iba nunca. Ahora la línea dice que tarda, cada archivo se
+     pide con HEAD (antes bajaba aperturas.json entero, 942 KB, compitiéndole
+     al módulo), y el cartel sale solo si uno falla de verdad: no responde,
+     no es 2xx o viene con otro tipo (una página de error en vez del JS). Lo
+     que responde bien va al registro. Si el módulo arranca, `listo` pisa la
+     línea. */
   setTimeout(function () {
     if (!window.MODULO_OK) {
-      diag.textContent = window.VERSION + " · el módulo no arrancó";
+      /* si el módulo llega mientras se prueban los archivos, un HEAD que
+         falla por un corte no pisa "listo" ni saca el cartel (revisor de UX) */
+      var roto = function () { if (!window.MODULO_OK) diag.textContent = window.VERSION + " · el módulo no arrancó"; };
+      /* si ya hubo un error de verdad (el import falló), no tarda: no arrancó */
+      if (document.documentElement.classList.contains("hubo-error")) roto();
+      else diag.textContent = window.VERSION + " · el módulo tarda…";
+      LOG.add("!", "a los 6 s el módulo no arrancó: pruebo los archivos");
       /* pruebo cada archivo por separado para poder nombrar el que falta */
-      ["./chess.js", "./aperturas.json", "./stockfish-18-lite-single.js"].forEach(function (f) {
-        fetch(f).then(function (r) {
-          window.mostrarError(f, r.ok
-            ? "responde " + r.status + " como " + (r.headers.get("content-type") || "sin tipo")
-            : "el servidor devolvió " + r.status);
-        }).catch(function (e) { window.mostrarError(f, "no se pudo pedir: " + e.message); });
+      [["./chess.js", /javascript/], ["./aperturas.json", /json/],
+       ["./stockfish-18-lite-single.js", /javascript/]].forEach(function (a) {
+        var f = a[0];
+        fetch(f, { method: "HEAD" }).then(function (r) {
+          if (window.MODULO_OK) return;
+          var tipo = r.headers.get("content-type") || "sin tipo";
+          if (!r.ok) { roto(); window.mostrarError(f, "el servidor devolvió " + r.status); }
+          else if (!a[1].test(tipo)) { roto(); window.mostrarError(f, "responde " + r.status + " como " + tipo); }
+          else LOG.add("!", f + " responde " + r.status + " como " + tipo);
+        }).catch(function (e) { if (!window.MODULO_OK) { roto(); window.mostrarError(f, "no se pudo pedir: " + e.message); } });
       });
     }
   }, 6000);

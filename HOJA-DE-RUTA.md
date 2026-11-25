@@ -194,8 +194,16 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       (`seLaLlevan`), y mirar con `npm run frases -- --frase planta`.
       Revisor de ajedrez sí.
 
-- [ ] **Con señal mala, un cartel rojo de "el módulo no arrancó" falso que
-      no se va** (revisor de código, 25-nov; ya estaba). Script clásico, el
+- [ ] **Con señal mala, Buscar no responde y no avisa** (revisor de UX,
+      v1.0.9; ya estaba). Mientras el módulo carga (con mala señal, ~10 s) el
+      campo y "Buscar" se ven listos, pero el manejador se engancha recién al
+      arrancar: el toque no hace nada. Que el toque se guarde y corra al
+      arrancar, o que el botón diga que carga; no volver a mostrar `#diag` en
+      modo simple. Pasa por el revisor de UX.
+
+- [x] ~~**Con señal mala, un cartel rojo de "el módulo no arrancó" falso que
+      no se va**~~ (hecho en la v1.0.9; adelantado a los otros arreglos
+      porque la prevención del mono pedía hacerlo junto con su regla) (revisor de código, 25-nov; ya estaba). Script clásico, el
       temporizador de 6 s (~1674–1686) y `mostrarError` (~1650). Si el módulo
       tarda más de 6 s (medido con Playwright: a 200 kbps arranca a los
       10,7 s), pide los tres archivos y llama a `mostrarError` aunque

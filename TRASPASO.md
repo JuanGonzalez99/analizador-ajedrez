@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.8**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.9**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -364,7 +364,7 @@ y el botón del mes, y atajaba un error y su primo):
 10. Ningún error en la consola.
 11. Sin error de verdad, no hay cartel de error (`#errores` oculta y sin
     `hubo-error` con el módulo arrancado; 25-nov, revisor de código). Nació
-    en rojo (semilla 1, antes del arreglo del cartel falso).
+    en rojo (semilla 1) y quedó verde con el arreglo de la v1.0.9.
 
 Lo específico de la app queda en dos listas chicas de `mono.mjs`: `EN_CURSO`
 (las palabras con que dice que trabaja) y `CUADRAN` (los números que se
@@ -4954,6 +4954,25 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.0.9, sin cartel rojo falso con mala señal** (revisor de código, 25-nov;
+Arreglos). El temporizador de 6 s del script clásico (`src/registro.js`),
+si el módulo no había arrancado, pedía los tres archivos y llamaba a
+`mostrarError` **aunque respondieran 200**: con la red lenta (a 200 kbps el
+módulo arranca a los 10,7 s) salía la caja roja de errores, también en modo
+simple, y no se borraba al arrancar. Además bajaba `aperturas.json` entero
+(942 KB) compitiéndole al módulo. Ahora: la línea dice "el módulo tarda…"
+(y "no arrancó" si ya hubo un error de verdad o un archivo falla), los
+archivos se piden con `HEAD`, y el cartel sale solo si uno no responde, no
+es 2xx o viene con otro tipo (javascript/json); lo que responde bien va al
+registro con `LOG.add("!")`; y si el módulo arranca mientras se prueban,
+nada de eso pisa "listo" (guarda que pidió el revisor de UX). En modo simple
+la línea `#diag` no se ve (`.solo-dev`): Juan ve la pantalla limpia, sin
+falsa alarma; el "tarda…" es para el modo dev. Verificado con Playwright: con `chess.js`
+demorado 7 s, sin caja ni `hubo-error` y la línea pasa a "listo" (la v1.0.8
+mostraba la caja con "responde 200"); con `chess.js` en 404, la caja sale y
+nombra el archivo. La regla 11 del mono, que nació en rojo con la semilla 1,
+quedó verde; y una prueba de unidad.
 
 **v1.0.6, la pareja de alfiles no se dice a mitad de un cambio** (revisor
 de ajedrez, pasada del 22-nov; Arreglos). En
