@@ -16,34 +16,40 @@ de distinta manera, o si una prueba da verde sin probar nada.
 
 ## Por qué importa acá, aunque Juan no lo lea
 
-- **Cada sesión paga por leer código.** `index.html` es un solo archivo de
-  ~100.000 tokens y no se lee entero nunca (`CLAUDE.md`). El código muerto y
+- **Cada sesión paga por leer código.** El código vive en los pedazos de
+  `src/` (desde el 25-nov; `index.html` es el armado, `npm run juntar`) y
+  los grandes no se leen enteros (`CLAUDE.md`). El código muerto y
   los comentarios largos de historia —que ya están en `TRASPASO.md`— se pagan
   cada vez que alguien lee esa zona, incluida la tarea de cada noche. Sacarlos
   es la ganancia más segura que tenés.
 - **Errores que no se ven.** Ramas que ya no corren, casos de borde, dos
   funciones que contestan lo mismo y un día se contradicen.
-- **La etapa 2 de la hoja de ruta es partir `index.html`.** Saber qué está
-  muerto y qué está duplicado antes de partir hace ese trabajo más barato.
+- **Un pedazo que crece mucho se puede partir** (sumándolo a `ORDEN` en
+  `juntar.mjs`): si uno pasa de ~20.000 tokens, proponelo.
 
 ## Qué mirás cada semana
 
 1. **Lo que cambió en la semana**: `git log --since="7 days ago" --stat` y el
-   diff de `index.html` y `pruebas/`. Es lo más fresco y lo más barato.
+   diff de `src/` y `pruebas/` (no el de `index.html`, que repite el de
+   `src/`). Es lo más fresco y lo más barato.
 2. **Una zona que rota**: la que diga `HOJA-DE-RUTA.md` en la perilla
    "Revisor de código" (y al terminar, decí cuál sigue). El orden, por el
-   mapa del §3 del traspaso:
-   1. el CSS (`<style>`);
-   2. el `<script>` clásico (registro, errores, diagnóstico);
-   3. bloque de análisis, primera mitad: evaluación, categorías, `derivarFilas`;
-   4. bloque de análisis, segunda mitad: la explicación (`partesDeLaExplicacion`,
-      `observarJugada`, geometría) y las aperturas;
-   5. motor, caché y `analizarPartida`;
-   6. bloque de tablas;
-   7. interfaz: tablero SVG, arrastre, marcas;
-   8. interfaz: `pintarRevision`, la tarjeta, la variante;
-   9. interfaz: inicio, Mes, ajustes, teclado, pantallas;
-   10. las pruebas (`pruebas/analisis.test.mjs`, `estaticos.mjs`, `mirar.mjs`).
+   mapa del §3 del traspaso (los pedazos de `src/`):
+   1. el CSS (`estilos.css`, `estilos-compu.css`);
+   2. el `<script>` clásico (`registro.js`);
+   3. bloque de análisis, primera mitad (`analisis-evaluacion.js`): evaluación,
+      categorías, `derivarFilas`;
+   4. bloque de análisis, segunda mitad (`analisis-explicacion.js`,
+      `analisis-posicion.js`): la explicación, `observarJugada`, las aperturas;
+   5. motor, caché y `analizarPartida` (`motor.js`);
+   6. bloque de tablas (`tablas.js`, `mes-pintar.js`);
+   7. interfaz: tablero SVG, arrastre, marcas (`tablero.js`);
+   8. interfaz: `pintarRevision`, la tarjeta, la variante (`revision.js`,
+      `variante.js`);
+   9. interfaz: inicio, Mes, ajustes, teclado, pantallas (`interfaz.js`,
+      `inicio.js`, `mes.js`, `cuerpo.html`);
+   10. las pruebas (`pruebas/analisis.test.mjs`, `estaticos.mjs`, `mirar.mjs`)
+       y `juntar.mjs`.
    Una zona no se lee entera de un saque si es grande: se grepea por funciones
    y se leen de a pedazos (`CLAUDE.md`, "Dos archivos que no se leen enteros").
 

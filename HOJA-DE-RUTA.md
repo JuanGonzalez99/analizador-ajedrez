@@ -49,8 +49,8 @@ avanzamos más, nos quedamos en correcciones de lo hecho"*. La regla:
   pasada sobre partidas reales los domingos (Juan, 17-nov).
 - **Revisor de código:** los miércoles, desde la tarea nocturna (Juan,
   18-nov): lo que cambió en la semana y una zona que rota. **Próxima zona: 3,
-  el bloque de análisis, primera mitad** (evaluación, categorías,
-  `derivarFilas`; la 1, el CSS, se miró el 18-nov y la 2, el script clásico,
+  el bloque de análisis, primera mitad** (`src/analisis-evaluacion.js`:
+  evaluación, categorías, `derivarFilas`; la 1, el CSS, se miró el 18-nov y la 2, el script clásico,
   el 25-nov) (el orden está en `.claude/agents/revisor-codigo.md`).
 - **Revisor de rumbo:** los sábados, desde la tarea nocturna (Juan, 20-nov):
   mira la hoja de ruta, el norte y estos documentos con mirada global, y los
@@ -257,7 +257,9 @@ limpieza: lo que está muerto no se parte.
         busca `tecla === "Escape"`, que está en tres lugares: tiene que buscar
         el renglón entero de `verAjustes(false)`. La de `data-sq="` (~2162)
         matchea también las marcas de la explicación: buscar la del tablero.
-- [ ] Partir y armar el paso que junta; `npm test` y `mirar` idénticos al byte.
+- [x] ~~Partir y armar el paso que junta; `npm test` y `mirar` idénticos al byte.~~
+      (hecho el 25-nov, sin versión: el `index.html` armado es idéntico al
+      byte; 19 pedazos en `src/`, `npm run juntar`)
 
 ## Etapa 4 · Posiciones, y el puente con el profe — primer módulo nuevo
 

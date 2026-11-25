@@ -3,13 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test --test-reporter=dot pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
-    "mirar": "node pruebas/mirar.mjs",
-    "mirar:mate": "node pruebas/mirar.mjs mate",
-    "mirar:ahogado": "node pruebas/mirar.mjs ahogado",
-    "mirar:reloj": "node pruebas/mirar.mjs reloj",
-    "mono": "node pruebas/mono.mjs",
-    "frases": "node pruebas/frases.mjs"
+    "juntar": "node juntar.mjs",
+    "test": "node juntar.mjs && node --test --test-reporter=dot pruebas/analisis.test.mjs && node pruebas/estaticos.mjs",
+    "mirar": "node juntar.mjs && node pruebas/mirar.mjs",
+    "mirar:mate": "node juntar.mjs && node pruebas/mirar.mjs mate",
+    "mirar:ahogado": "node juntar.mjs && node pruebas/mirar.mjs ahogado",
+    "mirar:reloj": "node juntar.mjs && node pruebas/mirar.mjs reloj",
+    "mono": "node juntar.mjs && node pruebas/mono.mjs",
+    "frases": "node juntar.mjs && node pruebas/frases.mjs"
   },
   "devDependencies": {
     "playwright": "^1.49.1"

@@ -108,6 +108,38 @@ razón de peso hoy, y no la que motivó la pregunta.
 para que si rompe se sepa qué fue. No mezclarlo con cambios de lógica. Y está
 anotado como **candidato a la v1.0** (§10), que la decide el usuario.
 
+### Partido en `src/`, juntado en un solo `index.html` (25-nov, etapa 2)
+
+**Las fuentes viven en `src/`, en 19 pedazos; `index.html` se arma con
+`npm run juntar` (`juntar.mjs`) y se sigue commiteando**, que es lo que sirve
+GitHub Pages. Así las sesiones leen archivos chicos (el más grande,
+`revision.js`, son ~20.000 tokens) y el teléfono sigue recibiendo un solo
+archivo, sin la trampa de la caché de módulos de versiones distintas.
+
+- **Los pedazos no son módulos**: son tramos del mismo archivo cortados en
+  renglones enteros, y `juntar` los pega uno atrás del otro sin agregar nada.
+  Un pedazo de JS puede abrir un bloque que cierra otro (el `try {` del
+  arranque abre en `motor.js` y cierra al final de `revision.js`). El orden
+  es la lista `ORDEN` de `juntar.mjs`; un pedazo nuevo se suma ahí, y `juntar`
+  falla si en `src/` hay uno que no está en la lista.
+- **Se edita `src/`, nunca `index.html`.** `juntar` no pisa un `index.html`
+  editado a mano: lo pisa solo si es lo que escribió la última vez (sello en
+  `.git/juntado`) o lo del último commit, y si no, avisa y sale con error.
+- **`npm test`, `mirar`, `mono` y `frases` juntan antes de correr**, así que
+  lo que se prueba es lo de `src/`. Y el chequeo estático 0 exige que
+  `index.html` sea exactamente lo que sale de juntar.
+- **La versión vive en `src/registro.js`** (primer renglón), y sigue la regla
+  de siempre: sube si cambia `index.html`.
+- **Los marcadores de los extractores no se movieron** (siguen en el
+  `index.html` armado, que es lo que leen `extraer.mjs`, `extraer-tablas.mjs`
+  y `frases.mjs`). El bloque de análisis quedó repartido en tres pedazos
+  `analisis-*.js`.
+- **Verificado al byte**: el `index.html` armado es idéntico al de la v1.0.8
+  (`cmp`), `npm test` verde, y de las 55 capturas de `mirar`, 53 iguales al
+  byte; las otras dos son el ruido conocido (`encadenadas`, a mitad del
+  cálculo, y `mes-varias`, la barra de carga). Como el archivo servido no
+  cambió, no hubo versión nueva: sigue la v1.0.8.
+
 ### Cómo se prueba sin navegador
 
 ```bash
@@ -363,15 +395,31 @@ px durante "Cargando…" (0,007) es por qué el corte de saltos está en 0,05.
 
 ## 3. Mapa del archivo
 
-| Zona | Qué hay |
+Desde el 25-nov las fuentes viven en `src/` y `index.html` se arma con
+`npm run juntar` (§2). **Se lee y se edita el pedazo, no `index.html`.** En
+el orden en que se juntan:
+
+| Pedazo | Qué hay |
 |---|---|
-| `<script>` clásico | registro, captura de errores, panel de diagnóstico |
-| bloque de análisis | evaluación, geometría, categorías, `derivarFilas` (y `precisionesRapidas`, su atajo para la fila del inicio, v0.175), `repartir`, el reloj (`leerCadencia`, `segundosPensados`), y al final el nombre de la apertura en castellano (`aperturaEs`, v0.130) |
-| motor | clase `Motor`, grupo de motores, `evaluarPosiciones` |
-| caché | IndexedDB |
-| análisis | `analizarPartida`, barrido, híbrido |
-| bloque de tablas | `textoPct`, `rangoWilson`, `tasa`, las tres funciones que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
-| interfaz | tablero SVG (geometría `TAB_S`/`sqX`, `dibujar`, `svgMarcas`), mes, banco de pruebas, revisión, resúmenes |
+| `cabeza.html` | doctype, `<head>`, abre `<style>` |
+| `estilos.css` | el CSS del celu y lo común: tokens, campos, Ajustes, tablas, pantallas, la Partida, la tira, la lista |
+| `estilos-compu.css` | [PC] desde "EN PANTALLA ANCHA, DOS COLUMNAS": las media queries de 950/1000/1500, el Mes y el inicio en la compu, el hover, `prefers-reduced-motion` |
+| `cuerpo-arriba.html` | cierra `<style>`, arranca el `<body>`, abre el `<script>` clásico |
+| `registro.js` | `<script>` clásico: **`window.VERSION`** (primer renglón), registro, captura de errores, `mostrarError`, el temporizador de 6 s, panel de diagnóstico |
+| `cuerpo.html` | el HTML de las tres pantallas, la hoja de Ajustes y el pie; abre `<script type="module">` |
+| `analisis-evaluacion.js` | bloque de análisis (desde su marcador): evaluación, geometría, `quedaComible`, `cambioEn`, categorías, `categorizar`, `derivarFilas`, `precisionesRapidas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), la curva |
+| `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
+| `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`; y `aperturaEs`. Cierra el bloque de análisis |
+| `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
+| `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes`, la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas, `dibujar` y el arrastre |
+| `interfaz.js` | el estado global (`PARTIDAS`, `R`, `IDX`…), la tira (`medirTira`, `centrarTira`), `irA` |
+| `variante.js` | probar jugadas: `abrirPrueba`, `probarJugada`, la tira y la planilla de la variante |
+| `inicio.js` | preferencias guardadas, cuántos motores, el usuario y "cambiar", `cargarMes`, el recuento, `filaDePartida`, `pintarFilas`, `abrirPartida`, `analizarElegida` |
+| `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
+| `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
+| `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
+| `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, el teclado. Cierra el `try` del arranque |
+| `pie.html` | cierra el módulo y el `</html>` |
 
 El **menú de ajustes** (v0.91, §4untrigies) es la excepción a "todo cuelga de su
 vista": la hoja vive al final del `<body>`, justo antes del pie, porque es

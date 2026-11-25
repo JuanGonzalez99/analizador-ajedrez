@@ -38,7 +38,7 @@ describe. §10 tiene las reglas de trabajo.
     si también se ve; lo puramente visual no lo necesita.
   - **Y uno de código** (`.claude/agents/revisor-codigo.md`, decisión de Juan
     del 18-nov-2026): los miércoles, desde la tarea nocturna, mira lo que
-    cambió en la semana y una zona de `index.html` que rota, y propone
+    cambió en la semana y una zona del código (`src/`) que rota, y propone
     limpiezas y arreglos que entran a la hoja de ruta. No edita nada.
   - **Y uno de rumbo** (`.claude/agents/revisor-rumbo.md`, decisión de Juan
     del 20-nov-2026): los sábados, desde la tarea nocturna, mira la hoja de
@@ -109,16 +109,28 @@ describe. §10 tiene las reglas de trabajo.
 
 Son los dos más grandes del repo y los dos se pagan en contexto:
 
+- **El código se edita en `src/`, no en `index.html`** (etapa 2, 25-nov).
+  `index.html` se arma pegando los 19 pedazos de `src/` con `npm run juntar`
+  y se commitea igual (es lo que sirve GitHub Pages). `npm test`, `mirar`,
+  `mono` y `frases` juntan solos antes de correr; `juntar` no pisa un
+  `index.html` tocado a mano (una maqueta suelta que levanta la app con
+  `tira.mjs` no junta: `npm run juntar` antes). Qué hay en cada pedazo: el mapa del §3 del
+  traspaso. **Los pedazos tampoco se leen enteros** si son grandes
+  (`revision.js`, `estilos.css`, `tablero.js` y los `analisis-*.js` son de
+  13.000 a 20.000 tokens): se grepea y se leen los renglones de alrededor.
+
 - **`aperturas.json` es una sola línea de 942 KB** (`wc -l` da 0, no es un
   error). O sea que **cualquier `grep` que matchee devuelve el archivo entero**
   como un único renglón: unos 236.000 tokens de golpe. Se lo toca solo con
   `-c`, con `-o`, o con `head -c`. Nunca `cat`, nunca `grep` a secas.
-- **`index.html` son ~103.000 tokens** (v0.90). No se lee entero nunca: para eso
-  está el mapa del §3 del traspaso, que dice qué función vive en qué zona. Se
+- **`index.html` son ~160.000 tokens** (armado). No se lee nunca: se lee el
+  pedazo de `src/`, y para eso está el mapa del §3 del traspaso, que dice qué
+  función vive en qué pedazo. Se
   grepea el nombre y se leen los renglones de alrededor. Mantener ese mapa al día
   no es prolijidad: es lo que evita leer el archivo completo. Lo mismo vale para
   el propio `TRASPASO.md`, que ya va por ~66.000: se lee por secciones.
   **Ojo con los greps demasiado abiertos ahí adentro**: `grep -n "^const PIEZAS"`
+  (en `src/tablero.js`)
   devuelve la constante entera con los doce dibujos de Cburnett, que son unos
   10.000 tokens de un saque. Si un nombre puede estar pegado a un bloque enorme,
   `grep -c` primero.
@@ -221,6 +233,7 @@ credencial. Si alguna vez hace falta un PR, se saca el `deny`.
   —**anclado a `origin/main`**, porque el `main` local que trae el contenedor
   viene viejo: llegó a estar 36 commits atrás—. Un `git checkout main` a secas
   te deja trabajando sobre una copia vieja sin que se note.
-- **La versión de `index.html` tiene que subir en cada push que lo toque**, y
+- **La versión de `index.html` tiene que subir en cada push que lo toque**
+  (vive en el primer renglón de `src/registro.js`), y
   hay que decirle al usuario cuál es la nueva: es lo que busca en la pantalla
   para saber si ya le llegó el cambio. Los tres niveles están en §10.

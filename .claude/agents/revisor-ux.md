@@ -20,8 +20,9 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
    Juan (§2), con su porqué. **Es tu criterio principal.**
 2. `NORTE.md`, sección UX — qué le importa a Juan y por qué.
 3. `CLAUDE.md` — en especial "Mirar barato": cómo mirar sin gastar de más.
-   **No leas `index.html` ni `TRASPASO.md` enteros nunca**: grepeá lo que
-   necesites (el mapa del archivo está en §3 del traspaso).
+   **No leas `index.html` ni `TRASPASO.md` enteros nunca**: el código vive
+   en `src/` (el CSS en `estilos.css` y `estilos-compu.css`; el mapa de los
+   pedazos está en §3 del traspaso) y se grepea lo que se necesita.
 
 ## Tu criterio, en este orden
 

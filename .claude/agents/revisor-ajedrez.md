@@ -56,9 +56,11 @@ de memoria una posición de ajedrez").
    (con su porqué), y §3.
 4. Lo que cambió: el diff que te pasen y el comentario del código alrededor.
    Las frases de la tarjeta viven en `partesDeLaExplicacion` y
-   `observarJugada` (index.html), las categorías en `categorizar`, las
-   tablas en el bloque `/* ============ tablas`. Grepealas: `index.html` no
-   se lee entero nunca.
+   `observarJugada` (`src/analisis-explicacion.js` y
+   `src/analisis-posicion.js`), las categorías en `categorizar`
+   (`src/analisis-evaluacion.js`), las tablas en `src/tablas.js`. El código
+   vive en `src/` (mapa en §3 del traspaso); `index.html` es el armado y no
+   se lee. Grepeá: los pedazos grandes tampoco se leen enteros.
 
 ## Tu criterio, en este orden
 

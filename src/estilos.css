@@ -1,0 +1,969 @@
+  :root {
+    color-scheme: dark;
+    --linea: #3a3d42;
+    --tenue: #a4a19b;
+    /* el tablero arranca en el de A · Noche (v0.97); los demás temas lo pisan */
+    --claro: #e6e1d3; --oscuro: #7f9466;
+    --c-brillante: #26a69a; --c-genial: #5b8def; --c-mejor: #4a9d4a;
+    --c-excelente: #6bb06b; --c-bien: #86b886; --c-libro: #b08d63;
+    --c-imprecision: #d4a017; --c-error: #e08030;
+    --c-omision: #ef6a5e; --c-grave: #e5534b;
+    --c-forzada: #8a8578;
+    /* lo que dibuja el usuario con el botón derecho (v0.85). Un color solo y
+       acá, así se cambia en un lugar y vale para los cinco tableros. */
+    --marca: #3f5163;
+    /* VIOLETA = INVENTADA (la prueba). El de la flecha (6a1b9a) sobre el
+       fondo oscuro da 1,8:1 y como texto no se leía: en la tira, la tarjeta y
+       el corte va este, 6,1 sobre el fondo. La flecha sigue con el suyo, que
+       sobre el tablero sí se ve (v0.97). */
+    --inventada: #b48ce0;
+    /* LAS FLECHAS DE LA APP. La mejor: #2e7d32 hasta la v0.100, #43c94a en la
+       v0.101 ("muy chillón", Juan) y #3a8f44 desde la v0.102. Se miraron cinco
+       sobre la misma jugada: los verdes claros que no gritan se funden con el
+       oliva de la casilla oscura de A; los que se leen sin gritar son los
+       oscuros, y este es apenas más vivo que el original. */
+    --f-jugada: #1565c0; --f-mejor: #3a8f44;
+    /* el ámbar de lo que señala la frase: casilla, flecha y frase encendida */
+    --senal: #e8a33d;
+
+    /* EL SISTEMA DE DISEÑO, A · Noche (DISENO.md §1). Desde la v0.96 la app va
+       SIEMPRE en oscuro (`color-scheme: dark`, decisión de Juan) y `--linea`,
+       `--tenue`, `--c-grave` y `--c-omision` ya tienen sus valores nuevos. El
+       resto se enchufa pantalla por pantalla, cada una en su versión. */
+    --fondo: #1d1f22; --superficie: #272a2e; --elevada: #2f3337;
+    --borde-campo: #7a7e84;
+    --texto: #e9e7e3;
+    --acento: #7cbf5a; --sobre-acento: #13210c;
+    --casilla-clara: #e6e1d3; --casilla-oscura: #7f9466;
+    --eval-blancas: #d9d5cc; --eval-negras: #33373c;
+    /* letra: seis tamaños (§1.4) */
+    --t-titulo: 22px; --t-subtitulo: 18px; --t-cuerpo: 16px;
+    --t-secundario: 14px; --t-leyenda: 12.5px; --t-minimo: 11px;
+    /* espacios: escala de 4 (§1.5); el 2 solo adentro de algo denso */
+    --e-1: 4px; --e-2: 8px; --e-3: 12px; --e-4: 16px; --e-6: 24px; --e-8: 32px;
+    /* formas (§1.6) */
+    --r-control: 10px; --r-tarjeta: 12px; --r-chico: 6px;
+    --sombra-flota: 0 8px 24px rgb(0 0 0 / .45);
+    /* lo que va detrás de lo que flota (la hoja de ajustes, v0.103) */
+    --velo: rgb(0 0 0 / .55);
+    /* movimiento (§1.8) */
+    --m-corta: 120ms; --m-media: 180ms; --m-larga: 250ms;
+    --m-entra: cubic-bezier(.2, 0, 0, 1); --m-sale: cubic-bezier(.3, 0, 1, 1);
+  }
+  * { box-sizing: border-box; }
+  /* overflow-anchor: none porque la app intercambia zonas enteras —Partida y
+     Mes— y el anclaje de scroll del navegador reajusta la posición por su
+     cuenta cuando eso pasa. Peleaba contra el scroll que hacemos nosotros al
+     abrir una partida desde la lista, y el tablero terminaba fuera de pantalla,
+     arriba, según desde dónde vinieras. Medido: desde el tope daba -643 px. */
+  /* `margin: 0 auto` y no `margin: 0`: con el margen en cero la columna queda
+     CLAVADA AL BORDE IZQUIERDO en cuanto la pantalla es más ancha que ella, y
+     en un monitor de 1900 eso son 850 px de vacío a la derecha. Reportado con
+     captura desde una compu, aunque venía de antes de la v0.80: con la columna
+     de 700 pasaba lo mismo, solo que la lista al costado lo dejó a la vista.
+     En un celular no cambia NADA —sin ancho de sobra, `auto` es cero— y por eso
+     las capturas del celu siguen siendo las mismas al byte. */
+  body { font: 16px/1.5 system-ui, sans-serif; background: var(--fondo); color: var(--texto);
+         margin: 0 auto; padding: 16px 14px 60px;
+         max-width: 700px; overflow-anchor: none; }
+  h1 { font-size: var(--t-titulo); margin: 0 0 2px; }
+  /* subtítulo del sistema (§1.4), en toda la app desde la v0.98 */
+  h2 { font-size: var(--t-subtitulo); margin: 24px 0 4px; }
+  p.n { margin: 0 0 12px; color: var(--tenue); font-size: 14px; }
+  p.cap { margin: 8px 0 2px; font-size: 12.5px; color: var(--tenue); }
+  button { font: inherit; padding: 9px 15px; border: 1px solid transparent; background: var(--elevada);
+           color: inherit; border-radius: var(--r-control); cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; }
+  button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: 2px; }
+  /* El principal de la pantalla: uno solo (§1.7). En la entrada es analizar. */
+  #analizarMes { background: var(--acento); color: var(--sobre-acento); font-weight: 600; }
+  /* el chico, 36 a la vista (§1.7; medía 33). Los 3 px los pagan los márgenes
+     de 10 → 8 de la vista de la jugada (v0.104) */
+  button.chico, select.chico { padding: 5px 10px; font-size: 14px; }
+  button.chico { padding: 6px 12px; min-height: 36px; }
+  /* Mismo alto y misma familia que los botones, pero NO iguales: un select con
+     borde lleno se lee como un botón y se toca esperando otra cosa. La
+     diferencia la hace el relleno —un campo tiene fondo, un botón no— más un
+     borde más tenue. La flechita se dibuja acá para que no dependa del
+     navegador. Provisorio: cuando exista el menú de configuración, estos
+     controles se van adentro y esto se replantea. */
+  select.chico { padding-right: 26px; }
+  /* currentColor NO sirve acá: dentro de un data: URI el SVG se carga como una
+     imagen aparte y no hereda nada del documento. Como la app es siempre
+     oscura (v0.96) alcanza con un solo color. */
+  input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--borde-campo);
+    border-radius: var(--r-control); background: var(--elevada); color: inherit; max-width: 100%; }
+  /* TODOS LOS CAMPOS A 44 Y CON LA MISMA FLECHA (v0.104, repaso final de la
+     etapa 1). Había cuatro altos —33, 40, 42 y 44— según la pantalla, y `#meses`
+     traía la flecha del navegador. `.chico` en un select ya no cambia el alto:
+     solo pone la letra en 14 (§1.7, campo = 44). Va DESPUÉS de la regla de
+     arriba porque su `background` abreviado borraría la flecha. La flecha va en
+     el color de `--texto` (#e9e7e3) escrito a mano: dentro de un data: URI no
+     hay variables. */
+  input:not([type=checkbox]):not([type=radio]), select { min-height: 44px; }
+  select { appearance: none; padding-right: 26px; background-repeat: no-repeat;
+           background-position: right 9px center; background-size: 9px;
+           background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23e9e7e3' stroke-width='1.5'/></svg>"); }
+  /* EL DESPLEGABLE DE UN SELECT NO HEREDA EL PAPEL (v0.80). Chrome en Windows
+     dibuja el menú con el fondo del propio select, y el nuestro es transparente:
+     el menú salía BLANCO y el texto de las opciones, que hereda el color del
+     papel oscuro, blanco también. Blanco sobre blanco, y se leía UNA sola: la
+     resaltada, que el sistema fuerza a contraste. Reportado con captura desde
+     una compu; en el celular nunca se vio porque ahí el menú lo dibuja Android
+     con sus propios colores.
+     Van colores de sistema y no fijos: `Canvas` y `CanvasText` siguen solos el
+     esquema claro/oscuro, que es lo que hace el resto de la pantalla. */
+  option { background-color: var(--elevada); color: var(--texto); }
+  /* el campo del usuario llena el renglón (v0.126): con 145 fijo el
+     placeholder se cortaba en "usuario de ches" */
+  input#usuario { flex: 1 1 0; min-width: 0; }
+  textarea { width: 100%; height: 80px; font: 12px/1.4 ui-monospace, monospace; }
+  .fila { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  #estado { font-weight: 600; font-size: 14px; margin: 12px 0 0; min-height: 20px; }
+  .barra { height: 4px; background: var(--linea); border-radius: 2px; overflow: hidden; margin-top: 6px; }
+  /* el progreso va en el acento (v0.127, Juan: "me copa"): en --texto era lo
+     más luminoso de la pantalla mientras corría el mes (revisor, v0.120) */
+  .barra > i { display: block; height: 100%; background: var(--acento); width: 0; transition: width var(--m-media) var(--m-entra); }
+
+  /* EL MENÚ DE AJUSTES (v0.91, §4untrigies). Las cuatro decisiones las tomó el
+     usuario mirando maquetas, y cada una tiene su porqué medido:
+     - LA HOJA QUE SUBE DESDE ABAJO y no un desplegable en línea ni una pantalla
+       propia: mide 447 px de los 760, o sea que el tablero SIGUE A LA VISTA
+       arriba mientras se toca el tema. El desplegable empujaba el tablero fuera
+       de pantalla justo cuando se está eligiendo cómo se ve el tablero, y la
+       pantalla propia lo tapaba del todo.
+     - LA PUERTA ARRIBA, en el renglón del título: la fila de controles del pie
+       pasa de 156 px a 37 —los cinco <select> se van— sin tocar el texto de
+       ningún botón, y la tuerca queda siempre en el mismo lugar en vez de al
+       final de todo lo que haya.
+     - LA TUERCA SOLA, sin la palabra "Ajustes": al lado del título eran dos
+       textos peleándose el renglón.
+     - EL CÍRCULO DE BORDE TENUE: dice "esto se toca" sin el peso del borde
+       lleno, que al lado de un título en negrita gana la pulseada. */
+  .cabvista { display: flex; align-items: center; justify-content: space-between;
+              gap: 10px; margin: 24px 0 4px; }
+  /* interlineado 1,25: a 18 px el renglón mide los mismos 22,5 que medía a 15,
+     así el título no empuja la vista de la jugada (§1.4) */
+  .cabvista h2 { margin: 0; line-height: 1.25; }
+  /* 34x34 es el área que se toca. La tuerca va CENTRADA CONTRA LA MAYÚSCULA del
+     título y no contra la caja del renglón: la caja reserva lugar para colas y
+     tildes que "Revisión" no tiene, así que centrar contra ella la deja arriba.
+     El translateY es esa corrección, medida con las métricas de la fuente —es
+     la misma lección del chevron contra la N de la v0.74—. CAMBIÓ DE +1 A -0,5
+     EN LA v0.92: el glifo vivía en una caja de texto, ya centrada adentro del
+     botón; un SVG de 20x20 centrado por la grilla cae 1,5 px más arriba, y esa
+     diferencia se midió, no se estimó. El `font-size` se fue con el glifo.
+     Y DE -0,5 A -2,25 EN LA v0.98: el título pasó de 15 a 18 (§1.4) y su
+     mayúscula, con el interlineado de 1,25, quedó más arriba; lo midió `mirar`. */
+  #btnAjustes { padding: 0; flex: none; display: grid; place-items: center;
+                width: 34px; height: 34px;
+                border: 1px solid var(--linea); border-radius: 50%;
+                transform: translateY(-2.25px); }
+  /* EL VELO (v0.103, §1.10 de DISENO): negro al 55% y no al 45. Sobre la
+     página oscura el de antes apenas la apagaba y la hoja —que ahora es
+     `--superficie`, un escalón arriba del fondo— no se despegaba de lo de atrás. */
+  #fondoAjustes { position: fixed; inset: 0; background: var(--velo); z-index: 40; }
+  /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
+     monitor, se queda del ancho de la columna, como el resto de la app. */
+  /* EL SISTEMA EN LA HOJA (v0.103, DISENO §1): `--superficie` y no `Canvas`
+     —el color de sistema era casi el mismo del fondo y la hoja no se leía como
+     algo que flota—, radio 12 de tarjeta, la única sombra de lo que flota
+     (§1.6) y 16 de margen a los costados, el del celu (§1.5). */
+  #hojaAjustes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+                 max-width: 700px; margin: 0 auto;
+                 background: var(--superficie); color: var(--texto);
+                 border-top: 1px solid var(--linea);
+                 border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0;
+                 /* ABAJO 24 Y NO 16 (v0.143.1, revisor): con la atribución al final de la
+                    hoja, los dos enlaces quedaban con la tinta a 17 px del borde de la
+                    pantalla, que en Android es donde vive la barra de gestos. En el pie de
+                    la página el problema no existía: ahí tenían ~60 px de página debajo. */
+                 padding: var(--e-2) var(--e-4) var(--e-6); box-shadow: var(--sombra-flota);
+                 max-height: 80vh; overflow-y: auto; }
+  /* `--borde-campo` y no `--linea`: sobre la superficie la línea da 1,2:1 y el
+     tirador, que es lo que dice "esto se baja", no se veía */
+  .ajTirador { width: 36px; height: 4px; border-radius: 2px;
+               background: var(--borde-campo); margin: 0 auto var(--e-2); }
+  .ajCab { display: flex; align-items: center; justify-content: space-between; }
+  .ajCab h2 { margin: 0; }
+  /* "Listo" es botón chico, 36 (§1.7); los selects son CAMPOS y van a 44, que
+     son lo que más se toca acá y la hoja tiene lugar de sobra (lo pidió el
+     revisor). Con 6 de relleno entre fila y fila quedan 12 de select a select. */
+  .ajCab .chico { min-height: 36px; }
+  /* LA LÍNEA VA POR GRUPO Y NO POR PERILLA (v0.91.1). Con una raya entre cada
+     dos perillas, las de un mismo grupo se leían tan separadas entre sí como de
+     las del grupo de al lado, y los tres bloques dejaban de existir. Ahora la
+     única raya es la que cierra el título del grupo, y adentro separa el aire. */
+  .ajGrupo { font-size: var(--t-leyenda); color: var(--tenue); margin: var(--e-4) 0 var(--e-1);
+             border-bottom: 1px solid var(--linea); padding-bottom: var(--e-1); }
+  .ajGrupo:first-of-type { margin-top: var(--e-2); }
+  .ajFila { display: flex; align-items: center; justify-content: space-between;
+            gap: var(--e-3); padding: 6px 0; font-size: var(--t-secundario); }
+  .ajFila select { min-width: 52%; }
+  /* Las secciones plegables del mes: el título es la fila que se toca, y con
+     todas cerradas se ve de un vistazo qué cortes hay. */
+  .seccion { border-top: 1px solid var(--linea); }
+  /* El título se lleva el espacio sobrante (`flex: 1`) y no `space-between`:
+     con el chip de cadencia eran cuatro elementos repartiéndose el ancho, y el
+     ? de cada sección caía en una columna distinta. El `gap` lo despega del
+     chevron, que si no quedan pegados y se tocan por error. */
+  .seccion > summary { cursor: pointer; padding: 11px 0; font-size: var(--t-secundario);
+                       font-weight: 600; list-style: none; display: flex;
+                       align-items: center; gap: 14px; }
+  .seccion > summary > .tit { flex: 1; min-width: 0; }
+  /* EL TITULAR DE LA SECCIÓN CERRADA (v0.156; lavado del revisor, la C de
+     la v0.146): un renglón tenue debajo del título con lo que la tabla
+     tiene para decir, para leer la pila sin abrirla. Abierta, habla la
+     tabla y el renglón se va. Ganó la A de tres (la B, a la derecha, partía
+     los títulos en tres renglones a 386; la C, solo "dama · 12 %", había que
+     descifrarla). Los textos salen de `titularDe…`. */
+  .seccion > summary .tl { display: block; font-weight: 400; font-size: var(--t-leyenda);
+                           color: var(--tenue); margin-top: 2px; }
+  .seccion[open] > summary .tl, .seccion > summary .tl:empty { display: none; }
+  /* con pocas malas en el mes lo dice UNA vez, bajo el rótulo, y no en las
+     cuatro tablas de tasas: es un dato del mes, no de cada sección (revisor) */
+  #capJugadas { margin: 0 0 var(--e-2); }
+  #capJugadas:empty { display: none; }
+  .seccion > summary::-webkit-details-marker { display: none; }
+  .seccion > summary::after { content: "\203a"; transform: rotate(90deg);
+                              color: var(--tenue); font-size: 18px;
+                              transition: transform var(--m-corta) var(--m-entra), color var(--m-corta) var(--m-entra); }
+  .seccion[open] > summary::after { transform: rotate(-90deg); }
+  .seccion > .cap { margin-top: 0; }
+  .seccion > .tw { margin-bottom: var(--e-4); }
+
+  /* la leyenda larga, plegada: lo indispensable queda arriba y esto se abre */
+  /* la línea de origen del mes y su "Cómo se leen" iban a 2, fuera de la
+     escala (v0.105, el revisor) */
+  #capMes { margin-bottom: var(--e-1); }
+  .quemide > summary { cursor: pointer; font-size: 12.5px; color: var(--tenue);
+                       margin: 0 0 8px; list-style: none; }
+  .quemide > summary::-webkit-details-marker { display: none; }
+  .quemide > summary::before { content: "\203a"; display: inline-block;
+                               margin-right: 6px; transition: transform var(--m-corta) var(--m-entra); }
+  .quemide[open] > summary::before { transform: rotate(90deg); }
+
+  /* precisión y mediana de los dos jugadores, enfrentadas */
+  .marcador { display: grid; grid-template-columns: 1fr 1fr; gap: var(--e-2); margin: 8px 0 12px; }
+  .marcador > div { background: var(--superficie); border: 1px solid var(--linea);
+                    border-radius: var(--r-tarjeta); padding: 8px 12px;
+                    overflow: hidden; }
+  .marcador .et { font-size: var(--t-leyenda); color: var(--tenue); white-space: nowrap;
+                  overflow: hidden; text-overflow: ellipsis; }
+  .marcador .gr { font-size: var(--t-titulo); font-weight: 700; font-variant-numeric: tabular-nums;
+                  line-height: 1.2; }
+  .marcador .pe { font-size: var(--t-minimo); color: var(--tenue);
+                  font-variant-numeric: tabular-nums; }
+
+  /* los números de todas las tablas, tabulares: sin esto las columnas bailan
+     de fila en fila y cuesta compararlas de un vistazo */
+  table { border-collapse: collapse; width: 100%; font-size: var(--t-secundario);
+          font-variant-numeric: tabular-nums; }
+  th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--linea); white-space: nowrap; }
+  /* La etiqueta es lo único que puede cortar en varias líneas: si no, empuja la
+     tabla más ancha que la pantalla y el porcentaje queda tapado en el celu. */
+  th:first-child, td:first-child { text-align: left; white-space: normal; }
+  /* red de seguridad: si aun así no entra, la tabla scrollea sola y no se
+     recorta ningún número */
+  /* LAS TABLAS VAN SUELTAS, SIN TARJETA: solo las rayas entre filas. En la
+     v0.98 fueron en tarjeta (superficie, borde, radio 12) y a Juan le
+     "quedaron raras" (DISENO §2); se sacó en la v0.99. */
+  .tw { overflow-x: auto; }
+  /* LAS PUNTAS AL RAS (v0.102): la primera y la última columna sin relleno
+     afuera, así el texto de la tabla arranca donde arrancan el título y la
+     leyenda de su sección. Con los 6 de antes la tabla se veía corrida. */
+  .tw th:first-child, .tw td:first-child { padding-left: 0; }
+  .tw th:last-child, .tw td:last-child { padding-right: 0; }
+  /* UNA SOLA RAYA ENTRE SECCIONES (v0.102). La última fila cerraba con su raya
+     y 12 más abajo venía la de la sección siguiente: dos líneas paralelas casi
+     pegadas, que es lo que a Juan "se sentía raro" entre una tabla y otra. La
+     raya de la sección es la que separa; la tabla termina sin raya y con 16 de
+     aire. */
+  .seccion .tw tr:last-child > td { border-bottom: 0; }
+  /* por la base y no al medio: con el rango abajo del porcentaje la fila tiene
+     dos renglones, y centrados los demás números caían 7 px más abajo */
+  .tw td { vertical-align: baseline; }
+  /* los selects del mes: 36 visibles y 12 entre ellos (§1.7), sin tocar el
+     `.chico` del resto de la app */
+  #zonaMes .fila { gap: var(--e-3); }
+  /* el Mes en dos columnas solo desde 1000 (abajo, en su @media); acá, sin caja.
+     LOS CORTES DEL INICIO Y DEL MES PASARON DE 950 A 1000 (v0.128.2, revisor):
+     desde la v0.125 el body se ensancha recién en 1000, y entre 950 y 999 la
+     grilla de dos columnas se armaba adentro de ~672 y a la lista le tocaba
+     lo que sobraba (en el Mes, el rival en 0 px). Cada pantalla cambia de
+     forma en el mismo ancho que el body. */
+  .mesGrid, .mesIzq, .mesDer { display: contents; }
+  /* El selector del mes hace de título: la letra del h2 (18/700) en el alto de
+     cualquier campo (44, §1.7), y un ancho fijo que entra "Septiembre 2026",
+     el mes más largo, para que el de la cadencia no salte al cambiar de mes. */
+  #fuente { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
+  /* EL RÓTULO CHICO ARRIBA DEL MES (v0.109, lo eligió Juan entre tres): la
+     letra de los títulos de los cuadritos (`.metricas .et`), en tenue, así
+     nombra la sección sin competir con el mes, que es el título de verdad. El
+     24 de arriba es el de todo h2: separa de la zona de Análisis. */
+  #zonaMes h2.rotulo { margin: var(--e-6) 0 var(--e-2); font-size: var(--t-minimo); font-weight: 600;
+                         letter-spacing: .07em; text-transform: uppercase; color: var(--tenue); }
+  /* Con scroll para que el botón de analizar quede a la vista sin bajar por
+     cuarenta partidas. Provisorio: la lista entera se va a rediseñar, esto es
+     solo para que deje de estorbar. */
+  .lista { background: var(--superficie); border: 1px solid var(--linea); border-radius: var(--r-tarjeta); margin-top: 8px;
+           max-height: 34vh; overflow-y: auto; }
+  .lista > div { padding: var(--e-3) var(--e-3); border-bottom: 1px solid var(--linea); cursor: pointer; font-size: 14px; }
+  .lista > div:last-child { border-bottom: 0; }
+  .lista > div.sel { font-weight: 700; border-left: 3px solid var(--acento); padding-left: 9px; }
+  /* EL TECLADO LLEGA A LAS FILAS (v0.153, [PC]): el aro va ADENTRO de la fila
+     (offset negativo) porque la lista recorta lo que se sale de su caja */
+  .lista > div:focus-visible, .jugadas:focus-visible {
+    outline: 2px solid var(--acento); outline-offset: -2px; }
+  /* !important a propósito: es una utilidad de un solo uso, y sin eso cualquier
+     regla posterior que fije display —.evalbar { display: flex } lo hizo— gana
+     por venir después con la misma especificidad, y el elemento no se esconde.
+     Es un fallo que no se ve en las pruebas: la clase está puesta, no surte
+     efecto. */
+  .oculto { display: none !important; }
+  /* PANTALLAS Y NO UNA PÁGINA APILADA (v0.110, §4sexies). El inicio es la
+     entrada —usuario, mes, lista, análisis—, y la Partida y el Mes ocupan la
+     pantalla entera, con "‹ Partidas" en el lugar del título. Se eligió entre
+     tres dibujadas (pestañas abajo, barra arriba con el contexto, esta): las
+     dos con barra fija le comían 64 a 70 px a la vista de la jugada y le
+     cortaban la fila de abajo, y "Partida" no es un destino hermano de la
+     lista sino su detalle. Lo que es solo del inicio lleva `.soloInicio`. */
+  body.enVista .soloInicio { display: none !important; }
+  /* en pantalla propia el título va arriba de todo: el margen de 24 era para
+     separarlo de la entrada, que ya no está encima */
+  body.enVista #zonaRevision .cabvista, body.enVista #zonaMes .cabvista { margin-top: 0; }
+  body.enVista { padding-top: 8px; }
+  /* LO QUE CORRE NO EMPUJA LA PANTALLA (revisor, v0.110): con la zona de
+     estado en el flujo, analizar el mes con una partida abierta bajaba el
+     tablero 79 px y la fila de abajo quedaba fuera; al terminar, todo subía de
+     golpe. En Partida y Mes la zona mide cero: el texto va en la cabecera,
+     entre el volver y la tuerca, y la barra es una línea de 3 px en el borde
+     de abajo de la cabecera. "Detener" queda en el inicio, a un "‹". */
+  body.enVista #zonaEstado { position: relative; height: 0; margin: 0; z-index: 2; }
+  body.enVista #estado { position: absolute; top: 0; left: 150px; right: 46px; margin: 0;
+    line-height: 34px; font-size: 12.5px; color: var(--tenue); text-align: right;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+  body.enVista #zonaEstado .barra { position: absolute; top: 33px; left: 0; right: 0;
+    height: 3px; margin: 0; }
+  body.enVista #zonaEstado .fila { display: none; }
+  /* en la Partida el texto va en el subtítulo de la barra de título (v0.123) */
+  body.enPartida #estado { display: none; }
+  /* y la raya, al borde de arriba de la pantalla (revisor): con 33 cruzaba el
+     subtítulo, y debajo de él quedaba a 6 de la barra de la evaluación, dos
+     rayas paralelas casi pegadas (DISENO.md §2). -8 cancela el relleno de
+     arriba del body. */
+  body.enPartida #zonaEstado .barra { top: -8px; }
+  /* el volver es la flecha sola: el ::before la lleva a 48 x 48 (revisor), sin pasar del x 4 de antes */
+  #volverDeLaPartida::before { inset: -13px -22px -13px -4px; }
+  /* EL VOLVER NO AGRANDA EL RENGLÓN: lo visible mide lo que medía el h2
+     "Revisión", y el área de 48 de §1.7 la pone un ::before invisible. */
+  .volver { background: none; border: 0; padding: 0; margin: 0 0 0 -6px; font: inherit;
+            color: inherit; line-height: inherit; display: inline-flex; align-items: center;
+            gap: 0; position: relative; cursor: pointer; border-radius: 0; }
+  /* ni fondo al pasar el mouse: un bloque gris sobre el título se lee como
+     campo, no como volver. El área invisible no llega al borde izquierdo de la
+     pantalla (x 4), que es donde `mirar` estaciona el puntero. El :not(:disabled)
+     es para pesar más que `button:not(:disabled):hover`, que hasta la v0.123
+     le ganaba y en la compu sí ponía el bloque gris (revisor). */
+  .volver:not(:disabled):hover, .volver:active, .volver:focus { background: none; }
+  .volver:hover { color: var(--acento); }
+  .volver::before { content: ""; position: absolute; inset: -13px -10px -13px -4px; }
+  .volver svg { width: 22px; height: 22px; flex: none; }
+  /* La puerta al Mes desde el inicio: es tarjeta porque se toca */
+  .tarjetaMes { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+                width: 100%; text-align: left; margin: var(--e-3) 0 0; padding: 12px 14px;
+                background: var(--superficie); border: 0; border-radius: 12px; color: var(--texto); }
+  .tarjetaMes b { display: block; font-size: var(--t-cuerpo, 16px); }
+  .tarjetaMes small { display: block; color: var(--tenue); font-size: var(--t-secundario); font-weight: 400; }
+  .tarjetaMes .flecha { color: var(--tenue); font-size: 22px; line-height: 1; }
+  /* EL INICIO (v0.120, lavado de cara: la C del revisor con sus ajustes).
+     Arriba, el título y la tuerca; después de la primera búsqueda la entrada
+     se pliega (`body.entradaCerrada`) a "santico26 · cambiar". El mes hace de
+     título, un renglón chico cuenta el mes, y la lista va entera, sin scroll
+     propio: tocar una fila entra a la Partida. */
+  .cabInicio { display: flex; align-items: center; justify-content: space-between;
+               gap: var(--e-3); min-height: 34px; }
+  .cabInicio h1 { margin: 0; }
+  body.entradaCerrada .deEntrada { display: none !important; }
+  /* el título, el texto y el campo viven en la misma fila que la tuerca: de
+     entrada se apilan; con "cambiar" (`body.cambiando`) aparece SOLO el campo,
+     en el lugar de "Santico26 · cambiar" y con la tuerca a la derecha */
+  .cabInicio { flex-wrap: wrap; }
+  .cabInicio > p.n { order: 2; flex-basis: 100%; margin-top: 2px; }
+  .cabInicio > .campo { order: 3; flex-basis: 100%; }
+  /* LA CABECERA NO CAMBIA AL ABRIR "cambiar" (v0.138, lavado de cara del
+     revisor sobre la v0.126: la B entre cuatro). El renglón "Santico26 ·
+     cambiar" se queda con la tuerca donde estaba, "cambiar" pasa a decir
+     "cancelar" y vuelve a plegar (Nielsen 3: antes no había cómo salir sin
+     buscar), y el campo aparece debajo. Así la tuerca vive arriba a la
+     derecha en los tres estados del inicio. Las otras: A, "o pegar un PGN ·
+     cancelar" abajo (la salida lejos de donde se abrió, y la tuerca saltaba
+     igual); C, un "‹" al lado del campo (en la app "‹" es volver a otra
+     pantalla); D, B con el título de la primera vez (el h1 vuelve a competir
+     con el mes, lo que se sacó en la v0.120). 4 de margen + 12 de `gap` = 16,
+     el ritmo de la pantalla plegada. */
+  body.entradaCerrada.cambiando .campo { display: flex !important; margin-top: 4px; }
+  body.entradaCerrada.cambiando #zonaPegar:not(.oculto) { display: block !important; }
+  /* con "cambiar" va el campo y Buscar en un renglón, y "o pegar un PGN" en
+     el de abajo, a 8: con usuario guardado es la única puerta al PGN (revisor,
+     v0.120). El margen del 100% es lo que lo manda solo a su renglón. */
+  /* "o pegar un PGN" es un ENLACE en su renglón, debajo del campo (v0.126,
+     lavado de la entrada desplegada: la A del revisor). Antes era un botón
+     chico de 36 al lado de Buscar: tres alturas y dos pesos en un renglón.
+     Pegar un PGN es otra fuente de partidas, y rara, así que pesa como
+     "cambiar": texto en acento, 14. El margen del 100% lo manda solo a su
+     renglón. El área de toque es de 48 y va justa entre el campo (12 arriba)
+     y lo que sigue (16 abajo: el mes o el PGN abierto), sin pisar ninguno. */
+  #verPegar { margin: 4px 100% 0 0; flex: none; white-space: nowrap; background: none; border: 0;
+              padding: 0; min-height: 0; color: var(--acento); font-size: var(--t-secundario);
+              line-height: 20px; position: relative; border-radius: 0; }
+  #verPegar:not(:disabled):hover, #verPegar:active { background: none; }
+  #verPegar::before { content: ""; position: absolute; inset: -12px -10px -16px; }
+  /* [PC] desde 1000 (950 hasta la v0.128.2), donde el inicio tiene dos columnas, la fila del campo
+     tiene tope de 300: termina en el mismo borde que la columna del mes, y el
+     PGN abierto usa el ancho entero, como la lista (v0.126.1, revisor: con
+     400 y 640 eran tres bordes derechos que no coincidían con nada). Por
+     debajo de 1000 la fila llena la columna hasta la tuerca, como en el celu,
+     y termina con todo lo de abajo. */
+  /* con el tope de 300 la base del 100% no alcanza para mandar el campo
+     abierto por "cancelar" a su renglón: subía al de la tuerca (v0.138) */
+  /* (v0.145) desde 1000 la cabecera y el PGN están adentro de la columna de
+     300: el tope sale de la columna y las tres reglas que lo imitaban se fueron */
+  #zonaPegar { margin-top: var(--e-4); }
+  /* el placeholder en la letra de la app; lo pegado sigue en mono */
+  #pgn::placeholder { font: var(--t-secundario)/1.4 system-ui, sans-serif; }
+  /* el renglón se achica en vez de irse de renglón (revisor, v0.138): con un
+     nombre largo —chess.com deja 25 letras— la tuerca se caía abajo y el mes
+     bajaba 36. Ahora el nombre corta con "…" y "cambiar" queda entero. */
+  #yaUsuario { margin: 0; display: flex; align-items: baseline; flex: 1 1 0; min-width: 0; }
+  #yaUsuarioNombre { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+  #yaUsuario .sep { color: var(--tenue); margin: 0 var(--e-2); }
+  /* "cambiar" es un enlace, no un botón: 24 a la vista y 48 de toque (§1.7) */
+  #cambiarUsuario { background: none; border: 0; padding: 0; font: inherit; color: var(--acento);
+                    position: relative; border-radius: 0; flex: none; }
+  /* a la derecha 4 y no 10 (revisor, v0.138): con un nombre largo
+     "cancelar" queda al lado de la tuerca y las dos áreas se pisaban 5 px */
+  #cambiarUsuario::before { content: ""; position: absolute; inset: -12px -4px -12px -10px; }
+  #btnAjustesInicio { padding: 0; flex: none; display: grid; place-items: center;
+                      width: 34px; height: 34px; margin-left: auto; order: 1;
+                      border: 1px solid var(--linea); border-radius: 50%; }
+  /* las dos tuercas se ven de 34 y se tocan en 48 (§1.7; revisor, v0.120) */
+  #btnAjustesInicio, #btnAjustes { position: relative; }
+  #btnAjustesInicio::before, #btnAjustes::before { content: ""; position: absolute; inset: -7px; }
+  #zonaMeses { margin-top: var(--e-4); }
+  /* [PC] TOPE DE LECTURA DE 640 para la columna del inicio (v0.121; revisor,
+     v0.120): a 1280 la tarjeta estiraba el "›" a ~1000 px del título y la
+     fila ponía la fecha a ~1050 del rival. A la izquierda, como el Mes. En el
+     celu no hace nada: el body ahí mide menos de 640. Lado a lado o no es el
+     ítem de PC del inicio. */
+  body:not(.enVista) .soloInicio, body:not(.enVista) #zonaEstado { max-width: 640px; }
+  /* el armazón de las dos columnas de la compu (v0.122): en el celu no existe */
+  .iniGrid, .iniIzq, .iniDer { display: contents; }
+  /* sin el botón, la fila no está: si no, corta el margen y quedan 24 */
+  .botonMes:has(#analizarMes.oculto) { display: none; }
+  #meses { font-size: 18px; font-weight: 700; width: 12.5em; max-width: 100%; }
+  .resumenInicio { margin: var(--e-3) 0; font-size: var(--t-leyenda); color: var(--tenue);
+                   font-variant-numeric: tabular-nums; }
+  /* el estado, en el inicio, solo mientras algo corre y en el lugar del botón:
+     "Analizando 12 de 40 · Parar" */
+  #estado:empty { display: none; }
+  body:not(.enVista) #zonaEstado { display: flex; flex-wrap: wrap; align-items: center;
+                                   gap: var(--e-2) var(--e-3); }
+  body:not(.enVista) #zonaEstado:has(#estado:not(:empty)) { margin: var(--e-3) 0; }
+  body:not(.enVista) #estado { margin: 0; min-height: 0; }
+  body:not(.enVista) #zonaEstado .barra { flex-basis: 100%; order: 3; margin: 0; }
+  #partidas.lista { margin-top: var(--e-3); max-height: none; overflow: visible; }
+  /* LA FILA, UN RENGLÓN (v0.120): rival · cómo terminó · tu precisión · fecha.
+     El ritmo y el "Santico26 vs" se fueron: el usuario es siempre el mismo. */
+  :is(#partidas, #mesLista) > div[data-i] { display: flex; align-items: baseline; gap: var(--e-2); white-space: nowrap; }
+  :is(#partidas, #mesLista) .rival { font-size: var(--t-cuerpo, 16px); overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  :is(#partidas, #mesLista) .res { font-size: var(--t-secundario); flex: none; }
+  :is(#partidas, #mesLista) :is(.prec, .fecha) { font-size: var(--t-leyenda); color: var(--tenue); flex: none;
+                                      font-variant-numeric: tabular-nums; }
+  :is(#partidas, #mesLista) .fecha { margin-left: auto; padding-left: var(--e-2); }
+  /* la lista del Mes, la misma fila del inicio y sin su caja con scroll: al
+     fondo de la página un scroll adentro de otro solo estorba (v0.128). Los 8
+     de arriba: sin leyenda corta, la caja quedaba a 2 del título */
+  #mesLista.lista { max-height: none; overflow: visible; margin: var(--e-2) 0 var(--e-4); }
+  .filaSeguir { margin-top: var(--e-4); }
+  .filaSeguir:has(#seguirMes.oculto) { display: none; }
+  /* la última vista se marca con la raya sola, sin negrita (una marca y no
+     dos), y la fila responde al toque (§1.10, "apretado") */
+  #partidas > div.sel { font-weight: 400; }
+  :is(#partidas, #mesLista) > div[data-i]:active { background: var(--elevada); }
+  @media (pointer: fine) and (hover: hover) { :is(#partidas, #mesLista) > div[data-i]:hover { background: var(--elevada); } }
+  body.enVista .deQuien { display: none; }
+  /* MIENTRAS SE ANALIZA LA PARTIDA QUE TOCASTE se ve su pantalla con el
+     volver y el progreso en la cabecera, y nada más: lo de abajo sería la
+     partida anterior. */
+  #zonaRevision.cargando > :not(.parriba),
+  #zonaRevision.cargando > .parriba > :not(.cabvista) { display: none !important; }
+  body:has(#zonaRevision.cargando:not(.oculto)) .pie { display: none; }
+  /* EL PASO DE PANTALLA ES SECO (v0.111). La v0.110 tenía un fundido de
+     120 ms y a Juan no le copó: *"brusco, medio violento"*, y la pantalla
+     nueva "seguía haciendo algo" —la barra de la evaluación y la de progreso
+     se animaban desde cero al aparecer—. Ahora no hay fundido, y en el cambio
+     se apagan las transiciones un instante para que lo nuevo llegue quieto.
+     La transición buena de verdad va en la etapa 3 ("que se sienta bien"). */
+  body.quieto *, body.quieto *::before, body.quieto *::after { transition: none !important; }
+  .ajVersion { margin: var(--e-4) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
+  .ajCredito { margin: var(--e-1) 0 0; font-size: var(--t-leyenda); color: var(--tenue); }
+  /* ÁREA DE TOQUE DE LOS DOS ENLACES (v0.143.1, revisor; §1.7 de DISENO). A 12,5 px
+     la tinta mide 15 de alto y en esta hoja todo lo demás mide de 44 a 56. Es el
+     mismo recurso que ya usan los otros dos enlaces de texto de la app
+     (`#cambiarUsuario::before`, `#verPegar::before`): un `::before` absoluto que
+     agranda el toque sin agrandar el renglón. Medido a 386: 64×47 y 94×47,
+     separados 123 entre sí, 24 de aire hasta "Mate a la vista" y 11 hasta el borde.
+     Los enlaces NO van en `--acento` como los otros dos: el verde pondría la letra
+     más chica como lo más vivo del final de la hoja. Con `color: inherit` el
+     subrayado es la única señal de que son enlaces, así que tampoco se saca. */
+  .ajCredito a { color: inherit; position: relative; }
+  .ajCredito a::before { content: ""; position: absolute; inset: -16px -6px; }
+  /* Dos modos. El simple es el default y es el que ve cualquiera; el modo dev
+     agrega las perillas de medición. Se marca en <html> para que baste CSS y
+     no haya que esconder cada cosa a mano desde JS. */
+  html:not(.dev) .solo-dev { display: none !important; }
+  /* La línea de diagnóstico se esconde en modo simple, PERO reaparece sola si
+     hubo un error: en el celular no hay consola, y una pantalla en blanco sin
+     ninguna pista es el peor modo de falla del proyecto. */
+  html.hubo-error #diag { display: block !important; }
+
+  /* La barra de evaluación va vertical al costado del tablero. Horizontal se
+     comía un renglón entero de una pantalla donde lo escaso es el alto, y al
+     lado del tablero se lee igual de bien. Se llena desde abajo, que es donde
+     están las blancas; si el tablero se gira, desde arriba. */
+  /* el margen de abajo separa el bloque del tablero de la tarjeta del veredicto:
+     sin él la barra de evaluación termina pegada al borde de la tarjeta */
+  /* LA BARRA VERTICAL VA PEGADA AL TABLERO EN CUALQUIER ANCHO, y por eso esto
+     vive acá y no en el `@media` de la compu. La caja del tablero mide lo que
+     mide el tablero —360, o `--ladoTab` desde 1110— y la fila se centra entera,
+     barra y tablero como un bloque. Con `flex: 1` la caja se estiraba a la
+     columna, el SVG se centraba adentro y la barra quedaba sola contra el borde:
+     la v0.86 lo arregló a 1280, pero de 413 a 1109 de ancho seguía (v0.107,
+     medido: 140 px entre la barra y el tablero a 1000 × 700). En el celular la
+     columna es más angosta que barra + hueco + 360, así que la caja se achica
+     igual que antes y nada se mueve. */
+  .revtab { display: flex; gap: 8px; align-items: stretch; margin: 10px 0;
+            justify-content: center; }
+  .comidas, .alts { display: none; }
+  .revtab > #tablero { flex: 0 1 var(--ladoTab, 360px); min-width: 0; }
+  /* arrastrar con el mouse desde el tablero pintaba de azul las coordenadas y el
+     número de la barra (v0.144) */
+  #tablero { user-select: none; -webkit-user-select: none; }
+  /* el tablero trae margen propio para cuando va suelto; al lado de la barra
+     sobra, y desalinea las dos por 10 px */
+  .revtab svg.tab { margin: 0 auto; }
+  .evalbar { width: 10px; flex-shrink: 0; border-radius: 5px; overflow: hidden;
+             background: var(--eval-negras); border: 1px solid var(--linea);
+             display: flex; flex-direction: column; justify-content: flex-end; }
+  .evalbar.girada { justify-content: flex-start; }
+  .evalbar > i { display: block; width: 100%; background: var(--eval-blancas); transition: height var(--m-media) var(--m-entra); }
+  /* con el número adentro la barra tiene que ser ancha: "+1.03" no entra en 10 px.
+     SON 36 Y NO 30 desde la v0.86: con 30, "+0.26" salía CORTADO —la barra tiene
+     `overflow: hidden` por las esquinas redondeadas del relleno, así que lo que
+     no entra no se ve—. Se vio recién cuando la vertical pasó a ser el default en
+     compu, o sea que el error tenía tres versiones. Los 6 px no le cuestan
+     tablero: en una compu el tablero lo limita el ALTO, no el ancho.
+     Y SON 40 desde la v0.105, con el número a 11: la barra tiene 1 de borde
+     por lado, así que adentro quedan 4 menos, y "Tablas" (35,4) no entraba en
+     los 34 de adentro. Medido por el revisor: en compu el tablero no cambia
+     (1000, 1280 y 1500 de ancho); en el celu, solo si se elige la barra, le
+     saca 4. */
+  .evalbar.ancha { width: 40px; }
+  .evalbar { position: relative; }
+  .evalbar .num, .evalh .num { position: absolute; font-size: var(--t-minimo); font-weight: 700;
+                               font-variant-numeric: tabular-nums; pointer-events: none; }
+  .evalbar .num { left: 0; right: 0; text-align: center; }
+  /* las dos en el mínimo del sistema (§1.4). La vertical estuvo en 9,5 hasta la
+     v0.105: a 11 "+10.00" no entra en la barra, así que de 10 para arriba
+     pierde un decimal (`textoBarra()`) en vez de achicar la letra */
+
+  /* la horizontal se suma al alto en vez de compartirlo con el tablero: por eso
+     es la más cara de las tres, aunque deja el tablero grande */
+  .evalh { height: 16px; border-radius: 8px; background: var(--eval-negras); margin-top: var(--e-2);
+           border: 1px solid var(--linea); overflow: hidden; position: relative; }
+  .evalh > i { display: block; height: 100%; background: var(--eval-blancas); transition: width var(--m-media) var(--m-entra); }
+
+  /* con el número en la barra, la tarjeta no lo repite; sin barra que lo lleve,
+     el número se corre al lado de la barra para que no queden en dos puntas */
+  .veredicto.invertida .ev { order: -1; }
+
+  /* Avanzar y retroceder es la misma tarea repetida muchas veces seguidas:
+     van pegadas, del mismo tamaño y ocupando el ancho entero. Antes eran dos
+     cuadraditos de 40 px separados por "Mostrar la mejor". */
+  /* LA FILA DE BOTONES GRANDES SE FUE EN LA v0.74. Vivía abajo de todo, o sea
+     donde no se ve el tablero, y el usuario la resumió así: "cualquier
+     navegación que se haga sin ver lo que se navega no sirve de nada". La
+     reemplaza la tira, que va pegada al tablero. */
+
+  /* El ? vive en el título de la sección y abre el texto largo. Es un botón y
+     no un <summary> anidado: los detalles no se pueden anidar en el título de
+     otro. 44 px de área táctil aunque el círculo mida 21: es un celular. */
+  .ayuda { border: 1px solid var(--linea); background: none; border-radius: 50%;
+           width: 21px; height: 21px; font-size: 12px; line-height: 1; padding: 0;
+           color: var(--tenue); vertical-align: middle; flex: none;
+           position: relative; }
+  .ayuda::after { content: ""; position: absolute; inset: -12px; }
+  .ayuda[aria-expanded="true"] { background: var(--linea); color: inherit; }
+  .ayudaPanel { display: block; border-left: 2px solid var(--linea);
+                padding-left: 10px; margin-top: 6px; }
+  th .sub { display: block; font-weight: 400; font-size: var(--t-minimo); color: var(--tenue); }
+
+  /* El paréntesis del margen: más chico y tenue que el porcentaje, porque es su
+     contexto y no otro número. Y el gris para la otra forma de marcarlo.
+
+     Va en su PROPIO renglón, y no al lado, por alineación. Al lado, lo que se
+     pega a la derecha de la celda es el paréntesis, así que el porcentaje de esa
+     fila queda corrido respecto del de las demás —y el encabezado "%", que
+     también se alinea a la derecha, termina alineado con el paréntesis y no con
+     los números—. Medido: al lado, tres números terminan en x=334 y el cuarto en
+     299; abajo, los cuatro y el encabezado en 334.
+     Reservarle un ancho fijo al paréntesis alineaba los números pero dejaba el
+     encabezado peor todavía (en 334 contra 291). */
+  .rango { display: block; line-height: 1.1; font-size: 11px;
+           color: var(--tenue); white-space: nowrap; }
+
+  .marcadorMes { font-size: 14px; margin: 8px 0; font-variant-numeric: tabular-nums; }
+  /* `auto-fit` y no `repeat(3, ...)`: esta misma clase la usan la fila de la
+     jugada, que desde la v0.93 tiene CUATRO cuadritos, y la cabecera del mes,
+     que tiene tres. Con auto-fit cada una arma tantas columnas como hijos
+     tenga, sin una clase aparte ni un número escrito dos veces. El mínimo tiene
+     que ser un ancho de verdad y no 0: con `minmax(0, 1fr)` auto-fit no puede
+     contar cuántas entran. Cuatro de 60 más los huecos son 258 px, y el celular
+     más angosto que importa deja 292. */
+  .metricas { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+              gap: var(--e-2); margin-top: 8px; }
+  .metricas > div { background: var(--superficie); border: 1px solid var(--linea);
+                    border-radius: var(--r-control); padding: 6px 8px; overflow: hidden; }
+  .metricas .et { font-size: var(--t-minimo); font-weight: 600; letter-spacing: .07em; text-transform: uppercase;
+                  color: var(--tenue); }
+  .metricas .va { font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums;
+                  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* el cuadrito de la mejor jugada se toca para verla en el tablero, y se nota
+     que está encendido: si no, la flecha aparece sin que se sepa de dónde */
+  .metricas .tocable { cursor: pointer; user-select: none; }
+  /* la leyenda del arranque (v0.131): sin caja, en tenue, desde la 2.ª columna */
+  .metricas > .leyInicio { display: none; grid-column: span 3; background: none; border: 0;
+                           border-radius: 0; padding: 0; color: var(--tenue); font-size: 12.5px;
+                           line-height: 1.35; align-items: center; }
+  .metricas.enInicio > div:not(.tocable):not(.leyInicio) { display: none; }
+  .metricas.enInicio > .leyInicio { display: flex; }
+  /* "sin reloj": dice qué falta, en vez del "·" que había que descifrar */
+  .metricas .va.sinDato { color: var(--tenue); font-weight: 400; }
+  /* Grisado (la jugada ya era la mejor) solo el VALOR: el cuadrito sigue
+     respondiendo desde la v0.117, así que el borde, el rótulo y el estado
+     prendido se tienen que seguir leyendo (revisor, v0.117). */
+  .metricas .tocable.inerte .va { opacity: .5; }
+  .metricas .tocable.activo { border-color: var(--acento);
+                              background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  /* EL CUADRITO MEJOR ES EL INTERRUPTOR (v0.117). Hasta la v0.116 había dos
+     controles para la misma pregunta: el cuadrito era un vistazo de una sola
+     jugada y "Siempre la mejor", un botón solo en su fila —el más grande de la
+     pantalla para una preferencia (Juan, v0.114)—. Se dibujaron cuatro: el
+     botón chico bajo Mejor, una chinche en el cuadrito, el cuadrito como
+     interruptor y la preferencia a la hoja; el revisor eligió esta. Tocarlo
+     prende la flecha en todas las jugadas hasta volver a tocarlo. La flechita
+     al lado de "MEJOR" dice que se toca; el estado va por color: rótulo en el
+     acento y flechita verde prendido, las dos tenues apagado. El rótulo va en
+     el acento y no en el verde de la flecha porque a 11 px el verde no llega
+     a 4,5:1. El toque ya pasa los 48 de alto: el cuadrito mide 51,5. */
+  /* Los márgenes negativos dejan la flechita sin agrandar el renglón (con ella
+     los cuadritos medían 51,5 y no 48): queda apoyada 1 px bajo la línea de
+     base, que la centra en la mayúscula de 11 px. */
+  .metricas .tocable .flechaMejor { width: 10px; height: 10px; margin: -10px 0 -1px 4px;
+                                    vertical-align: baseline; fill: currentColor; stroke: currentColor; }
+  .metricas .tocable.activo .et { color: var(--acento); }
+  .metricas .tocable.activo .flechaMejor { color: var(--f-mejor); }
+  /* LA FILA DE GIRAR. Va en la misma grilla de cuatro columnas que los
+     cuadritos (v0.106). Desde la v0.117 Girar es lo único que queda en ella
+     (Rival se fue a la hoja en la v0.114 y "Siempre la mejor" pasó a ser el
+     cuadrito Mejor), y Girar vive al costado del tablero: la fila no se
+     dibuja salvo cuando el canal no le alcanza (`body.girarEnFila`). */
+  .acciones { display: none; grid-template-columns: repeat(4, 1fr); gap: var(--e-2);
+              margin-top: var(--e-2); }
+  .acciones > button { width: 100%; margin: 0; padding-left: 4px; padding-right: 4px; }
+  .acciones > #btnGirar { display: none; }
+  .revtab { position: relative; }
+  /* Al costado de la fila 1, entre el borde de las casillas y el de la
+     pantalla (~40 px en el celu, donde a media altura vive el chevrón ›). La
+     posición la pone `ubicarGirar()`: depende de la escala del SVG. */
+  #btnGirarTab { position: absolute; width: 30px; height: 44px; min-height: 0; padding: 0;
+                 display: grid; place-items: center; border-radius: var(--r-control); }
+  #btnGirarTab.oculto { display: none; }
+  #btnGirarTab.pestana { border-radius: var(--r-control) 0 0 var(--r-control); }
+  #btnGirarTab > svg { width: 18px; height: 18px; }
+  /* El toque llega hasta el borde de la pantalla y a 48 de alto sin cambiar
+     lo que se ve (DISENO §1.7): a lo ancho no hay más lugar sin pisar las
+     casillas. */
+  #btnGirarTab::after { content: ""; position: absolute; top: -2px; bottom: -2px;
+                        left: 0; right: -3px; }
+  #btnGirarTab.pestana::after { right: 0; }
+  /* Cuando el canal no alcanza ni para la pestaña (menos de 24),
+     `ubicarGirar()` lo dice con esta clase y Girar vuelve a la fila. Medido
+     en la v0.116, entra desde 360 de ancho. */
+  body.girarEnFila .acciones > #btnGirar { display: flex; }
+  body.girarEnFila .acciones { display: grid; }
+  /* el corte de la compu, escrito así para que no se confunda con el bloque
+     grande de 1110 (las pruebas buscan el primero) */
+  /* EN LA COMPU (v0.125) Girar es el del costado, en la columna de las
+     comidas y a media altura, siempre a la vista: la fila del panel ocupaba un
+     renglón entero para algo que se toca una vez. Siempre y no solo en la
+     apertura como en el celu, porque en la compu no hay otro Girar. */
+  @media (width >= 1000px) {
+    .acciones { display: none !important; }
+    /* v0.132: chico, abajo a la derecha del tablero, en el renglón de las
+       comidas del que juega abajo (§1.7: 32 con puntero fino) */
+    #btnGirarTab { width: 32px; height: 32px; }
+    #btnGirarTab > svg { width: 20px; height: 20px; }
+  }
+  /* CON ÍCONO Y TEXTO (v0.113): Girar conserva el texto que a Juan le gustó,
+     con el ícono. El margen negativo deja el ícono de 18 sin agrandar el
+     renglón: sin él, la fila crecía 4 px. */
+  .acciones > button { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .acciones > button > svg { width: 18px; height: 18px; flex: none; margin: -2px 0; }
+  /* Por debajo de 360 manda el texto (v0.113: con ícono, un botón de la fila
+     se partía en dos renglones en un celu de 320). */
+  @media (max-width: 359px) { .acciones > button > svg { display: none; } }
+  /* el margen de arriba lo trae la tarjeta y no el bloque de arriba: desde la
+     v0.74 arriba hay una barra de evaluación, que no tenía margen abajo, y las
+     dos quedaban pegadas. Mover un elemento le cambia los márgenes a sus DOS
+     vecinos, no a uno (§10). */
+  /* Sobre la superficie y con el borde de la categoría de 3 px (DISENO §1.6).
+     El título sube de 15 a 16 con interlineado 1,4, así que su renglón mide lo
+     mismo que antes: la vista de la jugada no puede crecer (§1.4). El relleno
+     va a 8, que es la escala. */
+  .veredicto { display: flex; align-items: center; gap: var(--e-3); padding: 8px 12px; margin-top: var(--e-2);
+               background: var(--superficie);
+               border: 1px solid var(--linea); border-left-width: 3px; border-radius: var(--r-tarjeta); }
+  .veredicto .ico { font-weight: 700; font-size: var(--t-subtitulo); line-height: 1; min-width: 26px; text-align: center; }
+  .veredicto .txt { flex: 1; min-width: 0; }
+  .veredicto .tit { font-weight: 700; font-size: var(--t-cuerpo); line-height: 1.4; }
+  .veredicto .sub { font-size: 12.5px; color: var(--tenue); }
+  /* LOS MISMOS 2 PX QUE .exp (v0.124, revisor): la tarjeta medía 59 con la
+     frase fija y 61 con explicación, y el tablero saltaba 2 px. Solo el del
+     veredicto: en la de la variante sub y exp van juntos. */
+  #vSub { margin-top: 2px; }
+  /* La explicación va con el color del texto normal y NO con el tenue del
+     subtítulo: es lo único de la tarjeta que cambia en cada jugada, así que si
+     se pinta como el resto se pierde entre dos renglones grises. */
+  .veredicto .exp { font-size: 12.5px; margin-top: 2px; }
+  /* La frase que señala algo en el tablero. Subrayado punteado y no un chip con
+     fondo: son una o dos por tarjeta y a veces ocupan el renglón entero, así
+     que un fondo las convertiría en un bloque de color en el medio del texto.
+     El punteado dice "esto se toca" sin dejar de ser una frase. */
+  .senala { cursor: pointer; border-bottom: 1px dotted currentColor; }
+  .senala.on { background: var(--senal); border-radius: 3px; padding: 0 2px;
+               border-bottom-color: transparent; color: var(--fondo); }
+  /* La tarjeta de la prueba va PUNTEADA: dice "esto no pasó" sin gastar una
+     palabra en decirlo, y es lo único que la distingue de la del veredicto.
+     El violeta de acá es el de ANTES de que llegue el resultado, cuando todavía
+     no hay categoría; con el resultado, la barra de la izquierda toma el color
+     de la categoría, igual que la tarjeta del veredicto. Elegido por el usuario
+     mirándolo, contra la otra opción, que era dejarla violeta siempre. */
+  .veredicto.prueba { border-style: dashed; border-left-color: var(--inventada);
+                      margin-bottom: 0; }
+  /* La salida de la variante vive EN la tarjeta de la variante: es la única
+     pantalla que la necesita, y así no hay un botón esperando en la fila de
+     abajo para algo que casi nunca está pasando. */
+  .veredicto.prueba > .chico { flex: 0 0 auto; align-self: flex-start; }
+  .veredicto .ev { font-variant-numeric: tabular-nums; font-weight: 700; }
+  /* LA TARJETA DEL VEREDICTO NO CAMBIA DE ALTO (v0.149, lavado de cara; Juan,
+     16-nov: "es medio molesto" que el tablero baje 19 px cuando la frase no
+     entra en un renglón; a 386 pasaba en 5 de 37 jugadas). Dos cosas, la B
+     entre tres que eligió el revisor:
+     1. LA FRASE VA A TODO EL ANCHO de la tarjeta, y el símbolo pasa a la línea
+        del título, chico, como en la lista de jugadas. Eran 26 + 12 de columna
+        que no tenían nada debajo: de 6 a 8 letras más por renglón, y la frase
+        de dos renglones se parte pareja, sin la palabra viuda.
+     2. EL RENGLÓN DE LA FRASE RESERVA LO QUE PUEDE LLEGAR A MEDIR: dos
+        renglones (dos frases como mucho, "corta" y "media") o tres con
+        "larga". Lo pone `aplicarLargoExp` en --rExp: que el tablero cambie de
+        lugar al tocar un ajuste está bien, es algo que hace uno; lo que no
+        puede es saltar al pasar jugadas. `min-height` y no `height`: si alguna
+        frase se pasara, la tarjeta crece en vez de cortarla.
+     El texto va ARRIBA en lo reservado y no centrado: centrado, la frase de un
+     renglón y la de dos quedaban a alturas distintas y saltaba el texto.
+     Descartadas: la A (lo mismo con la columna del símbolo; el hueco se veía
+     más vacío) y la C (la frase debajo del tablero, lejos de su categoría).
+     Solo #veredicto: la de la variante (#prueba) tiene la tira y el Volver. */
+  #veredicto { display: grid; grid-template-columns: auto 1fr auto; gap: 0;
+               grid-template-areas: "ico tit ev" "frase frase frase"; }
+  #veredicto.invertida { grid-template-columns: auto auto 1fr; grid-template-areas: "ev ico tit" "frase frase frase"; }
+  #veredicto > .txt { display: contents; }
+  #vIco { grid-area: ico; font-size: var(--t-cuerpo); min-width: 0; margin-right: var(--e-2); }
+  #vTit { grid-area: tit; min-width: 0; }
+  #vEv { grid-area: ev; margin-left: var(--e-2); }
+  #veredicto.invertida #vEv { margin-left: 0; margin-right: var(--e-2); }
+  #vSub, #vExp { grid-area: frase; min-height: calc(var(--rExp, 2) * 1lh); align-self: start; }
+  /* LA DE LA VARIANTE TAMPOCO CAMBIA DE ALTO (v0.164; Juan, 17-nov: "tienen
+     los saltos de tablero con el cambio de tamaño"). Medía 59 con "Probando…",
+     78 con el "pierde · en la partida" partido en dos y 117 con explicación:
+     el tablero saltaba hasta 59 px entre pensar y contestar. Lo mismo que el
+     veredicto de la v0.149: el símbolo y el Volver en la línea del título, y
+     abajo, a todo el ancho, un renglón para el "pierde" y los de la
+     explicación reservados (--rExp), aunque esté pensando o no haya frase.
+     #pExp ya no se esconde: vacío, guarda su lugar. */
+  #prueba { display: grid; grid-template-columns: auto 1fr auto; gap: 0; align-items: center;
+            grid-template-areas: "ico tit btn" "sub sub sub" "exp exp exp"; }
+  #prueba > .txt { display: contents; }
+  #pIco { grid-area: ico; font-size: var(--t-cuerpo); min-width: 0; margin-right: var(--e-2); }
+  #pTit { grid-area: tit; min-width: 0; }
+  /* el Volver medía 36 y el título 22: estiraba el renglón 14 px. Se dibuja
+     de 28, se mete 3 arriba y 3 abajo en el relleno (le quedan 5 al borde) y
+     el toque es de 49 × 80 por el ::after (§1.7 pide 48; revisor). */
+  #prueba > .chico { grid-area: btn; margin: -3px 0 -3px var(--e-2); min-height: 28px;
+                     padding: 3px 12px; position: relative; }
+  #prueba > .chico::after { content: ""; position: absolute; inset: -10px -6px; }
+  #pSub { grid-area: sub; min-height: 1lh; margin-top: 2px; align-self: start; }
+  #pExp { grid-area: exp; min-height: calc(var(--rExp, 2) * 1lh); align-self: start; }
+  svg.tab { width: 100%; max-width: 360px; height: auto; display: block; margin: var(--e-2) auto 0; }
+  /* La curva de quién va ganando. Fondo y borde iguales a los de la barra
+     horizontal, porque son lo mismo contado de dos maneras. Va pegada arriba de
+     la tira de jugadas y no arriba del tablero: las dos recorren la partida
+     entera, mientras que todo lo de arriba habla de UNA jugada. Juntas quedan
+     las dos formas de moverse por la partida, una al lado de la otra. */
+  .curva { height: 46px; margin-top: var(--e-2); border-radius: var(--r-control); overflow: hidden;
+           background: var(--eval-negras); border: 1px solid var(--linea); cursor: pointer;
+           position: relative; }
+  .curva svg { display: block; width: 100%; height: 100%; }
+  /* Los puntos de las categorías. Van en HTML y no en el SVG porque el SVG se
+     estira al ancho que haya y ahí un círculo sale óvalo; el porcentaje se mide
+     contra este contenedor, que no está deformado. El ancho y el color los pone
+     el JS: son de la marca, no del estilo. */
+  .curva .pt { position: absolute; border-radius: 50%; display: block;
+               transform: translate(-50%, -50%); pointer-events: none; }
+  /* LA TIRA DE JUGADAS (v0.74). Es horizontal y lleva la partida ENTERA; se
+     centra sola en la jugada actual. De ahí sale, sin ninguna regla extra, que
+     SIEMPRE se vea que hay más para los dos lados cuando lo hay.
+
+     Fue una lista vertical de la v28 a la v0.73. La tira horizontal de antes de
+     la v28 "mostraba tres jugadas por vez y obligaba a scrollear a ciegas", y
+     eso está resuelto por dos cosas que aquella no tenía: los galones, que dan
+     el paso fino sin arrastrar, y el centrado automático. */
+  .tira { display: flex; align-items: center; gap: 6px; margin-top: var(--e-2); }
+  /* alineada POR LA BASE y no por el centro: el número va en 12 px y la jugada
+     en 13, así que centrando las cajas las bases quedan a distinta altura, que
+     es lo que el ojo lee como corrido. Los galones no tienen base —son un
+     dibujo— y por eso viven afuera de este contenedor. */
+  /* position: relative para que offsetLeft de cada jugada sea contra la tira y
+     no contra la página: de eso depende que el centrado caiga donde tiene que
+     caer. Es la misma razón por la que la lista vertical lo tenía. */
+  .tiraSc { flex: 1; min-width: 0; display: flex; gap: 5px; align-items: baseline;
+            overflow-x: auto; scrollbar-width: none; position: relative; }
+  .tiraSc::-webkit-scrollbar { display: none; }
+  /* EN LA COMPU LA TIRA SE ARRASTRA (v0.80). Con el dedo se scrollea sola; con
+     mouse, arrastrar un `overflow-x` no la mueve: SELECCIONA EL TEXTO. La manito
+     avisa que se puede agarrar, y mientras se arrastra no se selecciona nada. */
+  .tiraSc { cursor: grab; }
+  .tiraSc.arrastrando { cursor: grabbing; user-select: none; }
+  /* EL DESVANECIDO. Sin recuadro alrededor de cada jugada, las de las puntas se
+     cortaban en seco; una máscara las disuelve contra el papel al acercarse al
+     galón y eso dice "hay más para allá" sin dibujar nada. Es una MÁSCARA y no
+     opacidad sobre el elemento, así que no depende del color de fondo y anda
+     igual con cualquier tema de tablero. */
+  .tiraSc { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24px,
+                                #000 calc(100% - 24px), transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0, #000 24px,
+                        #000 calc(100% - 24px), transparent 100%); }
+  .tira > button { flex: 0 0 34px; height: 44px; padding: 0; border: none;
+                   background: none; color: var(--tenue); display: flex;
+                   align-items: center; justify-content: center; line-height: 1;
+                   /* lo pone `medirTira()`: el vértice del chevron va al centro
+                      de la mayúscula, no al del renglón */
+                   transform: translateY(var(--galon, 0px)); }
+  .tira .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: var(--t-leyenda);
+              white-space: nowrap; padding: 4px 0; line-height: 1.2; }
+  .tira .jg { white-space: nowrap; font-size: var(--t-leyenda); border-radius: var(--r-chico); cursor: pointer;
+              line-height: 1.2; display: inline-block;
+              /* el relleno lo reparte `medirTira()`: con la alineación por base,
+                 el recuadro sobresale por abajo todo el espacio de las colas */
+              padding: var(--jgArriba, 4px) 7px var(--jgAbajo, 4px); }
+  /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra "??") */
+  .tira .jg .sm { font-weight: 700; margin-right: 3px; }
+  /* un contorno redondeado se leía como un campo de texto editable. Un fondo
+     del propio color de la categoría marca igual y no promete nada falso. */
+  /* y el subrayado de 2 px de acento (DISENO §1.6, v0.97): el fondo dice la
+     categoría, el subrayado dice "estás acá" igual para todas */
+  .tira .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
+                  box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
+  /* Cómo terminó la partida, cerrando la tira: es donde lo escribe una planilla. */
+  .tira .cierre { white-space: nowrap; font-size: var(--t-leyenda); color: var(--tenue);
+                  padding: 4px 7px; }
+  .tira .cierre b { font-weight: 700; color: var(--texto); }
+  /* Lo inventado en la tira de la partida (dial de la v0.76, forma "abajo"):
+     VIOLETA, que es lo que ya significa "inventada" en la flecha del tablero, y
+     el corte con la misma línea punteada que el borde de su tarjeta. El fondo
+     de la elegida sale de `currentColor`, así que se tiñe solo. */
+  .tira .jg.inv { color: var(--inventada); }
+  /* la que todavía está en la cola: se ve, pero no dice un veredicto que no tiene */
+  .tira .jg.inv.pend { color: var(--tenue); }
+  /* la última de la variante —la recién probada— sale del desvanecido de 24
+     del borde derecho: sin esto quedaba pegada a "›" (v0.182; en la compu
+     desde la v0.171, con la misma medida). */
+  #zonaRevision.conVariante #tiraSc::after { content: ""; flex: 0 0 var(--colaVar, 24px); }
+  .tira .corte { flex: 0 0 0; width: 0; height: 17px; align-self: center;
+                 border-left: 2px dashed var(--inventada); margin: 0 5px; }
+  /* LA LISTA LATERAL (v0.80). Es la lista vertical que vivió de la v28 a la
+     v0.73, traída de vuelta SOLO donde el ancho sobra: en el celular no hay
+     lugar para una segunda columna y la tira sigue siendo lo único que hay.
+     Dos formas, y la diferencia no es cosmética:
+     - PLANILLA es la de la v0.73 tal cual, `nº | blancas | negras`, como se
+       anota una partida en papel. Densa: la partida entera de un vistazo.
+     - UNA POR RENGLÓN gasta el doble de alto y a cambio entra algo que la
+       planilla no puede dar, porque ahí las dos columnas ya están ocupadas por
+       los dos colores: cuánto perdió cada jugada, en su propio renglón. */
+  .jugadas { background: var(--superficie); border: 1px solid var(--linea);
+             border-radius: var(--r-tarjeta); font-size: var(--t-secundario);
+             overflow-y: auto; position: relative; }
+  .jugadas > div { display: grid; gap: 4px; align-items: center; padding: 3px 7px;
+                   border-bottom: 1px solid var(--linea); }
+  /* CINCO COLUMNAS: nº, jugada y reloj de cada lado. Es como está impresa una
+     planilla de papel, que trae una columna de reloj por jugador. El tiempo va
+     PEGADO a su jugada y no los dos al final, porque al final habría que contar
+     cuál es de quién. */
+  .jugadas.planilla > div { grid-template-columns: 28px 1fr auto 1fr auto; }
+  .jugadas > div:last-child { border-bottom: 0; }
+  /* el renglón de la jugada elegida, tenue: la marca fuerte la lleva la jugada
+     misma —la misma que en la tira— y dos marcas fuertes en la misma fila se
+     pelean. Esta es para encontrar el renglón barriendo con el ojo. */
+  .jugadas > div.aca { background: color-mix(in srgb, currentColor 7%, transparent); }
+  .jugadas .np { color: var(--tenue); font-variant-numeric: tabular-nums; font-size: var(--t-leyenda); }
+  .jugadas .jg { display: flex; align-items: center; gap: 6px; cursor: pointer;
+                 padding: 4px 6px; border-radius: var(--r-chico); min-width: 0; }
+  /* ancho fijo porque los símbolos van de uno a dos caracteres ("★" contra "??"):
+     sin esto las jugadas bailan de fila en fila */
+  .jugadas .jg .sm { font-size: 11px; font-weight: 700; min-width: 16px;
+                     text-align: center; flex-shrink: 0; }
+  .jugadas .jg .sa { overflow: hidden; text-overflow: ellipsis; }
+  .jugadas .jg.sel { background: color-mix(in srgb, currentColor 20%, transparent);
+                     box-shadow: inset 0 -2px 0 var(--acento); font-weight: 700; }
+  .jugadas .pe, .jugadas .se { font-variant-numeric: tabular-nums; font-size: var(--t-minimo);
+                 color: var(--tenue); padding-right: 3px; }
+  /* EL TIEMPO PENSADO (v0.82). Pedido explícito y con la palabra "fundamental":
+     ver que un error grave salió en dos segundos explica el error mejor que su
+     evaluación. Va en su propia columna, no pegado a la pérdida, porque son dos
+     magnitudes distintas y juntas se leen como una sola. Ancho mínimo para que
+     "1:05" y "9s" no bailen de fila en fila. */
+  .jugadas .se { min-width: 34px; text-align: right; }
+  /* Cómo terminó la partida, cerrando la lista: es donde lo escribe una
+     planilla. No suma alto porque vive adentro, que ya scrollea. */
+  .jugadas .cierre { display: block; text-align: center; padding: 7px 10px;
+                     font-size: 12.5px; color: var(--tenue);
+                     border-top: 1px solid var(--linea); }
+  .jugadas .cierre b { font-weight: 700; color: var(--texto); }
+  /* LA VARIANTE EN LA PLANILLA (v0.171, `laVarianteEnLaPlanilla`): párrafo
+     con sangría, el punteado y el violeta de lo inventado, como en la tira */
+  .jugadas > div.var { display: block; margin-left: 18px; padding: 4px 6px;
+                       border-left: 2px dashed var(--inventada); line-height: 1.9;
+                       background: color-mix(in srgb, var(--inventada) 6%, transparent); }
+  .jugadas > div.var .ata { white-space: nowrap; }
+  .jugadas > div.var .np { margin: 0 2px 0 4px; }
+  .jugadas > div.var .jg { display: inline-flex; gap: 3px; padding: 1px 4px;
+                           color: var(--inventada); vertical-align: middle; }
+  .jugadas > div.var .jg.pend { color: var(--tenue); }
+
+  /* Fuera de pantalla ancha no hay columna. VA ANTES de la media query: a
+     igual especificidad gana la última regla, y puesto después le ganaba al
+     `display` de adentro y la lista no se veía nunca. */
+  .colLista { display: none; }

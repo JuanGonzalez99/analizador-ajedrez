@@ -12,6 +12,12 @@ const chequear = (nombre, malas) => {
   else console.log(`  ok  ${nombre}`);
 };
 
+/* 0. index.html es exactamente lo que sale de juntar src/ (etapa 2, v1.0.9).
+      Las sesiones editan los pedazos de src/; si index.html se editó a mano,
+      o se tocó src/ sin juntar, lo que se pushea no es lo que se probó. */
+import { juntar } from "../juntar.mjs";
+chequear("index.html sale de src/", juntar() === html ? [] : ["no coincide: correr npm run juntar (y si index.html se editó a mano, pasar el cambio a src/)"]);
+
 /* 1. Todo id referenciado en JS existe en el HTML. */
 const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map(m => m[1]));
 const usados = new Set([

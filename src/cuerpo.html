@@ -1,0 +1,415 @@
+</script>
+
+
+
+<!-- EL MES HACE DE TÍTULO (v0.120), como en el Mes desde la v0.108: el
+     select dice "Octubre 2026" con la letra del h2, y abajo un solo renglón
+     chico con el recuento del mes. -->
+<!-- [PC] EL MES A LA IZQUIERDA Y LA LISTA A LA DERECHA desde 950 (v0.122): en
+     el celu el armazón es display: contents y no cambia nada. -->
+<div class="iniGrid"><div class="iniIzq">
+<!-- [PC] LA CABECERA Y EL PGN VIVEN ADENTRO DE LA COLUMNA IZQUIERDA (v0.145,
+     lavado del revisor sobre la v0.126: la A entre cuatro). Antes eran hijos
+     del body, arriba de la grilla, y a 1280 la tuerca quedaba sola en x 1037
+     sobre la lista. Acá adentro la columna es "quién, qué mes, qué hago con el
+     mes", con un solo borde derecho, y la lista arranca arriba de todo. En el
+     celu el armazón es display: contents: no cambia nada. -->
+<!-- LA CABECERA DEL INICIO (v0.120, lavado de cara del inicio, la C del
+     revisor). Con la entrada abierta es el título; después de la primera
+     búsqueda la entrada se pliega a "santico26 · cambiar" y el mes pasa a ser
+     el título: así entran 12 partidas a la vista en vez de 8. La tuerca abre
+     la misma hoja de ajustes que la de la Partida (una sola hoja). -->
+<div class="cabInicio soloInicio">
+  <h1 class="deEntrada">Analizador de partidas</h1>
+  <p id="yaUsuario" class="oculto"><span id="yaUsuarioNombre"></span><span class="sep" aria-hidden="true">&middot;</span><button type="button" id="cambiarUsuario" aria-expanded="false">cambiar</button></p>
+  <p class="n deEntrada">Analiza con Stockfish dentro de tu navegador. Solo sale de tu teléfono el pedido de las partidas.</p>
+  <div class="fila deEntrada campo">
+    <input id="usuario" placeholder="usuario de chess.com" spellcheck="false" autocapitalize="off">
+    <button id="buscar">Buscar</button>
+    <button id="verPegar" aria-expanded="false" aria-controls="zonaPegar">o pegar un PGN</button>
+  </div>
+  <button id="btnAjustesInicio" class="tuerca" aria-label="Ajustes" aria-expanded="false"
+          aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuercaI"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuercaI)"/></svg></button>
+</div>
+<div id="zonaPegar" class="oculto soloInicio deEntrada">
+  <textarea id="pgn" placeholder="Pegá acá el PGN"></textarea>
+  <div class="fila" style="margin-top:8px"><button id="usarPgn">Usar este PGN</button></div>
+</div>
+<div id="zonaMeses" class="oculto soloInicio"><select id="meses" aria-label="Mes"></select>
+  <p class="resumenInicio oculto" id="partidasMarcador"></p></div>
+
+<div id="zonaAnalizar" class="oculto soloInicio">
+  <div class="fila solo-dev">
+    <label>Profundidad
+      <select id="prof">
+        <option value="13">13 — rápida</option>
+        <option value="16" selected>16 — recomendada</option>
+        <option value="18">18 — lenta</option>
+      </select>
+    </label>
+    <label>Motores
+      <select id="motores"></select>
+    </label>
+    <label>Hash
+      <select id="hashMotor">
+        <option value="1">1 MB</option>
+        <option value="4">4 MB</option>
+        <option value="16" selected>16 MB</option>
+      </select>
+    </label>
+  </div>
+  <div class="fila solo-dev" style="margin-top:6px; font-size:14px">
+    <label>MultiPV
+      <select id="optMpv">
+        <option value="2" selected>2 — con Genial</option>
+        <option value="1">1 — sin Genial</option>
+        <option value="h">híbrido</option>
+      </select>
+    </label>
+    <label><input type="checkbox" id="optLimpiar" checked> memoria limpia</label>
+    <label><input type="checkbox" id="optBarrido"> barrido a 13</label>
+    <label><input type="checkbox" id="optBloques"> bloques</label>
+  </div>
+  <!-- SE ENTRA TOCANDO LA FILA (v0.120): "Analizar la partida" se fue. El
+       botón del mes dice cuántas faltan y no está si no falta ninguna. -->
+  <div class="fila botonMes"><button id="analizarMes" class="oculto">Analizar el mes</button></div>
+  <div class="fila solo-dev" style="margin-top:8px">
+    <button id="medir" class="chico">Copiar medición de Genial</button>
+    <button id="banco" class="chico">Comparar configuraciones</button>
+    <button id="barrido" class="chico">Barrer motores y memoria</button>
+    <button id="salirDev" class="chico">Salir del modo dev</button>
+  </div>
+</div>
+
+<!-- EL ESTADO DEL TRABAJO VIVE APARTE (v0.110): en el inicio se ve siempre,
+     y en la Partida o el Mes solo mientras algo corre, para que el progreso y
+     "Detener" no queden escondidos en otra pantalla. -->
+<div id="zonaEstado">
+  <p id="estado"></p>
+  <div class="barra oculto" id="barra"><i id="progreso"></i></div>
+  <div class="fila"><button id="detener" class="chico oculto">Parar</button></div>
+</div>
+
+<!-- La puerta al Mes, entre el renglón del recuento y la lista (v0.120). -->
+<button type="button" id="tarjetaMes" class="tarjetaMes soloInicio oculto"><span><b id="tarjetaMesTit">Estadísticas</b><small id="tarjetaMesSub"></small></span><span class="flecha" aria-hidden="true">&rsaquo;</span></button>
+</div><div class="iniDer">
+<div id="zonaPartidas" class="oculto soloInicio">
+  <div id="partidas" class="lista"></div></div>
+</div></div>
+
+<div id="zonaBanco" class="oculto solo-dev">
+  <h2 id="tituloBanco">Comparación de configuraciones</h2>
+  <p class="cap" id="capBanco"></p>
+  <div class="tw"><table id="tablaBanco"></table></div>
+</div>
+
+<div id="zonaMes" class="oculto">
+  <!-- EL MES ES EL TÍTULO (v0.108). Antes decía "Estadísticas" y "El mes
+       seleccionado", pero no QUÉ mes: ese estaba en #meses, arriba, que con el
+       scroll ya no se ve. Ahora el selector de arriba de todo dice el mes y
+       deja elegir otro. Arriba, "Estadísticas" como rótulo chico (v0.109). -->
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDelMes"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>Partidas</button></h2></div>
+  <!-- DOS COLUMNAS EN LA COMPU (v0.119): a la izquierda el resumen, a la
+       derecha las secciones. En el celu los dos envoltorios son `display:
+       contents` y la página se apila igual que antes, al byte. -->
+  <div class="mesGrid"><div class="mesIzq">
+  <h2 class="rotulo">Estadísticas</h2>
+  <div class="fila">
+    <select id="fuente" class="chico" aria-label="Mes de las estadísticas">
+      <option value="todo">Todo lo analizado</option>
+    </select>
+    <select id="cadencia" class="chico" aria-label="Cadencia"></select>
+  </div>
+  <p class="cap" id="capMes"></p>
+  <details class="quemide"><summary>Cómo se leen estos números</summary>
+    <p class="cap" id="capMesDetalle"></p>
+</details>
+  <div class="metricas" id="mesCabecera"></div>
+  <p class="marcadorMes" id="mesMarcador"></p>
+  <div class="tw"><table id="mesResumen"></table></div>
+  </div><div class="mesDer">
+
+  <!-- ARRIBA LO QUE HABLA DE PARTIDAS, ABAJO LO QUE HABLA DE JUGADAS (v0.146,
+       lavado del Mes como pila de siete secciones iguales: la A del revisor
+       con su ajuste). "Cómo terminaron" va abierta de fábrica —es cómo fue el
+       mes, se mira cada vez— y "Partida por partida" segunda; las cinco tablas
+       que cuentan jugadas malas son de consulta: juntas, cerradas y bajo un
+       rótulo, "Jugada por jugada" (v0.147, Juan: neutro, y hace pareja con
+       "Partida por partida"). Ninguna recuerda si se la cerró. -->
+  <details class="seccion" open>
+    <summary><span class="tit">Cómo terminaron</span><button type="button" class="ayuda" data-ayuda="capDesenlaces" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capDesenlaces"></p>
+    <div class="tw"><table id="mesDesenlaces"></table></div>
+  </details>
+  <!-- PARTIDA POR PARTIDA (v0.128, lavado de la lista del Mes, la A del
+       revisor). Era un h2 de 18 al fondo —el título más grande de la pantalla—
+       que decía "Partidas", igual que el volver de arriba. Es un apéndice: para
+       abrir partidas está el inicio, a un toque del volver. Así que va como
+       una sección más, cerrada, con las filas del inicio. "Seguir" queda afuera:
+       adentro de una sección cerrada no se vería nunca.
+       Desde la v0.146 sigue al selector de ritmo, como todo lo demás. -->
+  <details class="seccion">
+    <summary><span class="tit">Partida por partida</span><button type="button" class="ayuda" data-ayuda="capLista" aria-expanded="false" aria-label="Qué muestra esta lista">?</button></summary>
+    <p class="cap" id="capLista"></p>
+    <div id="mesLista" class="lista"></div>
+  </details>
+  <h2 class="rotulo">Jugada por jugada</h2>
+  <p class="cap capGrupo" id="capJugadas"></p>
+  <details class="seccion">
+    <summary><span class="tit">Por ventaja antes de mover</span><button type="button" class="ayuda" data-ayuda="capMesFranja" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capMesFranja"></p>
+    <div class="tw"><table id="mesFranja"></table></div>
+  </details>
+  <details class="seccion">
+    <summary><span class="tit">Capturas que estaban disponibles</span><button type="button" class="ayuda" data-ayuda="capCapturas" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capCapturas"></p>
+    <div class="tw"><table id="mesCapturas"></table></div>
+  </details>
+  <details class="seccion">
+    <summary><span class="tit">Por pieza movida</span><button type="button" class="ayuda" data-ayuda="capPieza" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capPieza"></p>
+    <div class="tw"><table id="mesPieza"></table></div>
+  </details>
+  <details class="seccion">
+    <summary><span class="tit">Por tramo de la partida</span><button type="button" class="ayuda" data-ayuda="capTramo" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capTramo"></p>
+    <div class="tw"><table id="mesTramo"></table></div>
+  </details>
+  <details class="seccion">
+    <summary><span class="tit">Mecanismos</span><button type="button" class="ayuda" data-ayuda="capMecanismos" aria-expanded="false" aria-label="Qué mide esta tabla">?</button></summary>
+    <p class="cap" id="capMecanismos"></p>
+    <div class="tw"><table id="mesMecanismos"></table></div>
+  </details>
+
+  <div class="fila filaSeguir"><button id="seguirMes" class="chico oculto"></button></div>
+  </div></div>
+</div>
+
+<div id="zonaRevision" class="oculto">
+  <!-- DOS COLUMNAS EN PANTALLA ANCHA (v0.80): la principal es la vista de
+       siempre, intacta y de 700 px, y al lado la lista de jugadas. En un
+       celular esto es un div de más y nada cambia: la lateral no se muestra. -->
+  <!-- LA COLUMNA PRINCIPAL VA PARTIDA EN DOS desde la v0.88, con la curva en el
+       medio y como hija directa de la grilla: es la única forma de que cruce las
+       dos columnas, porque adentro de un hijo no puede. El orden del celular no
+       cambia —en una sola columna esto se apila igual que antes— y el de la
+       compu tampoco: partirla acá y no al final es lo que evita que la curva
+       termine DEBAJO de los cuadritos y los botones, que era el precio que
+       este cambio parecía tener. -->
+  <div class="principal parriba">
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDeLaPartida" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="volverAQue" hidden>Partidas</span></button></h2>
+    <!-- LA BARRA DE TÍTULO DE LA PARTIDA (v0.123, la B del revisor): el título es
+         la partida —rival, fuerza, cómo terminó— y la apertura va de subtítulo.
+         Mientras algo corre, el estado ocupa el lugar del subtítulo. -->
+    <div class="cabTit"><div class="l1"><span id="revRival" class="rival"></span><span id="revElo" class="elo"></span><span id="revFin" class="fin"></span></div>
+      <div class="l2"><span id="revAp"></span><span id="revEstado"></span></div></div>
+    <!-- LA TUERCA ESTÁ DIBUJADA, no es el glifo ⚙ del sistema (v0.92). Es la
+         misma lección de las piezas de la v27 (§4bis): un glifo depende de la
+         fuente del aparato y el que sale es el hueco pensado para texto
+         corrido, con el trazo demasiado fino para leerse a 20 px. Lo reportó el
+         usuario mirando la app —"se ve raro, muy flaco"—. Seis dientes y no
+         ocho: a este tamaño los ocho se empastan. Pesa 900 bytes y no pide
+         nada a la red. El agujero se recorta con una máscara, que es lo que
+         deja el resto en `currentColor` y lo hace andar en los dos temas. -->
+    <button id="btnAjustes" aria-label="Ajustes" aria-expanded="false"
+            aria-controls="hojaAjustes"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><mask id="mTuerca"><rect width="24" height="24" fill="#000"/><circle cx="12" cy="12" r="6.4" fill="#fff"/><g fill="#fff"><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(60 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(120 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(180 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(240 12 12)"/><rect x="9.1" y="2.9" width="5.8" height="5.7" rx="1.6" transform="rotate(300 12 12)"/></g><circle cx="12" cy="12" r="3.4" fill="#000"/></mask><rect width="24" height="24" fill="currentColor" mask="url(#mTuerca)"/></svg></button></div>
+  <div class="evalh oculto" id="evalh"><i id="evalfillh"></i><span class="num" id="evalnumh"></span></div>
+  </div>
+  <!-- EL ORDEN DE ESTA VISTA SE DECIDIÓ DIBUJÁNDOLO (v0.74, §4septdecies):
+       arriba el ESTADO —la barra—, después lo que pasó en esta jugada —las dos
+       tarjetas—, después el tablero, y abajo la navegación y la curva. La
+       tarjeta va arriba del tablero porque se lee primero: bajás la vista,
+       encontrás el veredicto y recién entonces mirás la posición.
+       DESDE LA v0.90 LAS DOS TARJETAS VIVEN EN UN BLOQUE PROPIO, hijo directo de
+       la grilla, para poder mudarlas a una columna al costado en una pantalla
+       muy ancha (§4trigies). En el celular y en dos columnas esto se apila
+       exactamente igual que antes: es un div de más y nada más. -->
+  <div class="tarjetas">
+  <div class="veredicto prueba oculto" id="prueba">
+    <div class="ico" id="pIco"></div>
+    <div class="txt"><div class="tit" id="pTit"></div><div class="sub" id="pSub"></div>
+      <div class="exp" id="pExp"></div></div>
+    <button class="chico" id="btnProbar">Volver</button>
+  </div>
+  <div class="veredicto" id="veredicto">
+    <div class="ico" id="vIco"></div>
+    <div class="txt"><div class="tit" id="vTit"></div><div class="sub" id="vSub"></div>
+      <div class="exp oculto" id="vExp"></div></div>
+    <div class="ev" id="vEv"></div>
+  </div>
+  </div>
+  <div class="principal pmedio">
+  <div class="revtab">
+    <div class="evalbar" id="evalbar"><i id="evalfill"></i><span class="num" id="evalnum"></span></div>
+    <div id="tablero"></div>
+    <div class="comidas"><div class="cGrupo" id="cArriba"></div><div class="cGrupo" id="cAbajo"></div></div>
+    <!-- GIRAR AL COSTADO DEL TABLERO, SOLO AL ARRANCAR (v0.114, idea de Juan).
+         Girar se usa al abrir la partida —para verla del lado que interesa— y
+         casi nunca después; por eso está a mano mientras dura la apertura y
+         después desaparece. Afuera de #tablero a propósito: ese se redibuja
+         entero en cada jugada y escucha el arrastre y las marcas. -->
+    <button id="btnGirarTab" class="oculto" aria-label="Girar el tablero"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9"/><path d="M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3v4.3h-4.3"/><path d="M5.4 21v-4.3h4.3"/></svg></button>
+  </div>
+  <!-- La tira de jugadas: lleva la partida ENTERA y se centra sola en la
+       jugada actual, que es de donde sale que siempre se vea que hay más para
+       los dos lados cuando lo hay. Los galones son el paso fino y el dedo el
+       paso grueso. -->
+  <div class="tira" id="tira">
+    <!-- El chevron se DIBUJA y no se escribe: `&lsaquo;` y `&rsaquo;` son comillas
+         angulares y en casi toda tipografía se apoyan a la altura de la
+         minúscula, no en el centro del renglón, así que se ven corridas por más
+         que la caja mida centrada. Dibujado es además la MISMA forma que los
+         galones del tablero, que son el mismo gesto. -->
+    <button id="ant" aria-label="Jugada anterior"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M 3.5 -6 L -3.5 0 L 3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <div class="tiraSc" id="tiraSc"></div>
+    <button id="sig" aria-label="Jugada siguiente"><svg width="13" height="20" viewBox="-7 -10 14 20" aria-hidden="true"><path d="M -3.5 -6 L 3.5 0 L -3.5 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+  </div>
+  </div>
+  <!-- EL ENVASE DE LA LISTA (v0.95) no es un div de más: es lo que sujeta al
+       `sticky`. La lista se pega al techo mientras se scrollea, y Chrome no la
+       sujeta a su área de la grilla sino al fondo de #zonaRevision, así que le
+       sobraban 154 px de deslizamiento y se metía abajo de la curva. Con un
+       envase que ocupa exactamente las filas del tablero, el bloque contenedor
+       del `sticky` es ese y no le queda lugar para irse. -->
+  <div class="colLista">
+  <aside class="lateral" id="lateral">
+    <!-- LAS ALTERNATIVAS DEL MOTOR (v0.89). Solo en compu, arriba de la lista.
+         No se calculan solas: son una corrida de motor por posición y correrla
+         al pasar de jugada sería pelear con la variante por el mismo grupo. -->
+    <div class="alts" id="alts">
+      <!-- SON LAS MEJORES EN LUGAR DE LA JUGADA QUE SE ESTÁ MIRANDO (v0.139), o
+           sea las de la posición ANTERIOR. Hasta la v0.138 eran las de la
+           posición que se ve —"¿y ahora qué?"— y Juan lo leyó como un error:
+           parado en una jugada, lo que se pregunta es qué había en vez de esa.
+           El título nombra la jugada para que no haya que adivinarlo. -->
+      <div class="altCab"><span id="altTit">Las mejores de acá</span>
+        <button class="chico" id="btnAlts">Ver las tres mejores</button></div>
+      <div class="altLista" id="altLista"></div>
+    </div>
+    <div class="jugadas" id="jugadas" tabindex="0" role="group" aria-label="Jugadas: ↑ ↓ para pasar, Inicio y Fin para ir a la punta"></div>
+  </aside>
+  </div>
+  <div class="curva" id="curva" role="img"
+       aria-label="Curva de quién va ganando a lo largo de la partida"></div>
+  <div class="principal pabajo">
+  <div class="metricas">
+    <div id="tileMejor" class="tocable" role="button" tabindex="0" aria-pressed="false"
+         aria-label="Mostrar la mejor en todas las jugadas"><div class="et">Mejor<svg class="flechaMejor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 L15.5 8.5 L12.5 5.5 L19.5 4.5 L18.5 11.5 L15.5 8.5" stroke-width="2.4" stroke-linejoin="round"/></svg></div><div class="va" id="mMejor"></div></div>
+    <div><div class="et">Pérdida</div><div class="va" id="mPerdida"></div></div>
+    <div><div class="et">Caída</div><div class="va" id="mCaida"></div></div>
+    <!-- CUÁNTO PENSÓ ESTA JUGADA (v0.93). Va acá y no en el tablero, y esa fue
+         la decisión: el usuario rechazó ocho ubicaciones alrededor del tablero
+         —le sacaban alto, tapaban piezas o compartían renglón con texto
+         variable— y al plantearlo dijo que "en el fondo" lo que uno quiere ver
+         es cuánto se pensó. Siendo eso, es un dato DE LA JUGADA, igual que la
+         pérdida y la caída, y su lugar es esta fila: no cuesta un solo píxel,
+         no tapa nada, y el renglón ya existía. §4duotrigies. -->
+    <div><div class="et">Pensó</div><div class="va" id="mPenso"></div></div>
+    <!-- LA FILA ANTES DE LA PRIMERA JUGADA (v0.131). En la posición inicial no
+         hay jugada que juzgar, y los tres cuadritos decían "—": tres cajas
+         vacías con el mismo peso que la que sí sirve. Se dibujaron cinco (los
+         "—", solo Mejor, esta leyenda, huecos punteados y nada); el revisor
+         eligió la leyenda, SIN caja: suelta se lee como aclaración de Mejor y
+         no como un campo más, y enseña los nombres de lo que aparece en la
+         jugada 1. Ocupa las tres columnas, así que el alto no cambia y no salta
+         nada al avanzar. Traspaso §7, v0.131. -->
+    <div class="leyInicio" id="mLeyenda"></div>
+  </div>
+  <div class="senales" id="senales"></div>
+  <div class="acciones">
+    <button class="chico" id="btnGirar"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9"/><path d="M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3v4.3h-4.3"/><path d="M5.4 21v-4.3h4.3"/></svg><span>Girar</span></button>
+  </div>
+  </div>
+</div>
+
+<div id="zonaResumen" class="oculto">
+  <h2>Resumen</h2>
+  <p class="cap" id="capResumen"></p>
+  <div class="marcador" id="marcador"></div>
+  <div class="tw"><table id="resumen"></table></div>
+  <div class="resAncho"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
+</div>
+
+<!-- LA HOJA DE AJUSTES (v0.91). Vive al final del body y no adentro de la
+     vista Partida a propósito: es `position: fixed` y así no depende de en qué
+     columna de la grilla haya caído nada.
+     LOS <select> SON LOS MISMOS DE ANTES, mudados acá adentro: no hay estado
+     nuevo, ni una segunda fuente de verdad, y todo lo que ya escuchaba sus
+     onchange sigue igual. Lo único que cambió es el texto de las opciones, que
+     ahora no se autonombran —la etiqueta está al lado— y quedan cortas. -->
+<div id="fondoAjustes" class="oculto"></div>
+<div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
+     aria-labelledby="tituloAjustes">
+  <div class="ajTirador"></div>
+  <div class="ajCab"><h2 id="tituloAjustes">Ajustes</h2>
+    <button class="chico" id="cerrarAjustes">Listo</button></div>
+  <p class="ajGrupo">El tablero</p>
+  <label class="ajFila"><span>Tema</span>
+    <select id="tema" class="chico"></select></label>
+  <p class="ajGrupo">Cómo se ve la partida</p>
+  <label class="ajFila"><span>Evaluación</span>
+    <select id="verEval" class="chico"></select></label>
+  <!-- (v0.160) "Marcas de la curva" y "Las jugadas de al lado" se fueron:
+       Juan eligió punto chico, y la planilla porque no lo usa en la compu -->
+  <!-- "RIVAL" VIVÍA EN LA FILA DE ABAJO hasta la v0.113. Es de las que se ponen
+       una vez y se olvidan, y Juan no sabe cuánto le aporta: acá no ocupa la
+       pantalla de la jugada, y se guarda como los demás. -->
+  <label class="ajFila"><span>Jugadas del rival</span>
+    <select id="verRival" class="chico"><option value="no">atenuadas</option><option value="si">pintadas</option></select></label>
+  <p class="ajGrupo">La explicación</p>
+  <!-- DIAL TEMPORAL (v0.77): cuánto habla la tarjeta. Con quince conceptos
+       compitiendo por una sola ranura, los de abajo del orden no salían nunca;
+       las tres posiciones son las tres salidas que se dibujaron, y el usuario
+       elige usando la app. SE VA cuando esté elegida: §4novodecies. -->
+  <label class="ajFila"><span>Cuánto habla</span>
+    <select id="largoExp" class="chico"></select></label>
+  <!-- (v0.159) el nombre de la apertura en las jugadas de libro: Juan no se
+       decidió entre las dos y elige usando la app; de fábrica, "cuando cambia" -->
+  <label class="ajFila"><span>Nombre de la apertura</span>
+    <select id="nombreAp" class="chico"><option value="cambia">cuando cambia</option><option value="siempre">en cada jugada</option></select></label>
+  <!-- DIAL TEMPORAL (v0.76): cómo se ve la pantalla mientras se prueba una
+       jugada. Eran cuatro formas; desde la v0.160 quedan dos (Juan descartó
+       "adentro" y "las dos tarjetas"), y elige entre esas usando la app. SE
+       VA cuando esté elegida: ver §4sexdecies. -->
+  <label class="ajFila"><span>Al probar una jugada</span>
+    <select id="formaPrueba" class="chico"></select></label>
+  <!-- MODO Y MATE VIVÍAN EN EL INICIO hasta la v0.120: se ponen una vez y se
+       olvidan, y en el inicio empujaban la lista. -->
+  <p class="ajGrupo">El análisis</p>
+  <label class="ajFila"><span>Modo</span>
+    <select id="modo" class="chico">
+      <option value="critico" selected>crítico</option>
+      <option value="amigable">amigable</option>
+    </select></label>
+  <label class="ajFila"><span>Mate a la vista</span>
+    <select id="mateVista" class="chico">
+      <option value="1">solo en 1</option>
+      <option value="2">hasta en 2</option>
+      <option value="3" selected>hasta en 3</option>
+      <option value="5">hasta en 5</option>
+      <option value="99">cualquiera</option>
+    </select></label>
+  <p class="ajVersion" id="verAjustes"></p>
+  <!-- LA ATRIBUCIÓN VIVE ACÁ DESDE LA v0.143 (antes al pie de la página). Va
+       pegada a la versión a propósito: las dos son la ficha técnica de la app y
+       se leen como un bloque al final de la hoja. El `nowrap` del enlace es de
+       la v0.126 y sigue valiendo: sin él, "CC BY-SA 3.0" se corta en dos. -->
+  <p class="ajCredito">Piezas <a href="https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces"
+    rel="noopener">Cburnett</a> de Colin M.L. Burnett,
+    <a href="https://creativecommons.org/licenses/by-sa/3.0/" rel="noopener" style="white-space:nowrap">CC BY-SA 3.0</a>.</p>
+</div>
+
+<!-- EL PIE ES SOLO LA VERSIÓN (v0.143, Juan: la versión "se pierde con todo el
+     texto de los créditos"). Eran siete caracteres al principio de noventa, sin
+     nada que los separara, y la versión es lo que él busca para saber si le
+     llegó el deploy. La atribución de las piezas se mudó al pie de la hoja de
+     Ajustes, donde ya vivía la versión completa: es una obligación de la
+     licencia que no lee nadie, y acá le comía el renglón a una coordenada de
+     depuración. De paso le saca dos renglones al pie de TODAS las pantallas,
+     porque el pie cuelga del body y no de una vista. A un toque sigue siendo
+     atribución razonable para el medio (CC BY-SA 3.0, §4bis). Juan lo pensaba
+     como pantalla propia de "Acerca de", que queda anotada para cuando haya
+     más que poner: ver HOJA-DE-RUTA.md. -->
+<p class="pie" id="verPie"></p>
+
+<script type="module">

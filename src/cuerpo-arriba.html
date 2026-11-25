@@ -1,0 +1,21 @@
+</style>
+
+
+
+<!-- Este bloque es un script clásico: corre aunque el módulo falle, y por eso
+     sirve para avisar que el módulo falló. Acá vive también el registro, para
+     que exista antes que cualquier otra cosa y capture lo que pase al arrancar. -->
+<div id="diag" class="solo-dev">cargando…</div>
+<div id="errores" class="oculto"></div>
+
+<div id="panelLog" class="oculto">
+  <div class="fila">
+    <button class="chico" id="logCopiar">Copiar</button>
+    <button class="chico" id="logBajar">Descargar</button>
+    <button class="chico" id="logLimpiar">Limpiar</button>
+    <button class="chico" id="cacheBorrar" disabled>Borrar caché</button>
+  </div>
+  <div id="logTexto"></div>
+</div>
+
+<script>

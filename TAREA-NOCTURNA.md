@@ -103,7 +103,9 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    antes del ítem, en su propio commit, y no cuentan como ítem. Son lo que
    evita que vuelva a escaparse algo que ya se escapó.
 4. **Construir.** Con las reglas de siempre: un cambio invasivo por tanda,
-   `npm test` verde, versión de `index.html` que sube, traspaso actualizado en
+   el código se edita en `src/` (nunca `index.html` a mano: lo arma
+   `npm run juntar`, y `npm test` junta solo),
+   `npm test` verde, versión de `index.html` que sube (`src/registro.js`), traspaso actualizado en
    el mismo commit, PC en commits separados, y la comparación byte a byte de
    las capturas del celu contra las de antes del cambio.
    **Antes de pasárselo al revisor, mirá vos lo que él va a mirar** (22-nov):
