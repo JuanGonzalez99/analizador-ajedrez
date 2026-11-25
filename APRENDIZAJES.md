@@ -54,7 +54,11 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-(Ninguna por ahora.)
+- **El mono toca antes de que arranque el módulo** (revisor de UX, v1.0.9;
+  causa C). En los recorridos con `chess.js` lento, tocar Buscar antes de
+  `MODULO_OK` y contar como falla un toque que no cambia nada visible
+  ("todo lo que se toca responde", hoy solo corre con la app arrancada).
+  Nace en rojo; hacerla junto con el arreglo de Buscar.
 
 ## Registro
 
@@ -162,4 +166,12 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   misma noche (revisor de código) · F: la fila se escribió con el encabezado
   y las funciones de cada pedazo, sin buscar dónde se enganchan los eventos ·
   chequeo 0bis de `estaticos.mjs`: cada nombre de una fila del mapa tiene que
-  estar en ese pedazo.
+  estar en ese pedazo (y una fila por pedazo: la primera versión daba verde
+  sin encontrar el mapa; una prueba se prueba también quitándole lo que lee).
+- **Le pedí al revisor juzgar un texto que en modo simple no se ve** · v1.0.9
+  · A: miré el cambio en el código y no la pantalla en el modo de Juan ·
+  paso en `TAREA-NOCTURNA.md` (4): la captura de un cambio se saca en modo
+  simple y se dice si lo cambiado se ve ahí.
+- **Buscar no responde mientras carga el módulo** · ya estaba → v1.0.9
+  (revisor de UX) · C: nadie tocó nada antes de `MODULO_OK` · prevención
+  pendiente en el mono; el arreglo, a Arreglos.

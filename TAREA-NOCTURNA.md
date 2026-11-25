@@ -111,7 +111,10 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    **Antes de pasárselo al revisor, mirá vos lo que él va a mirar** (22-nov):
    la zona en todos sus estados (scroll arriba y abajo, abierta y cerrada,
    hover y foco, cada opción de Ajustes, 386 y los dos lados de cada corte)
-   y "¿dónde más vive esto?" (`revisor-ux.md`, "Cómo mirás"). Lo que el
+   y "¿dónde más vive esto?" (`revisor-ux.md`, "Cómo mirás"). Y en el modo
+   en que la usa Juan (simple): si lo que cambió no se ve ahí, decirlo
+   (v1.0.9: se le pidió al revisor juzgar un texto que en modo simple está
+   escondido). Lo que el
    revisor encuentre que vos podías ver también es un aprendizaje, y tuyo.
    **Si el cambio toca lo que dice la tarjeta**, antes del revisor de
    ajedrez: `npm run frases` (todas las jugadas legales, como buena y como error, de las partidas de
