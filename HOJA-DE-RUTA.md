@@ -213,7 +213,7 @@ archivo, y partirlo después cuesta más y cada noche de módulo paga la lectura
 entera. Es una o dos noches y Juan no ve nada distinto. Antes, una noche de
 limpieza: lo que está muerto no se parte.
 
-- [ ] **Limpieza antes de partir, en una o dos versiones** (revisor de código,
+- [x] ~~**Limpieza antes de partir, en una o dos versiones**~~ (hecha: v1.0.1, v1.0.3, v1.0.5 y las pruebas del 25-nov) (revisor de código,
       18-nov; interno, sin cambios que se vean):
   - [x] ~~**Sacar los restos de "la lista adentro" de la v0.160**~~ (hecho en la v1.0.1) (revisor de
         código, 18-nov; interno). `tiraDeLaVariante()`, la rama
@@ -236,7 +236,7 @@ limpieza: lo que está muerto no se parte.
         mejor", que ya no está. ~800 tokens. Las pruebas que buscan
         `.colLista, .soloAncho { display: none; }` pasan a `.colLista`. La
         regla de `max-width: 359px` que esconde el ícono NO se toca.
-  - [ ] **Dos pruebas que no prueban lo que dicen** (revisor de código,
+  - [x] ~~**Dos pruebas que no prueban lo que dicen**~~ (hecho el 25-nov, sin versión: solo pruebas) (revisor de código,
         18-nov; interno). La del Escape de Ajustes (analisis.test.mjs ~2632)
         busca `tecla === "Escape"`, que está en tres lugares: tiene que buscar
         el renglón entero de `verAjustes(false)`. La de `data-sq="` (~2162)

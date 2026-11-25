@@ -4847,6 +4847,15 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
 
+**Sin versión (25-nov), dos pruebas que no probaban lo que decían** (revisor
+de código, 18-nov; último paso de la limpieza antes de partir). La de las tres
+salidas de Ajustes buscaba `tecla === "Escape"`, que está en tres lugares
+(Ajustes, la prueba y la marcada): ahora busca el renglón entero que cierra
+Ajustes. La de las 64 casillas buscaba `data-sq="`, que también llevan las
+marcas de la explicación: ahora busca el `data-sq="${sq}"` del tablero.
+Comprobado al revés: borrando esos dos renglones de `index.html`, las dos
+fallan (antes seguían en verde). Solo cambian las pruebas: la versión no sube.
+
 **v1.0.6, la pareja de alfiles no se dice a mitad de un cambio** (revisor
 de ajedrez, pasada del 22-nov; Arreglos). En
 `r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b`, Bxg5 decía "Te

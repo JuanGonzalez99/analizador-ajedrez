@@ -2247,7 +2247,8 @@ test("las zonas de toque de los galones se fueron, y los galones se quedaron", (
      el tablero se desliza. */
   assert.ok(!html.includes("data-nav"), "no queda ninguna zona de navegación");
   assert.ok(html.includes("s += galon(M / 2 - 1, 1)"), "el dibujo se queda");
-  assert.ok(html.includes('data-sq="'), "y las 64 casillas reciben el toque");
+  assert.ok(html.includes('data-sq="${sq}"'),
+    "y las 64 casillas del tablero reciben el toque (no las marcas de la explicación, que también llevan data-sq)");
 });
 
 test("el tablero se toca siempre, no solo con una variante abierta", () => {
@@ -2771,7 +2772,7 @@ test("el menú de ajustes se lleva los select y tiene por dónde salir", () => {
   assert.ok(html.includes('<button id="btnAjustes"'), "la puerta es la tuerca del encabezado");
   assert.ok(html.includes('$("cerrarAjustes").onclick') &&
             html.includes('$("fondoAjustes").onclick') &&
-            html.includes('tecla === "Escape"'),
+            html.includes('if (tecla === "Escape") { ev.preventDefault(); verAjustes(false); }'),
     "tres salidas: el botón Listo, tocar afuera y Escape");
   /* Los <select> son los MISMOS de antes: si alguien los duplicara, habría dos
      fuentes de verdad y una de las dos quedaría muda. */
