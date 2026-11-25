@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.6**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.7**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -2077,6 +2077,8 @@ De ahí salen dos frases nuevas, y son espejo una de la otra:
 | frase | cuándo |
 |---|---|
 | "Tu peón de e4 queda sin defender." | estaba defendido y **esta jugada** lo dejó solo |
+| "Destapa tu peón de g7: queda a tiro de la dama." | no tenía defensa ni antes ni después, y la jugada le abrió una línea al rival (`destapada`, v1.0.7) |
+| "Tu peón de d4 queda a tiro de un caballo." | no tenía defensa y el ataque apareció sin línea abierta, p. ej. soltando una clavada (`sinDefensaAntes`, v1.0.7) |
 | "Defiende tu peón de e4, que estaba solo." | estaba colgado y la pieza movida **ahora lo cuida** (v1.0.4; antes decía "Salva") |
 | "Tapa el ataque a tu peón de a4." | estaba colgado y la pieza movida **se interpuso** (v1.0.4) |
 | "Salva tu peón de e4, que estaba sin defender." | estaba colgado y dejó de estarlo por otra cosa (se comió al atacante, se destapó una defensa) |
@@ -4846,6 +4848,31 @@ no respondía era un botón muerto que parecía vivo. Lo que quedó:
 - `.acciones` no se dibuja en el celu (quedaba vacía); vuelve con
   `body.girarEnFila` y en la compu, donde queda Girar solo, en la primera
   columna, bajo Mejor. La página del celu se acorta 44.
+
+**v1.0.7, "queda sin defender" solo si antes tenía defensa** (revisor de
+ajedrez, pasada del 22-nov; Arreglos). En
+`r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b`, Nc6 decía "El peón de g7
+queda sin defender": no tenía defensores antes ni después; lo nuevo era que
+el caballo dejaba de tapar la diagonal de la dama. `observarJugada` mira
+ahora, en las `nuevas` con motivo `sinDefensa`, si en la posición de antes
+tenían algún defensor (con la misma regla del rey de `enPeligro`). Si no
+tenían: `destapada` cuando la línea de algún atacante pasa por la casilla de
+donde salió la pieza (o por el peón comido al paso), y la tarjeta dice
+"Destapa tu peón de g7: queda a tiro de la dama."; si no, `sinDefensaAntes`,
+y la frase neutra "Tu peón de d4 queda a tiro de un caballo." (el atacante
+es el `por` de siempre, con `PIEZA_UN`). El revisor de ajedrez frenó la
+primera vuelta, sin la línea: Be2 en `4k3/8/2n5/1B6/3P4/8/8/6K1 w` suelta la
+clavada del caballo de c6 y decía "Destapa", cuando no se abrió ninguna
+línea. Y en la segunda vuelta: con "Destapa" el atacante que se nombra es
+el de la línea y no el más barato (Bd3 en `4k3/8/2n5/rB2P3/8/8/8/7K w`
+destapa la torre de a5 y suelta el caballo de c6: "a tiro de una torre").
+**`npm run frases` dice ahora cada jugada dos veces**, como buena y
+como error con un peón de pérdida: hasta acá iba sin pérdida y ninguna frase
+de la jugada mala podía salir (la primera versión de este párrafo lo leyó
+como "no sale en las partidas"). Con la pasada nueva cambian 6 de 4.624:
+Nc6, Ng6, Ng4 y Nxc4 en la posición del ítem y b3 y b4 en
+`r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w` ("Destapa tu torre
+de a1"), las seis verificadas con chess.js.
 
 **Sin versión (25-nov), dos pruebas que no probaban lo que decían** (revisor
 de código, 18-nov; último paso de la limpieza antes de partir). La de las tres

@@ -1524,7 +1524,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.0.6 · 24-11";
+  window.VERSION = "v1.0.7 · 25-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3283,6 +3283,12 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
     mecanismo = c.motivo === "menor"
       ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`,
           marca: "a tiro", sq: c.sq }
+      : c.destapada
+      ? { txt: `Destapa ${suya(c.pieza)} de ${c.sq}: queda a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`,
+          marca: "a tiro", sq: c.sq }
+      : c.sinDefensaAntes
+      ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`,
+          marca: "a tiro", sq: c.sq }
       : { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda sin defender.`,
           marca: "sin defender", sq: c.sq };
   }
@@ -4092,6 +4098,35 @@ function observarJugada(f, fenAntes = null) {
       const eran = new Set(antes.map(c => c.sq));
       const son = new Set(colgadas.map(c => c.sq));
       nuevas = colgadas.filter(c => !eran.has(c.sq));
+      /* "QUEDA SIN DEFENDER" SOLO SI ANTES TENÍA DEFENSA (revisor de ajedrez,
+         22-nov). En `r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b`, Nc6
+         decía "El peón de g7 queda sin defender": no tenía defensores ni
+         antes ni después; lo nuevo es que el caballo destapó la dama. Si antes
+         nadie la defendía, la jugada no le sacó la defensa: le abrió una
+         línea al rival, y eso es `destapada`. Pero solo si la línea del
+         atacante pasa por donde estaba la pieza que se movió (o por el peón
+         comido al paso): Be2 en `4k3/8/2n5/1B6/3P4/8/8/6K1 w` suelta la
+         clavada del caballo de c6 y ahí no se destapó nada (revisor, v1.0.7).
+         Sin línea, `sinDefensaAntes`, y la frase neutra: "queda a tiro". */
+      const tabEran = new Chess(fenAntes).board(), tabSon = new Chess(f.fen).board();
+      const rival = mio === "w" ? "b" : "w";
+      const pasos = [deDonde];
+      if (f.pieza === "p" && deDonde[0] !== donde[0] && !new Chess(fenAntes).get(donde))
+        pasos.push(donde[0] + deDonde[1]);
+      for (const c of nuevas) if (c.motivo === "sinDefensa") {
+        const atkAntes = atacantesDe(tabEran, c.sq, rival);
+        const defAntes = atacantesDe(tabEran, c.sq, mio)
+          .filter(d => d.pieza !== "k" || atkAntes.length < 2);
+        if (defAntes.length) continue;
+        /* el atacante que se nombra es el de la línea, no el más barato: Bd3
+           en `4k3/8/2n5/rB2P3/8/8/8/7K w` destapa la torre de a5 y suelta el
+           caballo de c6, y "a tiro de un caballo" contaba otro destape */
+        const linea = atacantesDe(tabSon, c.sq, rival)
+          .filter(a => pasos.some(x => enElMedio(a.sq, x, c.sq)))
+          .sort((a, b) => (VALOR[a.pieza] || 0) - (VALOR[b.pieza] || 0))[0];
+        if (linea) { c.destapada = true; c.por = linea.pieza; }
+        else c.sinDefensaAntes = true;
+      }
       /* Salvada: estaba colgada y ya no. Son dos cosas distintas y la frase
          cambia: si la casilla es la de donde salió la jugada, la pieza SE FUE;
          si no, se quedó y ahora está defendida. */

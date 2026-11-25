@@ -3471,6 +3471,53 @@ test("17. Bxe2: comerse la dama no se cuenta como 'salvar el peón de c2'", () =
   assert.deepEqual(o.salvadas, [], JSON.stringify(o.salvadas));
 });
 
+test("si nunca tuvo defensa no 'queda sin defender': la jugada la destapó", () => {
+  /* Revisor de ajedrez, 22-nov. Nc6 saca el caballo de e5 de la diagonal
+     d4–g7: el peón de g7 no tenía defensores antes ni después, y lo nuevo es
+     que la dama le llega. Decir "queda sin defender" era falso. */
+  const antes = "r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b KQkq - 0 6";
+  const f = unaFila(antes, "Nc6",
+    [{ cp: -100, mate: null, mejor: "e5g6", segunda: { cp: -150, mate: null } },
+     { cp: 300, mate: null, mejor: "d4g7", segunda: null }], 1);
+  const obs = A.observarJugada(f, antes);
+  const g7 = obs.nuevas.find(c => c.sq === "g7");
+  assert.ok(g7 && g7.destapada, JSON.stringify(obs.nuevas));
+  const txt = A.explicarJugada(f, null, true, null, obs);
+  assert.ok(txt.includes("Destapa tu peón de g7: queda a tiro de la dama."), txt);
+  assert.ok(!txt.includes("queda sin defender"), txt);
+  /* y el caso de siempre, con defensa antes, sigue diciendo "sin defender" */
+  const a2 = "4k3/8/5n2/8/4P3/3P4/8/4K3 w - - 0 1";
+  const f2 = unaFila(a2, "d4",
+    [{ cp: 100, mate: null, mejor: "e1e2", segunda: { cp: 80, mate: null } },
+     { cp: 100, mate: null, mejor: "f6e4", segunda: null }]);
+  assert.ok(!A.observarJugada(f2, a2).nuevas[0].destapada);
+  /* Revisor, v1.0.7: soltar una clavada no es destapar. Be2 deja de clavar
+     el caballo de c6 contra el rey, y Nxd4 pasa a ser legal; ninguna línea
+     se abrió. Se dice lo cierto sin nombrar el mecanismo. */
+  const a3 = "4k3/8/2n5/1B6/3P4/8/8/6K1 w - - 0 1";
+  const f3 = unaFila(a3, "Be2",
+    [{ cp: 100, mate: null, mejor: "g1f2", segunda: { cp: 80, mate: null } },
+     { cp: 200, mate: null, mejor: "c6d4", segunda: null }]);
+  const o3 = A.observarJugada(f3, a3);
+  const t3 = A.explicarJugada(f3, null, true, null, o3);
+  assert.ok(!t3.includes("Destapa") && !t3.includes("queda sin defender"), t3);
+  assert.ok(t3.includes("Tu peón de d4 queda a tiro de un caballo."), t3);
+  /* y al paso sí destapa: exd6 saca el peón de d5 de la diagonal b7–g2 */
+  const a4 = "k7/1b6/8/3pP3/8/8/6P1/K7 w - d6 0 1";
+  const f4 = unaFila(a4, "exd6",
+    [{ cp: 100, mate: null, mejor: "a1b1", segunda: { cp: 80, mate: null } },
+     { cp: 200, mate: null, mejor: "b7g2", segunda: null }]);
+  const o4 = A.observarJugada(f4, a4);
+  assert.ok((o4.nuevas.find(c => c.sq === "g2") || {}).destapada, JSON.stringify(o4.nuevas));
+  /* destapa la torre y suelta el caballo a la vez: se nombra la de la línea */
+  const a5 = "4k3/8/2n5/rB2P3/8/8/8/7K w - - 0 1";
+  const f5 = unaFila(a5, "Bd3",
+    [{ cp: 100, mate: null, mejor: "h1g2", segunda: { cp: 80, mate: null } },
+     { cp: 200, mate: null, mejor: "a5e5", segunda: null }]);
+  const t5 = A.explicarJugada(f5, null, true, null, A.observarJugada(f5, a5));
+  assert.ok(t5.includes("Destapa tu peón de e5: queda a tiro de una torre."), t5);
+});
+
 test("una pieza defendida pero a tiro de una menor se dice 'a tiro', no 'sin defender'", () => {
   /* el alfil de d4 lo defiende el peón de e3, pero lo ataca el peón de c5:
      al sacarlo de ahí, la tarjeta dice por qué estaba en peligro */
