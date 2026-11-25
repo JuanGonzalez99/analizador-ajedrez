@@ -123,6 +123,13 @@ de memoria una posición de ajedrez").
   encuadré el problema sobre el alfil que comió, y Nxc4 dejaba colgado el
   otro). Al revisar el arreglo de una frase, `npm run frases -- --frase
   <texto>` lista todas las jugadas donde sale, cambien o no.
+- **Una frase que nombra un mecanismo** ("destapa", "descubre", "desclava",
+  "tapa") **se prueba contra los otros mecanismos que dan el mismo efecto**:
+  una línea abierta, una clavada que se suelta, un peón comido al paso
+  (v1.0.7, causas D+B: "Destapa" se pensó para la línea abierta y salía
+  también cuando la jugada desclavaba al atacante). Y `npm run frases` dice
+  cada jugada dos veces, como buena y como error con un peón de pérdida:
+  hasta la v1.0.7 iba sin pérdida y no veía ninguna frase de la jugada mala.
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 

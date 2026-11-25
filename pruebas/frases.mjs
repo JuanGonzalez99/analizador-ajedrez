@@ -18,9 +18,15 @@
    en la lista de diferencias (APRENDIZAJES.md, v1.0.6). Una frase que se
    arregla se mira entera: npm run frases -- --frase pareja
 
-   Sin motor: la fila se arma como "buena" y sin pérdida, así que cubre lo que
-   sale de mirar la posición (`observarJugada`: colgadas, salvadas, clavadas,
-   ataques, estructura) y no lo que depende de la evaluación. */
+   Sin motor: cada jugada se dice DOS veces, como "buena" sin pérdida y como
+   "error" con un peón de pérdida. Cubre lo que sale de mirar la posición
+   (`observarJugada`: colgadas, salvadas, clavadas, ataques, estructura) y no
+   lo que depende de la evaluación de verdad. La segunda pasada es de la
+   v1.0.7: hasta ahí la fila iba sin pérdida y ninguna frase de la jugada
+   mala ("queda comible", "queda sin defender", "Destapa", "Pierde material
+   en el cambio") podía salir nunca; el traspaso leyó "no cambia nada" como
+   cobertura (APRENDIZAJES.md, v1.0.7). Las líneas de la segunda llevan
+   [error] adelante. */
 import fs from "node:fs";
 import { execSync } from "node:child_process";
 import { Chess } from "../chess.js";
@@ -34,9 +40,10 @@ const viejo = desde(execSync(`git show ${ref}:index.html`, { maxBuffer: 1 << 26 
 const dir = new URL("./", import.meta.url);
 const pgns = fs.readdirSync(dir).filter(n => n.endsWith(".pgn"));
 
-const decir = (M, antes, m, despues) => {
+const decir = (M, antes, m, despues, mala) => {
   const f = { fen: despues, uci: m.from + m.to + (m.promotion || ""), turno: m.color,
-              pieza: m.piece, san: m.san, cat: "buena", mejor: m.from + m.to };
+              pieza: m.piece, san: m.san, cat: mala ? "error" : "buena",
+              mejor: mala ? null : m.from + m.to, perdida: mala ? 1 : 0 };
   try {
     const obs = M.observarJugada(f, antes);
     return M.explicarJugada(f, null, true, null, obs) || "";
@@ -55,17 +62,20 @@ for (const n of pgns) {
       const k = new Chess(antes); k.move(m.san);
       const despues = k.fen();
       jugadas++;
-      const a = decir(viejo, antes, m, despues), b = decir(A, antes, m, despues);
-      if (frase && b.includes(frase)) {
-        conFrase++;
-        console.log(`[${frase}] ${antes}  ${m.san}\n  ${b}`);
+      for (const mala of [false, true]) {
+        const et = mala ? "[error] " : "";
+        const a = decir(viejo, antes, m, despues, mala), b = decir(A, antes, m, despues, mala);
+        if (frase && b.includes(frase)) {
+          conFrase++;
+          console.log(`[${frase}] ${et}${antes}  ${m.san}\n  ${b}`);
+        }
+        if (a === b) continue;
+        distintas++;
+        console.log(`${et}${antes}  ${m.san}\n  antes: ${a}\n  ahora: ${b}`);
       }
-      if (a === b) continue;
-      distintas++;
-      console.log(`${antes}  ${m.san}\n  antes: ${a}\n  ahora: ${b}`);
     }
   }
 }
 console.log(`\n${jugadas} jugadas legales en ${vistas.size} posiciones de ${pgns.length} partidas; ` +
-            `${distintas} dicen otra cosa que ${ref}.` +
+            `${distintas} frases (de ${jugadas * 2}: buena y error) dicen otra cosa que ${ref}.` +
             (frase ? ` "${frase}" sale en ${conFrase}.` : ""));

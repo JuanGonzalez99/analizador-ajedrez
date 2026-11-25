@@ -163,3 +163,11 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   antes → 25-nov · G: el uso se mudó a otra función y la vieja quedó; una
   prueba exigía que existiera · prevención pendiente: la regla de `estaticos.mjs`
   de funciones sin quien las llame, junto con sacarlas.
+- **"Destapa" cuando la jugada desclavaba al atacante** · v1.0.7 → visto en
+  la misma noche (revisor de ajedrez) · D+B: la regla se pensó para la línea
+  abierta del ítem y "antes nadie atacaba" no distingue cómo apareció el
+  ataque · regla en `revisor-ajedrez.md` (una frase de mecanismo se prueba
+  contra los otros mecanismos) y la prueba de unidad con Be2.
+- **`npm run frases` no veía las frases de la jugada mala** · v1.0.4 → v1.0.7
+  · C: la fila iba sin pérdida, y "no cambia nada" se leyó como cobertura en
+  el traspaso · `frases.mjs` dice cada jugada como buena y como error.

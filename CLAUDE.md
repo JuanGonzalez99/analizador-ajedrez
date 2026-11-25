@@ -202,7 +202,7 @@ credencial. Si alguna vez hace falta un PR, se saca el `deny`.
   **En una sesión remota hay que correr `npm install` primero** —el repo se
   clona limpio y Playwright no viene—; son 2 segundos, pero sin eso `mirar`
   explota con `ERR_MODULE_NOT_FOUND` y se pierde una corrida en descubrirlo.
-- `npm run frases` recorre todas las jugadas legales de las partidas de
+- `npm run frases` recorre todas las jugadas legales (como buena y como error) de las partidas de
   prueba y lista lo que la tarjeta dice distinto del último commit (`-- ref`
   para otro). ~25 s; correrlo después de tocar la explicación (v1.0.4).
   Con `-- --frase texto` lista además todas las jugadas donde sale ese texto

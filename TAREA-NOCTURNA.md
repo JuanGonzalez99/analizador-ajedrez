@@ -112,7 +112,7 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    y "¿dónde más vive esto?" (`revisor-ux.md`, "Cómo mirás"). Lo que el
    revisor encuentre que vos podías ver también es un aprendizaje, y tuyo.
    **Si el cambio toca lo que dice la tarjeta**, antes del revisor de
-   ajedrez: `npm run frases` (todas las jugadas legales de las partidas de
+   ajedrez: `npm run frases` (todas las jugadas legales, como buena y como error, de las partidas de
    prueba, contra el último commit; `-- HEAD~1` si ya se commiteó) y mirar en
    el tablero cada familia de frases que cambió (v1.0.4: así se escapaba
    "Defiende" con el atacante comido). **Si se arregla una frase**, además
