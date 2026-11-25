@@ -48,8 +48,10 @@ avanzamos más, nos quedamos en correcciones de lo hecho"*. La regla:
   de una partida (explicación, categorías, cuadritos, tablas, análisis), y una
   pasada sobre partidas reales los domingos (Juan, 17-nov).
 - **Revisor de código:** los miércoles, desde la tarea nocturna (Juan,
-  18-nov): lo que cambió en la semana y una zona que rota. **Próxima zona: 2,
-  el `<script>` clásico** (la 1, el CSS, se miró el 18-nov) (el orden está en `.claude/agents/revisor-codigo.md`).
+  18-nov): lo que cambió en la semana y una zona que rota. **Próxima zona: 3,
+  el bloque de análisis, primera mitad** (evaluación, categorías,
+  `derivarFilas`; la 1, el CSS, se miró el 18-nov y la 2, el script clásico,
+  el 25-nov) (el orden está en `.claude/agents/revisor-codigo.md`).
 - **Revisor de rumbo:** los sábados, desde la tarea nocturna (Juan, 20-nov):
   mira la hoja de ruta, el norte y estos documentos con mirada global, y los
   ordena (`.claude/agents/revisor-rumbo.md`).
@@ -191,6 +193,20 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       cambio, no en un cambio parejo. Mismo arreglo que la pareja
       (`seLaLlevan`), y mirar con `npm run frases -- --frase planta`.
       Revisor de ajedrez sí.
+
+- [ ] **Con señal mala, un cartel rojo de "el módulo no arrancó" falso que
+      no se va** (revisor de código, 25-nov; ya estaba). Script clásico, el
+      temporizador de 6 s (~1674–1686) y `mostrarError` (~1650). Si el módulo
+      tarda más de 6 s (medido con Playwright: a 200 kbps arranca a los
+      10,7 s), pide los tres archivos y llama a `mostrarError` aunque
+      respondan 200: aparece la caja `#errores` (también en modo simple), y
+      cuando el módulo arranca no se borra. Además baja `aperturas.json`
+      entero (942 KB) compitiéndole al módulo. Arreglo: la línea dice "el
+      módulo tarda…", los archivos se piden con `{ method: "HEAD" }`, y
+      `mostrarError` solo si `!r.ok` o el tipo no es javascript/json (si no,
+      `LOG.add("!", …)`). Verificar a 200 kbps o con chess.js demorado 7 s
+      (caja oculta, sin `hubo-error`) y con chess.js en 404 (la caja sale y
+      nombra el archivo). Pasa por el revisor de UX.
 
 ## Etapa 2 · Partir `index.html`
 
@@ -554,6 +570,21 @@ Pendientes que estaban anotados solo en el traspaso.
       salió y cada cuánto hay que refrescarla. Si hace falta permiso de red
       para un host, pedirlo y anotarlo; si no hay manera, decirlo con lo que
       se probó y recién ahí pedirle los nombres a Juan.
+
+### Del revisor de código (25-nov, zona 2 y la semana)
+
+- [ ] **Recortar el relato en comentarios largos del análisis de esta
+      semana**: `cambioEn` (~2250), "LO QUE SE PIERDE EN EL CAMBIO" (~4369,
+      que arranca diciendo "desde dos peones" cuando el código pide uno),
+      `puedeComer` (~4149), "CÓMO SE SALVÓ" (~4108) y el mecanismo del cambio
+      (~3253). Quedarse con el porqué medido y los FEN. ~600 tokens; solo
+      comentarios (`git diff -w`). Interno.
+- [ ] **El script clásico**: dos comentarios que dicen lo mismo (~1546–1553)
+      y uno falso ("corre en la cabeza": corre al principio del body); la
+      rama `e.reason` de `mostrarError`, que no corre nunca; el
+      `URL.createObjectURL` de Descargar sin liberar. Interno.
+- [ ] (Menor) El redondeo de la precisión repetido en `pintarFilas` (~6957)
+      y `pintarLista` (~8552): que viva en `filaDePartida`. Interno.
 
 ### Ideas de los revisores para más adelante
 

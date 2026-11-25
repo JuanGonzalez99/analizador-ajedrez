@@ -54,8 +54,21 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-(Ninguna: las dos del 22-nov se hicieron esa misma tarde y están en el
-registro.)
+- **El mono demora los archivos de la app** (revisor de código, 25-nov;
+  causa C). En `mono.mjs`, uno de cada tres o cuatro recorridos demora
+  `chess.js` más de 6 s con `ctx.route`, y una regla nueva: "con el módulo
+  arrancado, `#errores` oculta y sin `hubo-error`, salvo error real". Hoy el
+  mono solo frena la API de chess.com y el motor. Hacerla junto con (o antes
+  de) el arreglo del cartel rojo falso, para que la regla nazca en rojo.
+- **Funciones sin quien las llame** (revisor de código, 25-nov; causa G).
+  Una regla en `estaticos.mjs`: ninguna función de nivel superior de
+  `index.html` sin quien la llame (contando las que se pasan como valor,
+  como `adelgazar` y `pedirAlternativas`). En el mismo commit se sacan las
+  dos que encontró: `entregaMaterial` (~2362, reemplazada por `enPeligro` en
+  la v0.134; con la prueba ~1331 que solo exige que exista y la mención de
+  `TRASPASO.md` ~2722) y `atacadaPor` (~3853, el uso pasó a `atacantesDe`).
+  Rojo con `atacadaPor` adentro, verde sin ella; `npm run frases` sin
+  diferencias. Toca `index.html`: sube el tercer número.
 
 ## Registro
 
@@ -142,3 +155,11 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   `TAREA-NOCTURNA.md` (4), regla en `revisor-ajedrez.md` (las frases de estado
   se prueban contra todas las piezas que las sostienen) y la prueba de unidad.
   "Se planta", con la misma falla, a Arreglos.
+- **El cartel rojo falso con la red lenta** · ya estaba → visto el 25-nov
+  (revisor de código) · C: el mono frena la API y el motor, pero los
+  archivos de la app llegan siempre al toque · prevención pendiente: el mono
+  demora `chess.js` y vigila `#errores`.
+- **Dos funciones muertas (`entregaMaterial`, `atacadaPor`)** · v0.134 y
+  antes → 25-nov · G: el uso se mudó a otra función y la vieja quedó; una
+  prueba exigía que existiera · prevención pendiente: la regla de `estaticos.mjs`
+  de funciones sin quien las llame, junto con sacarlas.
