@@ -163,7 +163,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       Bxg5 lo dice, pero sigue Nxg5 y quedan uno y uno. `hayPareja` mira solo
       la posición de después: que no lo diga si el alfil que comió puede ser
       recapturado (o que mire después de `mejorRival`). Revisor de ajedrez sí.
-- [ ] **"Queda sin defender" cuando nunca tuvo defensa** (revisor de
+- [x] ~~**"Queda sin defender" cuando nunca tuvo defensa**~~ (hecho en la v1.0.7, también con la clavada que se suelta) (revisor de
       ajedrez, 22-nov). En `r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b KQkq - 0 6`,
       Nc6 da "El peón de g7 queda sin defender": no tenía defensores antes
       ni después; lo nuevo es que el caballo destapó la dama (Qxg7). Si antes
