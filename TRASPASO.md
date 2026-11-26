@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4988,6 +4988,15 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.2.1, [PC] Posiciones después del lavado** (revisor de UX, v1.2): la
+columna pasa a `100vh − 334px` (con la tarjeta del final sobraban 24 px; se
+descuenta siempre para que el tablero no cambie de tamaño al terminar) y en
+Posiciones **← o Ctrl/Cmd+Z deshacen** (en `revision.js`, como "‹" en la
+Partida; no dentro de un select ni con la hoja abierta). `mirar` lo mide a
+1280×800 con el mate jugado: `sobra` 0, la hoja a 21 del tablero, y ← saca
+la tarjeta del final (`ancho-posicion-final`). Las capturas del celu, iguales
+salvo el número de versión al pie.
 
 **v1.2, lavado de cara de Posiciones, con variantes** (Juan, 26-nov, sobre
 la v1.1.2: *"los botones están raros"*). Cuatro disposiciones dibujadas sobre

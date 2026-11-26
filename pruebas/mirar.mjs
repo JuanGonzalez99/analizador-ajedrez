@@ -1476,8 +1476,24 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await pg.setViewportSize({ width: 1280, height: 800 });
   await pg.waitForTimeout(250);
   await foto("ancho-posicion");
-  console.log("posición en la compu:", JSON.stringify(await pg.evaluate(() =>
-    ({ sobra: document.documentElement.scrollHeight - innerHeight }))), "(sobra ≤ 0: entra sin scroll)");
+  /* [PC] con la tarjeta del final, que es lo más alto que llega a medir */
+  await pg.evaluate(f => { location.hash = "fen=" + encodeURIComponent(f) + "&color=w"; },
+    "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4");
+  await pg.waitForTimeout(300);
+  await pg.click(`#posTablero [data-sq="h5"]`); await pg.click(`#posTablero [data-sq="f7"]`);
+  await pg.waitForTimeout(300);
+  await foto("ancho-posicion-final");
+  const sobra = await pg.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  await pg.click("#btnPosAjustes"); await pg.waitForTimeout(250);
+  const aireHoja = await pg.evaluate(() => Math.round(document.getElementById("hojaPos").getBoundingClientRect().top -
+    document.querySelector("#posTablero svg").getBoundingClientRect().bottom));
+  await pg.keyboard.press("Escape"); await pg.waitForTimeout(150);
+  /* ← deshace (v1.2.1): la tarjeta del final se va */
+  await pg.mouse.move(2, 2); await pg.keyboard.press("ArrowLeft"); await pg.waitForTimeout(200);
+  const deshizo = await pg.evaluate(() => document.getElementById("posFin").classList.contains("oculto"));
+  console.log("posición en la compu:", JSON.stringify({ sobra, aireHoja, flechaDeshace: deshizo }),
+    "(sobra ≤ 0 con el final, aireHoja ≥ 8, flechaDeshace true)");
+  if (sobra > 0 || aireHoja < 8 || !deshizo) console.log("OJO: Posiciones en la compu");
 }
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");

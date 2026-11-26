@@ -531,8 +531,13 @@
   /* [PC] POSICIONES (v1.1.1). Fuera de la Partida `--ladoTab` no existía y el
      tablero se estiraba a todo el ancho (1082 a 1280). Una columna centrada
      del ancho del tablero, que crece con el alto como en la Partida: a
-     1280 × 800 mide 490 y la página entra sin scroll (scrollHeight, v1.1.2). */
+     1280 × 800 mide 490 y la página entra sin scroll (scrollHeight, v1.1.2).
+     DESDE LA v1.2.1, 100vh − 334: con la tarjeta del final de la v1.2
+     sobraban 24 px. Se descuenta siempre, aunque no haya final, para que el
+     tablero no cambie de tamaño al terminar. La hoja de Posiciones queda
+     del ancho de la de Ajustes: con la columna más baja, no tapa el tablero
+     (21 de aire a 1280 × 800). */
   @media (min-width: 700px) {
-    #zonaPosicion { --ladoTab: clamp(360px, calc(100vh - 310px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
+    #zonaPosicion { --ladoTab: clamp(360px, calc(100vh - 334px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
     #zonaPosicion svg.tab { max-width: var(--ladoTab); }
   }

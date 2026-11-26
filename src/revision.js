@@ -1101,6 +1101,16 @@ document.addEventListener("keydown", seguro("teclas", ev => {
      comía y encima pasaba una jugada. */
   const sola = !ev.ctrlKey && !ev.altKey && !ev.metaKey;
   const nave = sola && (tecla === "ArrowLeft" || tecla === "ArrowRight");
+  /* [PC] EN POSICIONES, ← o Ctrl/Cmd+Z deshacen (v1.2.1, revisor): es lo
+     que hace "‹" en la Partida. No mientras se escribe ni se elige en un
+     select, y nunca con la Partida a la vista. */
+  if (VISTA === "posicion" && !ev.target.matches("input, select, textarea") &&
+      ((sola && tecla === "ArrowLeft") ||
+       ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && tecla.toLowerCase() === "z"))) {
+    ev.preventDefault();
+    if (!$("posDeshacer").disabled) $("posDeshacer").click();
+    return;
+  }
   /* Escape sale de la variante: es el botón "volver", en el teclado */
   if (tecla === "Escape" && PRUEBA && !$("zonaRevision").classList.contains("oculto")) {
     ev.preventDefault(); salirDePrueba(); return;

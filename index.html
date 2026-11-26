@@ -1563,9 +1563,14 @@
   /* [PC] POSICIONES (v1.1.1). Fuera de la Partida `--ladoTab` no existía y el
      tablero se estiraba a todo el ancho (1082 a 1280). Una columna centrada
      del ancho del tablero, que crece con el alto como en la Partida: a
-     1280 × 800 mide 490 y la página entra sin scroll (scrollHeight, v1.1.2). */
+     1280 × 800 mide 490 y la página entra sin scroll (scrollHeight, v1.1.2).
+     DESDE LA v1.2.1, 100vh − 334: con la tarjeta del final de la v1.2
+     sobraban 24 px. Se descuenta siempre, aunque no haya final, para que el
+     tablero no cambie de tamaño al terminar. La hoja de Posiciones queda
+     del ancho de la de Ajustes: con la columna más baja, no tapa el tablero
+     (21 de aire a 1280 × 800). */
   @media (min-width: 700px) {
-    #zonaPosicion { --ladoTab: clamp(360px, calc(100vh - 310px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
+    #zonaPosicion { --ladoTab: clamp(360px, calc(100vh - 334px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
     #zonaPosicion svg.tab { max-width: var(--ladoTab); }
   }
 </style>
@@ -1589,7 +1594,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.2 · 26-11";
+  window.VERSION = "v1.2.1 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -10202,6 +10207,16 @@ document.addEventListener("keydown", seguro("teclas", ev => {
      comía y encima pasaba una jugada. */
   const sola = !ev.ctrlKey && !ev.altKey && !ev.metaKey;
   const nave = sola && (tecla === "ArrowLeft" || tecla === "ArrowRight");
+  /* [PC] EN POSICIONES, ← o Ctrl/Cmd+Z deshacen (v1.2.1, revisor): es lo
+     que hace "‹" en la Partida. No mientras se escribe ni se elige en un
+     select, y nunca con la Partida a la vista. */
+  if (VISTA === "posicion" && !ev.target.matches("input, select, textarea") &&
+      ((sola && tecla === "ArrowLeft") ||
+       ((ev.ctrlKey || ev.metaKey) && !ev.altKey && !ev.shiftKey && tecla.toLowerCase() === "z"))) {
+    ev.preventDefault();
+    if (!$("posDeshacer").disabled) $("posDeshacer").click();
+    return;
+  }
   /* Escape sale de la variante: es el botón "volver", en el teclado */
   if (tecla === "Escape" && PRUEBA && !$("zonaRevision").classList.contains("oculto")) {
     ev.preventDefault(); salirDePrueba(); return;
