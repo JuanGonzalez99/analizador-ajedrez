@@ -58,7 +58,7 @@ function pintarExplicacion(id, partes, tocable = true) {
    análisis las prendía y apagaba por su cuenta, y eso se desincroniza al
    primer descuido. `VISTA` es la pantalla pedida; si no tiene contenido (y no
    hay nada corriendo que la vaya a llenar) se ve el inicio. */
-const HAY = { partida: false, mes: false };
+const HAY = { partida: false, mes: false, posicion: false };
 let VISTA = "inicio", OCUPADO = false;
 const SCROLL = { inicio: 0, mes: 0 };
 /* LO ANALIZADO DEL MES QUE SE VE (v0.120): id de partida → tu precisión (o
@@ -81,6 +81,8 @@ function mostrarVista(v, opc) {
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
   document.body.classList.toggle("enVista", actual !== "inicio");
   document.body.classList.toggle("enPartida", actual === "partida");
+  document.body.classList.toggle("enPosicion", actual === "posicion");
+  ver("zonaPosicion", actual === "posicion");
   /* la partida que tocaste y todavía se analiza: su pantalla, solo con la
      cabecera (el volver y el progreso) */
   const cargando = actual === "partida" && !HAY.partida;

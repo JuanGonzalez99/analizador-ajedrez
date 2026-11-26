@@ -330,6 +330,25 @@
   <div class="resAncho"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
 </div>
 
+<!-- POSICIONES (v1.1, etapa 4): jugar contra el motor desde una posición que
+     llega en un link (`#fen=…`). Es una pantalla aparte y no la Partida: acá
+     no hay nada que analizar, solo el tablero, cómo va, y los controles. -->
+<div id="zonaPosicion" class="oculto">
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDePosicion" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2>
+    <div class="cabTit"><div class="l1"><span class="rival">Posición</span></div>
+      <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div></div>
+  <p id="posError" class="oculto"></p>
+  <div id="posJuego">
+    <div id="posTablero"></div>
+    <p id="posJugadas"></p>
+    <div class="posControles">
+      <label>Nivel <select id="posNivel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></label>
+      <label>Jugás con <select id="posColor"><option value="w">blancas</option><option value="b">negras</option></select></label>
+    </div>
+    <div class="fila posAcciones"><button class="chico" id="posDeshacer">Deshacer</button><button class="chico" id="posReiniciar">Empezar de nuevo</button></div>
+  </div>
+</div>
+
 <!-- LA HOJA DE AJUSTES (v0.91). Vive al final del body y no adentro de la
      vista Partida a propósito: es `position: fixed` y así no depende de en qué
      columna de la grilla haya caído nada.

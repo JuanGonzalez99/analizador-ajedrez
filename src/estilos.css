@@ -967,3 +967,21 @@
      igual especificidad gana la última regla, y puesto después le ganaba al
      `display` de adentro y la lista no se veía nunca. */
   .colLista { display: none; }
+
+  /* POSICIONES (v1.1). La barra de título es la de la Partida (`.cabvista`
+     con `.cabTit`): título "Posición" y, de subtítulo, cómo va. El tablero
+     mide lo mismo que en la Partida (360) y va centrado; debajo, las jugadas
+     en un renglón que crece, y los controles. El estado del trabajo de las
+     partidas (`#zonaEstado`) no se ve acá: no es de esta pantalla. */
+  body.enVista #zonaPosicion .cabvista { margin-top: 0; }
+  body.enPosicion #zonaEstado { display: none; }
+  #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
+  #posTablero svg.tab { margin: 0 auto; }
+  #posJugadas { margin: var(--e-2) 0 0; font-size: var(--t-secundario); color: var(--tenue);
+                min-height: 1.5em; overflow-wrap: anywhere; }
+  .posControles { display: flex; gap: var(--e-4); flex-wrap: wrap; align-items: center;
+                  margin: var(--e-4) 0 0; font-size: var(--t-secundario); color: var(--tenue); }
+  .posControles label { display: flex; align-items: center; gap: var(--e-2); }
+  .posControles select { color: var(--texto); }
+  .posAcciones { margin: var(--e-4) 0 0; }
+  #posError { margin: var(--e-4) 0 0; }

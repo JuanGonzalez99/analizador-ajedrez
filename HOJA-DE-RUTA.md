@@ -285,8 +285,9 @@ Práctica y Lecciones, que también son "jugar desde una posición".
       caminito de la v0.110 (Partidas → Partida → Mes, con "‹"). Es la variante
       A de la estructura, que a Juan le encantó; se descartó para Partidas /
       Partida / Mes porque esas no son pestañas independientes.
-- [ ] Abrir una posición desde un link (`…/#fen=…`) y jugarla contra el motor,
-      con el nivel elegible.
+- [x] ~~Abrir una posición desde un link (`…/#fen=…`) y jugarla contra el motor,
+      con el nivel elegible.~~ (hecho en la v1.1; se adelantó a la barra de
+      abajo, que pide el segundo módulo ya hecho)
 - [ ] Armar una posición a mano en el tablero.
 - [ ] Que el profe pueda mandar links: un texto para su proyecto de claude.ai
       que le explique el formato.
@@ -484,6 +485,11 @@ archiva los que pierden sentido.
       una columna de ~400 px pegada a la izquierda (x 99–499) con ~780 vacíos
       a la derecha. ¿Centrar la entrada, o adelantar dónde va a aparecer la
       lista? Con variantes.
+
+- [ ] **Posiciones: elegir la pieza al coronar** (v1.1). Hoy va siempre a
+      dama. Una fila de cuatro piezas sobre la casilla, como lichess.
+- [ ] **Posiciones: arrastrar la pieza** (v1.1). Hoy es tocar y tocar; el
+      arrastre de la Partida está atado a `#tablero`.
 
 ### Limpieza de código
 

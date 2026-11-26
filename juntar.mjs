@@ -41,6 +41,7 @@ export const ORDEN = [
   "mes.js",                   /* el mes, banco de pruebas, todo lo analizado */
   "tablas.js",                /* bloque de tablas */
   "mes-pintar.js",            /* pintar el Mes y la lista */
+  "posicion.js",              /* Posiciones: jugar contra el motor desde un link */
   "revision.js",              /* la revisión de una partida (cierra el módulo) */
   "pie.html",                 /* </script></html> */
 ];

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.10**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -436,6 +436,7 @@ el orden en que se juntan:
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
+| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo |
 | `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
@@ -4963,6 +4964,48 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.1, Posiciones: abrir una posición desde un link y jugarla contra el
+motor** (etapa 4, el primer módulo nuevo). `…/#fen=<FEN>` abre una pantalla
+propia (`VISTA = "posicion"`, `#zonaPosicion`, `src/posicion.js`): la barra
+de título de la Partida ("‹ Posición" y, de subtítulo, cómo va), el tablero
+de la Partida (`dibujar`, 360 en el celu, del lado de Juan), las jugadas en
+un renglón, Nivel (1–8) y "Jugás con", y Deshacer / Empezar de nuevo. Se
+toca la pieza (salen los destinos, como al probar jugadas) y después la
+casilla; el motor contesta solo. Decisiones tomadas sin Juan:
+- **El link**: el FEN con espacios, `%20`, `+` o `_` (como lo escribe
+  lichess); si faltan campos se completan (`w - - 0 1`). Opcionales
+  `&nivel=1..8` y `&color=w|b`; sin `color`, Juan juega con el que mueve.
+  Un FEN que no se puede jugar (forma inválida, sin un rey de cada lado, o
+  el que no mueve en jaque, que cuelga a Stockfish) muestra por qué en vez
+  del tablero.
+- **El nivel**: un motor propio (no el del análisis, para que el "Skill
+  Level" no se cruce) con `Skill Level` y profundidad que suben juntos:
+  0/1, 3/2, 6/3, 9/5, 12/7, 15/9, 18/12, 20/16 (`NIVELES`). Ocho como
+  lichess; el 4 por defecto, y el elegido se guarda (`nivelPos`). **No está
+  medido contra Elo**: es una escala a ojo, y si queda corta o larga se
+  ajusta con el uso.
+- **Deshacer** vuelve a la última vez que le tocaba a Juan (su jugada y la
+  respuesta juntas). Cambiar de color con la partida empezada sigue desde
+  ahí: si ahora le toca al motor, juega. Un turno del motor que quedó viejo
+  (deshacer, de nuevo, color) se tira: `PENSANDO` numera los turnos, y antes
+  de un `go` nuevo se manda `stop` y se espera el anterior, porque si no el
+  `bestmove` viejo le contestaba al pedido nuevo.
+- **La coronación va siempre a dama** por ahora (elegir pieza, a Relleno).
+  Sin arrastre: solo tocar y tocar (el arrastre de la Partida vive atado a
+  `#tablero`).
+- **El historial**: al abrir con el link, la entrada de abajo queda sin el
+  `#fen` y la de la posición lo lleva (recargar la reabre; "‹" y el atrás
+  del celu vuelven al inicio). Si el link cambia con la app abierta
+  (`hashchange`), el navegador ya creó la entrada y atrás pasa por las
+  posiciones anteriores: **se acepta**, es como andan los links con `#` y
+  pasa solo si se pega otro link con la app abierta.
+- `#zonaEstado` (el progreso del mes) no se ve en esta pantalla.
+Verificado con Playwright y Stockfish de verdad, a 386: abre en el nivel del
+link, marca destinos, contesta (1. Rh4 Ke6), deshace, con negras el motor
+mueve primero, el mate ("Jaque mate: ganaste") y el link roto. Las capturas
+del celu de `mirar` son las mismas al byte salvo la versión al pie y la
+barra de progreso de `mes-varias` (4 px, tomada a mitad de su animación).
 
 **v1.0.10, Buscar responde aunque la app no haya arrancado** (revisor de
 UX, v1.0.9; Arreglos, adelantado porque la prevención pendiente del mono

@@ -875,7 +875,11 @@ test("solo irAPantalla empuja historial, y sobre la misma url", () => {
   /* Un solo lugar empuja: así el gesto de volver de Android, la flecha del
      navegador y el "‹" de arriba deshacen siempre lo mismo. */
   /* y la variante, desde la v0.168: el "atrás" de Android la cierra primero */
-  assert.equal((html.match(/history\.pushState/g) || []).length, 2);
+  /* y la posición del link, desde la v1.1: la misma ruta, con el `#fen` */
+  assert.equal((html.match(/history\.pushState/g) || []).length, 3);
+  assert.ok(html.includes('history.pushState({ vista: "posicion", de: "inicio" }, "", con);') &&
+    html.includes("const sin = location.pathname + location.search, con = sin + location.hash;"),
+    "la posición empuja la misma ruta, solo con el #");
   const prueba = html.slice(html.indexOf("function abrirPrueba"), html.indexOf("function soltarPrueba"));
   assert.ok(prueba.includes('history.pushState({ ...(history.state || {}), prueba: true }, "", location.href)'),
     "la variante empuja sobre la misma url");
