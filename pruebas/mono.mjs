@@ -484,6 +484,10 @@ async function recorrido(sem, nav) {
         const ops = await pg.locator("#meses option").evaluateAll(os => os.map(o => o.value));
         const v = ops[Math.floor(r() * ops.length)];
         anotar(`cambiar de mes a ${v.slice(-7)}`);
+        /* cambiar de mes entre la ida y la vuelta cambia la lista a propósito:
+           "ir y volver" ya no tiene con qué comparar (saltó en falso, 26-nov,
+           semilla 910543: tocar una fila, cambiar de mes, volver) */
+        alSalir = null;
         await pg.selectOption("#meses", v);
       } else if (a.varios) {
         const n = await pg.locator(a.sel).count();

@@ -109,6 +109,11 @@ cambió.
    (`document.getAnimations()` antes, durante y después), y probá con
    `page.emulateMedia({ reducedMotion: "reduce" })`. En duda, sin movimiento.
 
+- **El resultado de algo que se juega pesa** (v1.1, Posiciones): cuando
+  termina —un mate, unas tablas, un ejercicio resuelto— es lo más importante
+  de esa pantalla. Se juzga cuánto pesa, no solo que esté dicho en algún
+  lado.
+
 ## Además de lo que cambió: ¿algo pide un lavado de cara?
 
 **Es lo más valioso que podés aportar** (Juan, 6-nov-2026): sin esto, darse

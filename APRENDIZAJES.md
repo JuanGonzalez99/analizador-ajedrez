@@ -54,7 +54,14 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-(Ninguna por ahora.)
+- **Una pasada de Posiciones en `mirar.mjs`, y el tamaño de toque medido**
+  (revisor de UX, v1.1; causas C y F). `npm run mirar posicion` con un link
+  `#fen=` y el motor de `falso.mjs`: la pantalla con 0 y con 40 jugadas
+  (imprime cuánto se movió `#posDeshacer`: tiene que dar 0), mate y
+  ahogado. Y en todas las pasadas del celu, un aviso por cada `button` o
+  `select` visible con área de toque de menos de 48 (contando `::after`) o
+  dos vecinos a menos de 12; en las de PC, `scrollHeight - innerHeight` de
+  cada pantalla.
 
 ## Registro
 
@@ -63,6 +70,16 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Posiciones con FEN imposibles de contenido** · v1.1 (no salió) · D+C:
+  creí que chess.js validaba el FEN y solo valida la forma; probé solo FEN
+  bien formados · pruebas de unidad con los imposibles (enroque sin torre,
+  peón en la octava, al paso sin peón) y regla en `revisor-ajedrez.md`.
+- **La triple repetición sin historia** · v1.1 (no salió) · D: los estados se
+  probaron desde una sola posición · prueba de unidad con la repetición.
+- **Posiciones: botones de 36, que se corrían, y el final sin peso** · v1.1
+  (no salió) · A+C+F: se miró con 0–2 jugadas, `mirar` no pasa por ahí y
+  §1.7 no se mide · regla de peso en `revisor-ux.md`; la pasada de `mirar`
+  con 40 jugadas y el toque medido, pendientes.
 - **Fundido de la lista solo abajo** · v0.179 → v1.0 · A+B: el ítem decía
   "el borde de abajo" y el arnés fotografía la lista solo arriba de todo; el
   revisor eligió las variantes en ese único estado · los estados de la zona

@@ -46,6 +46,12 @@ dice con total seguridad. Así que:
 Es la misma regla que ya tiene el proyecto (`TRASPASO.md` §10: "Nunca afirmar
 de memoria una posición de ajedrez").
 
+- **Todo FEN que llega de afuera se prueba contra el Stockfish del repo**
+  (v1.1, Posiciones): chess.js valida la forma, no el contenido, y un
+  enroque sin su torre o un peón en la octava cuelgan al motor sin error.
+  En node, con una copia `.cjs` de `stockfish-18-lite-single.js` (por el
+  `type: module`), `position fen …` + `go`, y se borra al terminar.
+
 ## Qué leés antes de opinar
 
 1. `NORTE.md`, por encima: para qué existe la app y qué no tiene que ser.
