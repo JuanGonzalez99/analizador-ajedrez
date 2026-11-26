@@ -321,7 +321,8 @@ const verAjustes = (abrir, desde) => {
 $("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustes"));
 $("btnAjustesInicio").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustesInicio"));
 $("cerrarAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
-$("fondoAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
+/* el velo es de las dos hojas: cierra la que esté abierta (la de Posiciones, v1.2) */
+$("fondoAjustes").onclick = seguro("cerrar los ajustes", () => hojaPosAbierta() ? verHojaPos(false) : verAjustes(false));
 
 $("salirDev").onclick = seguro("salir de dev", () => {
   try { localStorage.setItem("dev", "0"); } catch (e) { /* incógnito */ }

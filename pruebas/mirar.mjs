@@ -68,6 +68,13 @@ const fotoDe = async (sel, n) => {
    no los midió nadie). DISENO.md §1.7: área de toque de 48 en el celu,
    contando el `::before` o `::after` invisible que agranda, y 12 entre vecinos. Devuelve
    los que no llegan, por nombre: [] es que está todo bien. */
+/* LA ESCALA DE TÍTULOS (revisor, v1.2: el final de Posiciones salió a 22/600
+   y §1.4 dice título = 22/700). Lo que está a la vista a 22 px con otro peso. */
+const pesos = () => pg.evaluate(() => [...document.querySelectorAll("body *")].filter(e => {
+  const cs = getComputedStyle(e);
+  return e.getClientRects().length && cs.fontSize === "22px" && cs.fontWeight !== "700" &&
+    [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim().length > 2);
+}).map(e => (e.id || e.className || e.tagName) + " " + getComputedStyle(e).fontWeight));
 const toques = () => pg.evaluate(() => {
   const px = v => (v && v.endsWith("px")) ? parseFloat(v) : 0;
   const els = [...document.querySelectorAll("button, select")].filter(el => {
@@ -148,6 +155,7 @@ console.log("inicial:", JSON.stringify(await pg.evaluate(() => ({
 }))));
 await foto("revision-inicio");
 console.log("toque, partida:".padEnd(16), JSON.stringify(await toques()));
+console.log("títulos, partida:".padEnd(16), JSON.stringify(await pesos()), "(22 px va a 700: [])");
 await pg.click("#sig");
 await pg.waitForTimeout(200);
 await foto("revision-1");
@@ -1189,6 +1197,7 @@ const bordesDe = (sels) => pg.evaluate(sels => {
   console.log("mes:           ", JSON.stringify({ selects: sel, ...await espacios(pg, "#zonaMes") }));
   await foto("mes");
 console.log("toque, mes:".padEnd(16), JSON.stringify(await toques()));
+console.log("títulos, mes:".padEnd(16), JSON.stringify(await pesos()), "(22 px va a 700: [])");
   await pg.evaluate(() => { const d = document.querySelector("#zonaMes details.seccion"); d.open = true; });
   await pg.waitForTimeout(200);
   await pg.evaluate(() => document.querySelector("#zonaMes details.seccion").scrollIntoView());
@@ -1269,6 +1278,7 @@ await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
 await pg.waitForTimeout(300);
 await foto("inicio");
 console.log("toque, inicio:".padEnd(16), JSON.stringify(await toques()));
+console.log("títulos, inicio:".padEnd(16), JSON.stringify(await pesos()), "(22 px va a 700: [])");
 const cab = () => pg.evaluate(() => {
   const r = s => Math.round(document.querySelector(s).getBoundingClientRect().top);
   return { tuerca: r("#btnAjustesInicio"), usuario: r("#yaUsuario"), enlace: document.getElementById("cambiarUsuario").textContent,
@@ -1378,7 +1388,9 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await pg.waitForTimeout(300);
   const caja = sel => pg.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect();
     return { x: Math.round(r.x), y: Math.round(r.y + scrollY) }; }, sel);
-  const antes = await caja("#posDeshacer");
+  /* la fila y el tablero no se mueven en toda la partida, ni al terminar
+     (revisor de UX, v1.2: en una variante el final tapaba Deshacer) */
+  const antes = await caja("#posDeshacer"), tab0 = await caja("#posTablero");
   await foto("posicion");
   const t0 = await toques();
   const { ucis } = FALSA;
@@ -1395,15 +1407,68 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
     }
   }
   await pg.waitForTimeout(300);
-  const despues = await caja("#posDeshacer");
+  const despues = await caja("#posDeshacer"), tab1 = await caja("#posTablero");
   await foto("posicion-jugadas");
   const est = await pg.evaluate(() => ({ estado: document.getElementById("posEstado").textContent,
     lista: document.getElementById("posJugadas").textContent.slice(-60) }));
   console.log("posiciones:    ", JSON.stringify({ jugadas, ...est,
-    deshacerSeMovio: { x: despues.x - antes.x, y: despues.y - antes.y } }),
-    "(deshacerSeMovio tiene que dar 0 y 0)");
-  if (despues.x !== antes.x || despues.y !== antes.y) console.log("OJO: Deshacer se movió al crecer la partida");
+    deshacerSeMovio: { x: despues.x - antes.x, y: despues.y - antes.y }, tableroSeMovio: tab1.y - tab0.y }),
+    "(deshacerSeMovio 0 y 0, tableroSeMovio 0)");
+  if (despues.x !== antes.x || despues.y !== antes.y || tab1.y !== tab0.y)
+    console.log("OJO: Deshacer o el tablero se movieron al crecer o terminar la partida");
   console.log("toque, posición:", JSON.stringify({ vacia: t0, jugada: await toques() }));
+  /* EL FINAL, que la partida de prueba no alcanza (y `mirar mate` se cae
+     antes de llegar acá, en la pasada de la compu): un mate en una y un
+     ahogado en una, jugados por Juan. Deshacer y el tablero, en el mismo
+     lugar que con la partida a medias. */
+  for (const [nom, fen, u] of [["mate", "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4", "h5f7"],
+                               ["tablas", "7k/8/6K1/8/8/8/8/5Q2 w - - 0 1", "f1f7"]]) {
+    await pg.evaluate(f => { location.hash = "fen=" + encodeURIComponent(f) + "&color=w"; }, fen);
+    await pg.waitForTimeout(300);
+    await pg.click(`#posTablero [data-sq="${u.slice(0, 2)}"]`);
+    await pg.click(`#posTablero [data-sq="${u.slice(2, 4)}"]`);
+    await pg.waitForTimeout(300);
+    const d = await caja("#posDeshacer"), t = await caja("#posTablero");
+    await foto("posicion-" + nom);
+    console.log(("final, " + nom + ":").padEnd(16), JSON.stringify({
+      ...await pg.evaluate(() => ({ barra: document.getElementById("posEstado").textContent,
+        tarjeta: document.getElementById("posFin").innerText.replace(/\n+/g, " | "),
+        alto: document.documentElement.scrollHeight })),
+      deshacerSeMovio: d.y - antes.y, tableroSeMovio: t.y - tab0.y }));
+    if (d.y !== antes.y || t.y !== tab0.y) console.log("OJO: el final movió Deshacer o el tablero");
+    console.log(("títulos, " + nom + ":").padEnd(16), JSON.stringify(await pesos()), "(22 px va a 700: [])");
+  }
+  /* LA POSICIÓN QUE LLEGA YA TERMINADA (revisor, v1.2): sin jugadas de
+     Juan, "Otra vez" no tiene a qué volver y no tiene que verse */
+  await pg.evaluate(f => { location.hash = "fen=" + encodeURIComponent(f) + "&color=w"; },
+    "rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR w KQkq - 1 3");
+  await pg.waitForTimeout(300);
+  const yaTerminada = await pg.evaluate(() => ({ tarjeta: !document.getElementById("posFin").classList.contains("oculto"),
+    otraVez: !!document.getElementById("posOtraVez").getClientRects().length,
+    deshacer: !document.getElementById("posDeshacer").disabled }));
+  console.log("llega terminada:", JSON.stringify(yaTerminada), "(tarjeta sí, otraVez y deshacer no)");
+  if (yaTerminada.otraVez && !yaTerminada.deshacer) console.log("OJO: Otra vez a la vista sin nada que deshacer");
+  await pg.click("#btnPosAjustes");
+  await pg.waitForTimeout(250);
+  await foto("posicion-hoja");
+  /* LA HOJA SOBRE EL TABLERO a los altos de verdad (revisor, v1.2): con la
+     barra de Chrome visible el celu de Juan mide ~745, y a 760 no se veía
+     que la hoja quedaba a 3 px del tablero */
+  {
+    const aire = {};
+    for (const [w, h] of [[412, 745], [386, 745], [412, 760]]) {
+      await pg.setViewportSize({ width: w, height: h });
+      await pg.waitForTimeout(150);
+      aire[w + "x" + h] = await pg.evaluate(() => Math.round(document.getElementById("hojaPos").getBoundingClientRect().top -
+        document.querySelector("#posTablero svg").getBoundingClientRect().bottom));
+    }
+    await pg.setViewportSize({ width: 412, height: 760 });
+    console.log("hoja sobre tablero:", JSON.stringify(aire), "(aire ≥ 8)");
+    if (Object.values(aire).some(a => a < 8)) console.log("OJO: la hoja de Posiciones tapa o pega al tablero");
+  }
+  console.log("toque, hoja pos.:", JSON.stringify(await toques()));
+  await pg.keyboard.press("Escape");
+  await pg.waitForTimeout(150);
   await pg.setViewportSize({ width: 386, height: 760 });
   await pg.waitForTimeout(200);
   console.log("posición a 386:", JSON.stringify({ desborde: await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth),

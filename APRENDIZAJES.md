@@ -63,6 +63,16 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **La hoja de Posiciones a 3 px del tablero a 745, "Otra vez" sin nada
+  que hacer y el final a 22/600** · v1.2 (no salió) · A+C: el arnés medía
+  la hoja a un solo alto (760) y entraba al final siempre jugando; D: nada
+  comparaba la tipografía contra §1.4 · renglones "hoja sobre tablero",
+  "llega terminada" y "títulos" en `mirar`.
+- **La variante D tapaba Deshacer al terminar** · maqueta del 26-nov (no
+  salió) · A: el final se dibujó como un estado aparte y no como la misma
+  zona con algo sumado · `mirar` mide la fila y el tablero con 0 jugadas, a
+  mitad, con mate y con ahogado (dos posiciones de una jugada al final del
+  arnés, porque `mirar mate` se cae antes).
 - **Prevención de Posiciones hecha** · 26-nov · `mirar` abre el link, juega
   la partida de prueba contra el falso (que ahora contesta `position … moves`)
   y mide: Deshacer no se mueve con 36 jugadas (0 y 0), nada se corta a 386,

@@ -176,7 +176,7 @@
      —el color de sistema era casi el mismo del fondo y la hoja no se leía como
      algo que flota—, radio 12 de tarjeta, la única sombra de lo que flota
      (§1.6) y 16 de margen a los costados, el del celu (§1.5). */
-  #hojaAjustes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  #hojaAjustes, #hojaPos { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
                  max-width: 700px; margin: 0 auto;
                  background: var(--superficie); color: var(--texto);
                  border-top: 1px solid var(--linea);
@@ -455,8 +455,8 @@
                       width: 34px; height: 34px; margin-left: auto; order: 1;
                       border: 1px solid var(--linea); border-radius: 50%; }
   /* las dos tuercas se ven de 34 y se tocan en 48 (§1.7; revisor, v0.120) */
-  #btnAjustesInicio, #btnAjustes { position: relative; }
-  #btnAjustesInicio::before, #btnAjustes::before { content: ""; position: absolute; inset: -7px; }
+  #btnAjustesInicio, #btnAjustes, #btnPosAjustes { position: relative; }
+  #btnAjustesInicio::before, #btnAjustes::before, #btnPosAjustes::before { content: ""; position: absolute; inset: -7px; }
   #zonaMeses { margin-top: var(--e-4); }
   /* [PC] TOPE DE LECTURA DE 640 para la columna del inicio (v0.121; revisor,
      v0.120): a 1280 la tarjeta estiraba el "›" a ~1000 px del título y la
@@ -983,17 +983,52 @@
   body.enPosicion #zonaEstado { display: none; }
   #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
   #posTablero svg.tab { margin: 0 auto; }
-  /* un solo renglón que no crece, con scroll de costado y las últimas a la
-     vista: si envolvía, cada renglón nuevo corría los botones que se están
-     tocando (revisor de UX, v1.1) */
-  #posJugadas { margin: var(--e-2) 0 0; font-size: var(--t-secundario); color: var(--tenue);
+  /* LAVADO DE CARA (v1.2): el revisor eligió D entre cuatro. Bajo el
+     tablero solo lo que se toca jugando —la tira y Deshacer—; lo que se
+     elige una vez va a la hoja (`#hojaPos`), y el final, en una tarjeta
+     debajo de la fila, que no se mueve en toda la partida. */
+  /* el botón redondo: el de la tuerca de la Partida (34 a la vista, 48 de
+     toque con el ::before) */
+  #btnPosAjustes { padding: 0; flex: none; display: grid; place-items: center;
+                   width: 34px; height: 34px; border: 1px solid var(--linea);
+                   border-radius: 50%; transform: translateY(-2.25px); }
+  /* LA TIRA: un renglón que no crece (si envolvía, corría los botones que
+     se están tocando; revisor de UX, v1.1), con las últimas a la vista y el
+     fundido a la izquierda cuando hay más, como la de la Partida */
+  #posJugadas { margin: var(--e-3) 0 0; font-size: var(--t-secundario); color: var(--texto);
+                line-height: 24px; height: 24px;
                 white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
-  #posJugadas b { color: var(--texto); font-weight: 600; }
-  .posControles { display: flex; gap: var(--e-4); flex-wrap: wrap; align-items: center;
-                  margin: var(--e-4) 0 0; font-size: var(--t-secundario); color: var(--tenue); }
-  .posControles label { display: flex; align-items: center; gap: var(--e-2); }
-  .posControles select { color: var(--texto); }
-  .posAcciones { margin: var(--e-4) 0 0; gap: var(--e-3); }
+  #posJugadas::-webkit-scrollbar { display: none; }
+  #posJugadas.corta { -webkit-mask-image: linear-gradient(to right, transparent, #000 32px);
+                      mask-image: linear-gradient(to right, transparent, #000 32px); }
+  #posJugadas .n, #posJugadas.vacia { color: var(--tenue); }
+  #posJugadas .n { margin-right: var(--e-1); }
+  #posJugadas .j { margin-right: var(--e-2); }
+  .posAcciones { margin: var(--e-3) 0 0; gap: var(--e-3); }
+  /* secundario con ícono y texto, 44 a la vista y 48 de toque (§1.7) */
+  #posDeshacer { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
+                 padding: 0 var(--e-4) 0 var(--e-3); position: relative; }
+  #posDeshacer::before { content: ""; position: absolute; inset: -2px 0; }
+  /* EL FINAL CON PESO: el título grande hace el peso, no el color (revisor:
+     un rojo para la derrota grita, y la app no gira alrededor de los
+     errores). Borde de acento solo cuando ganaste. "Otra vez" es el único
+     principal de la pantalla, y solo existe acá. */
+  #posFin { display: flex; align-items: center; gap: var(--e-3); margin: var(--e-3) 0 0;
+            padding: var(--e-3) var(--e-4); background: var(--superficie);
+            border: 1px solid var(--linea); border-left: 3px solid var(--borde-campo);
+            border-radius: var(--r-tarjeta); }
+  #posFin.oculto { display: none; }
+  #posFin.gano { border-left-color: var(--acento); }
+  .posFinTxt { flex: 1; min-width: 0; }
+  #posFinTit { font-size: var(--t-titulo); font-weight: 700; line-height: 1.2; }
+  #posFinSub { font-size: var(--t-secundario); color: var(--tenue); margin-top: 2px; }
+  #posOtraVez { background: var(--acento); color: var(--sobre-acento); font-weight: 600;
+                min-height: 44px; flex: none; position: relative; }
+  #posOtraVez::before { content: ""; position: absolute; inset: -2px 0; }
+  /* en la hoja, "Empezar de nuevo" a lo ancho, debajo de las perillas */
+  #hojaPos .ajCab { margin-bottom: var(--e-2); }
+  .posHojaBtn { display: block; width: 100%; min-height: 44px; margin: var(--e-4) 0 0; position: relative; }
+  .posHojaBtn::before { content: ""; position: absolute; inset: -2px 0; }
   #posError { margin: var(--e-4) 0 0; }
 
   /* EN PANTALLA ANCHA, DOS COLUMNAS (v0.80). Hasta acá el archivo entero tenía
@@ -1554,7 +1589,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.1.2 · 26-11";
+  window.VERSION = "v1.2 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2105,16 +2140,26 @@
 <div id="zonaPosicion" class="oculto">
   <div class="cabvista"><h2><button type="button" class="volver" id="volverDePosicion" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2>
     <div class="cabTit"><div class="l1"><span class="rival">Posición</span></div>
-      <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div></div>
+      <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div>
+    <!-- LO QUE SE ELIGE UNA VEZ, EN UNA HOJA (v1.2, lavado de cara con
+         variantes: el revisor eligió D). El botón redondo es el pariente de la
+         tuerca de la Partida, con las perillas acostadas que Juan había
+         guardado "para otra cosa" (DISENO §2). -->
+    <button id="btnPosAjustes" class="redondo" aria-label="Nivel y color" aria-expanded="false"
+            aria-controls="hojaPos"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h3M13 17h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button></div>
   <p id="posError" class="oculto"></p>
   <div id="posJuego">
     <div id="posTablero"></div>
+    <!-- la tira de jugadas, como la de la Partida: números en tenue, jugadas
+         en texto, fundido a la izquierda cuando no entra -->
     <p id="posJugadas"></p>
-    <!-- primero lo que se toca jugando, después cómo se juega (revisor, v1.1) -->
-    <div class="fila posAcciones"><button id="posDeshacer">Deshacer</button><button id="posReiniciar">Empezar de nuevo</button></div>
-    <div class="posControles">
-      <label>Nivel <select id="posNivel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></label>
-      <label>Jugás con <select id="posColor"><option value="w">blancas</option><option value="b">negras</option></select></label>
+    <!-- lo que se toca jugando: la fila no cambia en toda la partida, ni al
+         terminar (ahí "Pista" va a entrar al lado) -->
+    <div class="fila posAcciones"><button id="posDeshacer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Deshacer</button></div>
+    <!-- el final, con peso, debajo de la fila: no la tapa ni la corre -->
+    <div id="posFin" class="oculto" aria-live="polite">
+      <div class="posFinTxt"><div id="posFinTit"></div><div id="posFinSub"></div></div>
+      <button id="posOtraVez">Otra vez</button>
     </div>
   </div>
 </div>
@@ -2127,6 +2172,20 @@
      onchange sigue igual. Lo único que cambió es el texto de las opciones, que
      ahora no se autonombran —la etiqueta está al lado— y quedan cortas. -->
 <div id="fondoAjustes" class="oculto"></div>
+<!-- LA HOJA DE POSICIONES (v1.2): la misma forma que la de Ajustes, con lo
+     que se elige una vez. -->
+<div id="hojaPos" class="hoja oculto" role="dialog" aria-modal="true" aria-labelledby="tituloPos">
+  <div class="ajTirador"></div>
+  <div class="ajCab"><h2 id="tituloPos">La partida</h2>
+    <button class="chico" id="cerrarPos">Listo</button></div>
+  <!-- sin rótulos de grupo: dos para dos filas eran más armazón que
+       contenido, y a 745 de alto la hoja quedaba pegada al tablero (revisor) -->
+  <label class="ajFila"><span>Nivel del motor</span>
+    <select id="posNivel" class="chico"><option value="1">1, el más fácil</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8, el más fuerte</option></select></label>
+  <label class="ajFila"><span>Jugás con</span>
+    <select id="posColor" class="chico"><option value="w">blancas</option><option value="b">negras</option></select></label>
+  <button id="posReiniciar" class="posHojaBtn">Empezar de nuevo</button>
+</div>
 <div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
      aria-labelledby="tituloAjustes">
   <div class="ajTirador"></div>
@@ -5667,7 +5726,8 @@ const verAjustes = (abrir, desde) => {
 $("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustes"));
 $("btnAjustesInicio").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustesInicio"));
 $("cerrarAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
-$("fondoAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
+/* el velo es de las dos hojas: cierra la que esté abierta (la de Posiciones, v1.2) */
+$("fondoAjustes").onclick = seguro("cerrar los ajustes", () => hojaPosAbierta() ? verHojaPos(false) : verAjustes(false));
 
 $("salirDev").onclick = seguro("salir de dev", () => {
   try { localStorage.setItem("dev", "0"); } catch (e) { /* incógnito */ }
@@ -8838,24 +8898,48 @@ function estadoPos() {
   return (c.in_check() ? "Jaque. " : "") + "Te toca con " + (yo === "w" ? "blancas" : "negras");
 }
 
-/* las jugadas, numeradas desde donde arranca la posición */
+/* las jugadas, numeradas desde donde arranca la posición: el número en
+   tenue y la jugada en texto, como la tira de la Partida (v1.2) */
 function jugadasPos() {
   const p = POS.inicial.split(" ");
   let n = +p[5] || 1, blancas = p[1] === "w";
   const out = [];
   POS.sans.forEach((s, i) => {
-    if (blancas) out.push(`${n}. ${s}`);
-    else { out.push(i === 0 ? `${n}… ${s}` : s); n++; }
+    if (blancas) out.push(`<span class="n">${n}.</span><span class="j">${sinHtml(s)}</span>`);
+    else { out.push((i === 0 ? `<span class="n">${n}…</span>` : "") + `<span class="j">${sinHtml(s)}</span>`); n++; }
     blancas = !blancas;
   });
-  return out.join(" ");
+  return out.join("");
+}
+
+/* CÓMO TERMINÓ, para la tarjeta del final (v1.2): el resultado grande y
+   una línea de cómo, o null si sigue. El subtítulo de la barra ya no lo
+   repite (revisor de UX). */
+function finPos() {
+  if (POS.error) return null;
+  const c = juegoPos();
+  if (!c.game_over()) return null;
+  if (c.in_checkmate()) {
+    const nro = +fenPos().split(" ")[5] - (c.turn() === "w" ? 1 : 0);
+    return { gano: c.turn() !== POS.yo, titulo: c.turn() !== POS.yo ? "Ganaste" : "Perdiste",
+             sub: "Jaque mate en la jugada " + nro };
+  }
+  const sub = c.in_stalemate() ? "Por ahogado" : c.insufficient_material() ? "No queda con qué dar mate"
+    : c.in_threefold_repetition() ? "Tres veces la misma posición" : "50 jugadas sin captura ni peón";
+  return { gano: false, titulo: "Tablas", sub };
 }
 
 function pintarPosicion() {
   if (!POS) return;
-  $("posEstado").textContent = estadoPos();
+  const fin = finPos();
+  /* el subtítulo: cómo va y el nivel; al terminar, solo cómo se juega
+     (el resultado lo dice la tarjeta) */
+  const como = "nivel " + NIVEL_POS + " · con " + (POS.yo === "w" ? "blancas" : "negras");
+  $("posEstado").textContent = POS.error ? "" : fin ? como[0].toUpperCase() + como.slice(1)
+    : estadoPos() + " · nivel " + NIVEL_POS;
   ver("posError", !!POS.error);
   ver("posJuego", !POS.error);
+  ver("btnPosAjustes", !POS.error);
   if (POS.error) {
     $("posError").textContent = "El link trae una posición que no se puede jugar: " + POS.error + ".";
     return;
@@ -8870,20 +8954,41 @@ function pintarPosicion() {
   $("posTablero").innerHTML = dibujar(fen, POS.ucis[POS.ucis.length - 1] || null, null,
     { sinMarcas: true, sinAtras: true, sinAdelante: true, desde: POS.desde, destinos });
   GIRADO = g;
-  /* el final, en palabras, al cabo de las jugadas: es lo más importante de
-     la pantalla cuando termina (revisor de UX, v1.1) */
-  const j = juegoPos();
-  const fin = !j.game_over() ? "" : j.in_checkmate() ? (j.turn() === POS.yo ? "Ganó el motor" : "Ganaste") : "Tablas";
+  const tira = $("posJugadas");
   const lista = jugadasPos();
-  $("posJugadas").innerHTML = (lista ? sinHtml(lista) : fin ? "" : "Todavía no se jugó nada.") +
-    (fin ? `${lista ? " · " : ""}<b>${fin}</b>` : "");
-  /* un solo renglón que no crece: se ven las últimas */
-  $("posJugadas").scrollLeft = $("posJugadas").scrollWidth;
+  tira.innerHTML = lista || "Todavía no se jugó nada.";
+  tira.classList.toggle("vacia", !lista);
+  /* un solo renglón que no crece: se ven las últimas, y el fundido avisa
+     que hay más a la izquierda */
+  tira.scrollLeft = tira.scrollWidth;
+  tira.classList.toggle("corta", tira.scrollWidth > tira.clientWidth + 1);
+  ver("posFin", !!fin);
+  if (fin) {
+    $("posFin").classList.toggle("gano", fin.gano);
+    $("posFinTit").textContent = fin.titulo;
+    $("posFinSub").textContent = fin.sub;
+  }
   $("posNivel").value = String(NIVEL_POS);
   $("posColor").value = POS.yo;
   $("posDeshacer").disabled = !hayJugadaMia();
   $("posReiniciar").disabled = !hayJugadaMia();
+  /* si la posición llegó ya terminada, "Otra vez" volvería a lo mismo: un
+     principal apagado se ve roto, así que no se muestra (revisor de UX) */
+  ver("posOtraVez", hayJugadaMia());
 }
+
+/* LA HOJA (v1.2): la misma mecánica que la de Ajustes —Listo, tocar afuera
+   y Escape (en `revision.js`, con el Tab que no se escapa)—, y el foco va y
+   vuelve al botón redondo. */
+function verHojaPos(abrir) {
+  $("fondoAjustes").classList.toggle("oculto", !abrir);
+  $("hojaPos").classList.toggle("oculto", !abrir);
+  $("btnPosAjustes").setAttribute("aria-expanded", abrir ? "true" : "false");
+  (abrir ? $("cerrarPos") : $("btnPosAjustes")).focus();
+}
+const hojaPosAbierta = () => !$("hojaPos").classList.contains("oculto");
+$("btnPosAjustes").onclick = seguro("posición: la hoja", () => verHojaPos(true));
+$("cerrarPos").onclick = seguro("posición: cerrar la hoja", () => verHojaPos(false));
 
 /* TOCAR LA PIEZA Y DESPUÉS ADÓNDE. Solo las de Juan y solo en su turno. */
 $("posTablero").addEventListener("click", seguro("posición: tocar", ev => {
@@ -8955,16 +9060,20 @@ $("posDeshacer").onclick = seguro("posición: deshacer", () => {
   pintarPosicion();
   turnoDelMotor();
 });
-$("posReiniciar").onclick = seguro("posición: de nuevo", () => {
+function deNuevoPos() {
   if (!POS) return;
   cancelarMotorPos();
   POS.fens = [POS.inicial]; POS.sans = []; POS.ucis = []; POS.desde = null;
   pintarPosicion();
   turnoDelMotor();
-});
+}
+/* desde la hoja se cierra, así se ve la posición de vuelta */
+$("posReiniciar").onclick = seguro("posición: de nuevo", () => { verHojaPos(false); deNuevoPos(); });
+$("posOtraVez").onclick = seguro("posición: otra vez", deNuevoPos);
 $("posNivel").onchange = seguro("posición: nivel", () => {
   NIVEL_POS = +$("posNivel").value;
   try { localStorage.setItem("nivelPos", String(NIVEL_POS)); } catch (e) { /* incógnito */ }
+  pintarPosicion();
 });
 /* cambiar de color con la partida empezada sigue desde donde está: si ahora
    le toca al motor, juega */
@@ -8975,7 +9084,7 @@ $("posColor").onchange = seguro("posición: color", () => {
   pintarPosicion();
   turnoDelMotor();
 });
-$("volverDePosicion").onclick = seguro("volver", () => { cancelarMotorPos(); volver(); });
+$("volverDePosicion").onclick = seguro("volver", () => { if (hojaPosAbierta()) verHojaPos(false); cancelarMotorPos(); volver(); });
 
 /* EL LINK. Al abrir la app y si cambia el `#` con la app abierta (el profe
    manda otro). */
@@ -10043,26 +10152,34 @@ function saltarAMala(dir) {
   }
 }
 
+/* el Tab que da la vuelta adentro de una hoja `aria-modal` */
+function tabAdentro(hoja, ev) {
+  const fs = [...hoja.querySelectorAll("button, input, select, textarea, a[href], [tabindex]")]
+    .filter(x => !x.disabled && x.tabIndex >= 0 && x.getClientRects().length);
+  const i = fs.indexOf(document.activeElement);
+  if (fs.length && (i < 0 || (ev.shiftKey ? i === 0 : i === fs.length - 1))) {
+    ev.preventDefault();
+    fs[ev.shiftKey ? fs.length - 1 : 0].focus();
+  }
+}
+
 /* en la compu, las flechas. Se ignoran mientras se escribe en un campo. */
 document.addEventListener("keydown", seguro("teclas", ev => {
   const tecla = ev.key;
   /* Escape cierra la hoja, y sale antes que todo lo demás: con los ajustes
      abiertos, las flechas no tienen que estar navegando la partida de atrás. */
+  /* la hoja de Posiciones (v1.2), con las mismas dos reglas */
+  if (hojaPosAbierta()) {
+    if (tecla === "Escape") { ev.preventDefault(); verHojaPos(false); }
+    if (tecla === "Tab") tabAdentro($("hojaPos"), ev);
+    return;
+  }
   if (!$("hojaAjustes").classList.contains("oculto")) {
     if (tecla === "Escape") { ev.preventDefault(); verAjustes(false); }
     /* TAB NO SE ESCAPA DE LA HOJA (v0.153, [PC]): es `aria-modal`, así que
        el foco da la vuelta adentro en vez de irse a los botones de atrás,
        que con la hoja abierta no se ven. */
-    if (tecla === "Tab") {
-      const hoja = $("hojaAjustes");
-      const fs = [...hoja.querySelectorAll("button, input, select, textarea, a[href], [tabindex]")]
-        .filter(x => !x.disabled && x.tabIndex >= 0 && x.getClientRects().length);
-      const i = fs.indexOf(document.activeElement);
-      if (fs.length && (i < 0 || (ev.shiftKey ? i === 0 : i === fs.length - 1))) {
-        ev.preventDefault();
-        fs[ev.shiftKey ? fs.length - 1 : 0].focus();
-      }
-    }
+    if (tecla === "Tab") tabAdentro($("hojaAjustes"), ev);
     return;
   }
   /* LAS FILAS DE PARTIDAS SON BOTONES (v0.153, [PC]): Tab llega a cada una y

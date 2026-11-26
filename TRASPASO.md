@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.1.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -333,6 +333,16 @@ Posiciones (412): los `button`/`select` a la vista con menos de 48 contando
 `::before`/`::after` absolutos (DISENO §1.7) y los vecinos a menos de 12.
 Medido la primera vez: Posiciones 44 de alto; Partida "‹ ›" 34×44 y Girar
 33×48; Mes los selects y el "?" a 44–45; inicio el select de meses a 45.
+Desde la v1.2 suma el final, que la partida de prueba no alcanza: un mate en
+una y un ahogado en una jugados por Juan (`posicion-mate`, `posicion-tablas`,
+renglones **"final, …"**: Deshacer y el tablero tienen que dar 0 contra la
+pantalla vacía) y la hoja abierta (`posicion-hoja`). `mirar mate` y `mirar
+ahogado` se caen antes de llegar (en la pasada de la compu; a Relleno). Y tres
+renglones más, del revisor: **"llega terminada"** (un link ya en mate: la
+tarjeta sí, "Otra vez" y Deshacer no), **"hoja sobre tablero"** (el aire entre
+la hoja abierta y el tablero a 412×745, 386×745 y 412×760; OJO si es menos
+de 8) y **"títulos, …"** (texto a la vista a 22 px con un peso que no sea
+700, §1.4; en la Partida, el Mes, el inicio y los dos finales).
 
 **Dos trampas que ya costaron tiempo, las dos anotadas en el archivo:**
 - `load_pgn` devuelve `false` y **no tira**. Un PGN de prueba escrito a mano con
@@ -450,7 +460,7 @@ el orden en que se juntan:
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
-| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo |
+| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`) |
 | `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
@@ -4978,6 +4988,45 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.2, lavado de cara de Posiciones, con variantes** (Juan, 26-nov, sobre
+la v1.1.2: *"los botones están raros"*). Cuatro disposiciones dibujadas sobre
+la app con `pantallas()`, a mitad de partida y con el mate: A la de hoy
+ordenada (chips abajo), B la tarjeta arriba como la Partida y un grupo "Cómo
+se juega" al pie, C conmutadores (nivel 1–8 y color), D lo de una vez en una
+hoja. **El revisor eligió D con ajustes**: es la única que separa por
+frecuencia (la lección de la v0.113), es pariente de la Partida (botón
+redondo en la barra que abre una hoja, como la tuerca) y deja lugar para lo
+que trae la etapa 4 sin volverse formulario: "Pista" al lado de Deshacer,
+"Analizar lo jugado" y "Mandar al profe" en la tarjeta del final, el
+objetivo del link en el subtítulo. A seguía siendo formulario, B dejaba a la
+vista y a lo ancho lo que menos se usa (y bajaba el tablero 6 px en el mate),
+C pesaba lo más en lo que se elige una vez (+98 en el final). Cómo quedó:
+- **La barra**: "Posición" y de subtítulo cómo va y el nivel ("Te toca con
+  blancas · nivel 4"); al terminar, "Nivel 4 · con blancas" (el resultado lo
+  dice la tarjeta). A la derecha `#btnPosAjustes`, redondo de 34 con 48 de
+  toque, con las perillas acostadas.
+- **La hoja** `#hojaPos`, con la forma de la de Ajustes (comparte el CSS y el
+  velo `#fondoAjustes`, que cierra la que esté abierta): "La partida", "Nivel
+  del motor" ("1, el más fácil" … "8, el más fuerte"), "Jugás con" y
+  "Empezar de nuevo" a lo ancho, que cierra la hoja. **Sin rótulos de grupo**:
+  dos para dos filas eran armazón, y a 745 de alto (el celu de Juan con la
+  barra de Chrome) dejaban la hoja a 3 px del tablero; sin ellos, 72. Escape y el Tab que no se escapa, en
+  `revision.js` (el Tab salió a `tabAdentro(hoja, ev)`, el mismo para las dos).
+- **Bajo el tablero**, la tira de jugadas como la de la Partida (número en
+  tenue, jugada en texto, fundido de 32 a la izquierda cuando no entra;
+  sin jugadas, "Todavía no se jugó nada." en tenue) y la fila con "↶
+  Deshacer" secundario de 44 con ícono y texto. **La fila no cambia en toda
+  la partida ni al terminar** (`mirar` lo mide: Deshacer y el tablero, 0).
+- **El final**, `#posFin`, una tarjeta debajo de la fila: "Ganaste",
+  "Perdiste" o "Tablas" a 22 y 600, una línea de cómo ("Jaque mate en la
+  jugada 4", "Por ahogado", "No queda con qué dar mate", "Tres veces la
+  misma posición", "50 jugadas sin captura ni peón": `finPos()`) y "Otra vez",
+  el único principal de la pantalla (escondido si no hubo jugada de Juan: la
+  posición que llega ya terminada no tiene a qué volver). Título a 22/700. Borde izquierdo de acento solo con
+  "Ganaste"; si no, `--borde-campo`: **el peso lo da el título, no el color**
+  (revisor: un rojo para la derrota grita, y la app no gira alrededor de los
+  errores).
 
 **v1.1.2, Posiciones con lo que pidieron los dos revisores** (nada de esto
 llegó a publicarse: la v1.1 y la v1.1.1 salieron juntas con esta). Del de

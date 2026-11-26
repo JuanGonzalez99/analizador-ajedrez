@@ -336,16 +336,26 @@
 <div id="zonaPosicion" class="oculto">
   <div class="cabvista"><h2><button type="button" class="volver" id="volverDePosicion" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2>
     <div class="cabTit"><div class="l1"><span class="rival">Posición</span></div>
-      <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div></div>
+      <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div>
+    <!-- LO QUE SE ELIGE UNA VEZ, EN UNA HOJA (v1.2, lavado de cara con
+         variantes: el revisor eligió D). El botón redondo es el pariente de la
+         tuerca de la Partida, con las perillas acostadas que Juan había
+         guardado "para otra cosa" (DISENO §2). -->
+    <button id="btnPosAjustes" class="redondo" aria-label="Nivel y color" aria-expanded="false"
+            aria-controls="hojaPos"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h3M13 17h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button></div>
   <p id="posError" class="oculto"></p>
   <div id="posJuego">
     <div id="posTablero"></div>
+    <!-- la tira de jugadas, como la de la Partida: números en tenue, jugadas
+         en texto, fundido a la izquierda cuando no entra -->
     <p id="posJugadas"></p>
-    <!-- primero lo que se toca jugando, después cómo se juega (revisor, v1.1) -->
-    <div class="fila posAcciones"><button id="posDeshacer">Deshacer</button><button id="posReiniciar">Empezar de nuevo</button></div>
-    <div class="posControles">
-      <label>Nivel <select id="posNivel"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option></select></label>
-      <label>Jugás con <select id="posColor"><option value="w">blancas</option><option value="b">negras</option></select></label>
+    <!-- lo que se toca jugando: la fila no cambia en toda la partida, ni al
+         terminar (ahí "Pista" va a entrar al lado) -->
+    <div class="fila posAcciones"><button id="posDeshacer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Deshacer</button></div>
+    <!-- el final, con peso, debajo de la fila: no la tapa ni la corre -->
+    <div id="posFin" class="oculto" aria-live="polite">
+      <div class="posFinTxt"><div id="posFinTit"></div><div id="posFinSub"></div></div>
+      <button id="posOtraVez">Otra vez</button>
     </div>
   </div>
 </div>
@@ -358,6 +368,20 @@
      onchange sigue igual. Lo único que cambió es el texto de las opciones, que
      ahora no se autonombran —la etiqueta está al lado— y quedan cortas. -->
 <div id="fondoAjustes" class="oculto"></div>
+<!-- LA HOJA DE POSICIONES (v1.2): la misma forma que la de Ajustes, con lo
+     que se elige una vez. -->
+<div id="hojaPos" class="hoja oculto" role="dialog" aria-modal="true" aria-labelledby="tituloPos">
+  <div class="ajTirador"></div>
+  <div class="ajCab"><h2 id="tituloPos">La partida</h2>
+    <button class="chico" id="cerrarPos">Listo</button></div>
+  <!-- sin rótulos de grupo: dos para dos filas eran más armazón que
+       contenido, y a 745 de alto la hoja quedaba pegada al tablero (revisor) -->
+  <label class="ajFila"><span>Nivel del motor</span>
+    <select id="posNivel" class="chico"><option value="1">1, el más fácil</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8, el más fuerte</option></select></label>
+  <label class="ajFila"><span>Jugás con</span>
+    <select id="posColor" class="chico"><option value="w">blancas</option><option value="b">negras</option></select></label>
+  <button id="posReiniciar" class="posHojaBtn">Empezar de nuevo</button>
+</div>
 <div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
      aria-labelledby="tituloAjustes">
   <div class="ajTirador"></div>

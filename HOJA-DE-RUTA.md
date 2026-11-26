@@ -289,7 +289,7 @@ estaban para no romper las referencias de otros documentos. Es el más chico de 
 desde el primer día (el profe hoy manda links de lichess) y es la base de
 Práctica y Lecciones, que también son "jugar desde una posición".
 
-- [ ] **Lavado de cara de Posiciones, con variantes** (Juan, 26-nov, sobre
+- [x] ~~**Lavado de cara de Posiciones, con variantes**~~ (hecho en la v1.2: el revisor eligió D, lo de una vez en una hoja) (Juan, 26-nov, sobre
       la v1.1.2: *"los botones están raros"*; no quiso decir qué haría,
       quiere ver el criterio). Hoy es tablero y debajo controles apilados
       como un formulario. 3 o 4 disposiciones dibujadas sobre la app, al
@@ -706,6 +706,16 @@ Pendientes que estaban anotados solo en el traspaso.
       48 contando el `::before`/`::after` invisible. Que el revisor diga
       cuáles agrandar (los de la fila de la jugada tienen su excepción de
       40) y que el renglón quede en `[]` o con la excepción escrita.
+- [ ] **Dónde vive la versión** (revisor de UX, v1.2; ya estaba). El
+      "v1.2" al pie queda suelto debajo del contenido en todas las pantallas
+      del celu. ¿Al pie de la hoja de Ajustes (y de la de Posiciones) en vez
+      de flotar sobre el fondo? Ojo: es lo que Juan busca para saber si le
+      llegó el cambio; que siga a un toque.
+- [ ] **`mirar mate` y `mirar ahogado` se caen en la pasada de la compu**
+      (26-nov; ya estaba). Las partidas cortas rompen un `waitFor` (~632) y
+      el arrastre (~768: no hay jugada `from`), así que nunca llegan al final
+      del arnés. Que salteen lo que pide más jugadas de las que tienen.
+      Interno.
 
 ### Ideas de los revisores para más adelante
 

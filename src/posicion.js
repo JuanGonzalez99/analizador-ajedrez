@@ -133,24 +133,48 @@ function estadoPos() {
   return (c.in_check() ? "Jaque. " : "") + "Te toca con " + (yo === "w" ? "blancas" : "negras");
 }
 
-/* las jugadas, numeradas desde donde arranca la posición */
+/* las jugadas, numeradas desde donde arranca la posición: el número en
+   tenue y la jugada en texto, como la tira de la Partida (v1.2) */
 function jugadasPos() {
   const p = POS.inicial.split(" ");
   let n = +p[5] || 1, blancas = p[1] === "w";
   const out = [];
   POS.sans.forEach((s, i) => {
-    if (blancas) out.push(`${n}. ${s}`);
-    else { out.push(i === 0 ? `${n}… ${s}` : s); n++; }
+    if (blancas) out.push(`<span class="n">${n}.</span><span class="j">${sinHtml(s)}</span>`);
+    else { out.push((i === 0 ? `<span class="n">${n}…</span>` : "") + `<span class="j">${sinHtml(s)}</span>`); n++; }
     blancas = !blancas;
   });
-  return out.join(" ");
+  return out.join("");
+}
+
+/* CÓMO TERMINÓ, para la tarjeta del final (v1.2): el resultado grande y
+   una línea de cómo, o null si sigue. El subtítulo de la barra ya no lo
+   repite (revisor de UX). */
+function finPos() {
+  if (POS.error) return null;
+  const c = juegoPos();
+  if (!c.game_over()) return null;
+  if (c.in_checkmate()) {
+    const nro = +fenPos().split(" ")[5] - (c.turn() === "w" ? 1 : 0);
+    return { gano: c.turn() !== POS.yo, titulo: c.turn() !== POS.yo ? "Ganaste" : "Perdiste",
+             sub: "Jaque mate en la jugada " + nro };
+  }
+  const sub = c.in_stalemate() ? "Por ahogado" : c.insufficient_material() ? "No queda con qué dar mate"
+    : c.in_threefold_repetition() ? "Tres veces la misma posición" : "50 jugadas sin captura ni peón";
+  return { gano: false, titulo: "Tablas", sub };
 }
 
 function pintarPosicion() {
   if (!POS) return;
-  $("posEstado").textContent = estadoPos();
+  const fin = finPos();
+  /* el subtítulo: cómo va y el nivel; al terminar, solo cómo se juega
+     (el resultado lo dice la tarjeta) */
+  const como = "nivel " + NIVEL_POS + " · con " + (POS.yo === "w" ? "blancas" : "negras");
+  $("posEstado").textContent = POS.error ? "" : fin ? como[0].toUpperCase() + como.slice(1)
+    : estadoPos() + " · nivel " + NIVEL_POS;
   ver("posError", !!POS.error);
   ver("posJuego", !POS.error);
+  ver("btnPosAjustes", !POS.error);
   if (POS.error) {
     $("posError").textContent = "El link trae una posición que no se puede jugar: " + POS.error + ".";
     return;
@@ -165,20 +189,41 @@ function pintarPosicion() {
   $("posTablero").innerHTML = dibujar(fen, POS.ucis[POS.ucis.length - 1] || null, null,
     { sinMarcas: true, sinAtras: true, sinAdelante: true, desde: POS.desde, destinos });
   GIRADO = g;
-  /* el final, en palabras, al cabo de las jugadas: es lo más importante de
-     la pantalla cuando termina (revisor de UX, v1.1) */
-  const j = juegoPos();
-  const fin = !j.game_over() ? "" : j.in_checkmate() ? (j.turn() === POS.yo ? "Ganó el motor" : "Ganaste") : "Tablas";
+  const tira = $("posJugadas");
   const lista = jugadasPos();
-  $("posJugadas").innerHTML = (lista ? sinHtml(lista) : fin ? "" : "Todavía no se jugó nada.") +
-    (fin ? `${lista ? " · " : ""}<b>${fin}</b>` : "");
-  /* un solo renglón que no crece: se ven las últimas */
-  $("posJugadas").scrollLeft = $("posJugadas").scrollWidth;
+  tira.innerHTML = lista || "Todavía no se jugó nada.";
+  tira.classList.toggle("vacia", !lista);
+  /* un solo renglón que no crece: se ven las últimas, y el fundido avisa
+     que hay más a la izquierda */
+  tira.scrollLeft = tira.scrollWidth;
+  tira.classList.toggle("corta", tira.scrollWidth > tira.clientWidth + 1);
+  ver("posFin", !!fin);
+  if (fin) {
+    $("posFin").classList.toggle("gano", fin.gano);
+    $("posFinTit").textContent = fin.titulo;
+    $("posFinSub").textContent = fin.sub;
+  }
   $("posNivel").value = String(NIVEL_POS);
   $("posColor").value = POS.yo;
   $("posDeshacer").disabled = !hayJugadaMia();
   $("posReiniciar").disabled = !hayJugadaMia();
+  /* si la posición llegó ya terminada, "Otra vez" volvería a lo mismo: un
+     principal apagado se ve roto, así que no se muestra (revisor de UX) */
+  ver("posOtraVez", hayJugadaMia());
 }
+
+/* LA HOJA (v1.2): la misma mecánica que la de Ajustes —Listo, tocar afuera
+   y Escape (en `revision.js`, con el Tab que no se escapa)—, y el foco va y
+   vuelve al botón redondo. */
+function verHojaPos(abrir) {
+  $("fondoAjustes").classList.toggle("oculto", !abrir);
+  $("hojaPos").classList.toggle("oculto", !abrir);
+  $("btnPosAjustes").setAttribute("aria-expanded", abrir ? "true" : "false");
+  (abrir ? $("cerrarPos") : $("btnPosAjustes")).focus();
+}
+const hojaPosAbierta = () => !$("hojaPos").classList.contains("oculto");
+$("btnPosAjustes").onclick = seguro("posición: la hoja", () => verHojaPos(true));
+$("cerrarPos").onclick = seguro("posición: cerrar la hoja", () => verHojaPos(false));
 
 /* TOCAR LA PIEZA Y DESPUÉS ADÓNDE. Solo las de Juan y solo en su turno. */
 $("posTablero").addEventListener("click", seguro("posición: tocar", ev => {
@@ -250,16 +295,20 @@ $("posDeshacer").onclick = seguro("posición: deshacer", () => {
   pintarPosicion();
   turnoDelMotor();
 });
-$("posReiniciar").onclick = seguro("posición: de nuevo", () => {
+function deNuevoPos() {
   if (!POS) return;
   cancelarMotorPos();
   POS.fens = [POS.inicial]; POS.sans = []; POS.ucis = []; POS.desde = null;
   pintarPosicion();
   turnoDelMotor();
-});
+}
+/* desde la hoja se cierra, así se ve la posición de vuelta */
+$("posReiniciar").onclick = seguro("posición: de nuevo", () => { verHojaPos(false); deNuevoPos(); });
+$("posOtraVez").onclick = seguro("posición: otra vez", deNuevoPos);
 $("posNivel").onchange = seguro("posición: nivel", () => {
   NIVEL_POS = +$("posNivel").value;
   try { localStorage.setItem("nivelPos", String(NIVEL_POS)); } catch (e) { /* incógnito */ }
+  pintarPosicion();
 });
 /* cambiar de color con la partida empezada sigue desde donde está: si ahora
    le toca al motor, juega */
@@ -270,7 +319,7 @@ $("posColor").onchange = seguro("posición: color", () => {
   pintarPosicion();
   turnoDelMotor();
 });
-$("volverDePosicion").onclick = seguro("volver", () => { cancelarMotorPos(); volver(); });
+$("volverDePosicion").onclick = seguro("volver", () => { if (hojaPosAbierta()) verHojaPos(false); cancelarMotorPos(); volver(); });
 
 /* EL LINK. Al abrir la app y si cambia el `#` con la app abierta (el profe
    manda otro). */

@@ -1051,26 +1051,34 @@ function saltarAMala(dir) {
   }
 }
 
+/* el Tab que da la vuelta adentro de una hoja `aria-modal` */
+function tabAdentro(hoja, ev) {
+  const fs = [...hoja.querySelectorAll("button, input, select, textarea, a[href], [tabindex]")]
+    .filter(x => !x.disabled && x.tabIndex >= 0 && x.getClientRects().length);
+  const i = fs.indexOf(document.activeElement);
+  if (fs.length && (i < 0 || (ev.shiftKey ? i === 0 : i === fs.length - 1))) {
+    ev.preventDefault();
+    fs[ev.shiftKey ? fs.length - 1 : 0].focus();
+  }
+}
+
 /* en la compu, las flechas. Se ignoran mientras se escribe en un campo. */
 document.addEventListener("keydown", seguro("teclas", ev => {
   const tecla = ev.key;
   /* Escape cierra la hoja, y sale antes que todo lo demás: con los ajustes
      abiertos, las flechas no tienen que estar navegando la partida de atrás. */
+  /* la hoja de Posiciones (v1.2), con las mismas dos reglas */
+  if (hojaPosAbierta()) {
+    if (tecla === "Escape") { ev.preventDefault(); verHojaPos(false); }
+    if (tecla === "Tab") tabAdentro($("hojaPos"), ev);
+    return;
+  }
   if (!$("hojaAjustes").classList.contains("oculto")) {
     if (tecla === "Escape") { ev.preventDefault(); verAjustes(false); }
     /* TAB NO SE ESCAPA DE LA HOJA (v0.153, [PC]): es `aria-modal`, así que
        el foco da la vuelta adentro en vez de irse a los botones de atrás,
        que con la hoja abierta no se ven. */
-    if (tecla === "Tab") {
-      const hoja = $("hojaAjustes");
-      const fs = [...hoja.querySelectorAll("button, input, select, textarea, a[href], [tabindex]")]
-        .filter(x => !x.disabled && x.tabIndex >= 0 && x.getClientRects().length);
-      const i = fs.indexOf(document.activeElement);
-      if (fs.length && (i < 0 || (ev.shiftKey ? i === 0 : i === fs.length - 1))) {
-        ev.preventDefault();
-        fs[ev.shiftKey ? fs.length - 1 : 0].focus();
-      }
-    }
+    if (tecla === "Tab") tabAdentro($("hojaAjustes"), ev);
     return;
   }
   /* LAS FILAS DE PARTIDAS SON BOTONES (v0.153, [PC]): Tab llega a cada una y

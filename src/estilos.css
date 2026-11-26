@@ -170,7 +170,7 @@
      —el color de sistema era casi el mismo del fondo y la hoja no se leía como
      algo que flota—, radio 12 de tarjeta, la única sombra de lo que flota
      (§1.6) y 16 de margen a los costados, el del celu (§1.5). */
-  #hojaAjustes { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  #hojaAjustes, #hojaPos { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
                  max-width: 700px; margin: 0 auto;
                  background: var(--superficie); color: var(--texto);
                  border-top: 1px solid var(--linea);
@@ -449,8 +449,8 @@
                       width: 34px; height: 34px; margin-left: auto; order: 1;
                       border: 1px solid var(--linea); border-radius: 50%; }
   /* las dos tuercas se ven de 34 y se tocan en 48 (§1.7; revisor, v0.120) */
-  #btnAjustesInicio, #btnAjustes { position: relative; }
-  #btnAjustesInicio::before, #btnAjustes::before { content: ""; position: absolute; inset: -7px; }
+  #btnAjustesInicio, #btnAjustes, #btnPosAjustes { position: relative; }
+  #btnAjustesInicio::before, #btnAjustes::before, #btnPosAjustes::before { content: ""; position: absolute; inset: -7px; }
   #zonaMeses { margin-top: var(--e-4); }
   /* [PC] TOPE DE LECTURA DE 640 para la columna del inicio (v0.121; revisor,
      v0.120): a 1280 la tarjeta estiraba el "›" a ~1000 px del título y la
@@ -977,15 +977,50 @@
   body.enPosicion #zonaEstado { display: none; }
   #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
   #posTablero svg.tab { margin: 0 auto; }
-  /* un solo renglón que no crece, con scroll de costado y las últimas a la
-     vista: si envolvía, cada renglón nuevo corría los botones que se están
-     tocando (revisor de UX, v1.1) */
-  #posJugadas { margin: var(--e-2) 0 0; font-size: var(--t-secundario); color: var(--tenue);
+  /* LAVADO DE CARA (v1.2): el revisor eligió D entre cuatro. Bajo el
+     tablero solo lo que se toca jugando —la tira y Deshacer—; lo que se
+     elige una vez va a la hoja (`#hojaPos`), y el final, en una tarjeta
+     debajo de la fila, que no se mueve en toda la partida. */
+  /* el botón redondo: el de la tuerca de la Partida (34 a la vista, 48 de
+     toque con el ::before) */
+  #btnPosAjustes { padding: 0; flex: none; display: grid; place-items: center;
+                   width: 34px; height: 34px; border: 1px solid var(--linea);
+                   border-radius: 50%; transform: translateY(-2.25px); }
+  /* LA TIRA: un renglón que no crece (si envolvía, corría los botones que
+     se están tocando; revisor de UX, v1.1), con las últimas a la vista y el
+     fundido a la izquierda cuando hay más, como la de la Partida */
+  #posJugadas { margin: var(--e-3) 0 0; font-size: var(--t-secundario); color: var(--texto);
+                line-height: 24px; height: 24px;
                 white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
-  #posJugadas b { color: var(--texto); font-weight: 600; }
-  .posControles { display: flex; gap: var(--e-4); flex-wrap: wrap; align-items: center;
-                  margin: var(--e-4) 0 0; font-size: var(--t-secundario); color: var(--tenue); }
-  .posControles label { display: flex; align-items: center; gap: var(--e-2); }
-  .posControles select { color: var(--texto); }
-  .posAcciones { margin: var(--e-4) 0 0; gap: var(--e-3); }
+  #posJugadas::-webkit-scrollbar { display: none; }
+  #posJugadas.corta { -webkit-mask-image: linear-gradient(to right, transparent, #000 32px);
+                      mask-image: linear-gradient(to right, transparent, #000 32px); }
+  #posJugadas .n, #posJugadas.vacia { color: var(--tenue); }
+  #posJugadas .n { margin-right: var(--e-1); }
+  #posJugadas .j { margin-right: var(--e-2); }
+  .posAcciones { margin: var(--e-3) 0 0; gap: var(--e-3); }
+  /* secundario con ícono y texto, 44 a la vista y 48 de toque (§1.7) */
+  #posDeshacer { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
+                 padding: 0 var(--e-4) 0 var(--e-3); position: relative; }
+  #posDeshacer::before { content: ""; position: absolute; inset: -2px 0; }
+  /* EL FINAL CON PESO: el título grande hace el peso, no el color (revisor:
+     un rojo para la derrota grita, y la app no gira alrededor de los
+     errores). Borde de acento solo cuando ganaste. "Otra vez" es el único
+     principal de la pantalla, y solo existe acá. */
+  #posFin { display: flex; align-items: center; gap: var(--e-3); margin: var(--e-3) 0 0;
+            padding: var(--e-3) var(--e-4); background: var(--superficie);
+            border: 1px solid var(--linea); border-left: 3px solid var(--borde-campo);
+            border-radius: var(--r-tarjeta); }
+  #posFin.oculto { display: none; }
+  #posFin.gano { border-left-color: var(--acento); }
+  .posFinTxt { flex: 1; min-width: 0; }
+  #posFinTit { font-size: var(--t-titulo); font-weight: 700; line-height: 1.2; }
+  #posFinSub { font-size: var(--t-secundario); color: var(--tenue); margin-top: 2px; }
+  #posOtraVez { background: var(--acento); color: var(--sobre-acento); font-weight: 600;
+                min-height: 44px; flex: none; position: relative; }
+  #posOtraVez::before { content: ""; position: absolute; inset: -2px 0; }
+  /* en la hoja, "Empezar de nuevo" a lo ancho, debajo de las perillas */
+  #hojaPos .ajCab { margin-bottom: var(--e-2); }
+  .posHojaBtn { display: block; width: 100%; min-height: 44px; margin: var(--e-4) 0 0; position: relative; }
+  .posHojaBtn::before { content: ""; position: absolute; inset: -2px 0; }
   #posError { margin: var(--e-4) 0 0; }
