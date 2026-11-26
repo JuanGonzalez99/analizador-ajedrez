@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4988,6 +4988,18 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.3.1, [PC] la barra de los módulos es un riel** (revisor de UX, v1.3:
+abajo, a 1280, eran dos botones a 640 px uno del otro). Con `pointer: fine`
+y desde 1000, `#navMod` es un riel de 80 a la izquierda, con los ítems
+arriba (64 de alto cada uno, 12 entre ellos) y la misma pastilla; nunca se
+corre (`barraFija`). Desde 1270 entra en el margen; de 1000 a 1269 todas las
+pantallas se corren 80 (`body` con 94 a la izquierda), no solo las que lo
+muestran, para que sigan abriendo en el mismo borde. La versión de
+Posiciones va bajo la columna (flotaba en x 99), y arriba Posiciones
+conserva los 8 de antes en la compu (con 16, el final hacía scroll de 8 a
+1280 × 800). `mirar` mide que a 1000 sea un riel. El celu, igual al byte
+salvo el número de versión al pie.
 
 **v1.3, la barra de los módulos** (etapa 4; Juan eligió la barra abajo el
 7-nov, DISENO §2). Variantes sobre la app con `pantallas()`: A la barra

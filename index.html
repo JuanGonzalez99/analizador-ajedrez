@@ -1598,6 +1598,33 @@
     #zonaPosicion { --ladoTab: clamp(360px, calc(100vh - 334px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
     #zonaPosicion svg.tab { max-width: var(--ladoTab); }
   }
+
+  /* [PC] LA BARRA DE LOS MÓDULOS ES UN RIEL (v1.3.1, revisor de UX). Abajo,
+     a 1280, eran dos botones a 640 px uno del otro, lejos de todo. Con mouse
+     y desde 1000, un riel de 80 a la izquierda (Material para pantallas
+     anchas): los ítems arriba, a la altura de la cabecera, con el mismo ícono,
+     texto y pastilla. Nunca se corre (`barraFija` en motor.js). Desde 1270
+     entra en el margen libre; de 1000 a 1269 TODAS las pantallas se corren 80
+     —no solo las que lo muestran—, para que sigan abriendo en el mismo borde
+     (el renglón "bordes en la compu" de mirar). */
+  @media (pointer: fine) and (min-width: 1000px) {
+    #navMod { top: 0; right: auto; width: 80px; height: auto; flex-direction: column;
+              justify-content: flex-start; gap: var(--e-3); padding-top: var(--e-4);
+              border-top: 0; border-right: 1px solid var(--linea); transform: none !important; }
+    #navMod button { flex: none; height: 64px; }
+    body.conBarra { padding-bottom: 60px; }
+  }
+  @media (pointer: fine) and (min-width: 1000px) and (max-width: 1269px) {
+    body { padding-left: 94px; }
+  }
+  /* [PC] la versión de Posiciones, bajo la columna y alineada a su borde
+     (revisor, v1.3; flotaba en x 99, fuera de la columna) */
+  @media (min-width: 700px) {
+    /* arriba, los 8 de antes: con los 16 del celu, el final de la
+       partida hacía scroll de 8 a 1280 × 800 */
+    body.enPosicion { padding-top: 8px; }
+    body.enPosicion .pie { max-width: clamp(360px, calc(100vh - 334px), 640px); margin-left: auto; margin-right: auto; }
+  }
 </style>
 
 
@@ -1619,7 +1646,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.3 · 26-11";
+  window.VERSION = "v1.3.1 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

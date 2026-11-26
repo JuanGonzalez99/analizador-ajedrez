@@ -1520,6 +1520,13 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
                escondida: n.style.transform };
     });
   }
+  /* [PC] desde 1000, con mouse, es un riel vertical a la izquierda (v1.3.1) */
+  await pg.setViewportSize({ width: 1000, height: 800 }); await pg.waitForTimeout(150);
+  const riel = await pg.evaluate(() => { const r = document.getElementById("navMod").getBoundingClientRect();
+    return { ancho: Math.round(r.width), alto: Math.round(r.height), izq: Math.round(r.left) }; });
+  barra.riel1000 = riel;
+  if (!(riel.alto > riel.ancho && riel.izq === 0)) console.log("OJO: a 1000 la barra de los módulos no es un riel a la izquierda");
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
   /* en la Partida no está */
   const enPartida = await pg.evaluate(() => { document.querySelector("#partidas div[data-i]").click();
     return new Promise(r => setTimeout(() => r(getComputedStyle(document.getElementById("navMod")).display), 600)); });
