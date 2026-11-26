@@ -1139,8 +1139,21 @@ $("tarjetaMes").onclick = seguro("ver el mes", () =>
 /* con usuario guardado se arranca plegado y buscando (v0.120) */
 try {
   const u = localStorage.getItem("usuario");
-  if (u) { $("usuario").value = u; $("yaUsuarioNombre").textContent = u; entrada(false); $("buscar").click(); }
+  /* salvo que antes de arrancar se haya escrito otro nombre y tocado Buscar:
+     ese gana, lo corre el toque guardado de abajo (revisor de UX, v1.0.10) */
+  const escrito = window.TOQUE_PENDIENTE === "buscar" && $("usuario").value.trim();
+  if (u && !escrito) { $("usuario").value = u; $("yaUsuarioNombre").textContent = u; entrada(false); $("buscar").click(); }
 } catch (e) { /* incógnito */ }
+/* Buscar tocado antes de que arrancara el módulo (v1.0.10, script
+   clásico): se corre ahora. Si el usuario guardado ya largó la búsqueda,
+   Buscar está apagado y no se repite. El aviso de "arrancando" se borra
+   siempre, también el de los otros botones, que no se repiten. */
+{
+  const pend = window.TOQUE_PENDIENTE;
+  window.TOQUE_PENDIENTE = null;
+  if (/arrancando/.test($("estado").textContent)) estado("");
+  if (pend === "buscar" && !$("buscar").disabled && $("buscar").offsetParent !== null) $("buscar").click();
+}
 
 const atras = () => PRUEBA ? verDeLaVariante(PRUEBA.ver - 1) : irA(IDX - 1);
 const adelante = () => PRUEBA ? verDeLaVariante(PRUEBA.ver + 1) : irA(IDX + 1);

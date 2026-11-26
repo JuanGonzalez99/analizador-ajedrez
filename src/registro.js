@@ -1,4 +1,4 @@
-  window.VERSION = "v1.0.9 · 25-11";
+  window.VERSION = "v1.0.10 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -145,6 +145,33 @@
   window.addEventListener("unhandledrejection", function (ev) {
     window.mostrarError("promesa rechazada", ev.reason);
   });
+  /* EL TOQUE DE ANTES DE QUE ARRANQUE EL MÓDULO (v1.0.10; revisor de UX,
+     v1.0.9). Con mala señal el módulo tarda ~10 s y el inicio ya se ve
+     listo, pero los botones los engancha el módulo: un toque en Buscar no
+     hacía nada y no avisaba. Ahora el renglón del estado lo dice, y solo
+     Buscar con un nombre escrito se guarda y lo corre el módulo al final de
+     su arranque (`revision.js`, después del usuario guardado): es la única
+     intención clara. Los otros (la tuerca, el PGN) no se repiten solos 10 s
+     después —abrirían algo sin que nadie toque, revisor de UX— y el aviso
+     pide probar de nuevo. Los del registro (#panelLog) ya andan desde acá y
+     no se tocan. Sin la palabra "Cargando…": esa la usa la app para un mes
+     que baja, y el mono le pone plazo. */
+  /* con un error de verdad no hay "arrancando" que valga: el aviso dice qué
+     hacer (revisor de UX; el cartel rojo es técnico y Juan lee este) */
+  var NO_ARRANCO = "La app no pudo arrancar: recargá la página.";
+  document.addEventListener("click", function (ev) {
+    if (window.MODULO_OK) return;
+    var b = ev.target && ev.target.closest && ev.target.closest("button[id]");
+    if (!b || b.closest("#panelLog")) return;
+    var est = document.getElementById("estado"), u = document.getElementById("usuario");
+    var busca = b.id === "buscar" && u && u.value.trim();
+    var fallo = document.documentElement.classList.contains("hubo-error");
+    window.TOQUE_PENDIENTE = busca && !fallo ? "buscar" : null;
+    if (est) est.textContent = fallo ? NO_ARRANCO : busca
+      ? "La app todavía está arrancando: busco apenas esté."
+      : "La app todavía está arrancando: probá de nuevo en un momento.";
+    LOG.add("!", "toque en #" + b.id + " antes del módulo" + (busca ? ": queda guardado" : ""));
+  }, true);
   /* A LOS 6 S SIN MÓDULO NO ES UN ERROR TODAVÍA (v1.0.9; revisor de código,
      25-nov). Con mala señal el módulo arranca más tarde (a 200 kbps, a los
      10,7 s), y esto pintaba el cartel rojo con los tres archivos respondiendo
@@ -158,7 +185,14 @@
     if (!window.MODULO_OK) {
       /* si el módulo llega mientras se prueban los archivos, un HEAD que
          falla por un corte no pisa "listo" ni saca el cartel (revisor de UX) */
-      var roto = function () { if (!window.MODULO_OK) diag.textContent = window.VERSION + " · el módulo no arrancó"; };
+      var roto = function () {
+        if (window.MODULO_OK) return;
+        diag.textContent = window.VERSION + " · el módulo no arrancó";
+        /* el toque guardado no va a correr: el aviso no puede seguir prometiéndolo */
+        window.TOQUE_PENDIENTE = null;
+        var est = document.getElementById("estado");
+        if (est) est.textContent = NO_ARRANCO;
+      };
       /* si ya hubo un error de verdad (el import falló), no tarda: no arrancó */
       if (document.documentElement.classList.contains("hubo-error")) roto();
       else diag.textContent = window.VERSION + " · el módulo tarda…";

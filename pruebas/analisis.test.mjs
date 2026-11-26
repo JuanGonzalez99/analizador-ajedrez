@@ -4102,6 +4102,24 @@ test("si en el cambio el rival no entrega nada, la tarjeta no lo dice (v0.178.1)
   assert.ok(!t.includes("comible") && !t.includes("en el cambio"), t);
 });
 
+test("el toque de antes de que arranque el módulo se guarda y se corre al arrancar (v1.0.10)", () => {
+  /* Con mala señal el inicio se ve listo ~10 s antes que el módulo, que es
+     quien engancha los botones: Buscar no hacía nada. La regla 6bis del mono
+     lo mira andando; esto, que las dos puntas sigan conectadas. */
+  const c = html.slice(html.indexOf("/* EL TOQUE DE ANTES DE QUE ARRANQUE EL MÓDULO"), html.indexOf("/* A LOS 6 S SIN MÓDULO"));
+  assert.ok(c.includes('document.addEventListener("click"') && c.includes("if (window.MODULO_OK) return;"), "escucha solo antes del módulo");
+  assert.ok(c.includes('window.TOQUE_PENDIENTE = busca && !fallo ? "buscar" : null;'), "guarda solo Buscar con nombre");
+  assert.ok(c.includes('b.closest("#panelLog")'), "los botones del registro ya andan: no se tocan");
+  assert.ok(!/Cargando…/.test(c.replace(/\/\*[\s\S]*?\*\//g, "")), "sin \"Cargando…\", que el mono vigila");
+  const roto = html.slice(html.indexOf("var roto = function"), html.indexOf("var roto = function") + 500);
+  assert.ok(roto.includes("window.TOQUE_PENDIENTE = null;") && roto.includes("NO_ARRANCO"), "con un error de verdad no promete buscar");
+  const m = html.slice(html.indexOf("con usuario guardado se arranca plegado"));
+  const i = m.indexOf("const pend = window.TOQUE_PENDIENTE;");
+  assert.ok(i > 0 && i < m.indexOf("const atras ="), "el módulo lo corre después del usuario guardado");
+  assert.ok(m.slice(0, i).includes("if (u && !escrito)"), "el nombre escrito antes de arrancar le gana al guardado");
+  assert.ok(m.slice(i, i + 400).includes('pend === "buscar" && !$("buscar").disabled'), "solo Buscar, y si la búsqueda ya arrancó no se repite");
+});
+
 test("a los 6 s sin módulo no hay cartel rojo si los archivos responden bien (v1.0.9)", () => {
   /* Con mala señal el módulo arranca después de los 6 s del temporizador, y
      el cartel salía con los tres archivos respondiendo 200 y no se iba. La

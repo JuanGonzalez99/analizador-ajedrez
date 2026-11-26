@@ -126,6 +126,8 @@ await new Promise(r => srv.listen(PUERTO, r));
    8. Recargar no pierde nada.                      (afuera)
    9. Todo trabajo termina, y Parar para.           (afuera)
    10. Ningún error en la consola.                  (afuera)
+   6bis. Lo que se toca antes de que arranque el módulo, también, y no se
+       repite solo al arrancar. (afuera; en los recorridos con chess.js lento)
    11. Sin error de verdad, no hay cartel de error. (adentro; uno de cada
        cuatro recorridos demora chess.js 7 s, como un celu con mala señal)
 
@@ -327,7 +329,14 @@ async function recorrido(sem, nav) {
      recorridos, chess.js tarda 7 s, más que los 6 del temporizador del
      script clásico. Hasta acá solo tardaban la API y el motor. */
   const lenta = r() < 0.25;
-  if (lenta) await ctx.route("**/chess.js", ro => setTimeout(() => ro.continue().catch(() => {}), 7000));
+  /* y uno de cada tres lentos, chess.js no llega nunca (404): el aviso no
+     puede quedar prometiendo que arranca (6bis, revisor de UX, v1.0.10) */
+  const rota = lenta && r() < 0.33;
+  if (rota) await ctx.route("**/chess.js", ro => setTimeout(() => ro.fulfill({ status: 404, body: "" }).catch(() => {}), 500));
+  else if (lenta) await ctx.route("**/chess.js", ro => setTimeout(() => ro.continue().catch(() => {}), 7000));
+  /* a quién se le pidieron las partidas: el nombre escrito antes de arrancar le gana al guardado */
+  const pedidos = [];
+  ctx.on("request", q => { const m = /api\.chess\.com\/pub\/player\/([^/]+)/.exec(q.url()); if (m) pedidos.push(decodeURIComponent(m[1])); });
   const pg = await ctx.newPage();
   const pasos = [];
   const t0 = Date.now();
@@ -363,8 +372,64 @@ async function recorrido(sem, nav) {
   /* lo de "ir y volver": la firma al salir del inicio, y cuántos trabajos iban */
   let alSalir = null;
 
-  await pg.goto(`http://localhost:${PUERTO}/index.html`);
+  /* con chess.js lento, `goto` no espera el load (que espera al módulo):
+     hay que poder tocar antes de que arranque */
+  await pg.goto(`http://localhost:${PUERTO}/index.html`, lenta ? { waitUntil: "commit" } : {});
   anotar("abrir (con usuario guardado)" + (lenta ? ", chess.js lento" : ""));
+  /* 6bis. LO QUE SE TOCA ANTES DE QUE ARRANQUE EL MÓDULO TAMBIÉN RESPONDE,
+     Y NO SE REPITE SOLO (v1.0.10; revisor de UX; APRENDIZAJES.md, causa C y
+     A). Con mala señal el inicio se ve listo ~10 s antes que el módulo, y
+     Buscar no hacía nada: la regla 6 corre solo con la app arrancada. Acá se
+     toca un botón al azar de los que se ven, antes de MODULO_OK: algo tiene
+     que cambiar en la pantalla en 1,5 s, y al arrancar no puede aparecer un
+     diálogo, una descarga ni algo abierto (`aria-expanded`) que nadie tocó
+     después (la primera vuelta repetía la tuerca y el Descargar del
+     registro). */
+  if (lenta) {
+    const dialogos = [], descargas = [];
+    pg.on("dialog", d => { dialogos.push(d.message().slice(0, 40)); d.dismiss().catch(() => {}); });
+    pg.on("download", d => descargas.push(d.suggestedFilename()));
+    const ids = await pg.waitForSelector("#buscar", { state: "visible", timeout: 5000 })
+      .then(() => leer(() => window.MODULO_OK ? null : [...document.querySelectorAll("button[id]")]
+        .filter(b => b.offsetParent !== null && !b.disabled).map(b => b.id))).catch(() => null);
+    if (ids && ids.length) {
+      const id = ids[Math.floor(r() * ids.length)];
+      await leer(() => {
+        window.__mutPrevia = 0;
+        new MutationObserver(ms => { if (!window.MODULO_OK) window.__mutPrevia += ms.length; })
+          .observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true });
+      });
+      if (id === "buscar") await pg.fill("#usuario", "otro").catch(() => {});
+      anotar(`tocar #${id} antes de que arranque` + (id === "buscar" ? " (con otro nombre escrito)" : ""));
+      await pg.click("#" + id, { timeout: 2000 }).catch(() => {});
+      const ok = await pg.waitForFunction(() => window.__mutPrevia > 0, null, { timeout: 1500 }).then(() => true).catch(() => false);
+      if (!ok && (await leer(() => !window.MODULO_OK))) rotas.push({ regla: "no responde", que: `tocar #${id} antes de que arranque el módulo no cambió nada en 1,5 s` });
+      if (rota) {
+        /* con el módulo que no llega: pasado el temporizador de 6 s, el
+           aviso dice que no pudo arrancar. Los errores de consola de este
+           recorrido son el 404 a propósito: no cuentan. */
+        await pg.waitForTimeout(8000);
+        const t = await leer(() => document.getElementById("estado").textContent);
+        rotas.length = 0;
+        if (/arrancando/.test(t || "") || !/no pudo arrancar/.test(t || ""))
+          rotas.push({ regla: "aviso falso sin módulo", que: `con chess.js en 404, el estado dice "${t}"` });
+        anotar("chess.js en 404: mirar el aviso");
+        await ctx.close();
+        return { rotas, pasos };
+      }
+      const abiertos = () => leer(() => [...document.querySelectorAll('[aria-expanded="true"]')].map(e => e.id).join(","));
+      const antesAbiertos = await abiertos();
+      await pg.waitForFunction(() => window.MODULO_OK, null, { timeout: 20000 }).catch(() => {});
+      await pg.waitForTimeout(1500);
+      const ahora = await abiertos();
+      if (id === "buscar" && !pedidos.includes("otro"))
+        rotas.push({ regla: "toque repetido solo", que: `escribí "otro" y toqué Buscar antes de arrancar; se pidió ${pedidos.join(", ") || "nada"}` });
+      if (dialogos.length || descargas.length || (ahora && ahora !== antesAbiertos))
+        rotas.push({ regla: "toque repetido solo", que: `tras tocar #${id} antes de arrancar: ` +
+          [dialogos.length && "diálogo " + dialogos[0], descargas.length && "descarga " + descargas[0], ahora && ahora !== antesAbiertos && "se abrió " + ahora].filter(Boolean).join(", ") });
+    } else anotar("(el módulo arrancó antes de poder tocar)");
+    await pg.waitForLoadState("load").catch(() => {});
+  }
   /* LA MITAD ARRANCA CON LA CACHÉ LLENA: se analiza el mes entero y se
      recarga. Con la caché vacía no hay nada que mirar al cargar, y el error de
      la v0.175 (la lista empujada al terminar de mirarla) no podía pasar. */

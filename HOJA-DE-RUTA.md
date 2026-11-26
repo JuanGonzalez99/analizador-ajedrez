@@ -194,7 +194,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       (`seLaLlevan`), y mirar con `npm run frases -- --frase planta`.
       Revisor de ajedrez sí.
 
-- [ ] **Con señal mala, Buscar no responde y no avisa** (revisor de UX,
+- [x] ~~**Con señal mala, Buscar no responde y no avisa**~~ (hecho en la v1.0.10) (revisor de UX,
       v1.0.9; ya estaba). Mientras el módulo carga (con mala señal, ~10 s) el
       campo y "Buscar" se ven listos, pero el manejador se engancha recién al
       arrancar: el toque no hace nada. Que el toque se guarde y corra al
@@ -472,6 +472,18 @@ archiva los que pierden sentido.
       vertical (la de fábrica) y de 108 a 1172 con la horizontal. Pasar de una
       pantalla a otra corre el borde. ¿Mismo ancho total, o la Partida es otra
       grilla a propósito? Que lo juzgue el revisor con las tres capturas.
+
+- [ ] **El inicio con usuario guardado mientras la app arranca** (revisor
+      de UX, v1.0.10; celu). Con mala señal se ven ~10 s el campo vacío y
+      Buscar, y al arrancar salta a "juancito · cambiar" y busca sola: un
+      salto que nadie tocó, y mientras tanto la app parece no acordarse de
+      él. ¿El script clásico arma la fila "ya usuario" desde
+      `localStorage.usuario` en el primer cuadro y el módulo solo larga la
+      búsqueda?
+- [ ] **[PC] El inicio antes de buscar** (revisor de UX, v1.0.10). A 1280 es
+      una columna de ~400 px pegada a la izquierda (x 99–499) con ~780 vacíos
+      a la derecha. ¿Centrar la entrada, o adelantar dónde va a aparecer la
+      lista? Con variantes.
 
 ### Limpieza de código
 

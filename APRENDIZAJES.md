@@ -54,11 +54,7 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-- **El mono toca antes de que arranque el módulo** (revisor de UX, v1.0.9;
-  causa C). En los recorridos con `chess.js` lento, tocar Buscar antes de
-  `MODULO_OK` y contar como falla un toque que no cambia nada visible
-  ("todo lo que se toca responde", hoy solo corre con la app arrancada).
-  Nace en rojo; hacerla junto con el arreglo de Buscar.
+(Ninguna por ahora.)
 
 ## Registro
 
@@ -174,4 +170,16 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   simple y se dice si lo cambiado se ve ahí.
 - **Buscar no responde mientras carga el módulo** · ya estaba → v1.0.9
   (revisor de UX) · C: nadie tocó nada antes de `MODULO_OK` · prevención
-  pendiente en el mono; el arreglo, a Arreglos.
+  pendiente en el mono; el arreglo, a Arreglos · las dos hechas en la
+  v1.0.10 (regla 6bis del mono: toca Buscar antes de `MODULO_OK`).
+- **El arreglo de Buscar repetía todos los botones** · v1.0.10 (primera
+  vuelta, no salió) · A+F: probé un solo botón (Buscar) y el oyente era para
+  todos los `button[id]`; no me pregunté dónde más vive · la regla 6bis toca
+  un botón al azar y vigila que al arrancar no se abra nada, no haya diálogo
+  ni descarga.
+- **El aviso de Buscar prometía con el módulo roto, y el guardado pisaba lo
+  escrito** · v1.0.10 (segunda vuelta, no salió) · A: probé solo el camino
+  feliz (módulo lento, sin usuario guardado); el arnés arranca sin usuario
+  guardado y el revisor dejó el caso roto sin mirar en la primera · la regla
+  6bis escribe otro nombre y mira a quién se pide, y uno de cada tres
+  recorridos lentos rompe `chess.js` y mira el aviso.

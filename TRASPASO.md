@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.9**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.0.10**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -358,6 +358,15 @@ y el botón del mes, y atajaba un error y su primo):
 4. Sin trabajo, nada se mueve solo (`layout-shift` ≥ 0,05, en todas las pantallas).
 5. Nada se sale del ancho.
 6. Todo lo que se toca responde (algo cambia en 1,5 s).
+   6bis. También antes de que arranque el módulo, y no se repite solo: en
+   los recorridos con `chess.js` lento se toca un botón al azar de los que
+   se ven antes de `MODULO_OK`; al arrancar no puede haber diálogo,
+   descarga ni algo abierto (`aria-expanded`) sin un toque nuevo (v1.0.10;
+   revisor de UX). Si toca Buscar, antes escribe "otro", y el pedido a
+   chess.com tiene que ser de "otro" (el usuario guardado no le gana). Uno
+   de cada tres recorridos lentos tiene `chess.js` en 404: a los 8 s el
+   estado tiene que decir "no pudo arrancar" (regla "aviso falso sin
+   módulo"). Nació en rojo con la v1.0.9 y quedó verde con el arreglo.
 7. Ir y volver no cambia nada (sin las precisiones si en el medio corrió algo).
 8. Recargar no pierde nada (con las precisiones).
 9. Todo trabajo termina, y Parar para en 15 s.
@@ -4954,6 +4963,32 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.0.10, Buscar responde aunque la app no haya arrancado** (revisor de
+UX, v1.0.9; Arreglos, adelantado porque la prevención pendiente del mono
+pedía hacerlo junto). Con mala señal el módulo tarda ~10 s y el inicio ya se
+ve listo, pero los botones los engancha el módulo: tocar Buscar no hacía
+nada y no avisaba. Ahora el script clásico (`src/registro.js`) escucha los
+clics mientras no hay `MODULO_OK` y el renglón del estado lo dice. Solo
+**Buscar con un nombre escrito** se guarda (`window.TOQUE_PENDIENTE`) y avisa
+"La app todavía está arrancando: busco apenas esté."; el módulo lo corre al
+final de su arranque (`src/revision.js`, después del usuario guardado) y, si
+el usuario guardado ya largó la búsqueda, Buscar está apagado y no se repite.
+Cualquier otro botón del módulo avisa "…probá de nuevo en un momento." y no
+se repite: la primera vuelta repetía todo y el revisor de UX la frenó (la
+tuerca y el PGN se abrían solos 10 s después, con el foco robado al campo; y
+los botones del registro, que ya andan desde el script clásico, se
+repetían: dos descargas y un `alert` del portapapeles). Esos (#panelLog) no
+se tocan. La segunda vuelta del revisor sumó dos casos: con un error de
+verdad (el temporizador de 6 s ve un archivo roto, o ya hubo `hubo-error`)
+el aviso pasa a "La app no pudo arrancar: recargá la página." y se olvida el
+toque guardado —antes quedaba prometiendo buscar al lado del cartel rojo—; y
+con usuario guardado, el nombre escrito antes de arrancar le gana al
+guardado (el campo arranca vacío: el guardado lo pone el módulo). El texto evita "Cargando…", que el mono vigila con plazo. `#diag` sigue escondido en modo
+simple: el aviso va en `#estado`, que es lo que Juan ve. Verificado con
+chess.js demorado 5 s a 386 y 412: el aviso entra en un renglón y, al
+arrancar, sale el pedido a chess.com. La regla 6bis del mono nació en rojo
+con la v1.0.9 y quedó verde; y una prueba de unidad.
 
 **v1.0.9, sin cartel rojo falso con mala señal** (revisor de código, 25-nov;
 Arreglos). El temporizador de 6 s del script clásico (`src/registro.js`),
