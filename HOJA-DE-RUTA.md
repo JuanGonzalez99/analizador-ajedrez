@@ -310,6 +310,12 @@ Práctica y Lecciones, que también son "jugar desde una posición".
       con el nivel elegible.~~ (hecho en la v1.1; se adelantó a la barra de
       abajo, que pide el segundo módulo ya hecho)
 - [ ] Armar una posición a mano en el tablero.
+- [ ] **Analizar lo que jugaste contra el motor** (Juan, 26-nov): al
+      terminar (o cuando quieras), pasar la partida jugada desde la
+      posición al análisis de siempre, con la tarjeta y la curva.
+- [ ] **Pista** (Juan, 26-nov): un botón que ayuda sin dar la jugada
+      entera. Primero el criterio con el revisor de ajedrez (¿la pieza que
+      se mueve, la casilla, la idea?), después se dibuja.
 - [ ] Que el profe pueda mandar links: un texto para su proyecto de claude.ai
       que le explique el formato.
 
