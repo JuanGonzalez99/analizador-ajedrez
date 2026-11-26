@@ -63,6 +63,15 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **La Partida corrida sin riel en la compu, y el título de Posiciones 4 px
+  adentro** · v1.3.1 y v1.3 (no salieron) · F: se miró la pantalla que
+  tenía el riel y no las que se corrían sin tenerlo; C: "bordes en la
+  compu" mide que abran en el mismo x, no si el corrimiento tiene motivo;
+  G: al sacar el "‹" quedó su margen · `mirar` mide que la Partida de la
+  compu no tenga riel a 1000, 1110 y 1270, y el título de Posiciones al ras
+  de Deshacer por Range. Y una mía: probé el riel en la Partida con la
+  evaluación horizontal porque la maqueta arrancaba en el celu, y la de
+  fábrica en la compu es la barra (A: estado no mirado); `mirar` sí la usa.
 - **Las variantes de la barra de módulos, solo de celu y con un mes de una
   partida** · maqueta del 26-nov (no salió) · B+F: el ítem hablaba del celu
   y nadie dibujó PC (abajo, a 1280, la barra no servía); A+C: "el inicio al
