@@ -313,6 +313,32 @@ Práctica y Lecciones, que también son "jugar desde una posición".
 - [ ] **Analizar lo que jugaste contra el motor** (Juan, 26-nov): al
       terminar (o cuando quieras), pasar la partida jugada desde la
       posición al análisis de siempre, con la tarjeta y la curva.
+- [ ] **Que el motor no conteste al instante** (Juan, 26-nov: *"jugaba
+      rapidísimo, pensé que ya estaba consultando una tabla"*). Un tiempo
+      mínimo que varíe (del orden de medio segundo a un segundo y medio, lo
+      afina el revisor de UX), y la pieza que se mueve animada. El sonido,
+      opcional y apagado de fábrica.
+- [ ] **Mandar lo jugado al profe** (Juan, 26-nov; el revisor de ajedrez
+      llegó a lo mismo). Un botón que copia la posición, la partida en PGN
+      y, si hay objetivo, si se cumplió; Juan lo pega en el proyecto del
+      profe. Va después de "Analizar lo que jugaste".
+- [ ] **El objetivo en el link** (revisor de ajedrez y Juan, 26-nov). Dos
+      clases: jugar hasta un final (`ganar`, `tablas`, `mate`, `coronar`), y
+      al terminar "Lo lograste" o "Era ganado y quedó tablas", siempre
+      medido con el motor; o una sola jugada ("encontrá la que gana
+      material"), donde el tablero se frena después de la jugada de Juan y
+      la app dice si era. Definir el formato junto con el texto para el
+      profe. Va antes que la Pista: la pista ayuda hacia un objetivo.
+- [ ] **Variedad del motor, configurable** (revisor de ajedrez y Juan,
+      26-nov). Que entre jugadas de evaluación parecida elija distinto cada
+      vez, para que repetir una posición no sea repetir una línea. Se
+      elige en la pantalla y puede venir en el link (`&variedad=no|poca|
+      mucha`). De fábrica, poca.
+- [ ] **Mis posiciones** (revisor de ajedrez, 26-nov; a Juan le puede
+      servir). Cada link que se abre queda guardado solo, con la fecha y,
+      si tiene objetivo, si se logró, para volver sin buscar el mensaje del
+      profe. Que muestre lo logrado y no solo lo pendiente. Después del
+      objetivo.
 - [ ] **Pista** (Juan, 26-nov): un botón que ayuda sin dar la jugada
       entera. Primero el criterio con el revisor de ajedrez (¿la pieza que
       se mueve, la casilla, la idea?), después se dibuja.
