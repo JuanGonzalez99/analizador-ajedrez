@@ -1594,7 +1594,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.2.1 · 26-11";
+  window.VERSION = "v1.2.2 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3451,6 +3451,30 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
           marca: "sin defender", sq: c.sq };
   }
 
+  /* LA QUE YA ESTABA COLGADA Y SIGUE (revisor de ajedrez, 22-nov). En
+     `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w`, h4 (pierde 10,4)
+     decía solo "Había Qxb8…" y nada de la dama de c7, que sigue comible.
+     Solo si el motor se la come (lo que el motor come dice qué se pierde) y
+     LE GANA AL MECANISMO cuando ese nombra otra pieza que vale menos: g4 en
+     la misma posición decía "Tu peón queda comible en g4" con la dama
+     colgada (revisor, v1.2.2). El mate forzado y "la captura iba con otra
+     pieza" no nombran una pieza y se quedan. Defendida pero a tiro de algo
+     más barato, "sigue a tiro", en espejo de "queda a tiro". */
+  if (obs && obs.siguen && obs.siguen.length && f.perdida >= 2) {
+    const c = obs.siguen.find(x => (f.mejorRival || "").slice(2, 4) === x.sq && (VALOR[x.pieza] || 0) >= 3);
+    const queda = (f.uci || "").length > 4 ? f.uci[4] : f.pieza;
+    const valeMec = !mecanismo ? -1 : !mecanismo.sq ? Infinity
+      : mecanismo.sq === donde ? (VALOR[queda] || 0)
+      : (VALOR[((obs.nuevas || []).find(x => x.sq === mecanismo.sq) || {}).pieza] || 0);
+    if (c && mecanismo && mecanismo.sq === c.sq) { /* ya la nombra */ }
+    else if (c && (VALOR[c.pieza] || 0) > valeMec)
+      mecanismo = c.motivo === "menor"
+        ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} sigue a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`,
+            marca: "sigue a tiro", sq: c.sq }
+        : { txt: `${mayus(suya(c.pieza))} sigue comible en ${c.sq}.`,
+            marca: "sigue comible", sq: c.sq };
+  }
+
   /* 2. LO QUE LA JUGADA SALVA, que es el espejo del anterior y lo que faltaba
      para poder decir algo de las jugadas del rival: "tu rival defendió su peón
      amenazado" es media revisión de chess.com. */
@@ -4194,7 +4218,7 @@ const casillaDelRey = (tablero, color) => {
 };
 
 function observarJugada(f, fenAntes = null) {
-  const vacio = { amenazadas: [], colgadas: [], nuevas: [], salvadas: [],
+  const vacio = { amenazadas: [], colgadas: [], nuevas: [], siguen: [], salvadas: [],
                   clavadas: [], pasado: false, columna: null,
                   /* los de la v0.77: todos se comparan contra ANTES, así que
                      sin `fenAntes` la mayoría se queda en falso en vez de
@@ -4240,11 +4264,16 @@ function observarJugada(f, fenAntes = null) {
     const todasMias = colgadasDe(f.fen, mio);
     const colgadas = todasMias.filter(c => c.sq !== donde);
     const antes = fenAntes ? colgadasDe(fenAntes, mio) : null;
-    let nuevas = [], salvadas = [];
+    let nuevas = [], salvadas = [], siguen = [];
     if (antes) {
       const eran = new Set(antes.map(c => c.sq));
       const son = new Set(colgadas.map(c => c.sq));
       nuevas = colgadas.filter(c => !eran.has(c.sq));
+      /* LA QUE YA ESTABA COLGADA Y SIGUE (revisor de ajedrez, 22-nov): h4
+         con la dama de c7 comible decía solo "Había Qxb8…" y nada de la
+         dama. No es culpa de esta jugada, pero es lo que se pierde. La misma
+         pieza en la misma casilla, colgada antes y después. */
+      siguen = colgadas.filter(c => antes.some(a => a.sq === c.sq && a.pieza === c.pieza));
       /* "QUEDA SIN DEFENDER" SOLO SI ANTES TENÍA DEFENSA (revisor de ajedrez,
          22-nov). En `r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b`, Nc6
          decía "El peón de g7 queda sin defender": no tenía defensores ni
@@ -4579,7 +4608,7 @@ function observarJugada(f, fenAntes = null) {
                            ...(ca.cobra ? [ca.cobra] : [])] };
     }
 
-    return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
+    return { amenazadas, colgadas, nuevas, siguen, salvadas, clavadas, pasado, columna,
              semiabierta, aislado, doblados, pasadoContra, pareja, septima,
              sinDamas, conectadas, plantado, corona, enroque, pierdeEnroque,
              legalesRival, atrapada, descubierto, descubierta, cambio, coronaPerdida };

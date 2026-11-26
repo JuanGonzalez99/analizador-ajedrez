@@ -366,7 +366,7 @@ const casillaDelRey = (tablero, color) => {
 };
 
 function observarJugada(f, fenAntes = null) {
-  const vacio = { amenazadas: [], colgadas: [], nuevas: [], salvadas: [],
+  const vacio = { amenazadas: [], colgadas: [], nuevas: [], siguen: [], salvadas: [],
                   clavadas: [], pasado: false, columna: null,
                   /* los de la v0.77: todos se comparan contra ANTES, así que
                      sin `fenAntes` la mayoría se queda en falso en vez de
@@ -412,11 +412,16 @@ function observarJugada(f, fenAntes = null) {
     const todasMias = colgadasDe(f.fen, mio);
     const colgadas = todasMias.filter(c => c.sq !== donde);
     const antes = fenAntes ? colgadasDe(fenAntes, mio) : null;
-    let nuevas = [], salvadas = [];
+    let nuevas = [], salvadas = [], siguen = [];
     if (antes) {
       const eran = new Set(antes.map(c => c.sq));
       const son = new Set(colgadas.map(c => c.sq));
       nuevas = colgadas.filter(c => !eran.has(c.sq));
+      /* LA QUE YA ESTABA COLGADA Y SIGUE (revisor de ajedrez, 22-nov): h4
+         con la dama de c7 comible decía solo "Había Qxb8…" y nada de la
+         dama. No es culpa de esta jugada, pero es lo que se pierde. La misma
+         pieza en la misma casilla, colgada antes y después. */
+      siguen = colgadas.filter(c => antes.some(a => a.sq === c.sq && a.pieza === c.pieza));
       /* "QUEDA SIN DEFENDER" SOLO SI ANTES TENÍA DEFENSA (revisor de ajedrez,
          22-nov). En `r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b`, Nc6
          decía "El peón de g7 queda sin defender": no tenía defensores ni
@@ -751,7 +756,7 @@ function observarJugada(f, fenAntes = null) {
                            ...(ca.cobra ? [ca.cobra] : [])] };
     }
 
-    return { amenazadas, colgadas, nuevas, salvadas, clavadas, pasado, columna,
+    return { amenazadas, colgadas, nuevas, siguen, salvadas, clavadas, pasado, columna,
              semiabierta, aislado, doblados, pasadoContra, pareja, septima,
              sinDamas, conectadas, plantado, corona, enroque, pierdeEnroque,
              legalesRival, atrapada, descubierto, descubierta, cambio, coronaPerdida };

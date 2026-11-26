@@ -3474,6 +3474,45 @@ test("17. Bxe2: comerse la dama no se cuenta como 'salvar el peón de c2'", () =
   assert.deepEqual(o.salvadas, [], JSON.stringify(o.salvadas));
 });
 
+test("la dama que ya estaba colgada y sigue se nombra (v1.2.2)", () => {
+  /* Revisor de ajedrez, 22-nov. h4 deja la dama de c7 donde estaba,
+     comible por la de d8, y la tarjeta hablaba solo del caballo de b8. */
+  const antes = "1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5";
+  const f = unaFila(antes, "h4",
+    [{ cp: 600, mate: null, mejor: "c7b8", segunda: { cp: 500, mate: null } },
+     { cp: 440, mate: null, mejor: "d8c7", segunda: null }]);
+  const obs = A.observarJugada(f, antes);
+  assert.ok(obs.siguen.some(c => c.sq === "c7" && c.pieza === "q"), JSON.stringify(obs.siguen));
+  const txt = A.explicarJugada(f, null, true, null, obs);
+  assert.ok(txt.startsWith("Tu dama sigue comible en c7."), txt);
+  /* si el motor no se la come, no se dice: la pérdida es otra cosa */
+  const f2 = unaFila(antes, "h4",
+    [{ cp: 600, mate: null, mejor: "c7b8", segunda: { cp: 500, mate: null } },
+     { cp: 440, mate: null, mejor: "h6g6", segunda: null }]);
+  assert.ok(!A.explicarJugada(f2, null, true, null, A.observarJugada(f2, antes)).includes("sigue comible"));
+  /* y le gana a una pieza más chica que queda comible (revisor, v1.2.2):
+     g4 decía "Tu peón queda comible en g4" con la dama colgada */
+  const evs = [{ cp: 600, mate: null, mejor: "c7b8", segunda: { cp: 500, mate: null } },
+               { cp: 600, mate: null, mejor: "d8c7", segunda: null }];
+  for (const san of ["g4", "Ba6"]) {
+    const g = unaFila(antes, san, evs);
+    const t = A.explicarJugada(g, null, true, null, A.observarJugada(g, antes));
+    assert.ok(t.startsWith("Tu dama sigue comible en c7."), san + ": " + t);
+  }
+  /* también a una que queda sin defender */
+  const a3 = "r2qk3/2Q5/8/8/P7/8/8/R3K3 w - - 0 1";
+  const g3 = unaFila(a3, "Rb1", [{ cp: 300, mate: null, mejor: "a1a2", segunda: { cp: 250, mate: null } },
+                                 { cp: 600, mate: null, mejor: "d8c7", segunda: null }]);
+  const t3 = A.explicarJugada(g3, null, true, null, A.observarJugada(g3, a3));
+  assert.ok(t3.startsWith("Tu dama sigue comible en c7."), t3);
+  /* defendida pero a tiro de un peón: "a tiro", no "comible" */
+  const a4 = "4k3/8/8/4p3/3B4/8/2P5/4K3 w - - 0 1";
+  const g4 = unaFila(a4, "c3", [{ cp: 300, mate: null, mejor: "d4e5", segunda: { cp: 250, mate: null } },
+                                { cp: -80, mate: null, mejor: "e5d4", segunda: null }]);
+  const t4 = A.explicarJugada(g4, null, true, null, A.observarJugada(g4, a4));
+  assert.ok(/tu alfil de d4 sigue a tiro de un peón\./i.test(t4) && !t4.includes("comible"), t4);
+});
+
 test("si nunca tuvo defensa no 'queda sin defender': la jugada la destapó", () => {
   /* Revisor de ajedrez, 22-nov. Nc6 saca el caballo de e5 de la diagonal
      d4–g7: el peón de g7 no tenía defensores antes ni después, y lo nuevo es

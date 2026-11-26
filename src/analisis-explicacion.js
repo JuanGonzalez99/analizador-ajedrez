@@ -189,6 +189,30 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
           marca: "sin defender", sq: c.sq };
   }
 
+  /* LA QUE YA ESTABA COLGADA Y SIGUE (revisor de ajedrez, 22-nov). En
+     `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w`, h4 (pierde 10,4)
+     decía solo "Había Qxb8…" y nada de la dama de c7, que sigue comible.
+     Solo si el motor se la come (lo que el motor come dice qué se pierde) y
+     LE GANA AL MECANISMO cuando ese nombra otra pieza que vale menos: g4 en
+     la misma posición decía "Tu peón queda comible en g4" con la dama
+     colgada (revisor, v1.2.2). El mate forzado y "la captura iba con otra
+     pieza" no nombran una pieza y se quedan. Defendida pero a tiro de algo
+     más barato, "sigue a tiro", en espejo de "queda a tiro". */
+  if (obs && obs.siguen && obs.siguen.length && f.perdida >= 2) {
+    const c = obs.siguen.find(x => (f.mejorRival || "").slice(2, 4) === x.sq && (VALOR[x.pieza] || 0) >= 3);
+    const queda = (f.uci || "").length > 4 ? f.uci[4] : f.pieza;
+    const valeMec = !mecanismo ? -1 : !mecanismo.sq ? Infinity
+      : mecanismo.sq === donde ? (VALOR[queda] || 0)
+      : (VALOR[((obs.nuevas || []).find(x => x.sq === mecanismo.sq) || {}).pieza] || 0);
+    if (c && mecanismo && mecanismo.sq === c.sq) { /* ya la nombra */ }
+    else if (c && (VALOR[c.pieza] || 0) > valeMec)
+      mecanismo = c.motivo === "menor"
+        ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} sigue a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`,
+            marca: "sigue a tiro", sq: c.sq }
+        : { txt: `${mayus(suya(c.pieza))} sigue comible en ${c.sq}.`,
+            marca: "sigue comible", sq: c.sq };
+  }
+
   /* 2. LO QUE LA JUGADA SALVA, que es el espejo del anterior y lo que faltaba
      para poder decir algo de las jugadas del rival: "tu rival defendió su peón
      amenazado" es media revisión de chess.com. */

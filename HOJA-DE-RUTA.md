@@ -168,7 +168,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       Nc6 da "El peón de g7 queda sin defender": no tenía defensores antes
       ni después; lo nuevo es que el caballo destapó la dama (Qxg7). Si antes
       no tenía defensores: "Destapa el peón de g7: queda a tiro de la dama."
-- [ ] **La grave que no nombra la dama que se pierde** (revisor de ajedrez,
+- [x] ~~**La grave que no nombra la dama que se pierde**~~ (hecho en la v1.2.2, también cuando la jugada cuelga algo más chico) (revisor de ajedrez,
       22-nov). En `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5`,
       h4 (pérdida 10,4) dice "Había Qxb8, que se llevaba el caballo." y nada
       de la dama de c7, que sigue colgada (Qxc7). Si una pieza ya colgada

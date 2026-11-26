@@ -140,6 +140,16 @@ de memoria una posición de ajedrez").
   también cuando la jugada desclavaba al atacante). Y `npm run frases` dice
   cada jugada dos veces, como buena y como error con un peón de pérdida:
   hasta la v1.0.7 iba sin pérdida y no veía ninguna frase de la jugada mala.
+- **Lo que el motor come dice qué se pierde** (v1.2.2, causas B+C: el ítem
+  de la dama que sigue colgada lo encuadré sobre h4, donde no había otro
+  mecanismo, y g4 en la misma posición decía "Tu peón queda comible en g4"
+  con la dama colgada; el motor falso de `npm run frases` nunca come una
+  pieza que ya venía colgada, así que el barrido no lo ve). Cuando la
+  tarjeta nombra una pieza que se pierde, comparo su casilla con adónde va
+  `mejorRival`: si el motor come otra cosa que vale más, la tarjeta nombra
+  lo que no se pierde. Y lo pruebo en las jugadas que además cuelgan algo
+  chico (la pieza movida, una de `nuevas`), no solo en las que no cuelgan
+  nada, con el Stockfish del repo para saber qué come de verdad.
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 

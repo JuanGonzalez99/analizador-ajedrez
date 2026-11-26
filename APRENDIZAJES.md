@@ -63,6 +63,12 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **"Tu peón queda comible" con la dama colgada al lado** · ya estaba;
+  lo vio el revisor de ajedrez en la v1.2.2 · B+C: el ítem se encuadró
+  sobre h4, el único caso sin otro mecanismo, y `frases` no puede verlo (el
+  falso nunca come una pieza que venía colgada) · pruebas de g4, Ba6, Rb1 y
+  c3, y regla en `revisor-ajedrez.md` ("lo que el motor come dice qué se
+  pierde").
 - **La hoja de Posiciones a 3 px del tablero a 745, "Otra vez" sin nada
   que hacer y el final a 22/600** · v1.2 (no salió) · A+C: el arnés medía
   la hoja a un solo alto (760) y entraba al final siempre jugando; D: nada

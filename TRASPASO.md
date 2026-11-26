@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4988,6 +4988,22 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.2.2, la pieza que ya estaba colgada y sigue** (revisor de ajedrez,
+22-nov, Arreglos). En `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w`, h4
+(pierde 10,4) decía "Había Qxb8, que se llevaba el caballo." y nada de la
+dama de c7, que sigue comible. `observarJugada` suma `siguen`: las colgadas
+de después que antes ya estaban colgadas (misma pieza, misma casilla). En la
+tarjeta va como mecanismo **"Tu dama sigue comible en c7."** con pérdida
+≥ 2, pieza de 3 o más y la mejor del rival comiéndosela: **lo que el motor
+come dice qué se pierde**. Por eso le gana al mecanismo cuando ese nombra
+otra pieza que vale menos (g4 o Ba6 en la misma posición decían "Tu peón
+queda comible en g4"; revisor de ajedrez, primera vuelta); el mate forzado y
+"la captura iba con otra pieza" no nombran pieza y se quedan. Defendida pero
+a tiro de algo más barato: "Tu alfil de d4 sigue a tiro de un peón.", en
+espejo de "queda a tiro". `npm run frases` no cambió nada en las partidas de prueba (el
+falso nunca come una pieza que ya venía colgada): lo cubre una prueba de
+unidad, con el caso en que el motor no se la come.
 
 **v1.2.1, [PC] Posiciones después del lavado** (revisor de UX, v1.2): la
 columna pasa a `100vh − 334px` (con la tarjeta del final sobraban 24 px; se
