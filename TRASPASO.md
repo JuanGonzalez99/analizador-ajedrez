@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4989,6 +4989,10 @@ tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
 
+**v1.3.2, el título de Posiciones al ras** (revisor de UX, v1.3): quedaba
+4 px adentro de las jugadas y Deshacer (el margen de `.cabTit` era el aire
+después del "‹", que se fue). `mirar` lo mide por Range.
+
 **v1.3.1, [PC] la barra de los módulos es un riel** (revisor de UX, v1.3:
 abajo, a 1280, eran dos botones a 640 px uno del otro). Con `pointer: fine`
 y desde 1000, `#navMod` es un riel de 80 a la izquierda, con los ítems
@@ -5023,7 +5027,9 @@ scroll. Cómo quedó:
   arriba lleva los 16 del inicio, no los 8 de las hijas.
 - **Se corre pegada al scroll**, 1:1 con lo que se desliza entre 0 y 64, sin
   transición ni acomodo (como la barra de direcciones de Chrome); arriba de
-  todo siempre está entera, y al cambiar de pantalla llega entera. Donde no
+  todo siempre está entera, y al cambiar de pantalla llega entera, salvo
+  cuando vuelve a un scroll guardado (de la Partida a la fila 40): ahí llega
+  escondida, como la barra de Chrome (revisor: se acepta). Donde no
   hay scroll (Posiciones) no se mueve. No es una animación, así que con
   movimiento reducido queda igual.
 - **Tocar Posiciones** vuelve a la que estabas jugando o, si no hubo

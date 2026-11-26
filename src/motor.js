@@ -126,7 +126,9 @@ function mostrarVista(v, opc) {
 
 /* LA BARRA SE CORRE PEGADA AL SCROLL (revisor de UX, v1.3): 1:1 con lo
    que se desliza, entre 0 y su alto, sin transición ni acomodo al final,
-   como la barra de direcciones de Chrome. Arriba de todo, siempre entera.
+   como la barra de direcciones de Chrome. Arriba de todo, siempre entera,
+   y llega entera al cambiar de pantalla, salvo cuando vuelve a un scroll
+   guardado (se corre con él, como la de Chrome).
    Donde no hay scroll no se mueve nunca. En la compu es un riel y no se
    corre (`barraFija`). */
 let BARRA_OFF = 0, BARRA_Y = 0;

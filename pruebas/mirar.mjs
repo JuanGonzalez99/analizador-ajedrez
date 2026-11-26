@@ -1520,6 +1520,18 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
                escondida: n.style.transform };
     });
   }
+  /* el título de una pantalla sin "‹" al ras de lo de abajo (revisor, v1.3:
+     el margen que era para el "‹" quedó; causa G). Por Range, a 412 y 1280 */
+  /* al fondo la barra está escondida: el toque va por código */
+  await pg.evaluate(() => document.getElementById("navPosiciones").click()); await pg.waitForTimeout(400);
+  const ras = async () => pg.evaluate(() => { const t = document.querySelector("#zonaPosicion .cabTit .rival").firstChild;
+    const rg = document.createRange(); rg.selectNodeContents(t);
+    return Math.round(rg.getBoundingClientRect().left - document.getElementById("posDeshacer").getBoundingClientRect().left); });
+  barra.tituloAlRas = await ras();
+  await pg.setViewportSize({ width: 1280, height: 800 }); await pg.waitForTimeout(150);
+  barra.tituloAlRas1280 = await ras();
+  if (barra.tituloAlRas || barra.tituloAlRas1280) console.log("OJO: el título de Posiciones no está al ras de Deshacer");
+  await pg.evaluate(() => document.getElementById("navAnalisis").click()); await pg.waitForTimeout(300);
   /* [PC] desde 1000, con mouse, es un riel vertical a la izquierda (v1.3.1) */
   await pg.setViewportSize({ width: 1000, height: 800 }); await pg.waitForTimeout(150);
   const riel = await pg.evaluate(() => { const r = document.getElementById("navMod").getBoundingClientRect();

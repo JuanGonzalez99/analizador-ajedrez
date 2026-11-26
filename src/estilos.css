@@ -999,6 +999,9 @@
   /* desde la v1.3 es de primer nivel, como el inicio: arriba los mismos 16
      (los 8 son de las pantallas hijas, que tienen "‹") */
   body.enPosicion { padding-top: 16px; }
+  /* el título al ras de lo demás (revisor, v1.3): los 4 de `.cabTit` eran el
+     aire después del "‹", que se fue */
+  #zonaPosicion .cabTit { margin-left: 0; }
   body.enPosicion #zonaEstado { display: none; }
   #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
   #posTablero svg.tab { margin: 0 auto; }
