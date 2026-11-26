@@ -2627,7 +2627,7 @@ test("sacar la línea de señales no pierde nada: la tarjeta ya lo dice todo", (
      sola tabla. */
   const EQUIVALE = [
     [/^permite mate forzado/,          /Deja mate forzado/],
-    [/^la pieza movida queda comible/, /queda comible en/],
+    [/^la pieza movida queda comible/, /queda comible en|[Pp]ierde material en el cambio/],
     [/^había mate forzado/,            /Había mate forzado/],
     [/^había .*, que /,                /Había /],
     [/^la tomaste con otra pieza/,     /La captura iba con otra pieza/],
@@ -4217,4 +4217,48 @@ test("Posiciones: la triple repetición se ve con la historia, y Deshacer pide u
   assert.equal(posicion.hayJugadaMia(), false, "con Juan de negras, la primera del motor no se deshace");
   posicion.poner({ inicial, fens: fens.slice(0, 3), ucis: ucis.slice(0, 2), sans: [], yo: "b" });
   assert.equal(posicion.hayJugadaMia(), true);
+});
+
+/* revisor de ajedrez, 22-nov: Qxf6 Nxf6 es un cambio de damas, y decía "Tu
+   dama queda comible en f6". `quedaComible` resta lo que la jugada comió. */
+test("un cambio parejo no es 'queda comible' (arreglo, v1.2.3)", () => {
+  const f = "r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 0 1";
+  const evs = [{ cp: 300, mate: null, mejor: "g7h8", segunda: { cp: 250, mate: null } },
+               { cp: -219, mate: null, mejor: "g8f6", segunda: null }];
+  const fila = unaFila(f, "Qxf6", evs);
+  assert.equal(fila.colgada, false);
+  const dice = A.explicarJugada(fila, null, true, null, mirar(f, "g7f6"));
+  assert.ok(!dice.includes("comible"), dice);
+  /* lo que se lleva algo más chico sí: la torre que come un caballo y nadie
+     recaptura (5 − 3 = 2) */
+  assert.equal(A.quedaComible("4k3/8/4p3/3R4/8/8/8/4K3 b - - 0 1", "d5", 3), true);
+  /* la misma pieza por la misma pieza, no; un alfil por un caballo, tampoco */
+  assert.equal(A.quedaComible("4k3/8/4p3/3Q4/8/8/8/4K3 b - - 0 1", "d5", 9), false);
+  assert.equal(A.quedaComible("4k3/8/4p3/3B4/8/8/8/4K3 b - - 0 1", "d5", 3), false);
+  /* sin nada comido, como siempre */
+  assert.equal(A.quedaComible("4k3/8/4p3/3Q4/8/8/8/4K3 b - - 0 1", "d5"), true);
+});
+test("la coronación con captura descuenta lo coronado, y la torre por un alfil es un cambio (revisor, v1.2.3)", () => {
+  const f = "r1n4k/3P4/8/8/8/8/6PP/4R2K w - - 0 1";
+  const evs = [{ cp: 900, mate: null, mejor: "d7d8q", segunda: { cp: 800, mate: null } },
+               { cp: 300, mate: null, mejor: "a8c8", segunda: null }];
+  for (const san of ["dxc8=Q", "dxc8=N"]) assert.equal(unaFila(f, san, evs).colgada, false, san);
+  /* sin captura, coronar y que se la lleven sigue perdiendo un peón: 9 − 8 = 1 */
+  assert.equal(A.quedaComible("2Qr3k/8/8/8/8/8/8/6K1 b - - 0 1", "c8", 8), true);
+  /* Rxd5 exd5: "tu torre por un alfil", no "queda comible" */
+  const r = "r3k3/p7/4p3/3b4/8/8/2Q3PP/3R3K w - - 0 1";
+  const evr = [{ cp: 300, mate: null, mejor: "c2c3", segunda: { cp: 250, mate: null } },
+               { cp: -100, mate: null, mejor: "e6d5", segunda: null }];
+  const fila = unaFila(r, "Rxd5", evr);
+  assert.equal(fila.colgada, true);
+  const dice = A.explicarJugada(fila, null, true, null, mirar(r, "d1d5"));
+  assert.ok(dice.startsWith("Pierde material en el cambio: tu torre por un alfil."), dice);
+});
+test("agarrar un peón y dejar la pieza es 'queda comible', no un cambio (revisor, v1.2.3)", () => {
+  const f = "r1bqkb1r/pppp1ppp/2n2n2/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR w KQkq - 4 4";
+  const evs = [{ cp: 300, mate: null, mejor: "h5f7", segunda: { cp: 250, mate: null } },
+               { cp: 600, mate: null, mejor: "f6h7", segunda: null }];
+  const fila = unaFila(f, "Qxh7", evs);
+  const dice = A.explicarJugada(fila, null, true, null, mirar(f, "h5h7"));
+  assert.ok(dice.startsWith("Tu dama queda comible en h7."), dice);
 });

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2.3**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4988,6 +4988,30 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.2.3, un cambio parejo no es "queda comible"** (revisor de ajedrez,
+22-nov, Arreglos). En `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`,
+Qxf6 decía "Tu dama queda comible en f6." y es Qxf6 Nxf6: un cambio de
+damas. `quedaComible` toma ahora `comido` (lo que la jugada se llevó al
+llegar) y solo da verdadero si la pieza que queda vale al menos un peón más
+que eso: la torre que come un caballo y no tiene recaptura sigue, el alfil
+por el caballo no. `derivarFilas` le pasa la pieza comida **más lo que ganó
+al coronar** (como `cambio` de `observarJugada`: dxc8=Q Rxc8 y dxc8=N Rxc8
+terminan igual; revisor, primera vuelta); es el único que la llama. Y la que
+comió algo y queda comible ya no dice "queda comible" sino **"Pierde material
+en el cambio: tu torre por un alfil."** cuando `obs.cambio` trae lo del rival
+(Rxd5 exd5; decisión del revisor: dice lo que se va de cada lado), **salvo
+que lo comido sea un peón**: Qxh7 Nxh7 es dejar la dama colgada por un
+peón y sigue "Tu dama queda comible en h7." (segunda vuelta: un cambio es
+cuando se van piezas de los dos lados). Como
+`colgada` también alimenta la señal "la pieza movida queda comible" y la
+fila del Mes "Dejé comible la pieza que moví", los cambios parejos dejan de
+contarse ahí (el Mes se deriva de la caché de evaluaciones, así que vale
+para lo ya analizado). **`npm run frases` no veía nada de esto**: arma la
+fila a mano y nunca calculaba `colgada`, que sale de `derivarFilas`. Desde
+la v1.2.3 la pasada [error] la calcula con lo comido y lo coronado; contra
+la v1.2.2 cambian 20 frases (11 pasan a "Pierde material en el cambio": torre
+por caballo, dama por pieza; el resto son cambios parejos que callan).
 
 **v1.2.2, la pieza que ya estaba colgada y sigue** (revisor de ajedrez,
 22-nov, Arreglos). En `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w`, h4

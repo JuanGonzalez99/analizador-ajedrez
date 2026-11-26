@@ -63,6 +63,17 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **El descuento de "queda comible" sin la coronación, y `frases` ciego a
+  `colgada`** · v1.2.3 (no salió) · B: el descuento se escribió de nuevo en
+  vez de copiar el de `cambio` (lo comido más lo coronado); C: `frases` arma
+  la fila a mano y nunca calculaba `colgada`, así que "0 diferencias" no
+  probaba nada · `frases` calcula `colgada` en la pasada [error]; regla en
+  `revisor-ajedrez.md` ("un descuento de material se copia de `cambio`").
+- **Bxa7 nombra el alfil y no la dama que destapa** · ya estaba; lo vio el
+  revisor de ajedrez en la v1.2.3 · B: la regla "lo que el motor come dice
+  qué se pierde" de la v1.2.2 se aplicó solo a `siguen` · regla en
+  `revisor-ajedrez.md` (vale para toda pieza que come `mejorRival`); el
+  arreglo, a Arreglos.
 - **"Tu peón queda comible" con la dama colgada al lado** · ya estaba;
   lo vio el revisor de ajedrez en la v1.2.2 · B+C: el ítem se encuadró
   sobre h4, el único caso sin otro mecanismo, y `frases` no puede verlo (el

@@ -131,9 +131,14 @@ function entregaLaDama(fen, m) {
 }
 
 /* ¿la pieza parada en `sq` se la llevan sin devolución? Ni la captura ni la
-   devolución cuentan si entregan la dama (`entregaLaDama`). */
-function quedaComible(fenDespues, sq) {
+   devolución cuentan si entregan la dama (`entregaLaDama`).
+   `comido` es lo que la jugada se llevó al llegar (revisor de ajedrez,
+   22-nov): Qxf6 Nxf6 es un cambio de damas, no "tu dama queda comible".
+   Cuenta solo si lo que se pierde menos lo comido llega a un peón. */
+function quedaComible(fenDespues, sq, comido = 0) {
   const j = new Chess(fenDespues);
+  const aca = j.get(sq);
+  if (aca && aca.type !== "k" && (VALOR[aca.type] || 0) - comido < 1) return false;
   const capturas = j.moves({ verbose: true })
     .filter(m => m.to === sq && !entregaLaDama(fenDespues, m));
   if (!capturas.length) return false;
@@ -737,7 +742,10 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
     /* Los tres mecanismos se calculan SIEMPRE, no solo cuando la jugada salió
        mal: para saber si un mecanismo es peligroso hace falta también cuántas
        veces apareció sin consecuencias. Es la tasa base de §D regla 16. */
-    const colgada = quedaComible(fens[i + 1], j.to);
+    /* lo comido y lo ganado al coronar, como en `cambio` de observarJugada
+       (revisor de ajedrez, v1.2.3): dxc8=Q Rxc8 y dxc8=N Rxc8 terminan igual */
+    const colgada = quedaComible(fens[i + 1], j.to,
+      (VALOR[j.captured] || 0) + (j.promotion ? VALOR[j.promotion] - VALOR.p : 0));
     const capB = capturaBuena(fens[i], evs[i].mejor);
     const tomoBuena = esMejor && !!capB;
     /* Tomar el MISMO material con otra pieza no es dejarlo pasar. Salía con una

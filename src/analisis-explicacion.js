@@ -143,9 +143,23 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   if (f.mateContra)
     mecanismo = { txt: `Deja mate forzado en ${f.mateContra} en contra.`,
                   marca: "mate forzado" };
-  else if (f.colgada && f.perdida >= 0.5)
+  /* la que comió una pieza y queda comible es un cambio que pierde (revisor
+     de ajedrez, v1.2.3): Rxd5 exd5 es "tu torre por un alfil", no un regalo.
+     Si comió un peón, no: Qxh7 Nxh7 es dejar la dama colgada por un peón, y
+     eso se dice "queda comible" (un cambio es cuando se van piezas de los dos
+     lados) */
+  const comioPieza = !!(obs && obs.cambio && obs.cambio.suyas.length &&
+                        PIEZA_UN[obs.cambio.suyas[0]] && obs.cambio.suyas[0] !== "p");
+  if (mecanismo) { /* el mate forzado ya está */ }
+  else if (f.colgada && f.perdida >= 0.5 && !comioPieza)
     mecanismo = { txt: `${mayus(pieza)} queda comible en ${donde}.`,
                   marca: "queda comible", sq: donde };
+  else if (f.colgada && f.perdida >= 0.5) {
+    const nom = (ts, tabla) => ts.map(t => tabla[t] || "una pieza").join(" y ");
+    mecanismo = { txt: `Pierde material en el cambio: ${nom(obs.cambio.mias, mio ? PIEZA_TU : PIEZA_EL)}` +
+                       ` por ${nom(obs.cambio.suyas, PIEZA_UN)}.`,
+                  marca: "en el cambio", sq: donde };
+  }
   /* Tiene recaptura, pero el cambio pierde (20-nov, revisor de ajedrez): con
      Qe1 Rxe1 Kxe1 la tarjeta de un grave decía "Toma la columna abierta e." y
      no que se cambiaba la dama por una torre. Se nombra lo que se va de cada

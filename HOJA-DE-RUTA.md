@@ -175,7 +175,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       sigue colgada y la pérdida es grande: "Tu dama sigue comible en c7."
       primero. Misma familia que el de la pareja: la tarjeta mira una sola
       posición y no lo que sigue.
-- [ ] **"Queda comible" en un cambio parejo** (revisor de ajedrez, 22-nov,
+- [x] ~~**"Queda comible" en un cambio parejo**~~ (hecho en la v1.2.3, también con la coronación que come) (revisor de ajedrez, 22-nov,
       ya estaba). En `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 0 1`,
       Qxf6 (pérdida 0,81) dice "Tu dama queda comible en f6.", y es Qxf6
       Nxf6: un cambio de damas. `colgada` (`quedaComible`) no descuenta lo
@@ -185,7 +185,10 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       ajedrez, 22-nov, ya estaba). En `r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9`,
       Bg5 dice "Atrapa la dama de d8: no tiene salida.", y Nxg5 se come el
       alfil. Que no se diga si se puede comer la pieza que atrapa (sin
-      perder en el cambio), con su prueba. Revisor de ajedrez sí.
+      perder en el cambio), con su prueba. **Segundo caso** (revisor, v1.2.3):
+      en `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5`, Qxd8+
+      dice "Atrapa el alfil de c8: no tiene salida." y Kxd8 es forzada: la
+      dama que atrapa se la come el rey. Revisor de ajedrez sí.
 - [ ] **"Se planta" a mitad de un cambio** (revisor de ajedrez, v1.0.6; ya
       estaba). En `r4rk1/pppbbppp/q4n2/4N3/8/3B4/PP3PPP/RNB1K2R w KQ - 0 1`,
       Nxd7 dice "El caballo de d7 se planta" y sigue Nfxd7. El `cuelga` de la
@@ -200,6 +203,14 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       arrancar: el toque no hace nada. Que el toque se guarde y corra al
       arrancar, o que el botón diga que carga; no volver a mostrar `#diag` en
       modo simple. Pasa por el revisor de UX.
+
+- [ ] **La pieza chica que cuelga le gana a la dama que destapa** (revisor
+      de ajedrez, v1.2.3; ya estaba). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w - - 0 1`,
+      Bxa7 (pierde 7,9) dice "Tu alfil queda comible en a7." y el motor
+      juega Rxe2: la dama no tiene recaptura. Tendría que decir "Tu dama de
+      e2 queda a tiro de una torre." Extender a `nuevas` el desempate que la
+      v1.2.2 hizo para `siguen`: si `mejorRival` come una pieza que vale más
+      que la que nombra la frase, va esa. Revisor de ajedrez sí.
 
 - [ ] **Posiciones: el al paso con la casilla de origen ocupada** (revisor
       de ajedrez, v1.1.2; leve). `4k3/4p3/8/3Pp3/8/8/8/4K3 w - e6 0 1`:

@@ -44,6 +44,13 @@ const decir = (M, antes, m, despues, mala) => {
   const f = { fen: despues, uci: m.from + m.to + (m.promotion || ""), turno: m.color,
               pieza: m.piece, san: m.san, cat: mala ? "error" : "buena",
               mejor: mala ? null : m.from + m.to, perdida: mala ? 1 : 0 };
+  /* `colgada` la arma `derivarFilas`, no `observarJugada`, y hasta la v1.2.3
+     no estaba: "Tu X queda comible" de esa rama no podía salir nunca acá
+     (revisor de ajedrez, APRENDIZAJES.md). Con lo comido y lo coronado, como
+     lo llama `derivarFilas`; la versión vieja ignora el tercer argumento si no
+     lo conoce, y por eso la diferencia se ve. */
+  if (mala) f.colgada = M.quedaComible(despues, m.to,
+    (M.VALOR[m.captured] || 0) + (m.promotion ? M.VALOR[m.promotion] - 1 : 0));
   try {
     const obs = M.observarJugada(f, antes);
     return M.explicarJugada(f, null, true, null, obs) || "";

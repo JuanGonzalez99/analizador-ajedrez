@@ -149,7 +149,15 @@ de memoria una posición de ajedrez").
   `mejorRival`: si el motor come otra cosa que vale más, la tarjeta nombra
   lo que no se pierde. Y lo pruebo en las jugadas que además cuelgan algo
   chico (la pieza movida, una de `nuevas`), no solo en las que no cuelgan
-  nada, con el Stockfish del repo para saber qué come de verdad.
+  nada, con el Stockfish del repo para saber qué come de verdad. **Vale
+  para toda pieza que come `mejorRival`**, esté en `siguen` o en `nuevas`
+  (v1.2.3: Bxa7 nombraba el alfil con la dama de e2 destapada; causa B).
+- **Un descuento de material se copia de `cambio`** (v1.2.3, causa B): lo
+  comido más lo ganado al coronar, como `observarJugada`. Si un arreglo
+  resta material en otro lado, pruebo coronación con captura y sin ella.
+  Y antes de leer "0 diferencias" de `npm run frases`, miro si la fila que
+  arma (`decir` en `pruebas/frases.mjs`) tiene el campo que el arreglo toca:
+  hasta la v1.2.3 no tenía `colgada` (causa C).
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 
