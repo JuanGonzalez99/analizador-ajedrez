@@ -411,7 +411,7 @@ async function medirPantalla(pg, medir) {
    aparte y se fotografía esa página. */
 export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, salida,
                                       medir = null, espera = 250, navegador = null,
-                                      scrollY = 0 }) {
+                                      scrollY = 0, anchos = [1000, 1280] }) {
   const fs = await import("node:fs");
   const sueltas = [], medidas = [];
 
@@ -446,6 +446,19 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
     await pg.screenshot({ path: base + "-css.png", scale: "css" });
     await pg.screenshot({ path: base + ".png" });
     sueltas.push(base + "-css.png");
+    /* Y EN PC, SIN QUE SE LO PIDAN (revisor de UX, barra de módulos del
+       26-nov: la tanda vino solo de celu y la barra abajo no servía a 1280;
+       causas B y F de APRENDIZAJES.md). `anchos: []` lo apaga. */
+    if (anchos.length) {
+      const vp = pg.viewportSize();
+      for (const w of anchos) {
+        await pg.setViewportSize({ width: w, height: 800 });
+        await pg.waitForTimeout(espera);
+        await pg.screenshot({ path: `${base}-${w}-css.png`, scale: "css" });
+      }
+      await pg.setViewportSize(vp);
+      await pg.waitForTimeout(espera);
+    }
     /* CUÁNTO EMPUJA, que en una pantalla de 760 px es la mitad de la decisión:
        algo que se ve lindo pero baja el tablero 44 px puede dejar la navegación
        fuera de la pantalla. Sale gratis y no está en ninguna captura. */

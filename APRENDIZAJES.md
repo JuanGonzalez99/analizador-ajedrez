@@ -63,6 +63,12 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Las variantes de la barra de módulos, solo de celu y con un mes de una
+  partida** · maqueta del 26-nov (no salió) · B+F: el ítem hablaba del celu
+  y nadie dibujó PC (abajo, a 1280, la barra no servía); A+C: "el inicio al
+  fondo" con una sola fila no scrollea · `pantallas()` fotografía cada
+  variante también a 1000 y 1280 sin que se lo pidan; `mirar` mide la barra
+  con un mes largo al fondo y que a 1000 sea vertical (con la v1.3).
 - **El descuento de "queda comible" sin la coronación, y `frases` ciego a
   `colgada`** · v1.2.3 (no salió) · B: el descuento se escribió de nuevo en
   vez de copiar el de `cambio` (lo comido más lo coronado); C: `frases` arma
