@@ -74,6 +74,10 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   creí que chess.js validaba el FEN y solo valida la forma; probé solo FEN
   bien formados · pruebas de unidad con los imposibles (enroque sin torre,
   peón en la octava, al paso sin peón) y regla en `revisor-ajedrez.md`.
+- **El al paso que `limpiarFen` deja pasar** · v1.1.2 (leve, a Arreglos) ·
+  D: el revisor pidió una condición incompleta y no se comparó con la de
+  Stockfish · regla en `revisor-ajedrez.md`: copiar la condición de
+  Stockfish y compararla con su `d`.
 - **La triple repetición sin historia** · v1.1 (no salió) · D: los estados se
   probaron desde una sola posición · prueba de unidad con la repetición.
 - **Posiciones: botones de 36, que se corrían, y el final sin peso** · v1.1

@@ -201,6 +201,18 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       arrancar, o que el botón diga que carga; no volver a mostrar `#diag` en
       modo simple. Pasa por el revisor de UX.
 
+- [ ] **Posiciones: el al paso con la casilla de origen ocupada** (revisor
+      de ajedrez, v1.1.2; leve). `4k3/4p3/8/3Pp3/8/8/8/4K3 w - e6 0 1`:
+      `limpiarFen` deja e6 aunque e7 está ocupada; chess.js ofrece dxe6 y
+      Stockfish no. Pedir también la casilla de origen del doble paso vacía,
+      con el FEN sumado a la prueba de `limpiarFen`.
+- [ ] **Posiciones: una triple repetición que chess.js no cuenta** (revisor
+      de ajedrez, v1.1.2; leve, nunca dice algo falso: falta el "Tablas").
+      Desde `4k3/4p3/8/8/8/8/8/4K1N1 b - - 0 1`, e5 Nf3 Kd8 Ng1 Ke8 Nf3 Kd8
+      Ng1 Ke8: chess.js compara la casilla de al paso que dejó e5 aunque
+      nadie pueda comer; Stockfish sí ve la repetición. Contar con `POS.fens`
+      limpiados del al paso, comparando los cuatro primeros campos.
+
 - [x] ~~**Con señal mala, un cartel rojo de "el módulo no arrancó" falso que
       no se va**~~ (hecho en la v1.0.9; adelantado a los otros arreglos
       porque la prevención del mono pedía hacerlo junto con su regla) (revisor de código, 25-nov; ya estaba). Script clásico, el
@@ -493,6 +505,10 @@ archiva los que pierden sentido.
       tablero a la izquierda con su `--ladoTab` y un panel de ~320 con las
       jugadas en planilla, Deshacer / Empezar y Nivel / Jugás con. El revisor
       ya lo decidió; quedó para otra noche.
+- [ ] **Posiciones: avisar que hay jugadas atrás** (revisor de UX,
+      v1.1.2; celu). El renglón de jugadas, corrido al final, arranca justo
+      en el borde y puede cortar una jugada a la mitad. Un difuminado de 24
+      a la izquierda cuando `scrollLeft > 0`.
 - [ ] **[PC] Posiciones con teclado** (revisor de UX, v1.1): Tab se saltea
       el tablero; el resto de la app se juega con teclado desde la v0.153.
 - [ ] **Posiciones: arrastrar la pieza** (v1.1). Hoy es tocar y tocar; el

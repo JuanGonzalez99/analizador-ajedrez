@@ -50,7 +50,9 @@ de memoria una posición de ajedrez").
   (v1.1, Posiciones): chess.js valida la forma, no el contenido, y un
   enroque sin su torre o un peón en la octava cuelgan al motor sin error.
   En node, con una copia `.cjs` de `stockfish-18-lite-single.js` (por el
-  `type: module`), `position fen …` + `go`, y se borra al terminar.
+  `type: module`), `position fen …` + `go`, y se borra al terminar. Y cuando
+  se limpia un FEN para Stockfish, la condición se copia de la que usa él
+  y se compara contra lo que muestra su `d`.
 
 ## Qué leés antes de opinar
 
