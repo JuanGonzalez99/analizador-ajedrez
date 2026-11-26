@@ -289,6 +289,15 @@ estaban para no romper las referencias de otros documentos. Es el más chico de 
 desde el primer día (el profe hoy manda links de lichess) y es la base de
 Práctica y Lecciones, que también son "jugar desde una posición".
 
+- [ ] **Lavado de cara de Posiciones, con variantes** (Juan, 26-nov, sobre
+      la v1.1.2: *"los botones están raros"*; no quiso decir qué haría,
+      quiere ver el criterio). Hoy es tablero y debajo controles apilados
+      como un formulario. 3 o 4 disposiciones dibujadas sobre la app, al
+      menos una que cambie la estructura. Lo que se toca jugando (Deshacer)
+      separado de lo que se elige una vez (nivel, color, empezar de nuevo).
+      Emparentada con la Partida (la fila de botones bajo el tablero, los
+      chips). El resultado de la partida con peso. Sin texto suelto en
+      tenue. En el resumen, con la tira de todas y cuál ganó.
 - [ ] **La barra de navegación abajo, con los módulos** (Juan, 7-nov: eligió
       esta opción). Cuando llegue el segundo módulo, una barra fija abajo con
       ícono y texto (Análisis, Posiciones, y después Práctica y Lecciones), que

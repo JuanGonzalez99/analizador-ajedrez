@@ -70,6 +70,13 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Posiciones se armó sin variantes y se ve armada, no diseñada** · v1.1 →
+  lo vio Juan el 26-nov ("los botones están raros") · D+F: el ítem hablaba
+  de lo que hace y no de cómo se ve, así que no lo traté como forma nueva;
+  el revisor juzgó medidas (toque, espacios, pliegue) y aprobó sin
+  preguntarse si la pantalla se veía pensada · regla en `TAREA-NOCTURNA.md`
+  (pantalla nueva = variantes antes del código) y en `revisor-ux.md` (sin
+  variantes no se aprueba).
 - **Posiciones con FEN imposibles de contenido** · v1.1 (no salió) · D+C:
   creí que chess.js validaba el FEN y solo valida la forma; probé solo FEN
   bien formados · pruebas de unidad con los imposibles (enroque sin torre,

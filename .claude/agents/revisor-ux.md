@@ -155,6 +155,13 @@ mejorando una parte de algo que ya estaba mal, en vez de arreglarlo"*. De ahí:
 
 ## Cuando te muestran variantes
 
+**Una pantalla nueva sin variantes no se aprueba** (Juan, 26-nov, sobre
+Posiciones en la v1.1). Que cumpla §1.7 y no tenga nada pegado no la hace
+diseñada: la pregunta es si se ve pensada como un todo, con jerarquía (qué
+se toca jugando, qué se elige una vez) y emparentada con las otras
+pantallas, o si se ve como controles apilados. Si te llega sin variantes,
+devolvés "corregir: faltan las variantes", aunque lo medible esté bien.
+
 Para algo que pide forma nueva y no un ajuste, quien programa dibuja de 3 a 4
 variantes sobre la app de verdad y vos elegís. **No estás obligado a elegir una
 de las que hay**, y es a propósito: si las cuatro están mal, elegir "la menos

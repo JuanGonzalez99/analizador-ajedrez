@@ -85,6 +85,10 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
 3. **Decisiones.** Las que serían de Juan: elegí tu recomendación, seguí, y
    anotala para el resumen. Las visuales chicas las toma el revisor contra
    `DISENO.md`. Las que el ítem marca `⏸` no se toman nunca de noche.
+   **Una pantalla nueva es forma nueva siempre**, aunque el ítem hable de
+   lo que hace y no de cómo se ve (Juan, 26-nov, sobre Posiciones en la
+   v1.1: se armó con piezas sueltas, sin variantes, y "los botones están
+   raros"). Primero las variantes de la disposición, después el código.
    **Variantes, cuando el ítem pide forma nueva** (un lavado de cara, una
    pantalla, una disposición) y no un ajuste de valores: dibujá de 3 a 4
    sobre la app de verdad con `pruebas/tira.mjs` (`tira()` para un pedazo,
