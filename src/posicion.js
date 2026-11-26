@@ -319,7 +319,21 @@ $("posColor").onchange = seguro("posición: color", () => {
   pintarPosicion();
   turnoDelMotor();
 });
-$("volverDePosicion").onclick = seguro("volver", () => { if (hojaPosAbierta()) verHojaPos(false); cancelarMotorPos(); volver(); });
+/* LA BARRA DE LOS MÓDULOS (v1.3). Posiciones sin link abre la que estabas
+   jugando o, si no hay, la inicial con blancas (revisor de UX). Primero
+   `irAPantalla`, que empuja la entrada (es el único que empuja), y después
+   `abrirPosicion`, que le pone el estado. */
+const FEN_INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+$("navPosiciones").onclick = seguro("barra: posiciones", () => {
+  if (VISTA === "posicion") return void window.scrollTo(0, 0);
+  if (POS) return irAPantalla("posicion");
+  irAPantalla("posicion");
+  abrirPosicion(FEN_INICIAL, { color: "w" });
+});
+$("navAnalisis").onclick = seguro("barra: análisis", () => {
+  if (VISTA === "inicio") return void window.scrollTo(0, 0);
+  irAPantalla("inicio");
+});
 
 /* EL LINK. Al abrir la app y si cambia el `#` con la app abierta (el profe
    manda otro). */

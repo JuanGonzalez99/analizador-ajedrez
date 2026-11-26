@@ -164,6 +164,28 @@
      página oscura el de antes apenas la apagaba y la hoja —que ahora es
      `--superficie`, un escalón arriba del fondo— no se despegaba de lo de atrás. */
   #fondoAjustes { position: fixed; inset: 0; background: var(--velo); z-index: 40; }
+  /* LA BARRA DE LOS MÓDULOS (v1.3, la C del revisor con sus ajustes). 64 de
+     alto, debajo del velo (30 < 40). Lo activo se distingue por tres lados
+     —la pastilla, el texto en --texto y el color—, no solo por el tono: acento
+     contra tenue da 1,16:1 de luz. La pastilla es la del cuadrito encendido
+     (§1.10), acento al 14 % sobre superficie: el ícono da 4,97:1 encima. */
+  #navMod { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+            height: 64px; background: var(--superficie); border-top: 1px solid var(--linea); }
+  body.conBarra #navMod { display: flex; }
+  #navMod button { flex: 1; display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; gap: 4px; padding: 0; border: 0; border-radius: 0;
+                   background: none; color: var(--tenue); font-size: 12.5px; font-weight: 600;
+                   line-height: 1.2; }
+  #navMod button i { display: flex; align-items: center; justify-content: center;
+                     width: 56px; height: 32px; border-radius: 16px; }
+  #navMod button[aria-current] { color: var(--texto); }
+  #navMod button[aria-current] i { color: var(--acento);
+                                   background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  #navMod button:not([aria-current]):hover i { background: var(--elevada); }
+  /* lo último de la página (la versión al pie) no queda debajo de la barra:
+     64 más 8. Con la barra escondida al fondo sobran 12 más que antes, y no
+     los 64 enteros (revisor) */
+  body.conBarra { padding-bottom: 72px; }
   /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
      monitor, se queda del ancho de la columna, como el resto de la app. */
   /* EL SISTEMA EN LA HOJA (v0.103, DISENO §1): `--superficie` y no `Canvas`
@@ -974,6 +996,9 @@
      en un renglón que crece, y los controles. El estado del trabajo de las
      partidas (`#zonaEstado`) no se ve acá: no es de esta pantalla. */
   body.enVista #zonaPosicion .cabvista { margin-top: 0; }
+  /* desde la v1.3 es de primer nivel, como el inicio: arriba los mismos 16
+     (los 8 son de las pantallas hijas, que tienen "‹") */
+  body.enPosicion { padding-top: 16px; }
   body.enPosicion #zonaEstado { display: none; }
   #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
   #posTablero svg.tab { margin: 0 auto; }

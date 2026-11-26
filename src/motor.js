@@ -75,7 +75,17 @@ function mostrarVista(v, opc) {
     /* al salir se guarda dónde estabas. Volver y encontrar la lista arriba de
        todo, después de haber bajado veinte partidas, es no volver. */
     if (VISTA in SCROLL) SCROLL[VISTA] = window.scrollY;
+    /* Posiciones guarda la partida al irse (la barra, el atrás): el motor
+       que pensaba se calla, y al volver retoma si le toca */
+    if (VISTA === "posicion") cancelarMotorPos();
+    const deDonde = VISTA;
     VISTA = v;
+    /* si quien llegó ya le pidió jugada al motor (`abrirPosicion`), PENSANDO
+       cambió y no se pide dos veces */
+    if (v === "posicion" && deDonde !== "posicion" && POS) {
+      const marca = PENSANDO;
+      setTimeout(() => { if (PENSANDO === marca) turnoDelMotor(); }, 0);
+    }
   }
   let actual = VISTA;
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
@@ -83,6 +93,13 @@ function mostrarVista(v, opc) {
   document.body.classList.toggle("enPartida", actual === "partida");
   document.body.classList.toggle("enPosicion", actual === "posicion");
   ver("zonaPosicion", actual === "posicion");
+  /* la barra de los módulos, solo en las de primer nivel; llega entera */
+  const conBarra = actual === "inicio" || actual === "posicion";
+  document.body.classList.toggle("conBarra", conBarra);
+  barraA(0);
+  $("navAnalisis").toggleAttribute("aria-current", actual === "inicio");
+  $("navPosiciones").toggleAttribute("aria-current", actual === "posicion");
+  if (conBarra) $(actual === "inicio" ? "navAnalisis" : "navPosiciones").setAttribute("aria-current", "page");
   /* la partida que tocaste y todavía se analiza: su pantalla, solo con la
      cabecera (el volver y el progreso) */
   const cargando = actual === "partida" && !HAY.partida;
@@ -106,6 +123,24 @@ function mostrarVista(v, opc) {
   $("volverDeLaPartida").ariaLabel = $("volverDeLaPartida").title = "Volver a " + $("volverAQue").textContent;
   if (opc.scroll) window.scrollTo(0, SCROLL[actual] || 0);
 }
+
+/* LA BARRA SE CORRE PEGADA AL SCROLL (revisor de UX, v1.3): 1:1 con lo
+   que se desliza, entre 0 y su alto, sin transición ni acomodo al final,
+   como la barra de direcciones de Chrome. Arriba de todo, siempre entera.
+   Donde no hay scroll no se mueve nunca. En la compu es un riel y no se
+   corre (`barraFija`). */
+let BARRA_OFF = 0, BARRA_Y = 0;
+const barraFija = () => matchMedia("(pointer: fine) and (min-width: 1000px)").matches;
+function barraA(off) {
+  BARRA_OFF = off; BARRA_Y = window.scrollY;
+  $("navMod").style.transform = off ? `translateY(${off}px)` : "";
+}
+window.addEventListener("scroll", () => {
+  if (!document.body.classList.contains("conBarra") || barraFija()) return;
+  const y = window.scrollY, alto = $("navMod").offsetHeight;
+  const off = y <= 0 ? 0 : Math.min(alto, Math.max(0, BARRA_OFF + y - BARRA_Y));
+  if (off !== BARRA_OFF) barraA(off); else BARRA_Y = y;
+}, { passive: true });
 
 /* lo nuevo llega quieto: sin esto, la barra de la evaluación se animaba
    desde cero al aparecer la Partida */

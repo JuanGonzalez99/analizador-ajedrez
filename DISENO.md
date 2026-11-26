@@ -355,6 +355,15 @@ vistas (`body.enVista #zonaEstado .barra`), donde el verde es la barra de carga
 de siempre. Va como `.barra > i { background: var(--acento) }`
 y una fila en la tabla de §1.1 (aplicado en la v0.127). El revisor estuvo de acuerdo (11-nov).
 
+**Lo que decidió la barra de los módulos (v1.3):**
+
+| | valor | por qué |
+|---|---|---|
+| la barra | 64 de alto, `--superficie`, borde `--linea` arriba, ícono 24 + texto 12,5/600 | Material 3; con 56 y solo el color, lo activo no se distinguía (1,16:1 de luz entre acento y tenue) |
+| lo activo | pastilla 56×32 radio 16 en acento al 14 % sobre superficie, ícono `--acento`, texto `--texto` | la misma del cuadrito encendido: no suma color |
+| dónde | solo en las pantallas de primer nivel (inicio de Análisis, Posiciones) | las hijas tienen "‹" y la Partida tiene que entrar sin scroll |
+| cómo se esconde | pegada al scroll, 1:1, sin transición | lo pegado a un gesto continuo no se anima (§3, el halo del arrastre) |
+
 ### 1.11 Cómo se usa esto
 
 - **En el código son variables en `:root`**, una por fila de las tablas de

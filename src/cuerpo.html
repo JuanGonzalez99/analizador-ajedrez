@@ -334,7 +334,9 @@
      llega en un link (`#fen=…`). Es una pantalla aparte y no la Partida: acá
      no hay nada que analizar, solo el tablero, cómo va, y los controles. -->
 <div id="zonaPosicion" class="oculto">
-  <div class="cabvista"><h2><button type="button" class="volver" id="volverDePosicion" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2>
+  <!-- sin "‹" desde la v1.3: Posiciones es hermano de Análisis, no hijo, y
+       se va con la barra de abajo -->
+  <div class="cabvista">
     <div class="cabTit"><div class="l1"><span class="rival">Posición</span></div>
       <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div>
     <!-- LO QUE SE ELIGE UNA VEZ, EN UNA HOJA (v1.2, lavado de cara con
@@ -367,6 +369,14 @@
      nuevo, ni una segunda fuente de verdad, y todo lo que ya escuchaba sus
      onchange sigue igual. Lo único que cambió es el texto de las opciones, que
      ahora no se autonombran —la etiqueta está al lado— y quedan cortas. -->
+<!-- LA BARRA DE LOS MÓDULOS (v1.3; Juan eligió la barra abajo el 7-nov, el
+     revisor la C entre cuatro). Solo en las pantallas de primer nivel (el
+     inicio de Análisis y Posiciones): la Partida y el Mes son el caminito con
+     "‹". Se corre con el scroll, pegada al dedo, y queda debajo del velo. -->
+<nav id="navMod" aria-label="Módulos">
+  <button type="button" id="navAnalisis"><i><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M3 20h18M4 16l5-5 4 3 7-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Análisis</button>
+  <button type="button" id="navPosiciones"><i><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 4h8v8H4zM12 12h8v8h-8z" fill="currentColor"/></svg></i>Posiciones</button>
+</nav>
 <div id="fondoAjustes" class="oculto"></div>
 <!-- LA HOJA DE POSICIONES (v1.2): la misma forma que la de Ajustes, con lo
      que se elige una vez. -->

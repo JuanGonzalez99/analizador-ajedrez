@@ -170,6 +170,28 @@
      página oscura el de antes apenas la apagaba y la hoja —que ahora es
      `--superficie`, un escalón arriba del fondo— no se despegaba de lo de atrás. */
   #fondoAjustes { position: fixed; inset: 0; background: var(--velo); z-index: 40; }
+  /* LA BARRA DE LOS MÓDULOS (v1.3, la C del revisor con sus ajustes). 64 de
+     alto, debajo del velo (30 < 40). Lo activo se distingue por tres lados
+     —la pastilla, el texto en --texto y el color—, no solo por el tono: acento
+     contra tenue da 1,16:1 de luz. La pastilla es la del cuadrito encendido
+     (§1.10), acento al 14 % sobre superficie: el ícono da 4,97:1 encima. */
+  #navMod { display: none; position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+            height: 64px; background: var(--superficie); border-top: 1px solid var(--linea); }
+  body.conBarra #navMod { display: flex; }
+  #navMod button { flex: 1; display: flex; flex-direction: column; align-items: center;
+                   justify-content: center; gap: 4px; padding: 0; border: 0; border-radius: 0;
+                   background: none; color: var(--tenue); font-size: 12.5px; font-weight: 600;
+                   line-height: 1.2; }
+  #navMod button i { display: flex; align-items: center; justify-content: center;
+                     width: 56px; height: 32px; border-radius: 16px; }
+  #navMod button[aria-current] { color: var(--texto); }
+  #navMod button[aria-current] i { color: var(--acento);
+                                   background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  #navMod button:not([aria-current]):hover i { background: var(--elevada); }
+  /* lo último de la página (la versión al pie) no queda debajo de la barra:
+     64 más 8. Con la barra escondida al fondo sobran 12 más que antes, y no
+     los 64 enteros (revisor) */
+  body.conBarra { padding-bottom: 72px; }
   /* max-width y margin auto: en una compu la hoja no se estira a lo ancho del
      monitor, se queda del ancho de la columna, como el resto de la app. */
   /* EL SISTEMA EN LA HOJA (v0.103, DISENO §1): `--superficie` y no `Canvas`
@@ -980,6 +1002,9 @@
      en un renglón que crece, y los controles. El estado del trabajo de las
      partidas (`#zonaEstado`) no se ve acá: no es de esta pantalla. */
   body.enVista #zonaPosicion .cabvista { margin-top: 0; }
+  /* desde la v1.3 es de primer nivel, como el inicio: arriba los mismos 16
+     (los 8 son de las pantallas hijas, que tienen "‹") */
+  body.enPosicion { padding-top: 16px; }
   body.enPosicion #zonaEstado { display: none; }
   #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
   #posTablero svg.tab { margin: 0 auto; }
@@ -1594,7 +1619,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.2.3 · 26-11";
+  window.VERSION = "v1.3 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2143,7 +2168,9 @@
      llega en un link (`#fen=…`). Es una pantalla aparte y no la Partida: acá
      no hay nada que analizar, solo el tablero, cómo va, y los controles. -->
 <div id="zonaPosicion" class="oculto">
-  <div class="cabvista"><h2><button type="button" class="volver" id="volverDePosicion" aria-label="Volver a Partidas" title="Volver a Partidas"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2>
+  <!-- sin "‹" desde la v1.3: Posiciones es hermano de Análisis, no hijo, y
+       se va con la barra de abajo -->
+  <div class="cabvista">
     <div class="cabTit"><div class="l1"><span class="rival">Posición</span></div>
       <div class="l2"><span id="posEstado" aria-live="polite"></span></div></div>
     <!-- LO QUE SE ELIGE UNA VEZ, EN UNA HOJA (v1.2, lavado de cara con
@@ -2176,6 +2203,14 @@
      nuevo, ni una segunda fuente de verdad, y todo lo que ya escuchaba sus
      onchange sigue igual. Lo único que cambió es el texto de las opciones, que
      ahora no se autonombran —la etiqueta está al lado— y quedan cortas. -->
+<!-- LA BARRA DE LOS MÓDULOS (v1.3; Juan eligió la barra abajo el 7-nov, el
+     revisor la C entre cuatro). Solo en las pantallas de primer nivel (el
+     inicio de Análisis y Posiciones): la Partida y el Mes son el caminito con
+     "‹". Se corre con el scroll, pegada al dedo, y queda debajo del velo. -->
+<nav id="navMod" aria-label="Módulos">
+  <button type="button" id="navAnalisis"><i><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M3 20h18M4 16l5-5 4 3 7-8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Análisis</button>
+  <button type="button" id="navPosiciones"><i><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M4 4h8v8H4zM12 12h8v8h-8z" fill="currentColor"/></svg></i>Posiciones</button>
+</nav>
 <div id="fondoAjustes" class="oculto"></div>
 <!-- LA HOJA DE POSICIONES (v1.2): la misma forma que la de Ajustes, con lo
      que se elige una vez. -->
@@ -4955,7 +4990,17 @@ function mostrarVista(v, opc) {
     /* al salir se guarda dónde estabas. Volver y encontrar la lista arriba de
        todo, después de haber bajado veinte partidas, es no volver. */
     if (VISTA in SCROLL) SCROLL[VISTA] = window.scrollY;
+    /* Posiciones guarda la partida al irse (la barra, el atrás): el motor
+       que pensaba se calla, y al volver retoma si le toca */
+    if (VISTA === "posicion") cancelarMotorPos();
+    const deDonde = VISTA;
     VISTA = v;
+    /* si quien llegó ya le pidió jugada al motor (`abrirPosicion`), PENSANDO
+       cambió y no se pide dos veces */
+    if (v === "posicion" && deDonde !== "posicion" && POS) {
+      const marca = PENSANDO;
+      setTimeout(() => { if (PENSANDO === marca) turnoDelMotor(); }, 0);
+    }
   }
   let actual = VISTA;
   if (actual !== "inicio" && !HAY[actual] && !OCUPADO) actual = "inicio";
@@ -4963,6 +5008,13 @@ function mostrarVista(v, opc) {
   document.body.classList.toggle("enPartida", actual === "partida");
   document.body.classList.toggle("enPosicion", actual === "posicion");
   ver("zonaPosicion", actual === "posicion");
+  /* la barra de los módulos, solo en las de primer nivel; llega entera */
+  const conBarra = actual === "inicio" || actual === "posicion";
+  document.body.classList.toggle("conBarra", conBarra);
+  barraA(0);
+  $("navAnalisis").toggleAttribute("aria-current", actual === "inicio");
+  $("navPosiciones").toggleAttribute("aria-current", actual === "posicion");
+  if (conBarra) $(actual === "inicio" ? "navAnalisis" : "navPosiciones").setAttribute("aria-current", "page");
   /* la partida que tocaste y todavía se analiza: su pantalla, solo con la
      cabecera (el volver y el progreso) */
   const cargando = actual === "partida" && !HAY.partida;
@@ -4986,6 +5038,24 @@ function mostrarVista(v, opc) {
   $("volverDeLaPartida").ariaLabel = $("volverDeLaPartida").title = "Volver a " + $("volverAQue").textContent;
   if (opc.scroll) window.scrollTo(0, SCROLL[actual] || 0);
 }
+
+/* LA BARRA SE CORRE PEGADA AL SCROLL (revisor de UX, v1.3): 1:1 con lo
+   que se desliza, entre 0 y su alto, sin transición ni acomodo al final,
+   como la barra de direcciones de Chrome. Arriba de todo, siempre entera.
+   Donde no hay scroll no se mueve nunca. En la compu es un riel y no se
+   corre (`barraFija`). */
+let BARRA_OFF = 0, BARRA_Y = 0;
+const barraFija = () => matchMedia("(pointer: fine) and (min-width: 1000px)").matches;
+function barraA(off) {
+  BARRA_OFF = off; BARRA_Y = window.scrollY;
+  $("navMod").style.transform = off ? `translateY(${off}px)` : "";
+}
+window.addEventListener("scroll", () => {
+  if (!document.body.classList.contains("conBarra") || barraFija()) return;
+  const y = window.scrollY, alto = $("navMod").offsetHeight;
+  const off = y <= 0 ? 0 : Math.min(alto, Math.max(0, BARRA_OFF + y - BARRA_Y));
+  if (off !== BARRA_OFF) barraA(off); else BARRA_Y = y;
+}, { passive: true });
 
 /* lo nuevo llega quieto: sin esto, la barra de la evaluación se animaba
    desde cero al aparecer la Partida */
@@ -9140,7 +9210,21 @@ $("posColor").onchange = seguro("posición: color", () => {
   pintarPosicion();
   turnoDelMotor();
 });
-$("volverDePosicion").onclick = seguro("volver", () => { if (hojaPosAbierta()) verHojaPos(false); cancelarMotorPos(); volver(); });
+/* LA BARRA DE LOS MÓDULOS (v1.3). Posiciones sin link abre la que estabas
+   jugando o, si no hay, la inicial con blancas (revisor de UX). Primero
+   `irAPantalla`, que empuja la entrada (es el único que empuja), y después
+   `abrirPosicion`, que le pone el estado. */
+const FEN_INICIAL = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+$("navPosiciones").onclick = seguro("barra: posiciones", () => {
+  if (VISTA === "posicion") return void window.scrollTo(0, 0);
+  if (POS) return irAPantalla("posicion");
+  irAPantalla("posicion");
+  abrirPosicion(FEN_INICIAL, { color: "w" });
+});
+$("navAnalisis").onclick = seguro("barra: análisis", () => {
+  if (VISTA === "inicio") return void window.scrollTo(0, 0);
+  irAPantalla("inicio");
+});
 
 /* EL LINK. Al abrir la app y si cambia el `#` con la app abierta (el profe
    manda otro). */

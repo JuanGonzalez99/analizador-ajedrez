@@ -91,12 +91,15 @@ const toques = () => pg.evaluate(() => {
       d = Math.max(d, r.right - px(a.right)); b = Math.max(b, r.bottom - px(a.bottom));
     }
     const nombre = el.id || (el.getAttribute("aria-label") || el.textContent || el.tagName).trim().slice(0, 18);
-    return { nombre, l, t, d, b, r };
+    return { nombre, l, t, d, b, r, nav: el.closest("nav") };
   });
   const chicos = els.filter(e => e.d - e.l < 47.5 || e.b - e.t < 47.5)
     .map(e => `${e.nombre} ${Math.round(e.d - e.l)}×${Math.round(e.b - e.t)}`);
   const pegados = [];
   for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+    /* los de una misma barra de navegación se reparten el ancho a propósito:
+       cada uno es su área de toque entera (v1.3) */
+    if (els[i].nav && els[i].nav === els[j].nav) continue;
     const A = els[i].r, B = els[j].r;
     const vert = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
     const hor = Math.min(A.right, B.right) - Math.max(A.left, B.left);
@@ -1494,6 +1497,36 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   console.log("posición en la compu:", JSON.stringify({ sobra, aireHoja, flechaDeshace: deshizo }),
     "(sobra ≤ 0 con el final, aireHoja ≥ 8, flechaDeshace true)");
   if (sobra > 0 || aireHoja < 8 || !deshizo) console.log("OJO: Posiciones en la compu");
+}
+/* LA BARRA DE LOS MÓDULOS CON UN MES LARGO (prevención de la v1.3, causas A
+   y C: las variantes se dibujaron con un mes de una partida, que no
+   scrollea). Se clona la fila hasta 40 y, al fondo, con la barra a la vista,
+   entre la última fila (y la versión) y la barra tiene que haber 8 o más. */
+{
+  await pg.setViewportSize({ width: 412, height: 760 });
+  await pg.click("#navAnalisis"); await pg.waitForTimeout(400);
+  await pg.evaluate(() => { const l = document.getElementById("partidas"), f = l.querySelector("div[data-i]");
+    for (let k = l.children.length; k < 40; k++) l.append(f.cloneNode(true)); });
+  const barra = {};
+  for (const [w, h] of [[412, 760], [386, 745]]) {
+    await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(150);
+    await pg.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await pg.waitForTimeout(150);
+    barra[w] = await pg.evaluate(() => {
+      const fs = document.querySelectorAll("#partidas div[data-i]"), n = document.getElementById("navMod");
+      const tope = innerHeight - n.offsetHeight;
+      return { fila: Math.round(tope - fs[fs.length - 1].getBoundingClientRect().bottom),
+               version: Math.round(tope - document.getElementById("verPie").getBoundingClientRect().bottom),
+               escondida: n.style.transform };
+    });
+  }
+  /* en la Partida no está */
+  const enPartida = await pg.evaluate(() => { document.querySelector("#partidas div[data-i]").click();
+    return new Promise(r => setTimeout(() => r(getComputedStyle(document.getElementById("navMod")).display), 600)); });
+  console.log("barra de módulos:", JSON.stringify({ ...barra, enPartida }),
+    "(fila y version ≥ 8 con la barra a la vista; escondida al fondo; en la Partida none)");
+  if (Object.values(barra).some(b => b.fila < 8 || b.version < 8) || enPartida !== "none")
+    console.log("OJO: la barra de los módulos tapa o pega lo último del inicio, o aparece en la Partida");
 }
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");

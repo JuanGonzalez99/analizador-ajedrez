@@ -309,7 +309,7 @@ Práctica y Lecciones, que también son "jugar desde una posición".
       Emparentada con la Partida (la fila de botones bajo el tablero, los
       chips). El resultado de la partida con peso. Sin texto suelto en
       tenue. En el resumen, con la tira de todas y cuál ganó.
-- [ ] **La barra de navegación abajo, con los módulos** (Juan, 7-nov: eligió
+- [x] ~~**La barra de navegación abajo, con los módulos**~~ (hecho en la v1.3 y la v1.3.1: el revisor eligió la C entre cuatro; en la compu, un riel a la izquierda) (Juan, 7-nov: eligió
       esta opción). Cuando llegue el segundo módulo, una barra fija abajo con
       ícono y texto (Análisis, Posiciones, y después Práctica y Lecciones), que
       **se esconde al deslizar para arriba y vuelve al deslizar para abajo**,
@@ -577,6 +577,12 @@ archiva los que pierden sentido.
       el tablero; el resto de la app se juega con teclado desde la v0.153.
 - [ ] **Posiciones: arrastrar la pieza** (v1.1). Hoy es tocar y tocar; el
       arrastre de la Partida está atado a `#tablero`.
+- [ ] **Lavado de cara: Posiciones vacía** (revisor de UX, v1.3). Desde la
+      barra, sin link y sin nada jugado, la pantalla es la posición inicial,
+      "Todavía no se jugó nada." y un Deshacer apagado: es la primera
+      impresión del módulo. ¿Qué ve Juan la primera vez que entra sin link?
+      (la última posición, un "pegá un link o armala a mano", o lo que traiga
+      "Armar una posición a mano", que es el ítem que sigue en la etapa 4).
 
 ### Limpieza de código
 

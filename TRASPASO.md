@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.2.3**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -448,11 +448,11 @@ el orden en que se juntan:
 | `estilos-compu.css` | [PC] desde "EN PANTALLA ANCHA, DOS COLUMNAS": las media queries de 950/1000/1500, el Mes y el inicio en la compu, el hover, `prefers-reduced-motion` |
 | `cuerpo-arriba.html` | cierra `<style>`, arranca el `<body>`, abre el `<script>` clásico |
 | `registro.js` | `<script>` clásico: **`window.VERSION`** (primer renglón), registro, captura de errores, `mostrarError`, el temporizador de 6 s, panel de diagnóstico |
-| `cuerpo.html` | el HTML de las tres pantallas, la hoja de Ajustes y el pie; abre `<script type="module">` |
+| `cuerpo.html` | el HTML de las tres pantallas, Posiciones, la barra de los módulos (`navMod`, v1.3), las hojas y el pie; abre `<script type="module">` |
 | `analisis-evaluacion.js` | bloque de análisis (desde su marcador): evaluación, geometría, `quedaComible`, `cambioEn`, categorías, `categorizar`, `derivarFilas`, `precisionesRapidas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), la curva |
 | `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
 | `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`; y `aperturaEs`. Cierra el bloque de análisis |
-| `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
+| `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, `mostrarVista` (con la barra de los módulos: `conBarra`, `barraA`, el scroll que la corre), la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
 | `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes`, la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas (`svgMarcas`), `dibujar` |
 | `interfaz.js` | el estado global (`PARTIDAS`, `R`, `IDX`…), la tira (`medirTira`, `centrarTira`), `irA` |
 | `variante.js` | probar jugadas: `abrirPrueba`, `probarJugada`, la tira y la planilla de la variante |
@@ -460,7 +460,7 @@ el orden en que se juntan:
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
-| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`) |
+| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
 | `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
@@ -4988,6 +4988,44 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.3, la barra de los módulos** (etapa 4; Juan eligió la barra abajo el
+7-nov, DISENO §2). Variantes sobre la app con `pantallas()`: A la barra
+también en la Partida, B barra de 56 solo en las de primer nivel, C barra de
+64 con pastilla (Material 3), D sin barra, pestañas arriba. **El revisor
+eligió la C con ajustes**: en la B lo activo se distinguía solo por el tono
+(acento contra tenue, 1,16:1 de luz); la D bajaba 48 el tablero y apilaba dos
+cabeceras; la A pisaba el resumen de la Partida, que tiene que entrar sin
+scroll. Cómo quedó:
+- `#navMod`, fija abajo, 64 de alto, `--superficie` con borde `--linea`
+  arriba, z-index 30 (debajo del velo: con una hoja abierta no se cambia de
+  módulo). Dos botones mitad y mitad: ícono de 24 (Análisis la curva,
+  Posiciones un tablero de 2×2, trazo 2) en una pastilla de 56×32 radio 16 y
+  el texto a 12,5/600. Activo (`aria-current="page"`): pastilla acento al
+  14 % sobre superficie (la del cuadrito encendido, §1.10; el ícono da 4,97:1),
+  ícono `--acento`, texto `--texto`. Inactivo, los dos en `--tenue`.
+  Cuando lleguen: Práctica con una diana y Lecciones con un libro abierto.
+- **Solo en las pantallas de primer nivel**, el inicio de Análisis y
+  Posiciones (`body.conBarra`, en `mostrarVista`). La Partida y el Mes son el
+  caminito con "‹" y no la tienen. Posiciones perdió su "‹" (es hermano) y
+  arriba lleva los 16 del inicio, no los 8 de las hijas.
+- **Se corre pegada al scroll**, 1:1 con lo que se desliza entre 0 y 64, sin
+  transición ni acomodo (como la barra de direcciones de Chrome); arriba de
+  todo siempre está entera, y al cambiar de pantalla llega entera. Donde no
+  hay scroll (Posiciones) no se mueve. No es una animación, así que con
+  movimiento reducido queda igual.
+- **Tocar Posiciones** vuelve a la que estabas jugando o, si no hubo
+  ninguna, abre la inicial con blancas. Tocar el módulo donde ya estás
+  sube el scroll. Las dos pasan por `irAPantalla` (el único que empuja
+  historial): el atrás vuelve al módulo anterior. Al irse de Posiciones
+  por cualquier camino el motor que pensaba se calla, y al volver retoma si
+  le toca (`mostrarVista`, con `PENSANDO` para no pedir dos veces).
+- El pie de las de primer nivel pasa a 72 (64 + 8): con la barra a la vista
+  al fondo, entre la versión y la barra quedan 9; escondida, sobran 12 más
+  que antes. `mirar` lo mide con un mes de 40 filas a 412 y 386, y que en la
+  Partida no esté; los toques de una misma `nav` no cuentan como pegados.
+Medido en la maqueta: en Posiciones a 386×745 con la tarjeta del final,
+entre la tarjeta y la barra quedan 92 px, sin scroll.
 
 **v1.2.3, un cambio parejo no es "queda comible"** (revisor de ajedrez,
 22-nov, Arreglos). En `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`,
