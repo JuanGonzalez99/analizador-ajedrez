@@ -140,9 +140,22 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
      partida no la paga: esas posiciones sí están en la tabla. */
   const LENTO = +(process.env.MOTOR_LENTO || 400);
 
+  /* LA PARTIDA COMO RIVAL, PARA POSICIONES (prevención de la v1.1). La
+     pantalla de Posiciones le manda al motor la posición de arranque con las
+     jugadas (`position fen X moves a b c`), que el falso no conocía: contestaba
+     `(none)` y el motor nunca jugaba, así que el arnés no podía llegar a una
+     pantalla con jugadas. Acá cada prefijo de la partida contesta la jugada
+     que sigue: el arnés juega las de un color tocando el tablero y el falso,
+     las del otro. Solo matchea textos con " moves ", que el análisis no manda
+     nunca: las capturas de antes no cambian. */
+  const ucis = jugadas.map(m => m.from + m.to + (m.promotion || ""));
+  const rival = {};
+  for (let k = 1; k < ucis.length; k++) rival[fens[0] + " moves " + ucis.slice(0, k).join(" ")] = ucis[k];
+
   const FALSO = `
   const T = ${JSON.stringify(tabla)};
   const S = ${JSON.stringify(sueltas)};
+  const R = ${JSON.stringify(rival)};
   const LENTO = ${LENTO};
   let fen = null;
   /* CUÁNTAS LÍNEAS PIDIÓ, que hasta la v0.89 el falso ignoraba. Solo gatea la
@@ -159,6 +172,7 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
     if (s.startsWith("go ")) {
       var v = T[fen];
       var deLaTabla = !!v;
+      if (!v && R[fen]) v = { cp: 0, mejor: R[fen], segunda: null };
       if (!v) {
         /* Una posición que NO está en la tabla es, desde la v0.65, una jugada
            probada: por definición no estaba en la partida. Se contesta un número
@@ -217,5 +231,5 @@ export function partidaFalsa({ cual = "de-prueba", puerto = 8099 } = {}) {
     "/api/archives": { archives: [`http://localhost:${puerto}/api/mes/2026/10`] },
     "/api/mes/2026/10": { games: [JUEGO] },
   };
-  return { PGN, CUAL, SUFIJO, jugadas, fens, forma, base, cabPgn, FALSO, API };
+  return { ucis, PGN, CUAL, SUFIJO, jugadas, fens, forma, base, cabPgn, FALSO, API };
 }

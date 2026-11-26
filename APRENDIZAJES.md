@@ -54,14 +54,7 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-- **Una pasada de Posiciones en `mirar.mjs`, y el tamaño de toque medido**
-  (revisor de UX, v1.1; causas C y F). `npm run mirar posicion` con un link
-  `#fen=` y el motor de `falso.mjs`: la pantalla con 0 y con 40 jugadas
-  (imprime cuánto se movió `#posDeshacer`: tiene que dar 0), mate y
-  ahogado. Y en todas las pasadas del celu, un aviso por cada `button` o
-  `select` visible con área de toque de menos de 48 (contando `::after`) o
-  dos vecinos a menos de 12; en las de PC, `scrollHeight - innerHeight` de
-  cada pantalla.
+(Ninguna por ahora.)
 
 ## Registro
 
@@ -70,6 +63,13 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Prevención de Posiciones hecha** · 26-nov · `mirar` abre el link, juega
+  la partida de prueba contra el falso (que ahora contesta `position … moves`)
+  y mide: Deshacer no se mueve con 36 jugadas (0 y 0), nada se corta a 386,
+  en la compu entra sin scroll. Y un renglón "toque" en las cuatro pantallas
+  del celu. Lo primero que mostró: los botones de Posiciones miden 44 de
+  alto (al lavado de cara) y cinco controles viejos no llegan a 48 (a
+  Relleno).
 - **Posiciones se armó sin variantes y se ve armada, no diseñada** · v1.1 →
   lo vio Juan el 26-nov ("los botones están raros") · D+F: el ítem hablaba
   de lo que hace y no de cómo se ve, así que no lo traté como forma nueva;

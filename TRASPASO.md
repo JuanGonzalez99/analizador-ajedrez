@@ -320,6 +320,20 @@ en una línea dónde abren y cierran la Partida, el Mes y el inicio a 1000 y a
 la barra horizontal (108 contra 99 a 1280) y 11 más afuera con la vertical
 (88), que es la de fábrica; va a Relleno para que lo juzgue el revisor.
 
+**Posiciones y el toque (26-nov-2026, prevención de la v1.1).** Al final de
+`mirar`, después del Mes de varias, se abre `#fen=<arranque de la partida>&color=w`,
+se juegan las blancas tocando el tablero y el falso contesta las negras: un
+tercer diccionario `R` en `falso.mjs` lleva cada `position fen X moves …` de
+la partida a la jugada que sigue (el análisis nunca manda `moves`, así que no
+cambia nada de antes). Capturas `posicion` (vacía), `posicion-jugadas` (con
+la partida entera; con `mirar mate` o `ahogado`, la pantalla del final) y
+`ancho-posicion`; el renglón **"posiciones"** tiene que dar
+`deshacerSeMovio` 0 y 0. Y **"toque, …"** en la Partida, el Mes, el inicio y
+Posiciones (412): los `button`/`select` a la vista con menos de 48 contando
+`::before`/`::after` absolutos (DISENO §1.7) y los vecinos a menos de 12.
+Medido la primera vez: Posiciones 44 de alto; Partida "‹ ›" 34×44 y Girar
+33×48; Mes los selects y el "?" a 44–45; inicio el select de meses a 45.
+
 **Dos trampas que ya costaron tiempo, las dos anotadas en el archivo:**
 - `load_pgn` devuelve `false` y **no tira**. Un PGN de prueba escrito a mano con
   una jugada 19 imposible entró como una partida de cero jugadas y el arnés se

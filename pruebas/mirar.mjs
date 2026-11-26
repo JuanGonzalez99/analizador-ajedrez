@@ -64,6 +64,41 @@ const fotoDe = async (sel, n) => {
   await pg.waitForTimeout(120);
   await pg.locator(sel).screenshot({ path: path.join(SALIDA, n + ".png") });
 };
+/* EL TOQUE, MEDIDO (prevención de la v1.1: los botones de 36 de Posiciones
+   no los midió nadie). DISENO.md §1.7: área de toque de 48 en el celu,
+   contando el `::before` o `::after` invisible que agranda, y 12 entre vecinos. Devuelve
+   los que no llegan, por nombre: [] es que está todo bien. */
+const toques = () => pg.evaluate(() => {
+  const px = v => (v && v.endsWith("px")) ? parseFloat(v) : 0;
+  const els = [...document.querySelectorAll("button, select")].filter(el => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && el.offsetParent !== null &&
+      getComputedStyle(el).visibility !== "hidden" && r.bottom > 0 && r.top < innerHeight;
+  }).map(el => {
+    const r = el.getBoundingClientRect();
+    let l = r.left, t = r.top, d = r.right, b = r.bottom;
+    for (const ps of ["::before", "::after"]) {
+      const a = getComputedStyle(el, ps);
+      if (!a.content || a.content === "none" || a.position !== "absolute") continue;
+      l = Math.min(l, r.left + px(a.left)); t = Math.min(t, r.top + px(a.top));
+      d = Math.max(d, r.right - px(a.right)); b = Math.max(b, r.bottom - px(a.bottom));
+    }
+    const nombre = el.id || (el.getAttribute("aria-label") || el.textContent || el.tagName).trim().slice(0, 18);
+    return { nombre, l, t, d, b, r };
+  });
+  const chicos = els.filter(e => e.d - e.l < 47.5 || e.b - e.t < 47.5)
+    .map(e => `${e.nombre} ${Math.round(e.d - e.l)}×${Math.round(e.b - e.t)}`);
+  const pegados = [];
+  for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
+    const A = els[i].r, B = els[j].r;
+    const vert = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
+    const hor = Math.min(A.right, B.right) - Math.max(A.left, B.left);
+    const gap = vert > 0 ? Math.max(A.left, B.left) - Math.min(A.right, B.right)
+              : hor > 0 ? Math.max(A.top, B.top) - Math.min(A.bottom, B.bottom) : 99;
+    if (gap >= 0 && gap < 11.5) pegados.push(`${els[i].nombre}|${els[j].nombre} ${Math.round(gap)}`);
+  }
+  return { chicos, pegados };
+});
 /* frena solo al llegar a la última: el botón se deshabilita ahí, y sin esto
    el arnés se muere de timeout clickeando algo que no responde */
 const avanzar = async n => {
@@ -112,6 +147,7 @@ console.log("inicial:", JSON.stringify(await pg.evaluate(() => ({
   perdida: document.getElementById("mPerdida").textContent,
 }))));
 await foto("revision-inicio");
+console.log("toque, partida:".padEnd(16), JSON.stringify(await toques()));
 await pg.click("#sig");
 await pg.waitForTimeout(200);
 await foto("revision-1");
@@ -1152,6 +1188,7 @@ const bordesDe = (sels) => pg.evaluate(sels => {
   }));
   console.log("mes:           ", JSON.stringify({ selects: sel, ...await espacios(pg, "#zonaMes") }));
   await foto("mes");
+console.log("toque, mes:".padEnd(16), JSON.stringify(await toques()));
   await pg.evaluate(() => { const d = document.querySelector("#zonaMes details.seccion"); d.open = true; });
   await pg.waitForTimeout(200);
   await pg.evaluate(() => document.querySelector("#zonaMes details.seccion").scrollIntoView());
@@ -1231,6 +1268,7 @@ console.log("eval de fábrica:", JSON.stringify(
 await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
 await pg.waitForTimeout(300);
 await foto("inicio");
+console.log("toque, inicio:".padEnd(16), JSON.stringify(await toques()));
 const cab = () => pg.evaluate(() => {
   const r = s => Math.round(document.querySelector(s).getBoundingClientRect().top);
   return { tuerca: r("#btnAjustesInicio"), usuario: r("#yaUsuario"), enlace: document.getElementById("cambiarUsuario").textContent,
@@ -1324,6 +1362,57 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   console.log("mes de varias: ", JSON.stringify({ filas, ...varias, cortados: cortes,
               cortados386: (await pg.setViewportSize({ width: 386, height: 760 }), await pg.waitForTimeout(200), await cortados()) }),
               "(filas = 5; nada desborda ni se corta)");
+}
+/* POSICIONES (prevención de la v1.1, causas A, C y F de APRENDIZAJES.md).
+   Se armó mirada con cero a dos jugadas y `mirar` no pasaba por ahí: los
+   botones de 36 y los que se corrían al crecer la lista los vio el revisor
+   de casualidad. Se abre el link (`#fen=` con el arranque de la partida de
+   prueba), se juegan las blancas tocando el tablero y el falso contesta las
+   negras (`falso.mjs`, "la partida como rival"). Con `mirar mate` y
+   `mirar ahogado` la partida entera llega al final: la pantalla del
+   resultado. Va al final para no cambiar ninguna captura de arriba. */
+{
+  await pg.setViewportSize({ width: 412, height: 760 });
+  await pg.evaluate(f => { location.hash = "fen=" + encodeURIComponent(f) + "&color=w"; }, fens[0]);
+  await pg.waitForSelector("#zonaPosicion:not(.oculto)", { timeout: 10000 });
+  await pg.waitForTimeout(300);
+  const caja = sel => pg.evaluate(s => { const r = document.querySelector(s).getBoundingClientRect();
+    return { x: Math.round(r.x), y: Math.round(r.y + scrollY) }; }, sel);
+  const antes = await caja("#posDeshacer");
+  await foto("posicion");
+  const t0 = await toques();
+  const { ucis } = FALSA;
+  let jugadas = 0;
+  for (let k = 0; k < ucis.length; k += 2) {
+    const u = ucis[k];
+    await pg.click(`#posTablero [data-sq="${u.slice(0, 2)}"]`);
+    await pg.click(`#posTablero [data-sq="${u.slice(2, 4)}"]`);
+    jugadas = k + 1;
+    if (k + 1 < ucis.length) {
+      /* espera la respuesta del falso (demora 400 ms): vuelve a tocarle a Juan */
+      await pg.waitForFunction(() => !document.getElementById("posEstado").textContent.startsWith("Piensa"), null, { timeout: 5000 });
+      jugadas = k + 2;
+    }
+  }
+  await pg.waitForTimeout(300);
+  const despues = await caja("#posDeshacer");
+  await foto("posicion-jugadas");
+  const est = await pg.evaluate(() => ({ estado: document.getElementById("posEstado").textContent,
+    lista: document.getElementById("posJugadas").textContent.slice(-60) }));
+  console.log("posiciones:    ", JSON.stringify({ jugadas, ...est,
+    deshacerSeMovio: { x: despues.x - antes.x, y: despues.y - antes.y } }),
+    "(deshacerSeMovio tiene que dar 0 y 0)");
+  if (despues.x !== antes.x || despues.y !== antes.y) console.log("OJO: Deshacer se movió al crecer la partida");
+  console.log("toque, posición:", JSON.stringify({ vacia: t0, jugada: await toques() }));
+  await pg.setViewportSize({ width: 386, height: 760 });
+  await pg.waitForTimeout(200);
+  console.log("posición a 386:", JSON.stringify({ desborde: await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+    cortados: await cortados() }), "(nada desborda ni se corta)");
+  await pg.setViewportSize({ width: 1280, height: 800 });
+  await pg.waitForTimeout(250);
+  await foto("ancho-posicion");
+  console.log("posición en la compu:", JSON.stringify(await pg.evaluate(() =>
+    ({ sobra: document.documentElement.scrollHeight - innerHeight }))), "(sobra ≤ 0: entra sin scroll)");
 }
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");

@@ -699,6 +699,13 @@ Pendientes que estaban anotados solo en el traspaso.
       pedazo más grande (~20.000 tokens) y de ~749 a ~1230 son todo gestos y
       teclado: un `gestos.js` aparte, sumado a `ORDEN`. Interno, armado
       idéntico al byte.
+- [ ] **El toque de 48 en lo que ya estaba** (la medida nueva de `mirar`,
+      26-nov; ya estaba). El renglón "toque" marca, a 412: en la Partida
+      "‹ ›" de 34×44 y Girar de 33×48; en el Mes los dos selects y el "?"
+      de 44–45 de alto; en el inicio el select de meses de 45. §1.7 pide
+      48 contando el `::before`/`::after` invisible. Que el revisor diga
+      cuáles agrandar (los de la fila de la jugada tienen su excepción de
+      40) y que el renglón quede en `[]` o con la excepción escrita.
 
 ### Ideas de los revisores para más adelante
 
