@@ -322,20 +322,27 @@ Práctica y Lecciones, que también son "jugar desde una posición".
       llegó a lo mismo). Un botón que copia la posición, la partida en PGN
       y, si hay objetivo, si se cumplió; Juan lo pega en el proyecto del
       profe. Va después de "Analizar lo que jugaste".
-- [ ] **El objetivo en el link** (revisor de ajedrez y Juan, 26-nov). Dos
-      clases: jugar hasta un final (`ganar`, `tablas`, `mate`, `coronar`), y
-      al terminar "Lo lograste" o "Era ganado y quedó tablas", siempre
-      medido con el motor; o una sola jugada ("encontrá la que gana
-      material"), donde el tablero se frena después de la jugada de Juan y
-      la app dice si era. Definir el formato junto con el texto para el
-      profe. Va antes que la Pista: la pista ayuda hacia un objetivo.
+- [ ] **El objetivo en el link** (revisor de ajedrez y Juan, 26-nov):
+      `ganar` o `tablas` (contra la máquina y sin reloj, ganar es dar mate:
+      no son dos objetivos). Al terminar, "Lo lograste" o "Era ganado y
+      quedó tablas", siempre medido con el motor. Definir el formato junto
+      con el texto para el profe. Va antes que la Pista: la pista ayuda
+      hacia un objetivo. (Los de "encontrá cómo ganar material", que pueden
+      ser varias jugadas, van en Práctica.)
+- [ ] **La apertura que juega el motor, desde el link** (Juan, 26-nov). El
+      profe dice qué apertura va a intentar el motor (por nombre, contra
+      `aperturas.json`, o por jugadas) y el motor la sigue mientras pueda,
+      reaccionando a lo que juega Juan: si Juan se va de la línea, elige
+      entre las jugadas que siguen dentro de esa apertura y, si ya no
+      queda ninguna, juega por su cuenta. Primero el criterio con el
+      revisor de ajedrez (qué es "seguir intentando" una apertura cuando el
+      rival se desvía).
 - [ ] **Variedad del motor, configurable** (revisor de ajedrez y Juan,
       26-nov). Que entre jugadas de evaluación parecida elija distinto cada
       vez, para que repetir una posición no sea repetir una línea. Se
       elige en la pantalla y puede venir en el link (`&variedad=no|poca|
       mucha`). De fábrica, poca.
-- [ ] **Mis posiciones** (revisor de ajedrez, 26-nov; a Juan le puede
-      servir). Cada link que se abre queda guardado solo, con la fecha y,
+- [ ] **Mis posiciones** (revisor de ajedrez, 26-nov; Juan: "me sirve"). Cada link que se abre queda guardado solo, con la fecha y,
       si tiene objetivo, si se logró, para volver sin buscar el mensaje del
       profe. Que muestre lo logrado y no solo lo pendiente. Después del
       objetivo.
@@ -386,6 +393,11 @@ errores.
       libre), filtrada por tema y nivel y partida en archivos chicos.
 - [ ] Elegir tema (mates en dos, clavadas, finales…) y hacer todos los que
       quiera.
+- [ ] **Ejercicios de "encontrá cómo ganar"** (Juan, 26-nov): no siempre es
+      una jugada; puede ser una simplificación de varias de la que salís
+      ganando. El tablero se frena cuando la ventaja queda clara (medida con
+      el motor) o cuando Juan se equivoca. Que el profe también los pueda
+      mandar por link.
 - [ ] Link directo a un tema o a un ejercicio, para el profe.
 
 ## Etapa 6 · Lecciones
