@@ -488,6 +488,13 @@ archiva los que pierden sentido.
 
 - [ ] **Posiciones: elegir la pieza al coronar** (v1.1). Hoy va siempre a
       dama. Una fila de cuatro piezas sobre la casilla, como lichess.
+- [ ] **[PC] Posiciones en dos columnas** (revisor de UX, v1.1). A 1280 la
+      columna mide 490 de 1280. De 1000 para arriba, como la Partida:
+      tablero a la izquierda con su `--ladoTab` y un panel de ~320 con las
+      jugadas en planilla, Deshacer / Empezar y Nivel / Jugás con. El revisor
+      ya lo decidió; quedó para otra noche.
+- [ ] **[PC] Posiciones con teclado** (revisor de UX, v1.1): Tab se saltea
+      el tablero; el resto de la app se juega con teclado desde la v0.153.
 - [ ] **Posiciones: arrastrar la pieza** (v1.1). Hoy es tocar y tocar; el
       arrastre de la Partida está atado a `#tablero`.
 

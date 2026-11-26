@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.1.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.1.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4964,6 +4964,37 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.1.2, Posiciones con lo que pidieron los dos revisores** (nada de esto
+llegó a publicarse: la v1.1 y la v1.1.1 salieron juntas con esta). Del de
+ajedrez, verificado con chess.js y con el Stockfish del repo:
+- **Un enroque sin su torre colgaba a Stockfish** ("Piensa el motor…" para
+  siempre): pasa con el `KQkq` que deja un editor en un final de peones.
+  `limpiarFen` deja cada enroque solo si el rey y la torre están en su
+  casilla, y el al paso solo si está el peón que acaba de avanzar y la
+  casilla de atrás vacía (chess.js lo jugaba y Stockfish no). Se limpia en
+  silencio: la posición es jugable igual.
+- **Un peón en la primera o la octava fila** se rechaza (chess.js inventaba
+  una jugada "a" y Stockfish contestaba que no había ninguna).
+- **La triple repetición** no se veía: todo se juzgaba desde el último FEN.
+  `juegoPos()` rejuega las jugadas desde la inicial (estado, toque, turno
+  del motor) y al motor se le manda `position fen <inicial> moves …`
+  (`Motor.analizar` tiene un cuarto parámetro, `movs`, que el análisis no
+  usa).
+- Deshacer y Empezar de nuevo se apagan si no hay ninguna jugada de Juan
+  (`hayJugadaMia`): con Juan del color que no mueve deshacían la primera del
+  motor y el motor la volvía a jugar.
+Del de UX: Deshacer y Empezar de nuevo pasan a secundarios de 44 (eran
+`.chico`, 36, a 8 uno del otro; ahora 12) y van antes de Nivel y "Jugás con"
+(primero lo que se toca jugando); las jugadas son un renglón que no crece,
+con scroll de costado y las últimas a la vista (envolviendo, cada renglón
+corría los botones); y al terminar, el resultado en palabras al cabo de las
+jugadas, en `--texto` y 600 ("1. Ra8# · Ganaste", "Ganó el motor",
+"Tablas"). En la compu la columna se recalculó (`100vh − 310px`) y
+`scrollHeight` da justo el alto a 1280 × 800 y 1920 × 1080 (la v1.1.1 decía
+"sin scroll" y sobraban 5 px). Las dos columnas de la compu que propuso el
+revisor van a Relleno. Pruebas de unidad nuevas: el link, los FEN
+imposibles, la repetición y Deshacer.
 
 **v1.1.1, [PC] Posiciones en la compu**: fuera de la Partida `--ladoTab` no
 existía y el tablero se estiraba a todo el ancho (1082 a 1280). Desde 700,

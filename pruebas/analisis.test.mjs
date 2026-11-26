@@ -4135,3 +4135,47 @@ test("a los 6 s sin módulo no hay cartel rojo si los archivos responden bien (v
   assert.ok(!/window\.mostrarError\(f, r\.ok/.test(t), "no hay cartel con r.ok");
   assert.ok(t.includes("if (window.MODULO_OK) return;"), "con el módulo ya andando, un HEAD que falla no saca el cartel");
 });
+
+/* POSICIONES (v1.1). Las funciones puras de src/posicion.js, sacadas del
+   pedazo con un POS de mentira. Las pidió el revisor de ajedrez: los FEN
+   imposibles de contenido (que cuelgan a Stockfish), la triple repetición
+   (que necesita la historia) y Deshacer con Juan del color que no mueve. */
+const posicion = (() => {
+  const src = fs.readFileSync(new URL("../src/posicion.js", import.meta.url), "utf8");
+  const tomar = n => { const i = src.indexOf(`function ${n}(`); return src.slice(i, src.indexOf("\n}\n", i) + 2); };
+  return new Function("Chess", "let POS = null;\nconst fenPos = () => POS.fens[POS.fens.length - 1];\n" +
+    ["fenDelLink", "problemaDelFen", "limpiarFen", "juegoPos", "hayJugadaMia", "estadoPos"].map(tomar).join("\n") +
+    "\nreturn { fenDelLink, problemaDelFen, limpiarFen, juegoPos, hayJugadaMia, estadoPos, poner: p => { POS = p; } };")(Chess);
+})();
+
+test("Posiciones: el link de lichess y el FEN sin campos (v1.1)", () => {
+  assert.equal(posicion.fenDelLink("#fen=8/8/8/4k3/8/8/3K4/7R_w_-_-_0_1&nivel=2"), "8/8/8/4k3/8/8/3K4/7R w - - 0 1");
+  assert.equal(posicion.fenDelLink("#fen=6k1/5ppp/8/8/8/8/8/R5K1%20b"), "6k1/5ppp/8/8/8/8/8/R5K1 b - - 0 1");
+  assert.equal(posicion.fenDelLink("#otra=1"), null);
+});
+
+test("Posiciones: los FEN que no se pueden jugar se rechazan, y los enroques y el al paso imposibles se limpian (v1.1)", () => {
+  assert.match(posicion.problemaDelFen("8/8/8/8/8/8/8/4K3 w - - 0 1"), /un rey de cada color/);
+  assert.match(posicion.problemaDelFen("P3k3/8/8/8/8/8/8/4K3 w - - 0 1"), /primera o la octava/);
+  assert.match(posicion.problemaDelFen("4k3/8/8/8/8/8/8/p3K3 b - - 0 1"), /primera o la octava/);
+  assert.match(posicion.problemaDelFen("4k3/8/8/8/8/8/8/4R1K1 w - - 0 1"), /no mueve está en jaque/);
+  assert.equal(posicion.problemaDelFen("4k3/8/8/8/8/8/4P3/4K3 w KQkq - 0 1"), null);
+  /* el final de peones con los enroques por defecto de un editor: colgaba a Stockfish */
+  assert.equal(posicion.limpiarFen("4k3/8/8/8/8/8/4P3/4K3 w KQkq - 0 1"), "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1");
+  assert.equal(posicion.limpiarFen("r3k2r/8/8/8/8/8/8/R3K1R1 w KQkq - 0 1"), "r3k2r/8/8/8/8/8/8/R3K1R1 w Qkq - 0 1");
+  assert.equal(posicion.limpiarFen("4k3/8/8/3P4/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/3P4/8/8/8/4K3 w - - 0 1");
+  assert.equal(posicion.limpiarFen("4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 1");
+});
+
+test("Posiciones: la triple repetición se ve con la historia, y Deshacer pide una jugada de Juan (v1.1)", () => {
+  const inicial = "4k3/8/8/8/8/8/8/R3K3 w - - 0 1";
+  const ucis = ["a1a2", "e8f8", "a2a1", "f8e8", "a1a2", "e8f8", "a2a1", "f8e8"];
+  const c = new Chess(inicial), fens = [inicial];
+  for (const u of ucis) { c.move({ from: u.slice(0, 2), to: u.slice(2, 4) }); fens.push(c.fen()); }
+  posicion.poner({ inicial, fens, ucis, sans: [], yo: "w" });
+  assert.equal(posicion.estadoPos(), "Tablas: tres veces la misma posición");
+  posicion.poner({ inicial, fens: [inicial, fens[1]], ucis: ["a1a2"], sans: [], yo: "b" });
+  assert.equal(posicion.hayJugadaMia(), false, "con Juan de negras, la primera del motor no se deshace");
+  posicion.poner({ inicial, fens: fens.slice(0, 3), ucis: ucis.slice(0, 2), sans: [], yo: "b" });
+  assert.equal(posicion.hayJugadaMia(), true);
+});

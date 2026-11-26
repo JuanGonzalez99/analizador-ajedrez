@@ -319,7 +319,9 @@ class Motor {
 
   terminar() { if (this.w) { this.w.terminate(); this.w = null; this.oyentes = []; } }
 
-  analizar(fen, prof, limpiar) {
+  /* `movs` (v1.1, Posiciones): las jugadas desde `fen`, para que el motor
+     vea la historia; el análisis no las pasa */
+  analizar(fen, prof, limpiar, movs) {
     return new Promise((ok, no) => {
       const linea = {};
       const fn = s => {
@@ -358,7 +360,7 @@ class Motor {
       this.oyentes.push(fn);
       const corte = setTimeout(() => { quitar(); no(new Error("el motor " + this.i + " no respondió")); }, 120000);
       if (limpiar) this.w.postMessage("ucinewgame");
-      this.w.postMessage("position fen " + fen);
+      this.w.postMessage("position fen " + fen + (movs && movs.length ? " moves " + movs.join(" ") : ""));
       this.w.postMessage("go depth " + prof);
     });
   }

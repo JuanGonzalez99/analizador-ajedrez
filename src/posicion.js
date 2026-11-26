@@ -40,12 +40,36 @@ function problemaDelFen(fen) {
   const v = new Chess().validate_fen(fen);
   if (!v.valid) return "no es una posición válida";
   const tab = fen.split(" ")[0];
+  /* chess.js inventa una jugada "a" y Stockfish contesta que no hay (revisor de ajedrez) */
+  const filas = tab.split("/");
+  if (/p/i.test(filas[0]) || /p/i.test(filas[7])) return "hay un peón en la primera o la octava fila";
   if ((tab.match(/K/g) || []).length !== 1 || (tab.match(/k/g) || []).length !== 1)
     return "tiene que haber un rey de cada color";
   const p = fen.split(" ");
   const otro = new Chess([p[0], p[1] === "w" ? "b" : "w", "-", "-", "0", "1"].join(" "));
   if (otro.in_check()) return "el que no mueve está en jaque";
   return null;
+}
+
+/* LO QUE EL FEN DICE Y EL TABLERO NO SOSTIENE, se limpia en silencio
+   (revisor de ajedrez, v1.1): un editor deja "KQkq" por defecto, y un
+   enroque sin su torre o sin el rey en su casilla CUELGA a Stockfish (no
+   contesta nunca) y chess.js lo ofrece igual. El al paso sin el peón que
+   acaba de avanzar, lo mismo: chess.js lo juega y Stockfish no. */
+function limpiarFen(fen) {
+  const p = fen.split(" ");
+  const c = new Chess();
+  if (!c.load(fen)) return fen;
+  const hay = (sq, t) => { const x = c.get(sq); return !!x && x.type + x.color === t; };
+  const ok = { K: hay("e1", "kw") && hay("h1", "rw"), Q: hay("e1", "kw") && hay("a1", "rw"),
+               k: hay("e8", "kb") && hay("h8", "rb"), q: hay("e8", "kb") && hay("a8", "rb") };
+  p[2] = [...p[2]].filter(x => ok[x]).join("") || "-";
+  if (p[3] !== "-") {
+    const col = p[3][0], fila = p[3][1];
+    const peon = p[1] === "w" ? col + "5" : col + "4", tipo = p[1] === "w" ? "pb" : "pw";
+    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]))) p[3] = "-";
+  }
+  return p.join(" ");
 }
 
 let NIVEL_POS = 4;
@@ -55,6 +79,7 @@ function abrirPosicion(fen, opc) {
   opc = opc || {};
   cancelarMotorPos();
   const error = problemaDelFen(fen);
+  if (!error) fen = limpiarFen(fen);
   if (opc.nivel) NIVEL_POS = opc.nivel;
   const turno = fen.split(" ")[1];
   POS = { inicial: fen, fens: [fen], sans: [], ucis: [], desde: null, error,
@@ -80,11 +105,24 @@ function abrirPosicion(fen, opc) {
 }
 
 const fenPos = () => POS.fens[POS.fens.length - 1];
+/* LA PARTIDA CON SU HISTORIA: la triple repetición no se ve desde un FEN
+   suelto (revisor de ajedrez, v1.1). Son pocas jugadas: se rejuegan. */
+function juegoPos() {
+  const c = new Chess(POS.inicial);
+  for (const u of POS.ucis) c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
+  return c;
+}
+/* hubo alguna jugada de Juan: si no, Deshacer y Empezar de nuevo no tienen
+   qué deshacer (con Juan del color que no mueve, deshacían la del motor y
+   el motor la volvía a jugar) */
+function hayJugadaMia() {
+  return POS.fens.slice(0, -1).some(f => f.split(" ")[1] === POS.yo);
+}
 
 /* cómo está la partida, en una línea: es el subtítulo de la barra */
 function estadoPos() {
   if (POS.error) return "";
-  const c = new Chess(fenPos());
+  const c = juegoPos();
   const yo = POS.yo, toca = c.turn();
   if (c.in_checkmate()) return toca === yo ? "Jaque mate: ganó el motor" : "Jaque mate: ganaste";
   if (c.in_stalemate()) return "Tablas: ahogado";
@@ -127,11 +165,19 @@ function pintarPosicion() {
   $("posTablero").innerHTML = dibujar(fen, POS.ucis[POS.ucis.length - 1] || null, null,
     { sinMarcas: true, sinAtras: true, sinAdelante: true, desde: POS.desde, destinos });
   GIRADO = g;
-  $("posJugadas").textContent = jugadasPos() || "Todavía no se jugó nada.";
+  /* el final, en palabras, al cabo de las jugadas: es lo más importante de
+     la pantalla cuando termina (revisor de UX, v1.1) */
+  const j = juegoPos();
+  const fin = !j.game_over() ? "" : j.in_checkmate() ? (j.turn() === POS.yo ? "Ganó el motor" : "Ganaste") : "Tablas";
+  const lista = jugadasPos();
+  $("posJugadas").innerHTML = (lista ? sinHtml(lista) : fin ? "" : "Todavía no se jugó nada.") +
+    (fin ? `${lista ? " · " : ""}<b>${fin}</b>` : "");
+  /* un solo renglón que no crece: se ven las últimas */
+  $("posJugadas").scrollLeft = $("posJugadas").scrollWidth;
   $("posNivel").value = String(NIVEL_POS);
   $("posColor").value = POS.yo;
-  $("posDeshacer").disabled = !POS.sans.length;
-  $("posReiniciar").disabled = !POS.sans.length;
+  $("posDeshacer").disabled = !hayJugadaMia();
+  $("posReiniciar").disabled = !hayJugadaMia();
 }
 
 /* TOCAR LA PIEZA Y DESPUÉS ADÓNDE. Solo las de Juan y solo en su turno. */
@@ -139,7 +185,7 @@ $("posTablero").addEventListener("click", seguro("posición: tocar", ev => {
   const r = ev.target.closest && ev.target.closest("[data-sq]");
   if (!r || !POS || POS.error) return;
   const sq = r.dataset.sq;
-  const c = new Chess(fenPos());
+  const c = juegoPos();
   if (c.game_over() || c.turn() !== POS.yo) return;
   if (POS.desde) {
     const m = c.moves({ square: POS.desde, verbose: true }).find(x => x.to === sq);
@@ -165,9 +211,10 @@ function moverPos(uci) {
    empezar de nuevo, cambiar de color), lo que contesta se tira: `PENSANDO`
    es el número del turno, y cada cambio lo sube. */
 async function turnoDelMotor() {
+  if (POS.error) return;
   const fen = fenPos();
-  const c = new Chess(fen);
-  if (POS.error || c.game_over() || c.turn() === POS.yo) return;
+  const c = juegoPos();
+  if (c.game_over() || c.turn() === POS.yo) return;
   const yo = ++PENSANDO;
   try {
     if (!MOTOR_POS) { MOTOR_POS = new Motor("posición"); }
@@ -176,7 +223,8 @@ async function turnoDelMotor() {
     if (yo !== PENSANDO) return;
     const n = NIVELES[NIVEL_POS - 1];
     MOTOR_POS.w.postMessage("setoption name Skill Level value " + n.skill);
-    PEDIDO_POS = MOTOR_POS.analizar(fen, n.prof, false);
+    /* con las jugadas, para que vea las repeticiones */
+    PEDIDO_POS = MOTOR_POS.analizar(POS.inicial, n.prof, false, POS.ucis.slice());
     const r = await PEDIDO_POS;
     PEDIDO_POS = null;
     if (yo !== PENSANDO || fenPos() !== fen || !r.mejor) return;
@@ -194,7 +242,7 @@ function cancelarMotorPos() {
 /* DESHACER vuelve a la última vez que le tocaba a Juan: su jugada y la
    respuesta del motor juntas. Si el motor estaba pensando, solo la de Juan. */
 $("posDeshacer").onclick = seguro("posición: deshacer", () => {
-  if (!POS || !POS.sans.length) return;
+  if (!POS || !hayJugadaMia()) return;
   cancelarMotorPos();
   do { POS.fens.pop(); POS.sans.pop(); POS.ucis.pop(); }
   while (POS.sans.length && new Chess(fenPos()).turn() !== POS.yo);

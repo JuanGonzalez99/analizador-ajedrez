@@ -977,11 +977,15 @@
   body.enPosicion #zonaEstado { display: none; }
   #posTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
   #posTablero svg.tab { margin: 0 auto; }
+  /* un solo renglón que no crece, con scroll de costado y las últimas a la
+     vista: si envolvía, cada renglón nuevo corría los botones que se están
+     tocando (revisor de UX, v1.1) */
   #posJugadas { margin: var(--e-2) 0 0; font-size: var(--t-secundario); color: var(--tenue);
-                min-height: 1.5em; overflow-wrap: anywhere; }
+                white-space: nowrap; overflow-x: auto; scrollbar-width: none; }
+  #posJugadas b { color: var(--texto); font-weight: 600; }
   .posControles { display: flex; gap: var(--e-4); flex-wrap: wrap; align-items: center;
                   margin: var(--e-4) 0 0; font-size: var(--t-secundario); color: var(--tenue); }
   .posControles label { display: flex; align-items: center; gap: var(--e-2); }
   .posControles select { color: var(--texto); }
-  .posAcciones { margin: var(--e-4) 0 0; }
+  .posAcciones { margin: var(--e-4) 0 0; gap: var(--e-3); }
   #posError { margin: var(--e-4) 0 0; }
