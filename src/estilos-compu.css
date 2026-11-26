@@ -546,10 +546,7 @@
      a 1280, eran dos botones a 640 px uno del otro, lejos de todo. Con mouse
      y desde 1000, un riel de 80 a la izquierda (Material para pantallas
      anchas): los ítems arriba, a la altura de la cabecera, con el mismo ícono,
-     texto y pastilla. Nunca se corre (`barraFija` en motor.js). Desde 1270
-     entra en el margen libre; de 1000 a 1269 TODAS las pantallas se corren 80
-     —no solo las que lo muestran—, para que sigan abriendo en el mismo borde
-     (el renglón "bordes en la compu" de mirar). */
+     texto y pastilla. Nunca se corre (`barraFija` en motor.js). */
   @media (pointer: fine) and (min-width: 1000px) {
     #navMod { top: 0; right: auto; width: 80px; height: auto; flex-direction: column;
               justify-content: flex-start; gap: var(--e-3); padding-top: var(--e-4);
@@ -557,8 +554,17 @@
     #navMod button { flex: none; height: 64px; }
     body.conBarra { padding-bottom: 60px; }
   }
-  @media (pointer: fine) and (min-width: 1000px) and (max-width: 1269px) {
-    body { padding-left: 94px; }
+  /* SOLO LAS QUE TIENEN EL RIEL SE CORREN (v1.3.3, revisor). En la v1.3.1
+     se corrían todas de 1000 a 1269, y la Partida y el Mes quedaban torcidas
+     sin riel a la vista; con el riel también en ellas, la Partida no entra
+     (su grilla se desborda de costado a 1110 si se le saca ancho, y con la
+     barra de evaluación su "‹" caía debajo del riel). Así que la Partida y el
+     Mes quedan como antes y se acepta el salto de borde al ir del inicio a la
+     Partida: lo hace uno y se tolera (la salida que dejó el revisor). El
+     corrimiento descuenta el margen del centrado, sin corte: lo de la
+     izquierda queda siempre a 24 o más del riel. */
+  @media (pointer: fine) and (min-width: 1000px) {
+    body.conBarra { padding-left: max(14px, calc(104px - max(0px, (100vw - 1110px) / 2))); }
   }
   /* [PC] la versión de Posiciones, bajo la columna y alineada a su borde
      (revisor, v1.3; flotaba en x 99, fuera de la columna) */

@@ -1327,7 +1327,7 @@ for (const [w, h] of [[1280, 800], [1500, 900], [1000, 700]]) {
              desborde: document.documentElement.scrollWidth > innerWidth };
   });
 }
-console.log("inicio, bordes:", JSON.stringify(bordes), "(a 1280: 99–499 y 531–1171, como el Mes)");
+console.log("inicio, bordes:", JSON.stringify(bordes), "(a 1280: 104–504 y 536–1176, corrido por el riel desde la v1.3.3)");
 await pg.setViewportSize({ width: 412, height: 760 });
 
 /* LOS BORDES DE LAS TRES PANTALLAS EN LA COMPU, EN UNA LÍNEA (casos 2, 9, 10
@@ -1542,6 +1542,17 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   /* en la Partida no está */
   const enPartida = await pg.evaluate(() => { document.querySelector("#partidas div[data-i]").click();
     return new Promise(r => setTimeout(() => r(getComputedStyle(document.getElementById("navMod")).display), 600)); });
+  /* [PC] la Partida no tiene riel ni se corre (v1.3.3; en la v1.3.1 se
+     corría sin riel a la vista, causas F y C, y con el riel no entraba): a
+     1000, 1110 y 1270 el riel no está y el "‹" sigue donde estaba */
+  barra.rielPartida = {};
+  for (const w of [1000, 1110, 1270]) {
+    await pg.setViewportSize({ width: w, height: 800 }); await pg.waitForTimeout(150);
+    barra.rielPartida[w] = await pg.evaluate(() => getComputedStyle(document.getElementById("navMod")).display === "none" ?
+      Math.round(document.getElementById("volverDeLaPartida").getBoundingClientRect().left) : "riel");
+  }
+  if (Object.values(barra.rielPartida).some(a => a === "riel" || a < 0)) console.log("OJO: en la Partida de la compu aparece el riel o el ‹ se cortó");
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
   console.log("barra de módulos:", JSON.stringify({ ...barra, enPartida }),
     "(fila y version ≥ 8 con la barra a la vista; escondida al fondo; en la Partida none)");
   if (Object.values(barra).some(b => b.fila < 8 || b.version < 8) || enPartida !== "none")
@@ -1552,7 +1563,9 @@ console.log("bordes en la compu:", JSON.stringify(BORDES),
 /* y no queda en un número que hay que acordarse de leer: si a un mismo ancho
    las pantallas no coinciden (más de 2 px), lo dice con OJO, como el resto */
 for (const w of [1000, 1280]) {
-  const b = ["partida", "mes", "inicio"].map(n => BORDES[n + " " + w]).filter(Boolean);
+  /* el inicio no: desde la v1.3.3 se corre para dejarle lugar al riel, y
+     el salto al ir a la Partida se acepta */
+  const b = ["partida", "mes"].map(n => BORDES[n + " " + w]).filter(Boolean);
   const dif = Math.max(...[0, 1].map(k => Math.max(...b.map(x => x[k])) - Math.min(...b.map(x => x[k]))));
   if (dif > 2) console.log(`OJO: a ${w} las pantallas no abren y cierran en el mismo borde (${dif} px)`);
 }

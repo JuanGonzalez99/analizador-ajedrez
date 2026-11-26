@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3.3**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4989,6 +4989,20 @@ tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
 
+**v1.3.3, [PC] la Partida y el Mes, otra vez sin correrse** (revisor de UX,
+v1.3.1). De 1000 a 1269 la Partida y el Mes se corrían 80 sin riel a la
+vista y a 1270 se recentraban de golpe. El revisor pidió el riel también en
+ellas; se probó y **la Partida no entra**: con 32 más de corrimiento (lo
+que pide el "‹" con la barra de evaluación de fábrica, que corre la Partida
+a la izquierda) su grilla se desborda de costado a 1110. Así que se tomó la
+salida que él mismo dejó: el riel solo en el inicio y Posiciones, que se
+corren (`body.conBarra`, `padding-left: max(14px, 104px − el margen del
+centrado)`, continuo, sin corte), y la Partida y el Mes como antes de la
+v1.3.1. **Se acepta** el salto de borde al ir del inicio a la Partida: lo
+hace uno y se tolera. El renglón "bordes en la compu" compara la Partida y
+el Mes (el inicio ya no), y `mirar` mide que en la Partida de la compu no
+haya riel a 1000, 1110 y 1270. El celu, igual al byte salvo la versión.
+
 **v1.3.2, el título de Posiciones al ras** (revisor de UX, v1.3): quedaba
 4 px adentro de las jugadas y Deshacer (el margen de `.cabTit` era el aire
 después del "‹", que se fue). `mirar` lo mide por Range.
@@ -4999,7 +5013,8 @@ y desde 1000, `#navMod` es un riel de 80 a la izquierda, con los ítems
 arriba (64 de alto cada uno, 12 entre ellos) y la misma pastilla; nunca se
 corre (`barraFija`). Desde 1270 entra en el margen; de 1000 a 1269 todas las
 pantallas se corren 80 (`body` con 94 a la izquierda), no solo las que lo
-muestran, para que sigan abriendo en el mismo borde. La versión de
+muestran, para que sigan abriendo en el mismo borde (en la v1.3.3, solo
+las que tienen el riel, con corrimiento continuo). La versión de
 Posiciones va bajo la columna (flotaba en x 99), y arriba Posiciones
 conserva los 8 de antes en la compu (con 16, el final hacía scroll de 8 a
 1280 × 800). `mirar` mide que a 1000 sea un riel. El celu, igual al byte
