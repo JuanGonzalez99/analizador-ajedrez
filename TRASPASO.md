@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.1.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4964,6 +4964,12 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.1.1, [PC] Posiciones en la compu**: fuera de la Partida `--ladoTab` no
+existía y el tablero se estiraba a todo el ancho (1082 a 1280). Desde 700,
+`#zonaPosicion` es una columna centrada del ancho del tablero, que crece con
+el alto (`clamp(360px, 100vh − 290px, 640px)`: 510 a 1280 × 800, sin
+scroll). El celu, igual al byte.
 
 **v1.1, Posiciones: abrir una posición desde un link y jugarla contra el
 motor** (etapa 4, el primer módulo nuevo). `…/#fen=<FEN>` abre una pantalla

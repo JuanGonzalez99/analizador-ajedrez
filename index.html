@@ -1521,6 +1521,14 @@
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { transition-duration: 0ms !important; animation-duration: 0ms !important; }
   }
+  /* [PC] POSICIONES (v1.1.1). Fuera de la Partida `--ladoTab` no existía y el
+     tablero se estiraba a todo el ancho (1082 a 1280). Una columna centrada
+     del ancho del tablero, que crece con el alto como en la Partida: a
+     1280 × 800 mide 510, y la pantalla entra sin scroll. */
+  @media (min-width: 700px) {
+    #zonaPosicion { --ladoTab: clamp(360px, calc(100vh - 290px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
+    #zonaPosicion svg.tab { max-width: var(--ladoTab); }
+  }
 </style>
 
 
@@ -1542,7 +1550,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.1 · 26-11";
+  window.VERSION = "v1.1.1 · 26-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
