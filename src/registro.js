@@ -1,4 +1,4 @@
-  window.VERSION = "v1.5.1 · 27-11";
+  window.VERSION = "v1.6 · 27-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.

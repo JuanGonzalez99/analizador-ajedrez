@@ -584,6 +584,16 @@ hay. Las primeras salen del historial del traspaso.
   por un toque o porque la app cambia sola (pantallas, tarjetas, paneles); la
   excepción es lo que va pegado a un gesto continuo mientras el dedo se mueve
   (el arrastre): eso acompaña sin saltos.
+- **Que un botón de ajustes de la partida en curso tenga adentro lo que la
+  tira** (27-nov-2026, sobre la v1.5): Empezar de nuevo y Armar una posición
+  en la hoja de las perillas de Posiciones. *"No sé si me resulta muy natural
+  que el Empezar de nuevo y Armar una posición estén dentro de un botón que
+  parecen ajustes de la partida en curso."* El ícono promete "esto cambia lo
+  que estás jugando". En la v1.6 van detrás de un "+" (Nueva partida) aparte
+  de las perillas (nivel y color).
+- **Que en la compu el tablero quede chico cuando es lo único que hay**
+  (27-nov-2026, Posiciones a 1280: 466 de lado, con el resto vacío): *"podría
+  ocupar toda la pantalla, ya que es lo único que hay"*.
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no
   entra en un renglón: *"es medio molesto"* (16-nov-2026, sobre la v0.148; a
   su ancho, 386, el tablero baja 19 px). Va con "que el tablero salte", de más
@@ -651,6 +661,20 @@ Se anota cada vez que Juan rechaza algo que pasó por el revisor (decisión de
 Juan, 7-nov-2026). Las reglas que salen de acá las destila la revisión del
 criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
 
+- **Empezar de nuevo y Armar adentro de la hoja de nivel y color** (v1.2 y
+  v1.4, Posiciones). El revisor juntó "todo lo de una vez" en una hoja.
+  *Se le pasó*: el alcance. Nivel y color ajustan la partida que está;
+  Empezar de nuevo y Armar la tiran y arrancan otra. *Regla*: un botón
+  agrupa lo que tiene el mismo alcance, no lo que se toca con la misma
+  frecuencia; y lo que reemplaza la partida vuelve a estar a un toque en su
+  momento ("Otra vez" en la tarjeta del final).
+- **Posiciones en la compu, una columna del celu estirada** (v1.1.1, v1.2.1).
+  Se cuidó que entrara sin scroll con la tarjeta del final, y el tablero
+  quedó en 466 con media pantalla vacía. *Se le pasó*: preguntar qué es lo
+  único que hay en la pantalla y darle el lugar. *Regla*: en la compu, si el
+  tablero es lo único que importa, toma el alto entero, y lo demás va en una
+  columna al costado; lo que en el celu es una hoja, ahí es un menú colgado
+  de su botón que no tapa el tablero.
 - **La fila de cuadritos rearmada en las jugadas de libro** (v0.172). El
   revisor vio que la tarjeta decía "Libro" y abajo "Pérdida 1.20", lo llamó
   contradicción y eligió entre tres formas la que cambiaba la fila (Mejor,

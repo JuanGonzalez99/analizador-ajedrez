@@ -192,7 +192,7 @@
      —el color de sistema era casi el mismo del fondo y la hoja no se leía como
      algo que flota—, radio 12 de tarjeta, la única sombra de lo que flota
      (§1.6) y 16 de margen a los costados, el del celu (§1.5). */
-  #hojaAjustes, #hojaPos { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  #hojaAjustes, #hojaPos, #hojaNueva { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
                  max-width: 700px; margin: 0 auto;
                  background: var(--superficie); color: var(--texto);
                  border-top: 1px solid var(--linea);
@@ -471,8 +471,9 @@
                       width: 34px; height: 34px; margin-left: auto; order: 1;
                       border: 1px solid var(--linea); border-radius: 50%; }
   /* las dos tuercas se ven de 34 y se tocan en 48 (§1.7; revisor, v0.120) */
-  #btnAjustesInicio, #btnAjustes, #btnPosAjustes { position: relative; }
-  #btnAjustesInicio::before, #btnAjustes::before, #btnPosAjustes::before { content: ""; position: absolute; inset: -7px; }
+  #btnAjustesInicio, #btnAjustes, #btnPosAjustes, #btnPosNueva { position: relative; }
+  #btnAjustesInicio::before, #btnAjustes::before, #btnPosAjustes::before,
+  #btnPosNueva::before { content: ""; position: absolute; inset: -7px; }
   #zonaMeses { margin-top: var(--e-4); }
   /* [PC] TOPE DE LECTURA DE 640 para la columna del inicio (v0.121; revisor,
      v0.120): a 1280 la tarjeta estiraba el "›" a ~1000 px del título y la
@@ -1011,7 +1012,7 @@
      debajo de la fila, que no se mueve en toda la partida. */
   /* el botón redondo: el de la tuerca de la Partida (34 a la vista, 48 de
      toque con el ::before) */
-  #btnPosAjustes { padding: 0; flex: none; display: grid; place-items: center;
+  #btnPosAjustes, #btnPosNueva { padding: 0; flex: none; display: grid; place-items: center;
                    width: 34px; height: 34px; border: 1px solid var(--linea);
                    border-radius: 50%; transform: translateY(-2.25px); }
   /* LA TIRA: un renglón que no crece (si envolvía, corría los botones que
@@ -1047,12 +1048,14 @@
   #posOtraVez { background: var(--acento); color: var(--sobre-acento); font-weight: 600;
                 min-height: 44px; flex: none; position: relative; }
   #posOtraVez::before { content: ""; position: absolute; inset: -2px 0; }
-  /* en la hoja, "Empezar de nuevo" a lo ancho, debajo de las perillas */
-  #hojaPos .ajCab { margin-bottom: var(--e-2); }
+  /* en la hoja de Nueva partida, las tres a lo ancho (v1.6) */
+  #hojaPos .ajCab, #hojaNueva .ajCab { margin-bottom: var(--e-2); }
+  /* los dos redondos de la cabecera, a 14 (v1.6, revisor): con 34 a la
+     vista y 48 de toque, a 12 se pisaban 2 px y un toque a la derecha del
+     "+" abría las perillas */
+  .posRedondos { display: flex; gap: 14px; flex: none; }
   .posHojaBtn { display: block; width: 100%; min-height: 44px; margin: var(--e-4) 0 0; position: relative; }
   .posHojaBtn::before { content: ""; position: absolute; inset: -2px 0; }
-  .posHojaFila { display: flex; gap: var(--e-3); margin: var(--e-4) 0 0; }
-  .posHojaFila .posHojaBtn { flex: 1; min-width: 0; margin: 0; padding-left: var(--e-2); padding-right: var(--e-2); }
   #posError { margin: var(--e-4) 0 0; }
   /* ARMAR UNA POSICIÓN (v1.4; el revisor eligió la A entre cuatro). El
      tablero como el de Posiciones; debajo la paleta en dos filas de seis

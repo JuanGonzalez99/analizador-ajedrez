@@ -198,7 +198,7 @@
      —el color de sistema era casi el mismo del fondo y la hoja no se leía como
      algo que flota—, radio 12 de tarjeta, la única sombra de lo que flota
      (§1.6) y 16 de margen a los costados, el del celu (§1.5). */
-  #hojaAjustes, #hojaPos { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
+  #hojaAjustes, #hojaPos, #hojaNueva { position: fixed; left: 0; right: 0; bottom: 0; z-index: 41;
                  max-width: 700px; margin: 0 auto;
                  background: var(--superficie); color: var(--texto);
                  border-top: 1px solid var(--linea);
@@ -477,8 +477,9 @@
                       width: 34px; height: 34px; margin-left: auto; order: 1;
                       border: 1px solid var(--linea); border-radius: 50%; }
   /* las dos tuercas se ven de 34 y se tocan en 48 (§1.7; revisor, v0.120) */
-  #btnAjustesInicio, #btnAjustes, #btnPosAjustes { position: relative; }
-  #btnAjustesInicio::before, #btnAjustes::before, #btnPosAjustes::before { content: ""; position: absolute; inset: -7px; }
+  #btnAjustesInicio, #btnAjustes, #btnPosAjustes, #btnPosNueva { position: relative; }
+  #btnAjustesInicio::before, #btnAjustes::before, #btnPosAjustes::before,
+  #btnPosNueva::before { content: ""; position: absolute; inset: -7px; }
   #zonaMeses { margin-top: var(--e-4); }
   /* [PC] TOPE DE LECTURA DE 640 para la columna del inicio (v0.121; revisor,
      v0.120): a 1280 la tarjeta estiraba el "›" a ~1000 px del título y la
@@ -1017,7 +1018,7 @@
      debajo de la fila, que no se mueve en toda la partida. */
   /* el botón redondo: el de la tuerca de la Partida (34 a la vista, 48 de
      toque con el ::before) */
-  #btnPosAjustes { padding: 0; flex: none; display: grid; place-items: center;
+  #btnPosAjustes, #btnPosNueva { padding: 0; flex: none; display: grid; place-items: center;
                    width: 34px; height: 34px; border: 1px solid var(--linea);
                    border-radius: 50%; transform: translateY(-2.25px); }
   /* LA TIRA: un renglón que no crece (si envolvía, corría los botones que
@@ -1053,12 +1054,14 @@
   #posOtraVez { background: var(--acento); color: var(--sobre-acento); font-weight: 600;
                 min-height: 44px; flex: none; position: relative; }
   #posOtraVez::before { content: ""; position: absolute; inset: -2px 0; }
-  /* en la hoja, "Empezar de nuevo" a lo ancho, debajo de las perillas */
-  #hojaPos .ajCab { margin-bottom: var(--e-2); }
+  /* en la hoja de Nueva partida, las tres a lo ancho (v1.6) */
+  #hojaPos .ajCab, #hojaNueva .ajCab { margin-bottom: var(--e-2); }
+  /* los dos redondos de la cabecera, a 14 (v1.6, revisor): con 34 a la
+     vista y 48 de toque, a 12 se pisaban 2 px y un toque a la derecha del
+     "+" abría las perillas */
+  .posRedondos { display: flex; gap: 14px; flex: none; }
   .posHojaBtn { display: block; width: 100%; min-height: 44px; margin: var(--e-4) 0 0; position: relative; }
   .posHojaBtn::before { content: ""; position: absolute; inset: -2px 0; }
-  .posHojaFila { display: flex; gap: var(--e-3); margin: var(--e-4) 0 0; }
-  .posHojaFila .posHojaBtn { flex: 1; min-width: 0; margin: 0; padding-left: var(--e-2); padding-right: var(--e-2); }
   #posError { margin: var(--e-4) 0 0; }
   /* ARMAR UNA POSICIÓN (v1.4; el revisor eligió la A entre cuatro). El
      tablero como el de Posiciones; debajo la paleta en dos filas de seis
@@ -1729,7 +1732,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.5.1 · 27-11";
+  window.VERSION = "v1.6 · 27-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2287,8 +2290,14 @@
          variantes: el revisor eligió D). El botón redondo es el pariente de la
          tuerca de la Partida, con las perillas acostadas que Juan había
          guardado "para otra cosa" (DISENO §2). -->
-    <button id="btnPosAjustes" class="redondo" aria-label="Nivel y color" aria-expanded="false"
-            aria-controls="hojaPos"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h3M13 17h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button></div>
+    <!-- DOS BOTONES, DOS ALCANCES (v1.6; Juan: Empezar de nuevo y Armar
+         "dentro de un botón que parecen ajustes de la partida en curso"; el
+         revisor eligió la C entre cuatro). El "+" arranca otra partida; las
+         perillas ajustan la que está. -->
+    <div class="posRedondos"><button id="btnPosNueva" class="redondo" aria-label="Nueva partida" title="Nueva partida" aria-expanded="false"
+            aria-controls="hojaNueva"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+    <button id="btnPosAjustes" class="redondo" aria-label="Nivel y color" title="Nivel y color" aria-expanded="false"
+            aria-controls="hojaPos"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h3M13 17h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button></div></div>
   <p id="posError" class="oculto"></p>
   <div id="posJuego">
     <div id="posTablero"></div>
@@ -2347,7 +2356,7 @@
      que se elige una vez. -->
 <div id="hojaPos" class="hoja oculto" role="dialog" aria-modal="true" aria-labelledby="tituloPos">
   <div class="ajTirador"></div>
-  <div class="ajCab"><h2 id="tituloPos">La partida</h2>
+  <div class="ajCab"><h2 id="tituloPos">Nivel y color</h2>
     <button class="chico" id="cerrarPos">Listo</button></div>
   <!-- sin rótulos de grupo: dos para dos filas eran más armazón que
        contenido, y a 745 de alto la hoja quedaba pegada al tablero (revisor) -->
@@ -2355,10 +2364,18 @@
     <select id="posNivel" class="chico"><option value="1">1, el más fácil</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8, el más fuerte</option></select></label>
   <label class="ajFila"><span>Jugás con</span>
     <select id="posColor" class="chico"><option value="w">blancas</option><option value="b">negras</option></select></label>
-  <!-- lado a lado (v1.4): uno debajo del otro, la hoja crecía 60 y quedaba
-       a 4 del tablero a 745 de alto -->
-  <div class="posHojaFila"><button id="posReiniciar" class="posHojaBtn">Empezar de nuevo</button>
-    <button id="posArmar" class="posHojaBtn">Armar una posición</button></div>
+</div>
+<!-- NUEVA PARTIDA (v1.6): desde dónde arranca, las tres del mismo peso (es
+     un menú: el principal de la pantalla sigue siendo "Otra vez") -->
+<div id="hojaNueva" class="hoja oculto" role="dialog" aria-modal="true" aria-labelledby="tituloNueva">
+  <div class="ajTirador"></div>
+  <div class="ajCab"><h2 id="tituloNueva">Nueva partida</h2>
+    <button class="chico" id="cerrarNueva">Listo</button></div>
+  <!-- "Otra vez": la misma acción y el mismo nombre que en la tarjeta del
+       final (vuelve al arranque de esta partida; revisor, v1.6) -->
+  <button id="posReiniciar" class="posHojaBtn">Otra vez</button>
+  <button id="posArmar" class="posHojaBtn">Armar una posición</button>
+  <button id="posInicial" class="posHojaBtn">Desde la inicial</button>
 </div>
 <div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
      aria-labelledby="tituloAjustes">
@@ -9370,6 +9387,9 @@ function pintarPosicion() {
   $("posDeshacer").disabled = !hayJugadaMia();
   $("posReiniciar").disabled = !hayJugadaMia();
   $("posAnalizar").disabled = !hayJugadaMia();
+  /* "Desde la inicial" apagado si ya se arrancó de ahí: haría lo mismo que
+     "Otra vez" (revisor, v1.6) */
+  $("posInicial").disabled = POS.inicial === FEN_INICIAL;
   /* si la posición llegó ya terminada, "Otra vez" volvería a lo mismo: un
      principal apagado se ve roto, así que no se muestra (revisor de UX) */
   ver("posOtraVez", hayJugadaMia());
@@ -9378,15 +9398,31 @@ function pintarPosicion() {
 /* LA HOJA (v1.2): la misma mecánica que la de Ajustes —Listo, tocar afuera
    y Escape (en `revision.js`, con el Tab que no se escapa)—, y el foco va y
    vuelve al botón redondo. */
-function verHojaPos(abrir) {
+/* Desde la v1.6 son dos: "hojaPos" (nivel y color) y "hojaNueva" (Nueva
+   partida). `HOJA_POS` es la abierta; cerrar devuelve el foco a su botón. */
+const HOJAS_POS = { hojaPos: ["btnPosAjustes", "cerrarPos"], hojaNueva: ["btnPosNueva", "cerrarNueva"] };
+let HOJA_POS = null;
+function verHojaPos(abrir, cual = "hojaPos") {
+  if (!abrir) cual = HOJA_POS || cual;
+  const [btn, listo] = HOJAS_POS[cual];
   $("fondoAjustes").classList.toggle("oculto", !abrir);
-  $("hojaPos").classList.toggle("oculto", !abrir);
-  $("btnPosAjustes").setAttribute("aria-expanded", abrir ? "true" : "false");
-  (abrir ? $("cerrarPos") : $("btnPosAjustes")).focus();
+  $(cual).classList.toggle("oculto", !abrir);
+  $(btn).setAttribute("aria-expanded", abrir ? "true" : "false");
+  HOJA_POS = abrir ? cual : null;
+  (abrir ? $(listo) : $(btn)).focus();
 }
-const hojaPosAbierta = () => !$("hojaPos").classList.contains("oculto");
+const hojaPosAbierta = () => !!HOJA_POS;
 $("btnPosAjustes").onclick = seguro("posición: la hoja", () => verHojaPos(true));
 $("cerrarPos").onclick = seguro("posición: cerrar la hoja", () => verHojaPos(false));
+$("btnPosNueva").onclick = seguro("posición: nueva partida", () => verHojaPos(true, "hojaNueva"));
+$("cerrarNueva").onclick = seguro("posición: cerrar nueva partida", () => verHojaPos(false));
+/* DESDE LA INICIAL (v1.6): con el mismo color, y sin el link de la que
+   estaba (recargar abre la inicial, como desde la barra) */
+$("posInicial").onclick = seguro("posición: desde la inicial", () => {
+  verHojaPos(false);
+  try { history.replaceState(history.state, "", location.pathname + location.search); } catch (e) { /* nada */ }
+  abrirPosicion(FEN_INICIAL, { color: POS ? POS.yo : "w" });
+});
 
 /* TOCAR LA PIEZA Y DESPUÉS ADÓNDE. Solo las de Juan y solo en su turno. */
 $("posTablero").addEventListener("click", seguro("posición: tocar", ev => {
@@ -10691,7 +10727,7 @@ document.addEventListener("keydown", seguro("teclas", ev => {
   /* la hoja de Posiciones (v1.2), con las mismas dos reglas */
   if (hojaPosAbierta()) {
     if (tecla === "Escape") { ev.preventDefault(); verHojaPos(false); }
-    if (tecla === "Tab") tabAdentro($("hojaPos"), ev);
+    if (tecla === "Tab") tabAdentro($(HOJA_POS), ev);
     return;
   }
   if (!$("hojaAjustes").classList.contains("oculto")) {

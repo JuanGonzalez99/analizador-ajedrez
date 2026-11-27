@@ -1071,7 +1071,7 @@ document.addEventListener("keydown", seguro("teclas", ev => {
   /* la hoja de Posiciones (v1.2), con las mismas dos reglas */
   if (hojaPosAbierta()) {
     if (tecla === "Escape") { ev.preventDefault(); verHojaPos(false); }
-    if (tecla === "Tab") tabAdentro($("hojaPos"), ev);
+    if (tecla === "Tab") tabAdentro($(HOJA_POS), ev);
     return;
   }
   if (!$("hojaAjustes").classList.contains("oculto")) {

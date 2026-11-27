@@ -35,6 +35,18 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
      luminoso, lo más grande o lo que va a todo el ancho tiene que ser lo más
      importante de la pantalla, no un detalle ("Siempre la mejor" a todo el
      ancho, la barra de progreso casi blanca, un título que compite con el mes).
+     **Y un botón agrupa lo que tiene el mismo alcance** (Juan, 27-nov, v1.6:
+     Empezar de nuevo y Armar adentro de las perillas de nivel y color "parecen
+     ajustes de la partida en curso"): antes de juntar controles detrás de un
+     mismo ícono, preguntate si ajustan lo que está pasando o lo reemplazan
+     por otra cosa. El ícono promete uno solo.
+     **En la compu, lo que en el celu es una hoja que sube pasa a ser un menú
+     colgado de su botón**, adentro de su columna: nada que se abre tapa el
+     tablero si hay lugar al costado (v1.6).
+     **El rótulo de un botón se coteja con lo que hace la función que
+     llama**, y una hoja de opciones se mira en el estado en que todas están
+     prendidas (v1.6: "Desde esta posición" volvía al arranque y repetía a
+     "Desde la inicial"; se miró con la posición terminada, el botón apagado).
    - **Lo mínimo que hace el trabajo, pero que se entienda sin aprenderlo.**
      Una raya y no dos, tarjeta solo para lo que es tarjeta, color que se lea
      sin gritar. Entender le gana a limpiar: un número dice qué es (por forma

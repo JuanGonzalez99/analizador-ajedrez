@@ -343,8 +343,14 @@
          variantes: el revisor eligió D). El botón redondo es el pariente de la
          tuerca de la Partida, con las perillas acostadas que Juan había
          guardado "para otra cosa" (DISENO §2). -->
-    <button id="btnPosAjustes" class="redondo" aria-label="Nivel y color" aria-expanded="false"
-            aria-controls="hojaPos"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h3M13 17h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button></div>
+    <!-- DOS BOTONES, DOS ALCANCES (v1.6; Juan: Empezar de nuevo y Armar
+         "dentro de un botón que parecen ajustes de la partida en curso"; el
+         revisor eligió la C entre cuatro). El "+" arranca otra partida; las
+         perillas ajustan la que está. -->
+    <div class="posRedondos"><button id="btnPosNueva" class="redondo" aria-label="Nueva partida" title="Nueva partida" aria-expanded="false"
+            aria-controls="hojaNueva"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+    <button id="btnPosAjustes" class="redondo" aria-label="Nivel y color" title="Nivel y color" aria-expanded="false"
+            aria-controls="hojaPos"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 7h9M19 7h1M4 17h3M13 17h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><circle cx="16" cy="7" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/><circle cx="10" cy="17" r="2.4" fill="none" stroke="currentColor" stroke-width="2.2"/></svg></button></div></div>
   <p id="posError" class="oculto"></p>
   <div id="posJuego">
     <div id="posTablero"></div>
@@ -403,7 +409,7 @@
      que se elige una vez. -->
 <div id="hojaPos" class="hoja oculto" role="dialog" aria-modal="true" aria-labelledby="tituloPos">
   <div class="ajTirador"></div>
-  <div class="ajCab"><h2 id="tituloPos">La partida</h2>
+  <div class="ajCab"><h2 id="tituloPos">Nivel y color</h2>
     <button class="chico" id="cerrarPos">Listo</button></div>
   <!-- sin rótulos de grupo: dos para dos filas eran más armazón que
        contenido, y a 745 de alto la hoja quedaba pegada al tablero (revisor) -->
@@ -411,10 +417,18 @@
     <select id="posNivel" class="chico"><option value="1">1, el más fácil</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8, el más fuerte</option></select></label>
   <label class="ajFila"><span>Jugás con</span>
     <select id="posColor" class="chico"><option value="w">blancas</option><option value="b">negras</option></select></label>
-  <!-- lado a lado (v1.4): uno debajo del otro, la hoja crecía 60 y quedaba
-       a 4 del tablero a 745 de alto -->
-  <div class="posHojaFila"><button id="posReiniciar" class="posHojaBtn">Empezar de nuevo</button>
-    <button id="posArmar" class="posHojaBtn">Armar una posición</button></div>
+</div>
+<!-- NUEVA PARTIDA (v1.6): desde dónde arranca, las tres del mismo peso (es
+     un menú: el principal de la pantalla sigue siendo "Otra vez") -->
+<div id="hojaNueva" class="hoja oculto" role="dialog" aria-modal="true" aria-labelledby="tituloNueva">
+  <div class="ajTirador"></div>
+  <div class="ajCab"><h2 id="tituloNueva">Nueva partida</h2>
+    <button class="chico" id="cerrarNueva">Listo</button></div>
+  <!-- "Otra vez": la misma acción y el mismo nombre que en la tarjeta del
+       final (vuelve al arranque de esta partida; revisor, v1.6) -->
+  <button id="posReiniciar" class="posHojaBtn">Otra vez</button>
+  <button id="posArmar" class="posHojaBtn">Armar una posición</button>
+  <button id="posInicial" class="posHojaBtn">Desde la inicial</button>
 </div>
 <div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
      aria-labelledby="tituloAjustes">

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.5.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.6**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -460,7 +460,7 @@ el orden en que se juntan:
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
-| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), Analizar lo jugado (v1.5: `pgnDePos`), armar una posición a mano (v1.4: `casillasDe`, `colocacionDe`, `fenArmado`, `problemaArmado`, `abrirArmar`, `pintarArmar`, `ARM`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
+| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), Analizar lo jugado (v1.5: `pgnDePos`), las dos hojas (`verHojaPos(abrir, cual)`, `HOJA_POS`: nivel y color, y Nueva partida, v1.6), armar una posición a mano (v1.4: `casillasDe`, `colocacionDe`, `fenArmado`, `problemaArmado`, `abrirArmar`, `pintarArmar`, `ARM`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
 | `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
@@ -4988,6 +4988,28 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.6, Nueva partida aparte de nivel y color** (Juan, 27-nov: Empezar de
+nuevo y Armar "dentro de un botón que parecen ajustes de la partida en
+curso"). El revisor eligió la C entre cuatro (A: un lápiz en la cabecera y
+"De nuevo" en la fila de jugar; B: una fila aparte debajo; C: un "+" con su
+hoja), con sus textos: un redondo **"+" (Nueva partida)** al lado de las
+perillas abre `#hojaNueva` con "Otra vez" (lo de antes, vuelve al arranque, apagado
+sin jugadas tuyas: el mismo nombre que en la tarjeta del final), "Armar una
+posición" y **"Desde la inicial"** (nueva: mismo color, saca el link;
+apagada si ya se arrancó de la inicial); la de las perillas se llama "Nivel y color" y
+queda con los dos selects. `verHojaPos(abrir, cual)` maneja las dos
+(`HOJA_POS` es la abierta: Escape, Tab adentro, tocar afuera y el foco que
+vuelve a su botón). La B se descartó porque al final duplicaba "Otra vez" y
+quedaba a 5 de la barra; la A mezclaba frecuencias en la fila de jugar.
+`mirar` saca `posicion-nueva` y mide su aire sobre el tablero a 745 (66),
+y "toque, posición" avisa con OJO si hay chicos o pegados. De la revisión:
+el "+" había quedado de 34 de toque sin el `::before` de las tuercas (y a
+12 de las perillas se pisaban: 14), y el primer rótulo, "Desde esta
+posición", no decía lo que hacía.
+Regla nueva en `DISENO.md` §2 y §3 y en `revisor-ux.md`: un botón agrupa
+lo que tiene el mismo alcance. Celu byte a byte: cambian las de Posiciones
+(el "+"), `posicion-hoja` (más corta) y la versión al pie.
 
 **v1.5.1, el caballo no "se planta" a mitad de un cambio** (revisor de
 ajedrez, v1.0.6; Arreglos). Nxd7 en

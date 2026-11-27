@@ -241,6 +241,9 @@ function pintarPosicion() {
   $("posDeshacer").disabled = !hayJugadaMia();
   $("posReiniciar").disabled = !hayJugadaMia();
   $("posAnalizar").disabled = !hayJugadaMia();
+  /* "Desde la inicial" apagado si ya se arrancó de ahí: haría lo mismo que
+     "Otra vez" (revisor, v1.6) */
+  $("posInicial").disabled = POS.inicial === FEN_INICIAL;
   /* si la posición llegó ya terminada, "Otra vez" volvería a lo mismo: un
      principal apagado se ve roto, así que no se muestra (revisor de UX) */
   ver("posOtraVez", hayJugadaMia());
@@ -249,15 +252,31 @@ function pintarPosicion() {
 /* LA HOJA (v1.2): la misma mecánica que la de Ajustes —Listo, tocar afuera
    y Escape (en `revision.js`, con el Tab que no se escapa)—, y el foco va y
    vuelve al botón redondo. */
-function verHojaPos(abrir) {
+/* Desde la v1.6 son dos: "hojaPos" (nivel y color) y "hojaNueva" (Nueva
+   partida). `HOJA_POS` es la abierta; cerrar devuelve el foco a su botón. */
+const HOJAS_POS = { hojaPos: ["btnPosAjustes", "cerrarPos"], hojaNueva: ["btnPosNueva", "cerrarNueva"] };
+let HOJA_POS = null;
+function verHojaPos(abrir, cual = "hojaPos") {
+  if (!abrir) cual = HOJA_POS || cual;
+  const [btn, listo] = HOJAS_POS[cual];
   $("fondoAjustes").classList.toggle("oculto", !abrir);
-  $("hojaPos").classList.toggle("oculto", !abrir);
-  $("btnPosAjustes").setAttribute("aria-expanded", abrir ? "true" : "false");
-  (abrir ? $("cerrarPos") : $("btnPosAjustes")).focus();
+  $(cual).classList.toggle("oculto", !abrir);
+  $(btn).setAttribute("aria-expanded", abrir ? "true" : "false");
+  HOJA_POS = abrir ? cual : null;
+  (abrir ? $(listo) : $(btn)).focus();
 }
-const hojaPosAbierta = () => !$("hojaPos").classList.contains("oculto");
+const hojaPosAbierta = () => !!HOJA_POS;
 $("btnPosAjustes").onclick = seguro("posición: la hoja", () => verHojaPos(true));
 $("cerrarPos").onclick = seguro("posición: cerrar la hoja", () => verHojaPos(false));
+$("btnPosNueva").onclick = seguro("posición: nueva partida", () => verHojaPos(true, "hojaNueva"));
+$("cerrarNueva").onclick = seguro("posición: cerrar nueva partida", () => verHojaPos(false));
+/* DESDE LA INICIAL (v1.6): con el mismo color, y sin el link de la que
+   estaba (recargar abre la inicial, como desde la barra) */
+$("posInicial").onclick = seguro("posición: desde la inicial", () => {
+  verHojaPos(false);
+  try { history.replaceState(history.state, "", location.pathname + location.search); } catch (e) { /* nada */ }
+  abrirPosicion(FEN_INICIAL, { color: POS ? POS.yo : "w" });
+});
 
 /* TOCAR LA PIEZA Y DESPUÉS ADÓNDE. Solo las de Juan y solo en su turno. */
 $("posTablero").addEventListener("click", seguro("posición: tocar", ev => {

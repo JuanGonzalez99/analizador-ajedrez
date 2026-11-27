@@ -1427,7 +1427,12 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
     "(deshacerSeMovio 0 y 0, tableroSeMovio 0)");
   if (despues.x !== antes.x || despues.y !== antes.y || tab1.y !== tab0.y)
     console.log("OJO: Deshacer o el tablero se movieron al crecer o terminar la partida");
-  console.log("toque, posición:", JSON.stringify({ vacia: t0, jugada: await toques() }));
+  const t1 = await toques();
+  console.log("toque, posición:", JSON.stringify({ vacia: t0, jugada: t1 }));
+  /* y lo dice con OJO (revisor de UX, v1.6: el "+" salió 34×34 en este
+     renglón y nadie lo frenó; causa C) */
+  if (t0.chicos.length || t1.chicos.length || t0.pegados.length || t1.pegados.length)
+    console.log("OJO: Posiciones con botones de toque chico o pegados");
   /* EL FINAL, que la partida de prueba no alcanza (y `mirar mate` se cae
      antes de llegar acá, en la pasada de la compu): un mate en una y un
      ahogado en una, jugados por Juan. Deshacer y el tablero, en el mismo
@@ -1480,6 +1485,18 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   console.log("toque, hoja pos.:", JSON.stringify(await toques()));
   await pg.keyboard.press("Escape");
   await pg.waitForTimeout(150);
+  /* NUEVA PARTIDA (v1.6): la otra hoja, la del "+", con sus tres botones;
+     tampoco tapa ni pega al tablero a 745 */
+  await pg.click("#btnPosNueva"); await pg.waitForTimeout(250);
+  await foto("posicion-nueva");
+  const nueva = { toque: await toques() };
+  await pg.setViewportSize({ width: 386, height: 745 }); await pg.waitForTimeout(150);
+  nueva.aire745 = await pg.evaluate(() => Math.round(document.getElementById("hojaNueva").getBoundingClientRect().top -
+    document.querySelector("#posTablero svg").getBoundingClientRect().bottom));
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  console.log("nueva partida:", JSON.stringify(nueva), "(toque sin chicos fuera de Listo; aire745 ≥ 8)");
+  if (nueva.aire745 < 8) console.log("OJO: la hoja de Nueva partida tapa o pega al tablero");
+  await pg.keyboard.press("Escape"); await pg.waitForTimeout(150);
   await pg.setViewportSize({ width: 386, height: 760 });
   await pg.waitForTimeout(200);
   console.log("posición a 386:", JSON.stringify({ desborde: await pg.evaluate(() => document.documentElement.scrollWidth > innerWidth),
@@ -1513,7 +1530,7 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
    apagado con el problema y prendido sin él. */
 {
   await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
-  await pg.click("#btnPosAjustes"); await pg.click("#posArmar"); await pg.waitForTimeout(250);
+  await pg.click("#btnPosNueva"); await pg.click("#posArmar"); await pg.waitForTimeout(250);
   await pg.click("#armVaciar");
   const poner = async (pz, sq) => { await pg.click(`#armPaleta [data-pz="${pz}"]`); await pg.click(`#armTablero [data-sq="${sq}"]`); };
   await poner("wk", "e1"); await poner("bk", "d8"); await poner("wr", "d1"); await poner("bp", "c7");
