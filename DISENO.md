@@ -364,6 +364,30 @@ y una fila en la tabla de §1.1 (aplicado en la v0.127). El revisor estuvo de ac
 | dónde | solo en las pantallas de primer nivel (inicio de Análisis, Posiciones) | las hijas tienen "‹" y la Partida tiene que entrar sin scroll |
 | cómo se esconde | pegada al scroll, 1:1, sin transición | lo pegado a un gesto continuo no se anima (§3, el halo del arrastre) |
 
+### 1.12 La compu: qué quiere decir "aprovechada"
+
+Hasta el 27-nov-2026 "celu primero, PC aprovechada" se leía como "que en la
+compu entre y no se rompa", y así salió una app de celu acomodada a la
+pantalla grande (Juan, ese día). Aprovechar la compu es esto, y vale para
+toda pantalla nueva desde que se diseña, no como adaptación después:
+
+| | en la compu | por qué |
+|---|---|---|
+| tamaños | se mira a **1366×768** (la notebook común, el caso apretado) y **1920×1080** (el monitor común), además de 1280×800 | 1280 solo escondía los dos problemas: a 1920 la columna centrada, a 1366 lo que no entra |
+| el ancho | la pantalla usa el ancho de la ventana; nada de una columna de celu centrada con los costados vacíos. Solo el texto corrido y las tablas de texto tienen un ancho de lectura | si sobran 800 px, se nota que la pantalla no es de ahí |
+| el alto | lo principal entra sin bajar; el tablero, donde es lo principal, toma el alto | en la compu bajar para ver la mitad de la pantalla no es natural, en el celu sí |
+| lo que se abre | menú o panel colgado de su botón, que no tapa lo principal si hay lugar; nunca una hoja que sube desde abajo con tirador | el tirador se arrastra con el dedo; con mouse es un adorno |
+| los botones | del tamaño del mouse (32–36), no del dedo (48): el área de toque grande es del celu | dos botones de medio panel para pasar jugadas son de celu |
+| teclado | todo lo que se hace seguido tiene atajo, y el atajo **se ve**: en el título al pasar el mouse y en una ayuda con `?` | un atajo que nadie conoce no existe |
+| hover | todo lo clickeable responde al pasar el mouse (fila entera en listas y tablas) | es lo que dice "esto se toca" en la compu |
+| navegación | fija y a la vista (el riel), con el camino de dónde estás; el "‹" solo no alcanza | en escritorio uno espera saltar de una sección a otra sin volver |
+| listas | con columnas y encabezados, no filas de celu estiradas | el ancho sobrante entre los datos es la marca del celu estirado |
+
+**La referencia es lichess y chess.com de escritorio**: ante cada pantalla de
+compu, preguntarse si existiría así ahí. `npm run mirar` mide cuatro de estas
+reglas en las capturas de monitor y las marca con OJO (`TRASPASO.md`, el
+tercer chequeo): el ancho, el tablero, las hojas y los botones de dedo.
+
 ### 1.11 Cómo se usa esto
 
 - **En el código son variables en `:root`**, una por fila de las tablas de

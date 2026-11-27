@@ -1717,26 +1717,44 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
    Empiezan con `ancho-` para que la comparación byte a byte del celu las
    saltee. Va al final para no cambiar ninguna captura de arriba.
    `sobra` es lo que hay que bajar para ver la pantalla entera (0 = entra), y
-   `tablero`, su lado. Cuánto del ancho se usa no se mide: las barras de
-   ancho entero lo ensucian, y la captura lo dice de un vistazo. */
+   `tablero`, su lado.
+   LO QUE HACE QUE SE SIENTA DE CELU, MEDIDO (prevención del mismo día: la
+   causa fue C —el arnés no tenía el caso— y D —"PC aprovechada" no decía
+   qué era aprovechar—; DISENO.md §1.12). Cuatro OJO que valen para toda
+   pantalla de compu, presente o futura:
+   - `usa`: el ancho que ocupa lo dibujado de la pantalla, sin las barras de
+     ancho entero (que lo ensuciaban). A 1920, menos de 3/4 es una columna
+     de celu centrada (salvo el Mes, que es texto, y donde el tablero ya
+     toma el alto).
+   - el tablero, donde es lo principal, toma el alto: menos que el alto de la
+     ventana menos 130 (cabecera, coordenadas y comidas) es tablero chico.
+   - lo que se abre no sube desde abajo como una hoja de celu (`hoja`).
+   - los botones de pasar jugadas no son de dedo: con mouse, 44 de alto o
+     más es un área de toque que en la compu no hace falta (`ant`). */
 {
   const MONITORES = [[1366, 768], [1920, 1080]];
   const fotoM = async n => {
     await pg.mouse.move(2, 2); await pg.waitForTimeout(300);
     await pg.screenshot({ path: path.join(SALIDA, n + SUFIJO + ".png"), scale: "css" });
   };
-  const medidaM = (tab) => pg.evaluate(t => {
+  const medidaM = (tab, zona) => pg.evaluate(([t, z]) => {
     const tab = t && document.querySelector(t);
+    const rs = [...document.querySelectorAll(z)].flatMap(e => [...e.querySelectorAll("*")])
+      .filter(e => e.offsetParent !== null && getComputedStyle(e).position !== "fixed")
+      .map(e => e.getBoundingClientRect())
+      .filter(r => r.width > 0 && r.height > 0 && r.width < innerWidth * .95 && r.right > 0);
+    const usa = rs.length ? Math.max(...rs.map(r => r.right)) - Math.min(...rs.map(r => r.left)) : 0;
     return { sobra: document.documentElement.scrollHeight - innerHeight,
-             tablero: tab ? Math.round(tab.getBoundingClientRect().width) : null };
-  }, tab);
+             tablero: tab ? Math.round(tab.getBoundingClientRect().width) : null,
+             usa: Math.round(usa) };
+  }, [tab, zona]);
   const MON = {};
-  const cadaMonitor = async (nombre, tab, extra) => {
+  const cadaMonitor = async (nombre, tab, zona, extra) => {
     for (const [w, h] of MONITORES) {
       await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(400);
       await pg.evaluate(() => scrollTo(0, 0));
       await fotoM(`ancho-${w}-${nombre}`);
-      MON[`${nombre} ${w}`] = await medidaM(tab);
+      MON[`${nombre} ${w}`] = await medidaM(tab, zona);
       if (extra) await extra(w);
     }
   };
@@ -1746,7 +1764,7 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await pg.click("#navAnalisis");
   await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
   await pg.waitForTimeout(300);
-  await cadaMonitor("inicio", null);
+  await cadaMonitor("inicio", null, "#zonaMeses, #zonaAnalizar, #tarjetaMes, #zonaPartidas");
   await pg.click("#partidas div[data-i]");
   await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
   await pg.waitForFunction(() => !document.getElementById("revEstado").textContent, null, { timeout: 45000 });
@@ -1754,8 +1772,13 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   /* a una jugada del medio, con flecha y categoría: la 15, el ?? */
   await pg.keyboard.press("Home");
   for (let i = 0; i < 29; i++) await pg.keyboard.press("ArrowRight");
-  await cadaMonitor("partida", "#tablero", async w => {
+  await cadaMonitor("partida", "#tablero", "#zonaRevision", async w => {
+    MON[`partida ${w}`].ant = await pg.evaluate(() => Math.round(document.getElementById("ant").getBoundingClientRect().height));
     await pg.click("#btnAjustes"); await pg.waitForTimeout(400);
+    MON[`partida ${w}`].hoja = await pg.evaluate(() => {
+      const r = document.getElementById("hojaAjustes").getBoundingClientRect();
+      return Math.abs(r.bottom - innerHeight) < 2 && r.width > innerWidth / 3 ? "sube desde abajo" : "menú";
+    });
     await fotoM(`ancho-${w}-ajustes`);
     await pg.keyboard.press("Escape"); await pg.waitForTimeout(300);
   });
@@ -1764,18 +1787,28 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await pg.evaluate(() => document.getElementById("tarjetaMes").click());
   await pg.waitForSelector("#zonaMes:not(.oculto)", { timeout: 30000 });
   await pg.waitForTimeout(400);
-  await cadaMonitor("mes", null);
+  await cadaMonitor("mes", null, "#zonaMes");
   await pg.click("#volverDelMes");
   await pg.waitForTimeout(300);
   await pg.click("#navPosiciones");
   await pg.waitForSelector("#zonaPosicion:not(.oculto)", { timeout: 10000 });
   await pg.waitForTimeout(300);
-  await cadaMonitor("posicion", "#posTablero svg");
+  await cadaMonitor("posicion", "#posTablero svg", "#zonaPosicion");
   await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
   console.log("monitores:", JSON.stringify(MON),
-    "(sobra: px que hay que bajar, 0 = entra; tablero: lado; capturas ancho-1366-* y ancho-1920-*)");
-  for (const [k, v] of Object.entries(MON))
+    "(sobra: px que hay que bajar, 0 = entra; tablero: lado; usa: ancho dibujado; hoja y ant, §1.12; capturas ancho-1366-* y ancho-1920-*)");
+  for (const [k, v] of Object.entries(MON)) {
+    const [w, h] = MONITORES.find(m => k.endsWith(" " + m[0]));
     if (/partida|posicion/.test(k) && v.sobra > 0) console.log(`OJO: a ${k} hay que bajar ${v.sobra} px para ver la pantalla entera`);
+    if (v.tablero && v.tablero < h - 130) console.log(`OJO: a ${k} el tablero mide ${v.tablero} con ${h} de alto (tablero chico, §1.12)`);
+    /* el Mes no: es texto y tablas, y eso tiene un ancho de lectura (se
+       juzga a ojo). Ni donde el tablero ya toma el alto: ahí el ancho lo
+       pone el alto de la ventana, no una columna (Posiciones, v1.6.1) */
+    const llena = v.tablero && v.tablero >= h - 130;
+    if (w === 1920 && !/^mes/.test(k) && !llena && v.usa < w * .75) console.log(`OJO: a ${k} lo dibujado ocupa ${v.usa} de ${w} (columna centrada, §1.12)`);
+    if (v.hoja === "sube desde abajo") console.log(`OJO: a ${k} Ajustes sube desde abajo como hoja de celu (§1.12)`);
+    if (v.ant >= 44) console.log(`OJO: a ${k} los botones de pasar jugadas miden ${v.ant} de alto: son de dedo (§1.12)`);
+  }
 }
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");

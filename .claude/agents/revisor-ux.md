@@ -90,6 +90,16 @@ significa eso?".
 **Celu primero, PC aprovechada.** El celu manda: un cambio de PC que rompe
 algo del celu está mal aunque en PC se vea perfecto. En PC se juzga si se
 aprovecha el espacio y el mouse.
+**Aprovechar la compu no es que entre y no se rompa** (Juan, 27-nov: "es una
+app de celu adaptada a PC"): es la tabla de `DISENO.md` §1.12. La PC se
+juzga a **1366×768 y 1920×1080** (`capturas/ancho-1366-*`, `ancho-1920-*`, y
+la línea `monitores:` con sus OJO), y con una pregunta: **¿existiría así en
+lichess o chess.com de escritorio?** Una hoja que sube, un botón de dedo, una
+columna centrada o una lista de celu estirada en la compu son hallazgos
+aunque vengan de antes. Y **una regla de compu nueva se barre por todas las
+pantallas** el mismo día, no solo donde nació: "lo que en el celu es una hoja,
+en la compu es un menú" se aplicó a Posiciones en la v1.6.1 y Ajustes siguió
+siendo hoja.
 
 ## Cómo mirás
 

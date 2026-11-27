@@ -323,3 +323,14 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   guardado y el revisor dejó el caso roto sin mirar en la primera · la regla
   6bis escribe otro nombre y mira a quién se pide, y uno de cada tres
   recorridos lentos rompe `chess.js` y mira el aviso.
+- **La app en la compu, una de celu acomodada** · Juan, 27-nov, usándola un
+  día en la PC · C: el arnés miraba la compu solo a 1280×800, donde no se ve
+  ni la columna centrada de 1920 ni la Partida que no entra a 1366×768; D:
+  "PC aprovechada" no decía qué era aprovechar, y se leyó como "que entre y no
+  se rompa"; E: "Juan no usa la compu" bajó la vara en cada decisión de PC; B:
+  la regla de la v1.6.1 (en la compu, menú y no hoja) se aplicó solo en
+  Posiciones · `mirar` saca y mide los dos monitores con cuatro OJO (ancho,
+  tablero, hojas, botones de dedo), `DISENO.md` §1.12 dice qué es aprovechar
+  la compu, y el revisor de UX juzga contra eso, se pregunta si existiría así
+  en lichess de escritorio y barre cada regla de compu nueva por todas las
+  pantallas.

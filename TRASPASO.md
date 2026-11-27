@@ -255,7 +255,13 @@ Posiciones a los dos tamaños, **a escala CSS** (un monitor a 100 % es 1x; la de
 1920 son ~2.800 tokens si se mira, ~1.400 la de 1366), en `ancho-1366-*` y
 `ancho-1920-*` —el prefijo las saca de la comparación byte a byte del celu—, e
 imprime `monitores:` con lo que hay que bajar para ver cada pantalla entera y
-el lado del tablero. Un OJO si la Partida o Posiciones no entran.
+el lado del tablero. Un OJO si la Partida o Posiciones no entran, y otros
+cuatro que miden lo que hace que una pantalla se sienta de celu
+(`DISENO.md` §1.12): lo dibujado ocupa menos de 3/4 del ancho a 1920 (salvo
+el Mes y donde el tablero ya toma el alto), el tablero mide menos que el alto
+menos 130, Ajustes sube desde abajo, y los botones de pasar jugadas tienen 44
+o más de alto. El 27-nov saltan nueve, uno o más por cada ítem de "La compu,
+hecha para la compu" de la hoja de ruta: se apagan a medida que se hacen.
 
 **Entra por la lista del mes, no pegando el PGN, y eso es una regla que costó un
 bug.** Desde la v0.63.1 el arnés **falsea también la API de chess.com** —el
