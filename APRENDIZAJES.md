@@ -63,6 +63,11 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **La cabecera de la columna de Posiciones corrida 21–42 px del tablero**
+  · v1.6.1 (revisor de UX, mismo día) · B: se dio por bueno el
+  `margin-top` escrito sin medirlo, y una regla del celu más específica le
+  ganaba · `mirar` mide `alineaCab` (OJO si pasa de 2) y que un menú
+  abierto se cierre al cambiar la ventana.
 - **El "+" de Posiciones con 34 de toque** · v1.6 (revisor de UX, mismo
   día) · C y E: `mirar` imprimía "chicos btnPosNueva 34×34" sin OJO y no
   se leyó · "toque, posición" avisa con OJO si hay chicos o pegados.
