@@ -379,6 +379,23 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   la compu, y el revisor de UX juzga contra eso, se pregunta si existiría así
   en lichess de escritorio y barre cada regla de compu nueva por todas las
   pantallas.
+- **La jugada elegida fuera de vista en la planilla** · v1.7, primera
+  vuelta (no salió; se le pasó también al revisor en la maqueta) · A: se miró
+  la foto de la zona nueva y no si "la elegida a la vista" seguía valiendo
+  con otro alto de lista o con la lista escondida · `mirar` mide en toda
+  captura de monitor que lo elegido adentro de algo con scroll propio caiga
+  en su caja visible, y pasa jugadas con la otra pestaña puesta antes de
+  volver. Atrapa también la lista del Mes, la de Posiciones, cualquier menú
+  con la opción elegida y la vuelta de toda pestaña.
+- **Las pestañas de la Partida dibujadas en un solo estado** · maqueta de la
+  v1.7 (no salió) · A: la variante D se fotografió con la pestaña Jugadas y
+  con la de Resumen, pero se midió solo la primera; en la otra "‹ ›"
+  desaparecían y la tabla quedaba cortada sin aviso · `mirar` toca todo
+  `[role=tab]` a la vista en cualquier pantalla de compu, con foto y medida,
+  y avisa si un botón de afuera del contenido conmutado deja de verse o si
+  algo con scroll propio no entra sin fundido ni barra. Atrapa también las
+  pestañas que vengan en Posiciones, Ajustes o el Mes, y cualquier lista o
+  menú con scroll propio cortado, haya o no pestañas.
 - **Repaso contra la causa, tanda 1 (el registro y `revisor-ux.md`)** ·
   27-nov · siete reglas escritas contra su caso pasan a principio (arriba,
   "Los casos juntos"): el rótulo de un botón → todo texto que promete algo;

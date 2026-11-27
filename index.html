@@ -1152,65 +1152,52 @@
        `max-content` —barra, tablero y comidas abrazados— y el cuerpo se suelta
        solo en la Partida. */
     body.enVista:has(#zonaRevision:not(.oculto)) { max-width: none; }
-    /* EL RESUMEN VA AL ANCHO DEL GRUPO DE ARRIBA (v0.137, revisor, v0.125):
-       medía 1082 fijo y centrado, y el grupo es otra cosa según la escala —1029
-       a 1280—, así que eran dos cajas centradas de anchos distintos y el
-       Resumen asomaba 40 px antes de las casillas. Ahora va de la columna a al
-       borde del panel, como la barra, el título y la curva: los dos números
-       los pone `ubicarGirar()`, que ya tiene la escala. Sin ellos (antes del
-       primer dibujo) queda el 1082 de antes. */
-    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen { max-width: none;
-      width: var(--resAncho, min(1082px, 100%)); margin-left: var(--resIzq, auto); margin-right: auto; }
-    /* y el pie con él (revisor, v0.137): toda la Partida ancha arranca en la
-       columna a, y el pie se quedaba solo en el borde de la página */
+    /* EL RESUMEN ES UNA PESTAÑA DEL PANEL (v1.7, "la Partida a la medida de
+       la ventana"; el revisor eligió la D entre cuatro). Hasta la v1.6 iba
+       debajo de la primera pantalla, traspuesto a todo el ancho (v0.137), y
+       había que bajar ~400 px. Las otras: A, panel ancho con el Resumen abajo
+       (no lo resolvía); B, tres columnas como lichess (a 1366 el tablero bajaba
+       a 476); C, planilla y Resumen lado a lado (a 1366 el Resumen quedaba en
+       142). En la Partida de la compu la zona de abajo no se muestra; la tabla
+       vive en `#resAncho`, adentro de la lateral. */
+    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen { display: none; }
+    /* y el pie arranca con la columna a, como toda la Partida ancha (v0.137) */
     body.enVista:has(#zonaRevision:not(.oculto)) .pie { margin-left: var(--resIzq, 0); }
-    /* LA TABLA DEL RESUMEN, TRASPUESTA (v0.137, lavado de cara del revisor
-       sobre el ancho del grupo). Al medir ~1000 de ancho, el armado del celu
-       —dos tarjetas partidas al medio y una tabla de tres columnas— dejaba
-       ~700 px entre "Brillante" y su número, y cada jugador en dos x
-       distintas. Es la D entre cuatro: una FILA POR JUGADOR, que arranca con
-       su nombre, la precisión y la mediana y sigue con los diez recuentos en
-       el renglón de la precisión, números con números; las categorías van de
-       cabecera. Misma pregunta —cuántas de cada una tuvo cada uno—,
-       traspuesta. Las otras: A, la de hoy; B, cada jugador una columna con su
-       tarjeta arriba (prometía alinear y no alineaba, y columnas de 400 para
-       un número); C, tabla bajo el tablero y tarjetas bajo el panel (dos
-       pedazos). En el celu no entran diez columnas: queda lo de antes. */
-    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen #marcador,
-    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen .tw:has(#resumen) { display: none; }
-    body.enVista:has(#zonaRevision:not(.oculto)) #zonaResumen .resAncho { display: block; margin-top: var(--e-3); }
-    #resumenAncho { table-layout: fixed; width: 100%; }
-    /* arriba y no abajo (revisor): a 1000 "Error grave" se parte en dos y,
-       alineado abajo, su ícono subía; así los diez íconos van en una fila */
-    #resumenAncho th { text-align: center; vertical-align: top; font-weight: 400; padding: 0 4px 8px; white-space: normal; }
-    /* el 15 % sale del ancho del Resumen y no de un porcentaje: la tabla fija
-       no tomaba el `clamp()` con % y la columna quedaba en ~106. 150 es lo
-       que piden "88.5" y "mediana 0.33" en un renglón, con su aire. */
-    #resumenAncho th:first-child { width: clamp(150px, calc(var(--resAncho, 1000px) * .15), 190px); }
-    #resumenAncho .ic { font-size: var(--t-secundario); font-weight: 700; }
-    #resumenAncho .no { font-size: var(--t-leyenda); color: var(--tenue); }
-    /* los recuentos en la línea de base de la precisión (revisor): el nombre
-       va fuera del flujo, así el primer renglón de la celda —el que manda la
-       base de toda la fila— es el de la precisión */
-    #resumenAncho td { text-align: center; vertical-align: baseline; font-size: var(--t-cuerpo);
-                       font-variant-numeric: tabular-nums; }
+    /* LAS PESTAÑAS: la elegida, subrayada con el acento (borde, no el anillo
+       del foco, §1.7); la otra responde al mouse. Sin el Resumen todavía
+       (analizando) la pestaña queda apagada y se ve la planilla. */
+    .pestanas { display: flex; flex: none; margin-top: var(--e-3); border-bottom: 1px solid var(--linea); }
+    .pestanas > button { background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      padding: 6px 12px; min-height: 32px; border-radius: 0; color: var(--tenue);
+      font: inherit; font-size: var(--t-secundario); font-weight: 600; cursor: pointer; }
+    .pestanas > button[aria-selected="true"] { color: var(--texto); border-bottom-color: var(--acento); }
+    body:has(#zonaResumen.oculto) #tabResumen { opacity: .5; pointer-events: none; }
+    .lateral > .resAncho { display: none; }
+    body:not(:has(#zonaResumen.oculto)) .lateral.verRes > .jugadas { display: none; }
+    body:not(:has(#zonaResumen.oculto)) .lateral.verRes > .resAncho { display: block; flex: 1 1 auto;
+      min-height: 0; overflow-y: auto; margin-top: var(--e-2); }
+    .lateral .resAncho.hayMas::after { content: ""; position: sticky; bottom: 0; display: block;
+      height: var(--fundido, 32px); margin-top: calc(-1 * var(--fundido, 32px)); pointer-events: none;
+      background: linear-gradient(to bottom, transparent, var(--fondo)); }
+    /* LA TABLA DEL PANEL: los dos jugadores de columna, y la precisión como
+       primera fila bajo los mismos nombres (revisor: las dos tarjetas del celu
+       partían el ancho en otras columnas que los números). La cifra grande
+       con la mediana chica debajo; los ceros, tenues. */
+    #resumenAncho { table-layout: fixed; }
+    #resumenAncho th:not(:first-child) { width: 34%; overflow: hidden; text-overflow: ellipsis; }
+    #resumenAncho td { font-variant-numeric: tabular-nums; }
     #resumenAncho td.cero { color: var(--tenue); }
-    #resumenAncho td.quien { text-align: left; padding: 28px 12px 6px 0; position: relative; white-space: nowrap; }
-    #resumenAncho .et { position: absolute; top: 8px; left: 0; right: 12px; font-size: var(--t-leyenda);
-                        color: var(--tenue); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    #resumenAncho .gr { font-size: var(--t-titulo); font-weight: 700; font-variant-numeric: tabular-nums; }
-    #resumenAncho .pe { font-size: var(--t-minimo); color: var(--tenue); margin-left: 6px; }
-    #zonaRevision { --panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 380px); --mTab: calc(var(--ladoTab) * 15 / 366);
+    /* filas de 24: es para leer con el mouse, no hay nada que tocar */
+    #resumenAncho th, #resumenAncho td { padding-top: 2px; padding-bottom: 2px; line-height: 19px; }
+    #resumenAncho tr.prec > td { vertical-align: top; padding-top: 4px; padding-bottom: 4px; }
+    #resumenAncho .gr { display: block; font-size: var(--t-titulo); font-weight: 700; line-height: 1.15; }
+    #resumenAncho .pe { display: block; font-size: var(--t-minimo); color: var(--tenue); line-height: 1.2; }
+    #zonaRevision { --panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 480px); --mTab: calc(var(--ladoTab) * 15 / 366);
                     display: grid; grid-template-columns: max-content var(--panel);
                     grid-template-rows: auto auto auto auto minmax(0, 1fr);
                     justify-content: center; row-gap: 0; align-items: start;
                     /* 32 de la casilla h al panel (§1.5): el SVG ya trae su margen */
-                    column-gap: max(4px, calc(32px - var(--mTab)));
-                    /* el Resumen arranca debajo de la primera pantalla y no asoma
-                       cortado (revisor): 68 son la cabecera y los márgenes del
-                       tablero. Relleno y no `min-height`, que estiraría la fila
-                       de la lista. */
-                    padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab))); }
+                    column-gap: max(4px, calc(32px - var(--mTab))); }
     /* el renglón de las comidas de abajo y Girar (v0.132) */
     .revtab { padding-bottom: 36px; }
     /* con la barra horizontal arriba, las comidas del de arriba necesitan 8 +
@@ -1274,8 +1261,7 @@
        la curva (`ubicarCurva()` pone `.curvaAbajo`; una media query no puede
        restar vh de vw). En una laptop de 1366×768 no se cumple y queda la de
        siempre: no se achica el tablero para bajar la curva. */
-    #zonaRevision.curvaAbajo { grid-template-rows: auto auto auto 1fr auto;
-      padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab) - 62px)); }
+    #zonaRevision.curvaAbajo { grid-template-rows: auto auto auto 1fr auto; }
     #zonaRevision.curvaAbajo > .pmedio { grid-row: 2 / 5; }
     /* 16 desde la fila de Girar (§1.5; los 10 que resta son el margen de
        `.revtab`) y al ancho de las casillas, no de la
@@ -1296,8 +1282,7 @@
        rótulo y el botón arriba a la izquierda, al borde de la curva, y las
        filas igual cuando llegan. 12 + 139 = los 151 de antes, que es lo que
        cuenta el `padding-bottom` de arriba. */
-    #zonaRevision.altsAbajo { grid-template-rows: auto auto auto 1fr auto auto;
-      padding-bottom: max(0px, calc(100vh - 8px - var(--altoCab) - 56px - var(--ladoTab) - 62px - 151px)); }
+    #zonaRevision.altsAbajo { grid-template-rows: auto auto auto 1fr auto auto; }
     #zonaRevision.altsAbajo > .colLista { grid-row: 4 / 7; }
     #zonaRevision.altsAbajo > .alts { grid-column: 1; grid-row: 6; box-sizing: border-box; height: 139px;
       margin: var(--e-3) 0 0 var(--izqCurva, var(--mTab));
@@ -1362,9 +1347,12 @@
        vertical, la de fábrica, 52 de alto: 8 arriba, 10 y 10 de márgenes del
        tablero y 24 de aire abajo; la horizontal suma 26 (16 desde la v0.151, que la
        pasó al renglón de las comidas, arriba del panel). El piso de 360 es el
-       del celu: en una ventana baja nunca queda más chico. */
-    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 70px), calc(100vw - var(--panel) - 120px)), 680px); }
-    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 64px), calc(100vw - var(--panel) - 120px)), 680px); }
+       del celu: en una ventana baja nunca queda más chico.
+       v1.7: el techo pasó de 680 a 1000 y el panel de 380 a 480 (la Partida a
+       la medida de la ventana): a 1920×1080 el tablero mide 962 y no 680, y a
+       1366×768 manda el alto (650) y el panel gana el ancho que sobra. */
+    #zonaRevision { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 70px), calc(100vw - var(--panel) - 120px)), 1000px); }
+    #zonaRevision.sinEvalH { --ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 64px), calc(100vw - var(--panel) - 120px)), 1000px); }
     svg.tab { max-width: var(--ladoTab); }
     /* con la columna en `max-content` la caja necesita su ancho escrito: si no,
        la columna se mide con los 300 de fábrica de un SVG y el tablero queda en
@@ -1564,6 +1552,8 @@
     /* sobre `--elevada` y no sobre transparente: desde la v0.96 los botones
        tienen relleno, y el hover de antes se lo sacaba y los OSCURECÍA */
     button:not(:disabled):hover { background: color-mix(in srgb, var(--texto) 8%, var(--elevada)); }
+    /* las pestañas del panel (v1.7) no se rellenan: el texto se aclara */
+    .pestanas > button:not(:disabled):hover { background: none; color: var(--texto); }
     select:hover { border-color: color-mix(in srgb, currentColor 45%, transparent); }
     /* LAS JUGADAS: EL MOUSE SUBRAYA, NO RELLENA. Primero se probó rellenando más
        suave que la elegida —10% contra 20%— y en la captura las dos se veían
@@ -1771,7 +1761,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.6.1 · 27-11";
+  window.VERSION = "v1.7 · 27-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2272,7 +2262,16 @@
         <button class="chico" id="btnAlts">Ver las tres mejores</button></div>
       <div class="altLista" id="altLista"></div>
     </div>
+    <!-- JUGADAS | RESUMEN (v1.7, "la Partida a la medida de la ventana"): en
+         la compu el Resumen dejó de estar 400 px más abajo y es una pestaña
+         del panel, como Análisis/Revisión en chess.com de escritorio. Lo único
+         que cambia es lo de entre las pestañas y "‹ ›": los botones quedan. -->
+    <div class="pestanas" role="tablist" aria-label="Qué muestra el panel">
+      <button role="tab" id="tabJugadas" aria-selected="true" aria-controls="jugadas">Jugadas</button>
+      <button role="tab" id="tabResumen" aria-selected="false" aria-controls="resAncho">Resumen</button>
+    </div>
     <div class="jugadas" id="jugadas" tabindex="0" role="group" aria-label="Jugadas: ↑ ↓ para pasar, Inicio y Fin para ir a la punta"></div>
+    <div class="resAncho" id="resAncho" role="tabpanel" aria-labelledby="tabResumen"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
   </aside>
   </div>
   <div class="curva" id="curva" role="img"
@@ -2313,7 +2312,6 @@
   <p class="cap" id="capResumen"></p>
   <div class="marcador" id="marcador"></div>
   <div class="tw"><table id="resumen"></table></div>
-  <div class="resAncho"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
 </div>
 
 <!-- POSICIONES (v1.1, etapa 4): jugar contra el motor desde una posición que
@@ -9720,10 +9718,10 @@ const JUGADAS_GIRAR = 4;
 function ubicarCurva() {
   const z = $("zonaRevision");
   const vw = window.innerWidth, vh = window.innerHeight;
-  const panel = Math.min(380, Math.max(340, 340 + (vw - 1000) * .364));
+  const panel = Math.min(480, Math.max(340, 340 + (vw - 1000) * .364));
   const porAlto = vh - 48 - (z.classList.contains("sinEvalH") ? 64 : 70) - 62;
   z.classList.toggle("curvaAbajo", window.matchMedia(CORTE_ANCHO).matches &&
-    porAlto >= Math.min(vw - panel - 120, 680));
+    porAlto >= Math.min(vw - panel - 120, 1000));
   ubicarAlts();
 }
 /* LAS TRES MEJORES BAJAN DEBAJO DE LA CURVA SI ENTRAN ENTERAS (v0.150, lavado
@@ -9880,12 +9878,49 @@ function marcarMas(lista) {
    (legible pero apagada, como a 1366): eso es lo que dice "sigue". Con +20 no
    alcanzaba: el texto de esa fila cae donde el degradé casi no tapa. */
 function fundidoDe(lista) {
+  /* la tabla del Resumen (v1.7) no arranca a renglón entero: se mira la fila
+     que corta el borde de abajo, con la misma regla */
+  if (lista.id === "resAncho") {
+    const abajo = lista.getBoundingClientRect().bottom, filas = [...lista.querySelectorAll("tr")];
+    const i = filas.findIndex(tr => tr.getBoundingClientRect().bottom > abajo + 1);
+    if (i < 1) return 32;
+    const asoma = abajo - filas[i].getBoundingClientRect().top;
+    return asoma < 20 ? Math.round(asoma + filas[i - 1].offsetHeight) : 32;
+  }
   const fila = lista.firstElementChild ? lista.firstElementChild.offsetHeight : 0;
   if (!fila) return 32;
   const asoma = lista.clientHeight % fila;
   return asoma < 20 ? asoma + fila : 32;
 }
 
+/* LA ELEGIDA, A LA VISTA EN LA PLANILLA (sacado de `pintarRevision` en la
+   v1.7 para llamarlo también cuando la lista cambia de alto). Escondida (la
+   pestaña Resumen) no se toca: todos los `offsetTop` dan 0. */
+function acomodarLista(lista) {
+  if (!lista.clientHeight) return;
+  /* que la elegida quede a la vista sin arrastrar la lista a mano. Y en la
+     ÚLTIMA la lista baja del todo, o el cierre no se ve nunca: el scroll de
+     arriba deja la jugada pegada al fondo del recuadro y el cierre queda
+     justo abajo, fuera de vista. Se descubrió mirándolo, en la v0.73. */
+  const sel = lista.querySelector(".sel");
+  if (sel) {
+    const fila = sel.parentElement;
+    if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
+    else if (fila.offsetTop + fila.offsetHeight + fundidoDe(lista) >
+             lista.scrollTop + lista.clientHeight) {
+      /* y que arriba no quede medio renglón (revisor, v0.135): se baja hasta
+         el borde del renglón siguiente. Medio renglón abajo se acepta, avisa
+         que hay más. */
+      /* la elegida queda arriba del fundido (v0.179). La última jugada no
+         pasa por acá: la línea de abajo lleva la lista hasta el fondo. */
+      const tope = fila.offsetTop + fila.offsetHeight + fundidoDe(lista) - lista.clientHeight;
+      const borde = [...lista.children].find(d => d.offsetTop >= tope);
+      lista.scrollTop = borde ? Math.min(borde.offsetTop, fila.offsetTop) : tope;
+    }
+  }
+  if (lista._ultima) lista.scrollTop = lista.scrollHeight;
+  if (lista._inicio) lista.scrollTop = 0;
+}
 function pintarRevision() {
   const enInicio = IDX < 0;
   const f = enInicio ? filaDeArranque() : R.filas[IDX];
@@ -10320,32 +10355,19 @@ function pintarRevision() {
       sp.onclick = () => irA(+sp.dataset.i);
       previaEn(sp, +sp.dataset.i);
     });
-    /* que la elegida quede a la vista sin arrastrar la lista a mano. Y en la
-       ÚLTIMA la lista baja del todo, o el cierre no se ve nunca: el scroll de
-       arriba deja la jugada pegada al fondo del recuadro y el cierre queda
-       justo abajo, fuera de vista. Se descubrió mirándolo, en la v0.73. */
-    const sel = lista.querySelector(".sel");
-    if (sel) {
-      const fila = sel.parentElement;
-      if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
-      else if (fila.offsetTop + fila.offsetHeight + fundidoDe(lista) >
-               lista.scrollTop + lista.clientHeight) {
-        /* y que arriba no quede medio renglón (revisor, v0.135): se baja hasta
-           el borde del renglón siguiente. Medio renglón abajo se acepta, avisa
-           que hay más. */
-        /* la elegida queda arriba del fundido (v0.179). La última jugada no
-           pasa por acá: la línea de abajo lleva la lista hasta el fondo. */
-        const tope = fila.offsetTop + fila.offsetHeight + fundidoDe(lista) - lista.clientHeight;
-        const borde = [...lista.children].find(d => d.offsetTop >= tope);
-        lista.scrollTop = borde ? Math.min(borde.offsetTop, fila.offsetTop) : tope;
-      }
-    }
-    if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
-    if (enInicio && !PRUEBA) lista.scrollTop = 0;
+    lista._ultima = selTira === R.filas.length - 1;
+    lista._inicio = enInicio && !PRUEBA;
+    acomodarLista(lista);
     if (!lista.dataset.mas) {
       lista.dataset.mas = "1";
       lista.addEventListener("scroll", () => marcarMas(lista), { passive: true });
-      if (window.ResizeObserver) new ResizeObserver(() => marcarMas(lista)).observe(lista);
+      /* y se vuelve a acomodar cuando la caja cambia de alto: otra ventana, o
+         la pestaña Jugadas que vuelve después de pasar jugadas en Resumen
+         (revisor de UX, v1.7: a 1366 la 15 quedaba fuera de vista) */
+      if (window.ResizeObserver) new ResizeObserver(() => {
+        if (lista.clientHeight !== lista._alto) { lista._alto = lista.clientHeight; acomodarLista(lista); }
+        marcarMas(lista);
+      }).observe(lista);
     }
     marcarMas(lista);
     /* LA LISTA NO PUEDE SER MÁS ALTA QUE LA COLUMNA DE AL LADO (v0.88), y esto
@@ -10973,6 +10995,20 @@ window.matchMedia(CORTE_ANCHO).addEventListener("change", () => {
    ventana la dejaba tapada por el desvanecido (revisor, v0.125) */
 new ResizeObserver(() => { if (R && (IDX < 0 || R.filas[IDX])) { ubicarGirar(IDX < 0 ? null : R.filas[IDX]); centrarTira(); } }).observe(document.querySelector(".revtab"));
 
+/* LAS PESTAÑAS DEL PANEL DE LA COMPU (v1.7): Jugadas o Resumen. La elegida
+   se recuerda mientras dure la sesión (es una clase de la lateral, que no se
+   rehace); arranca en Jugadas, que es lo que se usa jugada a jugada. */
+function verPestana(res) {
+  $("lateral").classList.toggle("verRes", res);
+  $("tabJugadas").setAttribute("aria-selected", String(!res));
+  $("tabResumen").setAttribute("aria-selected", String(res));
+  if (res) marcarMas($("resAncho"));
+}
+$("tabJugadas").onclick = () => verPestana(false);
+$("tabResumen").onclick = () => verPestana(true);
+$("resAncho").addEventListener("scroll", () => marcarMas($("resAncho")), { passive: true });
+if (window.ResizeObserver) new ResizeObserver(() => marcarMas($("resAncho"))).observe($("resAncho"));
+
 function pintarResumen(prof) {
   const { filas, cab } = R;
   const B = filas.filter(f => f.turno === "w"), N = filas.filter(f => f.turno === "b");
@@ -11002,14 +11038,21 @@ function pintarResumen(prof) {
     <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
     <tbody>${ORDEN.map(filaCat).join("")}</tbody>`;
 
-  /* la misma tabla traspuesta, para la compu (v0.137): una fila por jugador */
-  const filaJug = (nom, fs) => `<tr><td class="quien"><div class="et">${nom}</div>` +
-    `<span class="gr">${prec(fs)}</span><span class="pe">${pie(fs)}</span></td>` +
-    ORDEN.map(k => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; }).join("") + "</tr>";
+  /* la de la compu, en la pestaña Resumen del panel (v1.7): la misma tabla
+     con la precisión como primera fila, bajo los mismos nombres, en vez de
+     las dos tarjetas; los ceros, tenues */
+  const cuenta = (fs, k) => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; };
+  const celdaPrec = fs => `<td><span class="gr">${prec(fs)}</span><span class="pe">${pie(fs)}</span></td>`;
+  /* sin las categorías que dan 0 para los dos (revisor de UX, v1.7: a
+     1366 entraban 4 de 10 y se cortaban justo los errores). El Resumen es
+     de la partida entera: la tabla no cambia de forma al pasar jugadas */
   $("resumenAncho").innerHTML = `
-    <thead><tr><th></th>${ORDEN.map(k => `<th><div class="ic" style="color:var(--c-${k})">${CATEGORIAS[k].icono}</div>` +
-      `<div class="no">${CATEGORIAS[k].nombre}</div></th>`).join("")}</tr></thead>
-    <tbody>${filaJug(cab.White || "Blancas", B)}${filaJug(cab.Black || "Negras", N)}</tbody>`;
+    <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
+    <tbody><tr class="prec"><td>Precisi\u00f3n</td>${celdaPrec(B)}${celdaPrec(N)}</tr>` +
+    ORDEN.filter(k => filas.some(f => f.cat === k)).map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
+      cuenta(B, k) + cuenta(N, k) + "</tr>").join("") + `</tbody>`;
+  $("resumenAncho").title = $("capResumen").textContent;
+  marcarMas($("resAncho"));
 
 }
 

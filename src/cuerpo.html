@@ -286,7 +286,16 @@
         <button class="chico" id="btnAlts">Ver las tres mejores</button></div>
       <div class="altLista" id="altLista"></div>
     </div>
+    <!-- JUGADAS | RESUMEN (v1.7, "la Partida a la medida de la ventana"): en
+         la compu el Resumen dejó de estar 400 px más abajo y es una pestaña
+         del panel, como Análisis/Revisión en chess.com de escritorio. Lo único
+         que cambia es lo de entre las pestañas y "‹ ›": los botones quedan. -->
+    <div class="pestanas" role="tablist" aria-label="Qué muestra el panel">
+      <button role="tab" id="tabJugadas" aria-selected="true" aria-controls="jugadas">Jugadas</button>
+      <button role="tab" id="tabResumen" aria-selected="false" aria-controls="resAncho">Resumen</button>
+    </div>
     <div class="jugadas" id="jugadas" tabindex="0" role="group" aria-label="Jugadas: ↑ ↓ para pasar, Inicio y Fin para ir a la punta"></div>
+    <div class="resAncho" id="resAncho" role="tabpanel" aria-labelledby="tabResumen"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
   </aside>
   </div>
   <div class="curva" id="curva" role="img"
@@ -327,7 +336,6 @@
   <p class="cap" id="capResumen"></p>
   <div class="marcador" id="marcador"></div>
   <div class="tw"><table id="resumen"></table></div>
-  <div class="resAncho"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
 </div>
 
 <!-- POSICIONES (v1.1, etapa 4): jugar contra el motor desde una posición que

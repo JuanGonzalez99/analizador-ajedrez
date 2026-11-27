@@ -312,7 +312,7 @@ compu**: las capturas del celu tienen que salir idénticas byte a byte en cada
 1280×800, que hasta hoy era el único tamaño de compu que se miraba. `npm run
 mirar` ya los saca (`ancho-1366-*`, `ancho-1920-*`, y la línea `monitores:`).
 
-- [ ] **La Partida a la medida de la ventana.** Sacar el tope de 1110 de
+- [x] ~~**La Partida a la medida de la ventana.**~~ (hecho en la v1.7: pestañas Jugadas | Resumen, la D del revisor entre cuatro) Sacar el tope de 1110 de
       ancho; el tablero al alto de la ventana, como Posiciones (v1.6.1); que
       entre sin scroll de 1366×768 a 1920×1080 con una sola disposición (hoy
       a 1920×1080 la curva y las mejores se van abajo del tablero y a 1280 no);
@@ -598,7 +598,7 @@ archiva los que pierden sentido.
 - [ ] **El renglón técnico de la cabecera del Mes** (revisor, v1.0; celu):
       "1 partida · 18 jugadas · prof 16 · crítico" arriba de lo que más se
       mira. ¿Hace falta a la vista, o va adentro de "Cómo se leen…"?
-- [ ] **[PC] La Partida no abre en el borde del Mes y el inicio** (arnés,
+- [x] ~~**[PC] La Partida no abre en el borde del Mes y el inicio**~~ (sin objeto desde la v1.7: la Partida usa el ancho de la ventana, §1.12, y el Mes tiene ancho de lectura) (arnés,
       22-nov: lo mostró el renglón nuevo "bordes en la compu"). A 1280 el Mes
       y el inicio van de 99 a 1171; la Partida, de 88 a 1192 con la barra
       vertical (la de fábrica) y de 108 a 1172 con la horizontal. Pasar de una
@@ -808,6 +808,13 @@ Pendientes que estaban anotados solo en el traspaso.
       `prepararPartida` lo acepta; Stockfish contesta `(none)` y no se
       cuelga, pero el análisis no sirve. Pasarlo por `problemaDelFen` (hoy
       en `posicion.js`) y decir "la posición de arranque no es válida".
+
+- [ ] **[PC] Lavado de cara: las columnas de la planilla en la compu**
+      (revisor de UX, v1.7). A 480 de panel el "·" del tiempo queda lejos de
+      la jugada, con aire en el medio: la marca de la lista de celu estirada.
+      ¿Qué columnas tiene la planilla en la compu (número, blanca, negra, y
+      quizás el tiempo o la pérdida) y con qué ancho cada una, para que el
+      sobrante no quede entre los datos? Con variantes.
 
 ### Ideas de los revisores para más adelante
 

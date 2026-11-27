@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.6.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.7**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -486,7 +486,7 @@ el orden en que se juntan:
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
 | `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), Analizar lo jugado (v1.5: `pgnDePos`), las dos hojas (`verHojaPos(abrir, cual)`, `HOJA_POS`: nivel y color, y Nueva partida, v1.6), armar una posición a mano (v1.4: `casillasDe`, `colocacionDe`, `fenArmado`, `problemaArmado`, `abrirArmar`, `pintarArmar`, `ARM`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
-| `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
+| `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, las pestañas Jugadas | Resumen de la compu (`verPestana`, v1.7), y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
 El **menú de ajustes** (v0.91, §4untrigies) es la excepción a "todo cuelga de su
@@ -5013,6 +5013,64 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.7, [PC] La Partida a la medida de la ventana** (etapa "La compu,
+hecha para la compu", primer ítem). Cuatro variantes dibujadas a 1366×768,
+1920×1080 y 1280×800: A, panel ancho con el Resumen abajo (había que bajar
+~400); B, tres columnas como lichess (a 1366 el tablero bajaba a 476); C,
+planilla y Resumen lado a lado (a 1366 el Resumen quedaba en 142 y a 1280 se
+desbordaba); D, pestañas **Jugadas | Resumen** arriba de la planilla. El
+revisor eligió la D con tres ajustes, aplicados: "‹ ›" quedan fijos en las
+dos pestañas (lo único que cambia es lo de entre las pestañas y los
+botones), la tabla scrollea adentro con el fundido de la planilla (la
+última fila fantasma si asoma poco, `fundidoDe` mira la fila que corta el
+borde), y la precisión pasa a ser la primera fila de la tabla bajo los
+mismos nombres, en vez de las dos tarjetas del celu.
+- **El tablero**: techo de 680 a 1000 en `--ladoTab` (y en `ubicarCurva`);
+  el panel crece de 340 a 480 con la misma pendiente (`.364`). Medido: 650 a
+  1366×768, 962 a 1920×1080, 682 a 1280×800, y la curva y las mejores se
+  quedan en el panel en los tres (la misma disposición). `.curvaAbajo` sigue
+  existiendo para la ventana angosta y alta (1000×900: el tablero lo topa el
+  ancho y sobra alto), que es para lo que nació.
+- **El Resumen**: en la Partida de la compu `#zonaResumen` no se muestra; la
+  tabla `#resumenAncho` vive en `#resAncho`, adentro de la lateral, y se
+  rehízo vertical (jugadores de columna, precisión arriba). La traspuesta de
+  la v0.137 se fue. Sin el análisis terminado la pestaña Resumen queda
+  apagada (`body:has(#zonaResumen.oculto)`). La explicación técnica del
+  Resumen (profundidad y modo) va en el `title` de la tabla. La pestaña
+  elegida se recuerda mientras dure la sesión (clase `verRes` de la
+  lateral); arranca en Jugadas.
+- **Se fueron los rellenos** que empujaban el Resumen debajo de la primera
+  pantalla (`padding-bottom` de `#zonaRevision`, `.curvaAbajo` y
+  `.altsAbajo`).
+- **La Partida ya no se compara con el borde del Mes** en "bordes en la
+  compu" (se acepta, v1.7): usa el ancho de la ventana (§1.12) y el Mes y el
+  inicio tienen ancho de lectura. El ítem de Relleno que pedía alinearlas
+  queda sin objeto.
+- **`mirar`**: "resumen en la pestaña" reemplaza a "resumen al ancho del
+  grupo" (la tabla al ras del panel en las tres formas, con OJO); `sobra`
+  de los monitores mide la zona y no el pie con la versión; y la prevención
+  del revisor (causa A): todo `[role=tab]` a la vista en una pantalla de
+  compu se toca, con foto (`ancho-<w>-<pantalla>-<id>`) y medida, y salta OJO
+  si un botón de afuera del contenido conmutado deja de verse o si algo con
+  scroll propio queda cortado sin fundido ni barra. Probada al revés:
+  escondiendo "‹ ›" y el fundido en la pestaña Resumen, los dos OJO saltan.
+- **Segunda vuelta del revisor**, dos arreglos: (1) a 1366 la planilla
+  mostraba de la 3 a la 8 parada en la 15 (el scroll se calculó con otro
+  alto), y con la pestaña Resumen puesta todo `offsetTop` da 0: el acomodo
+  salió a `acomodarLista(lista)`, que no toca una lista escondida y vuelve a
+  correr cuando la caja cambia de alto (ResizeObserver). (2) A 1366 la tabla
+  mostraba 4 de 10 categorías y se cortaban los errores: filas de 24 y **sin
+  las categorías que dan 0 para los dos** (se acepta, v1.7: el Resumen es de
+  la partida entera y no cambia al pasar jugadas; se pierde el "0 errores"
+  explícito, que Juan puede pedir de vuelta). Y la prevención: `mirar` mide
+  en cada captura de monitor que lo elegido (`.sel`, `aria-selected`,
+  `aria-current`) adentro de algo con scroll propio quede a la vista, y pasa
+  jugadas con la otra pestaña puesta antes de volver. Probada al revés: con
+  el acomodo apagado, 4 OJO. Antes de cada foto de monitor, `blur()`.
+- Celu: idéntico byte a byte (la lateral no se muestra ahí; las que cambian
+  son las del número de versión, comprobado con la vieja puesta, y
+  `mes-varias`, donde la barra de "Analizando 2 de 4" depende del momento).
 
 **v1.6.1, [PC] Posiciones a toda la pantalla** (Juan, 27-nov: *"el tablero
 ocupa muy poco espacio… podría ocupar toda la pantalla, ya que es lo único

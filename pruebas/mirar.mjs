@@ -922,21 +922,24 @@ for (const f of ["horizontal", "barra", "tarjeta"]) {
              titulo: (() => { const r = document.createRange(); r.selectNodeContents(document.getElementById("revRival"));
                               return Math.round(r.getBoundingClientRect().left - (s.left + m)); })() };
   })), "(1280×800; todo en 0)");
-  /* el Resumen, de la columna a al borde del panel (v0.137), en las tres
-     formas: 0 y 0 */
+  /* el Resumen, en la pestaña del panel (v1.7; de la v0.137 a la v1.6 iba
+     abajo, de la columna a al borde del panel), en las tres formas: la zona
+     de abajo escondida, y la tabla al ras del panel: 0 y 0 */
+  await pg.click("#tabResumen"); await pg.waitForTimeout(200);
   porForma[f + "Resumen"] = await pg.evaluate(() => {
-    const z = document.getElementById("zonaResumen").getBoundingClientRect(), s = document.querySelector("svg.tab").getBoundingClientRect();
-    const p = document.querySelector("#zonaRevision > .tarjetas").getBoundingClientRect();
-    /* y adentro, la traspuesta (v0.137): visible, sin la de celu, con los
-       recuentos en la línea de base de la precisión */
-    const g = document.createRange(), n = document.createRange(), fila = document.querySelector("#resumenAncho tbody tr");
-    g.selectNodeContents(fila.querySelector(".gr")); n.selectNodeContents(fila.children[1]);
-    const base = r => r.getBoundingClientRect().bottom - r.getBoundingClientRect().height * .2;
-    return [Math.round(z.left - (s.left + s.width * 15 / 366)), Math.round(z.right - p.right),
-            !!document.getElementById("resumenAncho").offsetParent && !document.getElementById("resumen").offsetParent ? "traspuesta" : "MAL"];
+    const t = document.getElementById("resumenAncho"), p = document.querySelector("#zonaRevision > .tarjetas").getBoundingClientRect();
+    if (!t.offsetParent) return [null, null, "MAL: no se ve"];
+    const r = t.getBoundingClientRect();
+    return [Math.round(r.left - p.left), Math.round(r.right - p.right),
+            document.getElementById("zonaResumen").offsetParent ? "MAL: la de abajo también" : "pestaña"];
   });
+  await pg.click("#tabJugadas"); await pg.waitForTimeout(150);
 }
-console.log("resumen al ancho del grupo:", JSON.stringify(["horizontal", "barra", "tarjeta"].map(f => porForma[f + "Resumen"])), "(1280×800; todo en 0)");
+console.log("resumen en la pestaña:", JSON.stringify(["horizontal", "barra", "tarjeta"].map(f => porForma[f + "Resumen"])), "(1280×800; todo en 0)");
+for (const f of ["horizontal", "barra", "tarjeta"]) {
+  const [a, b, e] = porForma[f + "Resumen"];
+  if (e !== "pestaña" || Math.abs(a) > 1 || Math.abs(b) > 1) console.log(`OJO: con la forma ${f} el Resumen no queda al ras del panel en su pestaña (${a}, ${b}, ${e})`);
+}
 console.log("lado del tablero:", JSON.stringify(porForma), "(compu, 800 de alto)");
 /* LA BARRA PEGADA AL TABLERO Y EL NÚMERO ENTERO ADENTRO. Las dos fallaron en la
    primera captura de la v0.86 y ninguna de las dos la agarraba una cuenta: la
@@ -1746,6 +1749,8 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
 {
   const MONITORES = [[1366, 768], [1920, 1080]];
   const fotoM = async n => {
+    /* sin el foco que dejó el último clic (el anillo salía en la tuerca) */
+    await pg.evaluate(() => document.activeElement && document.activeElement.blur());
     await pg.mouse.move(2, 2); await pg.waitForTimeout(300);
     await pg.screenshot({ path: path.join(SALIDA, n + SUFIJO + ".png"), scale: "css" });
   };
@@ -1780,7 +1785,19 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
       columna = lado.length ? +((Math.min(b.bottom, Math.max(...lado.map(r => r.bottom))) -
         Math.max(b.top, Math.min(...lado.map(r => r.top)))) / b.height).toFixed(2) : 0;
     }
-    return { sobra: document.documentElement.scrollHeight - innerHeight,
+    /* lo que hay que bajar para ver LA ZONA entera, no el pie de la página
+       con la versión (v1.7: §1.12 pide que entre lo principal; el pie está
+       debajo en todas las pantallas) */
+    /* sin lo que queda adentro de algo con scroll propio (las filas de la
+       planilla que siguen abajo no son página) */
+    const zs = [...document.querySelectorAll(z)];
+    const recortado = e => { for (let p = e.parentElement; p && !zs.includes(p); p = p.parentElement)
+      if (getComputedStyle(p).overflowY !== "visible") return true; return false; };
+    const rf = [...zs].flatMap(e => [...e.querySelectorAll("*")])
+      .filter(e => e.offsetParent !== null && getComputedStyle(e).position !== "fixed" && !recortado(e))
+      .map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
+    const fondo = rf.length ? Math.max(...rf.map(r => r.bottom)) + scrollY : 0;
+    return { sobra: Math.max(0, Math.round(fondo - innerHeight)),
              tablero: tab ? Math.round(tab.getBoundingClientRect().width) : null,
              usa: Math.round(usa), dedo, icono, columna, listo };
   }, [tab, zona]);
@@ -1788,6 +1805,50 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   /* `antes` corre después de cada cambio de tamaño: un menú abierto se
      cierra al cambiar la ventana (a propósito, v1.6.1), así que se abre de
      nuevo en cada monitor */
+  /* CADA ESTADO DE LO QUE CONMUTA, en toda pantalla (v1.7, revisor de UX
+     sobre las pestañas Jugadas | Resumen de la Partida: en la maqueta los
+     "‹ ›" desaparecían en la otra pestaña y la tabla quedaba cortada sin
+     aviso; causa A, un solo estado mirado). Contra la causa: cualquier
+     `[role=tab]` a la vista en la zona —hoy la Partida, mañana Posiciones,
+     Ajustes o lo que venga— se toca uno por uno, con su foto y su medida, y
+     salta OJO si un botón de fuera del contenido conmutado deja de verse, o
+     si algo con scroll propio queda cortado sin fundido. */
+  const visibles = zona => pg.evaluate(z => {
+    const paneles = [...document.querySelectorAll("[role=tab][aria-controls]")]
+      .map(t => document.getElementById(t.getAttribute("aria-controls"))).filter(Boolean);
+    return [...document.querySelectorAll(z)].flatMap(e => [...e.querySelectorAll("button[id]")])
+      .filter(e => { const r = e.getBoundingClientRect();
+        return e.offsetParent !== null && r.width > 0 && r.bottom > 0 && r.top < innerHeight &&
+          !paneles.some(p => p.contains(e)); })
+      .map(e => e.id);
+  }, zona);
+  /* algo con scroll propio que no entra tiene que decirlo: fundido (un
+     degradé en ::after) o la barra a la vista */
+  const cortados = zona => pg.evaluate(z => [...document.querySelectorAll(z)]
+    .flatMap(e => [...e.querySelectorAll("*")])
+    .filter(e => { const c = getComputedStyle(e);
+      return e.offsetParent !== null && /auto|scroll/.test(c.overflowY) && e.clientHeight > 40 &&
+        e.scrollHeight > e.clientHeight + 1 && e.scrollTop + e.clientHeight < e.scrollHeight - 1 &&
+        !/gradient/.test(getComputedStyle(e, "::after").backgroundImage) &&
+        e.offsetWidth - e.clientWidth < 2; })
+    .map(e => e.id || e.className.toString().split(" ")[0]), zona);
+  /* LO ELEGIDO, A LA VISTA EN TODA LISTA CON SCROLL (v1.7, revisor de UX:
+     a 1366 la planilla mostraba de la 3 a la 8 parada en la 15, porque el
+     scroll se calculó con otro alto). Contra la causa: en cualquier pantalla
+     y estado, todo `.sel`, `[aria-selected=true]` o `[aria-current]` adentro
+     de algo con scroll propio tiene que caer en su caja visible, descontado
+     el fundido. */
+  const fueraDeVista = zona => pg.evaluate(z => [...document.querySelectorAll(z)]
+    .flatMap(e => [...e.querySelectorAll(".sel, [aria-selected=true], [aria-current]:not([aria-current=false])")])
+    .filter(e => e.offsetParent !== null && !e.matches("[role=tab]"))
+    .flatMap(e => { for (let p = e.parentElement; p; p = p.parentElement) {
+        const c = getComputedStyle(p);
+        if (/auto|scroll/.test(c.overflowY) && p.scrollHeight > p.clientHeight + 1) {
+          const r = e.getBoundingClientRect(), q = p.getBoundingClientRect();
+          const f = parseFloat(getComputedStyle(p, "::after").height) || 0;
+          return r.top < q.top - 1 || r.bottom > q.bottom - f + 1 ? [p.id || p.className.toString().split(" ")[0]] : [];
+        } }
+      return []; }), zona);
   const cadaMonitor = async (nombre, tab, zona, extra, antes) => {
     for (const [w, h] of MONITORES) {
       await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(400);
@@ -1795,6 +1856,31 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
       if (antes) await antes();
       await fotoM(`ancho-${w}-${nombre}`);
       MON[`${nombre} ${w}`] = await medidaM(tab, zona);
+      MON[`${nombre} ${w}`].cortado = await cortados(zona);
+      MON[`${nombre} ${w}`].fuera = await fueraDeVista(zona);
+      const tabs = await pg.evaluate(z => [...document.querySelectorAll(z)]
+        .flatMap(e => [...e.querySelectorAll("[role=tab]")])
+        .filter(t => t.offsetParent !== null).map(t => [t.id, t.getAttribute("aria-selected") === "true"]), zona);
+      if (tabs.length) {
+        const base = await visibles(zona);
+        for (const [id] of tabs.filter(([, sel]) => !sel)) {
+          await pg.click("#" + id); await pg.waitForTimeout(300);
+          await fotoM(`ancho-${w}-${nombre}-${id}`);
+          const m = await medidaM(tab, zona);
+          m.cortado = await cortados(zona);
+          m.fuera = await fueraDeVista(zona);
+          const ahora = await visibles(zona);
+          m.pierde = base.filter(b => !ahora.includes(b));
+          MON[`${nombre}-${id} ${w}`] = m;
+        }
+        /* y la vuelta: con la otra pestaña puesta se pasan jugadas (ida y
+           vuelta, así la jugada queda la misma) y se vuelve; lo que se
+           repintó escondido tiene que quedar bien al mostrarse */
+        for (const k of ["ArrowRight", "ArrowRight", "ArrowLeft", "ArrowLeft"]) { await pg.keyboard.press(k); await pg.waitForTimeout(60); }
+        const [elegida] = tabs.find(([, sel]) => sel) || [];
+        if (elegida) { await pg.click("#" + elegida); await pg.waitForTimeout(300);
+          MON[`${nombre} ${w}`].fueraVuelta = await fueraDeVista(zona); }
+      }
       if (extra) await extra(w);
     }
   };
@@ -1861,6 +1947,10 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
     if (v.dedo.length) console.log(`OJO: a ${k}, botones de dedo (44 o más de alto, §1.12): ${v.dedo.join(", ")}`);
     if (v.icono.length) console.log(`OJO: a ${k}, botones de solo ícono no universal (§1.12): ${v.icono.join(", ")}`);
     if (v.listo.length) console.log(`OJO: a ${k}, un "Listo" de hoja de celu adentro de lo que se abre (§1.12): ${v.listo.join(", ")}`);
+    if (v.pierde && v.pierde.length) console.log(`OJO: a ${k} dejan de verse ${v.pierde.join(", ")} al cambiar de pestaña (la zona cambia de forma)`);
+    if (v.fuera && v.fuera.length) console.log(`OJO: a ${k} lo elegido quedó fuera de vista en una lista con scroll: ${v.fuera.join(", ")}`);
+    if (v.fueraVuelta && v.fueraVuelta.length) console.log(`OJO: a ${k}, al volver de otra pestaña, lo elegido quedó fuera de vista: ${v.fueraVuelta.join(", ")}`);
+    if (v.cortado && v.cortado.length) console.log(`OJO: a ${k} ${v.cortado.join(", ")} no entra y no lo dice (sin fundido ni barra)`);
     if (v.columna !== null && v.columna < .5) console.log(`OJO: a ${k} lo del costado ocupa ${Math.round(v.columna * 100)} % del alto del tablero (columna vacía, §1.12)`);
   }
 }
@@ -1871,7 +1961,10 @@ console.log("bordes en la compu:", JSON.stringify(BORDES),
 for (const w of [1000, 1280]) {
   /* el inicio no: desde la v1.3.3 se corre para dejarle lugar al riel, y
      el salto al ir a la Partida se acepta */
-  const b = ["partida", "mes"].map(n => BORDES[n + " " + w]).filter(Boolean);
+  /* la Partida tampoco desde la v1.7: usa el ancho de la ventana (§1.12) y
+     el Mes y el inicio tienen ancho de lectura. Queda el recorrido para las
+     pantallas que vengan con ancho de lectura */
+  const b = ["mes"].map(n => BORDES[n + " " + w]).filter(Boolean);
   const dif = Math.max(...[0, 1].map(k => Math.max(...b.map(x => x[k])) - Math.min(...b.map(x => x[k]))));
   if (dif > 2) console.log(`OJO: a ${w} las pantallas no abren y cierran en el mismo borde (${dif} px)`);
 }

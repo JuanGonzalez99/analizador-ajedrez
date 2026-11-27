@@ -2859,8 +2859,8 @@ test("la lista lateral no le saca lugar al celular", () => {
     "el tablero y su panel, sin una columna estirada");
   assert.ok(html.includes("body.enVista:has(#zonaRevision:not(.oculto)) { max-width: none; }"),
     "en la Partida el cuerpo no tiene tope fijo");
-  assert.ok(html.includes("--panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 380px)"),
-    "de 1000 a 1110 el panel crece de a poco: el tablero no se achica cuando la ventana crece");
+  assert.ok(html.includes("--panel: clamp(340px, calc(340px + (100vw - 1000px) * .364), 480px)"),
+    "desde 1000 el panel crece de a poco (hasta 480 desde la v1.7): el tablero no se achica cuando la ventana crece");
   assert.ok(!html.includes("@media (min-width: 1500px)"), "las tres columnas de 1500 se fueron");
 });
 
@@ -3036,8 +3036,8 @@ test("en la compu el tablero crece, pero lo limita el alto", () => {
      son la navegación— se van abajo del pliegue. Lo que manda es el alto. */
   /* desde la v0.123.1 lo de arriba del tablero sale de --altoCab */
   assert.ok(html.includes("#zonaRevision { --altoCab: 48px; }"), "el alto de la cabecera, en una variable");
-  assert.ok(html.includes("--ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 70px), calc(100vw - var(--panel) - 120px)), 680px)"),
-    "el tablero se queda con lo que sobra de alto, o de ancho si la ventana es angosta (v0.125; v0.132 sin la columna de las comidas y con su renglón abajo; v0.151, la barra en el renglón de las comidas: 10 menos)");
+  assert.ok(html.includes("--ladoTab: clamp(360px, min(calc(100vh - var(--altoCab) - 70px), calc(100vw - var(--panel) - 120px)), 1000px)"),
+    "el tablero se queda con lo que sobra de alto, o de ancho si la ventana es angosta (techo de 1000 desde la v1.7; v0.125; v0.132 sin la columna de las comidas y con su renglón abajo; v0.151, la barra en el renglón de las comidas: 10 menos)");
   /* Y CON LA BARRA VERTICAL SOBRAN 26 px MÁS (v0.86): la horizontal se suma al
      alto —16 de barra y 10 de margen— y la vertical lo comparte. Medido en el
      arnés a 1280x800: el lado pasa de 470 a 496. */

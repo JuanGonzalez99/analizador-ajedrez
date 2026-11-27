@@ -13,10 +13,10 @@ const JUGADAS_GIRAR = 4;
 function ubicarCurva() {
   const z = $("zonaRevision");
   const vw = window.innerWidth, vh = window.innerHeight;
-  const panel = Math.min(380, Math.max(340, 340 + (vw - 1000) * .364));
+  const panel = Math.min(480, Math.max(340, 340 + (vw - 1000) * .364));
   const porAlto = vh - 48 - (z.classList.contains("sinEvalH") ? 64 : 70) - 62;
   z.classList.toggle("curvaAbajo", window.matchMedia(CORTE_ANCHO).matches &&
-    porAlto >= Math.min(vw - panel - 120, 680));
+    porAlto >= Math.min(vw - panel - 120, 1000));
   ubicarAlts();
 }
 /* LAS TRES MEJORES BAJAN DEBAJO DE LA CURVA SI ENTRAN ENTERAS (v0.150, lavado
@@ -173,12 +173,49 @@ function marcarMas(lista) {
    (legible pero apagada, como a 1366): eso es lo que dice "sigue". Con +20 no
    alcanzaba: el texto de esa fila cae donde el degradé casi no tapa. */
 function fundidoDe(lista) {
+  /* la tabla del Resumen (v1.7) no arranca a renglón entero: se mira la fila
+     que corta el borde de abajo, con la misma regla */
+  if (lista.id === "resAncho") {
+    const abajo = lista.getBoundingClientRect().bottom, filas = [...lista.querySelectorAll("tr")];
+    const i = filas.findIndex(tr => tr.getBoundingClientRect().bottom > abajo + 1);
+    if (i < 1) return 32;
+    const asoma = abajo - filas[i].getBoundingClientRect().top;
+    return asoma < 20 ? Math.round(asoma + filas[i - 1].offsetHeight) : 32;
+  }
   const fila = lista.firstElementChild ? lista.firstElementChild.offsetHeight : 0;
   if (!fila) return 32;
   const asoma = lista.clientHeight % fila;
   return asoma < 20 ? asoma + fila : 32;
 }
 
+/* LA ELEGIDA, A LA VISTA EN LA PLANILLA (sacado de `pintarRevision` en la
+   v1.7 para llamarlo también cuando la lista cambia de alto). Escondida (la
+   pestaña Resumen) no se toca: todos los `offsetTop` dan 0. */
+function acomodarLista(lista) {
+  if (!lista.clientHeight) return;
+  /* que la elegida quede a la vista sin arrastrar la lista a mano. Y en la
+     ÚLTIMA la lista baja del todo, o el cierre no se ve nunca: el scroll de
+     arriba deja la jugada pegada al fondo del recuadro y el cierre queda
+     justo abajo, fuera de vista. Se descubrió mirándolo, en la v0.73. */
+  const sel = lista.querySelector(".sel");
+  if (sel) {
+    const fila = sel.parentElement;
+    if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
+    else if (fila.offsetTop + fila.offsetHeight + fundidoDe(lista) >
+             lista.scrollTop + lista.clientHeight) {
+      /* y que arriba no quede medio renglón (revisor, v0.135): se baja hasta
+         el borde del renglón siguiente. Medio renglón abajo se acepta, avisa
+         que hay más. */
+      /* la elegida queda arriba del fundido (v0.179). La última jugada no
+         pasa por acá: la línea de abajo lleva la lista hasta el fondo. */
+      const tope = fila.offsetTop + fila.offsetHeight + fundidoDe(lista) - lista.clientHeight;
+      const borde = [...lista.children].find(d => d.offsetTop >= tope);
+      lista.scrollTop = borde ? Math.min(borde.offsetTop, fila.offsetTop) : tope;
+    }
+  }
+  if (lista._ultima) lista.scrollTop = lista.scrollHeight;
+  if (lista._inicio) lista.scrollTop = 0;
+}
 function pintarRevision() {
   const enInicio = IDX < 0;
   const f = enInicio ? filaDeArranque() : R.filas[IDX];
@@ -613,32 +650,19 @@ function pintarRevision() {
       sp.onclick = () => irA(+sp.dataset.i);
       previaEn(sp, +sp.dataset.i);
     });
-    /* que la elegida quede a la vista sin arrastrar la lista a mano. Y en la
-       ÚLTIMA la lista baja del todo, o el cierre no se ve nunca: el scroll de
-       arriba deja la jugada pegada al fondo del recuadro y el cierre queda
-       justo abajo, fuera de vista. Se descubrió mirándolo, en la v0.73. */
-    const sel = lista.querySelector(".sel");
-    if (sel) {
-      const fila = sel.parentElement;
-      if (fila.offsetTop < lista.scrollTop) lista.scrollTop = fila.offsetTop;
-      else if (fila.offsetTop + fila.offsetHeight + fundidoDe(lista) >
-               lista.scrollTop + lista.clientHeight) {
-        /* y que arriba no quede medio renglón (revisor, v0.135): se baja hasta
-           el borde del renglón siguiente. Medio renglón abajo se acepta, avisa
-           que hay más. */
-        /* la elegida queda arriba del fundido (v0.179). La última jugada no
-           pasa por acá: la línea de abajo lleva la lista hasta el fondo. */
-        const tope = fila.offsetTop + fila.offsetHeight + fundidoDe(lista) - lista.clientHeight;
-        const borde = [...lista.children].find(d => d.offsetTop >= tope);
-        lista.scrollTop = borde ? Math.min(borde.offsetTop, fila.offsetTop) : tope;
-      }
-    }
-    if (selTira === R.filas.length - 1) lista.scrollTop = lista.scrollHeight;
-    if (enInicio && !PRUEBA) lista.scrollTop = 0;
+    lista._ultima = selTira === R.filas.length - 1;
+    lista._inicio = enInicio && !PRUEBA;
+    acomodarLista(lista);
     if (!lista.dataset.mas) {
       lista.dataset.mas = "1";
       lista.addEventListener("scroll", () => marcarMas(lista), { passive: true });
-      if (window.ResizeObserver) new ResizeObserver(() => marcarMas(lista)).observe(lista);
+      /* y se vuelve a acomodar cuando la caja cambia de alto: otra ventana, o
+         la pestaña Jugadas que vuelve después de pasar jugadas en Resumen
+         (revisor de UX, v1.7: a 1366 la 15 quedaba fuera de vista) */
+      if (window.ResizeObserver) new ResizeObserver(() => {
+        if (lista.clientHeight !== lista._alto) { lista._alto = lista.clientHeight; acomodarLista(lista); }
+        marcarMas(lista);
+      }).observe(lista);
     }
     marcarMas(lista);
     /* LA LISTA NO PUEDE SER MÁS ALTA QUE LA COLUMNA DE AL LADO (v0.88), y esto
@@ -1266,6 +1290,20 @@ window.matchMedia(CORTE_ANCHO).addEventListener("change", () => {
    ventana la dejaba tapada por el desvanecido (revisor, v0.125) */
 new ResizeObserver(() => { if (R && (IDX < 0 || R.filas[IDX])) { ubicarGirar(IDX < 0 ? null : R.filas[IDX]); centrarTira(); } }).observe(document.querySelector(".revtab"));
 
+/* LAS PESTAÑAS DEL PANEL DE LA COMPU (v1.7): Jugadas o Resumen. La elegida
+   se recuerda mientras dure la sesión (es una clase de la lateral, que no se
+   rehace); arranca en Jugadas, que es lo que se usa jugada a jugada. */
+function verPestana(res) {
+  $("lateral").classList.toggle("verRes", res);
+  $("tabJugadas").setAttribute("aria-selected", String(!res));
+  $("tabResumen").setAttribute("aria-selected", String(res));
+  if (res) marcarMas($("resAncho"));
+}
+$("tabJugadas").onclick = () => verPestana(false);
+$("tabResumen").onclick = () => verPestana(true);
+$("resAncho").addEventListener("scroll", () => marcarMas($("resAncho")), { passive: true });
+if (window.ResizeObserver) new ResizeObserver(() => marcarMas($("resAncho"))).observe($("resAncho"));
+
 function pintarResumen(prof) {
   const { filas, cab } = R;
   const B = filas.filter(f => f.turno === "w"), N = filas.filter(f => f.turno === "b");
@@ -1295,14 +1333,21 @@ function pintarResumen(prof) {
     <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
     <tbody>${ORDEN.map(filaCat).join("")}</tbody>`;
 
-  /* la misma tabla traspuesta, para la compu (v0.137): una fila por jugador */
-  const filaJug = (nom, fs) => `<tr><td class="quien"><div class="et">${nom}</div>` +
-    `<span class="gr">${prec(fs)}</span><span class="pe">${pie(fs)}</span></td>` +
-    ORDEN.map(k => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; }).join("") + "</tr>";
+  /* la de la compu, en la pestaña Resumen del panel (v1.7): la misma tabla
+     con la precisión como primera fila, bajo los mismos nombres, en vez de
+     las dos tarjetas; los ceros, tenues */
+  const cuenta = (fs, k) => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; };
+  const celdaPrec = fs => `<td><span class="gr">${prec(fs)}</span><span class="pe">${pie(fs)}</span></td>`;
+  /* sin las categorías que dan 0 para los dos (revisor de UX, v1.7: a
+     1366 entraban 4 de 10 y se cortaban justo los errores). El Resumen es
+     de la partida entera: la tabla no cambia de forma al pasar jugadas */
   $("resumenAncho").innerHTML = `
-    <thead><tr><th></th>${ORDEN.map(k => `<th><div class="ic" style="color:var(--c-${k})">${CATEGORIAS[k].icono}</div>` +
-      `<div class="no">${CATEGORIAS[k].nombre}</div></th>`).join("")}</tr></thead>
-    <tbody>${filaJug(cab.White || "Blancas", B)}${filaJug(cab.Black || "Negras", N)}</tbody>`;
+    <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
+    <tbody><tr class="prec"><td>Precisi\u00f3n</td>${celdaPrec(B)}${celdaPrec(N)}</tr>` +
+    ORDEN.filter(k => filas.some(f => f.cat === k)).map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
+      cuenta(B, k) + cuenta(N, k) + "</tr>").join("") + `</tbody>`;
+  $("resumenAncho").title = $("capResumen").textContent;
+  marcarMas($("resAncho"));
 
 }
 

@@ -207,17 +207,17 @@ chequear("la barra horizontal va arriba del panel", [
   ...(/#zonaRevision:not\(\.sinEvalH\) \.comidas > #cArriba \{ bottom: calc\(100% \+ 12px\); \}/.test(html) ? [] : ["las comidas de arriba no van en el renglón de la barra"]),
 ]);
 
-/* 7septies. [PC] El Resumen va al ancho del grupo (v0.137): de la columna a
-   al borde del panel, con los números que pone `ubicarResumen()`. Medía 1082
-   fijo y centrado, y eran dos cajas de anchos distintos. `mirar` mide el
-   desfasaje ("resumen al ancho del grupo:"). */
-chequear("el resumen va al ancho del grupo", [
-  ...(/#zonaResumen \{ max-width: none;\s+width: var\(--resAncho/.test(html) ? [] : ["falta el ancho del Resumen"]),
+/* 7septies. [PC] El Resumen es una pestaña del panel (v1.7; de la v0.137 a
+   la v1.6 iba abajo, al ancho del grupo). `ubicarResumen()` sigue: el pie
+   arranca con la columna a. `mirar` mide la pestaña ("pestañas:"). */
+chequear("el resumen va en la pestaña del panel", [
+  ...(/body\.enVista:has\(#zonaRevision:not\(\.oculto\)\) #zonaResumen \{ display: none; \}/.test(html) ? [] : ["en la Partida de la compu la zona de abajo sigue a la vista"]),
+  ...(/<button role="tab" id="tabResumen"/.test(html) && /\$\("tabResumen"\)\.onclick/.test(html) ? [] : ["falta la pestaña Resumen o su manejador"]),
   ...(/window\.addEventListener\("resize", ubicarResumen\)/.test(html) ? [] : ["ubicarResumen no se recalcula al cambiar el ancho"]),
   ...(/ubicarResumen\(\);\n/.test(html) ? [] : ["ubicarGirar no llama a ubicarResumen"]),
   /* y en la compu va la tabla traspuesta, una fila por jugador; en el celu
      sigue escondida (no entran diez columnas en 386) */
-  ...(/<div class="resAncho"><div class="tw"><table id="resumenAncho"/.test(html) ? [] : ["falta la tabla traspuesta"]),
+  ...(/<div class="resAncho" id="resAncho" role="tabpanel"[^>]*><div class="tw"><table id="resumenAncho"/.test(html) ? [] : ["falta la tabla traspuesta"]),
   ...(/\n  \.resAncho \{ display: none; \}/.test(html) ? [] : ["la tabla traspuesta no arranca escondida"]),
 ]);
 
