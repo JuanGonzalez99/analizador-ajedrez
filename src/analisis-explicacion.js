@@ -215,8 +215,9 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
   if (obs && obs.siguen && obs.siguen.length && f.perdida >= 2) {
     const c = obs.siguen.find(x => (f.mejorRival || "").slice(2, 4) === x.sq && (VALOR[x.pieza] || 0) >= 3);
     const queda = (f.uci || "").length > 4 ? f.uci[4] : f.pieza;
+    /* con un cambio, lo que se lleva el rival en él (v1.7.1) */
     const valeMec = !mecanismo ? -1 : !mecanismo.sq ? Infinity
-      : mecanismo.sq === donde ? (VALOR[queda] || 0)
+      : mecanismo.sq === donde ? (obs.cambio ? obs.cambio.neto : (VALOR[queda] || 0))
       : (VALOR[((obs.nuevas || []).find(x => x.sq === mecanismo.sq) || {}).pieza] || 0);
     if (c && mecanismo && mecanismo.sq === c.sq) { /* ya la nombra */ }
     else if (c && (VALOR[c.pieza] || 0) > valeMec)
@@ -225,6 +226,32 @@ function partesDeLaExplicacion(f, mejorSan = null, mio = null, sanRival = null,
             marca: "sigue a tiro", sq: c.sq }
         : { txt: `${mayus(suya(c.pieza))} sigue comible en ${c.sq}.`,
             marca: "sigue comible", sq: c.sq };
+  }
+
+  /* LO QUE EL MOTOR COME DICE QUÉ SE PIERDE, también entre las que quedan
+     colgadas por esta jugada (revisor de ajedrez, v1.2.3; Arreglos). En
+     `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`, Bxa7 decía "Tu alfil queda comible
+     en a7." y el motor juega Rxe2: el alfil destapaba la dama. Es el mismo
+     desempate que `siguen` tiene desde la v1.2.2, ahora para `nuevas`: si la
+     respuesta del motor come una pieza que vale más que la que nombra el
+     mecanismo, la frase va por esa. */
+  if (obs && obs.nuevas && obs.nuevas.length && f.perdida >= 2 && mecanismo && mecanismo.sq) {
+    const c = obs.nuevas.find(x => (f.mejorRival || "").slice(2, 4) === x.sq);
+    const queda = (f.uci || "").length > 4 ? f.uci[4] : f.pieza;
+    const valeMec = mecanismo.sq === donde ? (obs.cambio ? obs.cambio.neto : (VALOR[queda] || 0))
+      : (VALOR[((obs.nuevas || []).find(x => x.sq === mecanismo.sq) ||
+                (obs.siguen || []).find(x => x.sq === mecanismo.sq) || {}).pieza] || 0);
+    if (c && c.sq !== mecanismo.sq && (VALOR[c.pieza] || 0) > valeMec) {
+      const tiro = `queda a tiro de ${PIEZA_UN[c.por] || "una pieza"}.`;
+      /* las mismas frases y el mismo orden que el mecanismo de `nuevas` */
+      mecanismo = c.motivo === "menor"
+        ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} ${tiro}`, marca: "a tiro", sq: c.sq }
+        : c.destapada
+        ? { txt: `Destapa ${suya(c.pieza)} de ${c.sq}: ${tiro}`, marca: "a tiro", sq: c.sq }
+        : c.sinDefensaAntes
+        ? { txt: `${mayus(suya(c.pieza))} de ${c.sq} ${tiro}`, marca: "a tiro", sq: c.sq }
+        : { txt: `${mayus(suya(c.pieza))} de ${c.sq} queda sin defender.`, marca: "sin defender", sq: c.sq };
+    }
   }
 
   /* 2. LO QUE LA JUGADA SALVA, que es el espejo del anterior y lo que faltaba

@@ -204,7 +204,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       arrancar, o que el botón diga que carga; no volver a mostrar `#diag` en
       modo simple. Pasa por el revisor de UX.
 
-- [ ] **La pieza chica que cuelga le gana a la dama que destapa** (revisor
+- [x] ~~**La pieza chica que cuelga le gana a la dama que destapa**~~ (hecho en la v1.7.1, también con el cambio con recaptura) (revisor
       de ajedrez, v1.2.3; ya estaba). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w - - 0 1`,
       Bxa7 (pierde 7,9) dice "Tu alfil queda comible en a7." y el motor
       juega Rxe2: la dama no tiene recaptura. Tendría que decir "Tu dama de
@@ -815,6 +815,13 @@ Pendientes que estaban anotados solo en el traspaso.
       ¿Qué columnas tiene la planilla en la compu (número, blanca, negra, y
       quizás el tiempo o la pérdida) y con qué ancho cada una, para que el
       sobrante no quede entre los datos? Con variantes.
+
+- [ ] **"Destapa" también cuando la pieza destapada es más cara que su
+      atacante** (revisor de ajedrez, v1.7.1). `observarJugada` calcula
+      `destapada` solo para el motivo "sin defensa"; con el motivo "menor"
+      (la dama a tiro de una torre) no. Bxa7 en
+      `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w` es una descubierta de libro sobre
+      la dama y la tarjeta dice "queda a tiro", que es cierto pero no dice cómo.
 
 ### Ideas de los revisores para más adelante
 

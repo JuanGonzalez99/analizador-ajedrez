@@ -71,7 +71,7 @@ test("la cuenta del cambio ve lo que deja la pieza que come (v1.0.2)", () => {
   assert.ok(A.explicarJugada(unaFila(fd5, "Nd5", evs), null, true, null, d5).startsWith("Tu caballo queda comible en d5."));
   /* lo que se cobra afuera se nombra: Ne5 Nxe5 deja el peón de d4 (cxd4) */
   const ne5 = mirar("r1bqk2r/pppp1ppp/2n2n2/2b5/2BpP3/2P2N2/PP3PPP/RNBQK2R w KQkq - 0 6", "f3e5");
-  assert.deepEqual(ne5.cambio, { pierde: 2, mias: ["n"], suyas: ["p"] });
+  assert.deepEqual(ne5.cambio, { pierde: 2, neto: 2, mias: ["n"], suyas: ["p"] });
   /* revisor de ajedrez: lo que ya se podía comer no se nombra entero. Ng5
      Nxg5 con bxc3 posible desde antes decía "tu caballo por un alfil" */
   const c3 = "r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9";
@@ -3567,6 +3567,35 @@ test("la dama que ya estaba colgada y sigue se nombra (v1.2.2)", () => {
   assert.ok(/tu alfil de d4 sigue a tiro de un peón\./i.test(t4) && !t4.includes("comible"), t4);
 });
 
+test("la dama que la jugada deja a tiro le gana a la pieza chica que cuelga (v1.7.1)", () => {
+  /* Revisor de ajedrez, v1.2.3 (Arreglos). Bxa7 deja el alfil comible, pero
+     el motor juega Rxe2: la dama de e2 no tiene recaptura. */
+  const antes = "r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w - - 0 1";
+  const evs = m => [{ cp: 100, mate: null, mejor: "e2e4", segunda: { cp: 90, mate: null } },
+                    { cp: 690, mate: null, mejor: m, segunda: null }];
+  const f = unaFila(antes, "Bxa7", evs("e8e2"));
+  const t = A.explicarJugada(f, null, true, null, A.observarJugada(f, antes));
+  assert.ok(t.startsWith("Tu dama de e2 queda a tiro de una torre."), t);
+  /* si el motor come el alfil, la frase sigue siendo la del alfil */
+  const g = unaFila(antes, "Bxa7", evs("a8a7"));
+  const u = A.explicarJugada(g, null, true, null, A.observarJugada(g, antes));
+  assert.ok(u.startsWith("Tu alfil queda comible en a7."), u);
+  /* con un cambio que tiene recaptura se compara contra lo que se lleva el
+     rival en el cambio, no contra la pieza movida (revisor de ajedrez,
+     v1.7.1): Rbxd5 exd5 Rxd5 le deja 4, y el motor prefiere la torre de b2.
+     Una para `nuevas` y otra para `siguen`. */
+  const ev2 = [{ cp: 550, mate: null, mejor: "h2h3", segunda: { cp: 500, mate: null } },
+               { cp: 0, mate: null, mejor: "h8b2", segunda: null }];
+  const n1 = "7q/5k2/4p3/1R1p4/8/8/1R5P/3R3K w - - 0 1";
+  const h1 = unaFila(n1, "Rbxd5", ev2);
+  const t1 = A.explicarJugada(h1, null, true, null, A.observarJugada(h1, n1));
+  assert.ok(t1.startsWith("Tu torre de b2 queda sin defender."), t1);
+  const n2 = "7q/5k2/4p3/2Rp4/8/8/1R5P/3R3K w - - 0 1";
+  const h2 = unaFila(n2, "Rcxd5", ev2);
+  const t2 = A.explicarJugada(h2, null, true, null, A.observarJugada(h2, n2));
+  assert.ok(/^Tu torre (sigue comible en b2|de b2)/.test(t2), t2);
+});
+
 test("si nunca tuvo defensa no 'queda sin defender': la jugada la destapó", () => {
   /* Revisor de ajedrez, 22-nov. Nc6 saca el caballo de e5 de la diagonal
      d4–g7: el peón de g7 no tenía defensores antes ni después, y lo nuevo es
@@ -4119,12 +4148,12 @@ test("lo que se pierde en el cambio es el mecanismo, aunque haya recaptura (20-n
   const f = unaFila(qe1, "Qe1", evs(400));
   assert.equal(f.colgada, false);
   const obs = mirar(qe1, "a1e1");
-  assert.deepEqual(obs.cambio, { pierde: 4, mias: ["q"], suyas: ["r"] });
+  assert.deepEqual(obs.cambio, { pierde: 4, neto: 4, mias: ["q"], suyas: ["r"] });
   assert.equal(A.explicarJugada(f, null, true, null, obs),
     "Pierde material en el cambio: tu dama por una torre. La posición pasa de parejo a perdiendo.");
   /* la calidad: Rd3 Bxd3 cxd3, torre por alfil */
   const rd3 = "4k3/8/8/1b6/8/8/2P5/3RK3 w - - 0 1";
-  assert.deepEqual(mirar(rd3, "d1d3").cambio, { pierde: 2, mias: ["r"], suyas: ["b"] });
+  assert.deepEqual(mirar(rd3, "d1d3").cambio, { pierde: 2, neto: 2, mias: ["r"], suyas: ["b"] });
   assert.ok(A.explicarJugada(unaFila(rd3, "Rd3", evs(200)), null, false, null, mirar(rd3, "d1d3"))
     .startsWith("Pierde material en el cambio: la torre por un alfil."));
   /* un caballo que el peón come y nadie recaptura no cambia: sigue "queda comible" */

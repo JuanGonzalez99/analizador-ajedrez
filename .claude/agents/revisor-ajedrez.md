@@ -158,6 +158,12 @@ de memoria una posición de ajedrez").
   Y antes de leer "0 diferencias" de `npm run frases`, miro si la fila que
   arma (`decir` en `pruebas/frases.mjs`) tiene el campo que el arreglo toca:
   hasta la v1.2.3 no tenía `colgada` (causa C).
+- **Todo desempate entre lo que nombra la frase y lo que come el motor se
+  prueba con un cambio con recaptura** (v1.7.1, causas B y C): el valor del
+  mecanismo es lo que el rival se lleva en el cambio (`cambio.neto`), no lo
+  que vale la pieza movida, y en una pieza sin defensa los dos coinciden,
+  así que el caso fácil no lo distingue. Vale para los desempates de
+  `siguen` y `nuevas` y para los que vengan.
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
   **Borrás solo los archivos que creaste vos, por nombre**: nunca la

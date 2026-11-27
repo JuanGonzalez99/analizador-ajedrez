@@ -379,6 +379,15 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   la compu, y el revisor de UX juzga contra eso, se pregunta si existiría así
   en lichess de escritorio y barre cada regla de compu nueva por todas las
   pantallas.
+- **El desempate de lo que come el motor comparaba contra la pieza movida**
+  · `siguen` desde la v1.2.2, copiado a `nuevas` en la v1.7.1 (no salió) ·
+  B: el ítem se encuadró sobre Bxa7, donde la pieza que cuelga no tiene
+  defensa y "lo que vale la movida" es "lo que se lleva el rival"; C:
+  `frases` nunca come lo que la jugada deja colgada · `cambio` expone `neto`
+  y los dos desempates lo usan; prueba de unidad con Rbxd5 y Rcxd5 (cambio
+  con recaptura y el motor comiendo otra torre); regla en
+  `revisor-ajedrez.md`: todo desempate así se prueba con un cambio con
+  recaptura. Atrapa los dos bloques y los desempates que vengan.
 - **La jugada elegida fuera de vista en la planilla** · v1.7, primera
   vuelta (no salió; se le pasó también al revisor en la maqueta) · A: se miró
   la foto de la zona nueva y no si "la elegida a la vista" seguía valiendo

@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.7**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.7.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -5013,6 +5013,20 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.7.1, lo que come el motor dice qué se pierde, también en `nuevas`**
+(Arreglos; revisor de ajedrez, v1.2.3). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`,
+Bxa7 decía "Tu alfil queda comible en a7." y el motor juega Rxe2: ahora
+"Tu dama de e2 queda a tiro de una torre." Es el desempate de `siguen`
+(v1.2.2) para las piezas que la jugada deja colgadas: si `mejorRival` come
+una de `nuevas` que vale más que lo que nombra el mecanismo, la frase va
+por esa, con las frases y el orden del mecanismo de `nuevas`. **El valor
+del mecanismo, cuando es la pieza movida y hay cambio, es `cambio.neto`**
+(lo que se lleva el rival en el cambio, campo nuevo de `observarJugada`) y
+no lo que vale la movida: el revisor lo encontró en la segunda pasada
+(Rbxd5 exd5 Rxd5 le deja 4, y el motor prefiere la torre de b2), y valía
+también para el bloque de `siguen`, que se corrigió igual. `frases`: 0
+diferencias (su motor no come lo que la jugada deja colgada).
 
 **v1.7, [PC] La Partida a la medida de la ventana** (etapa "La compu,
 hecha para la compu", primer ítem). Cuatro variantes dibujadas a 1366×768,

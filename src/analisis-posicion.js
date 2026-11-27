@@ -783,7 +783,10 @@ function observarJugada(f, fenAntes = null) {
          que ganó la coronación), pero se va el peón: no se festeja. */
       coronaPerdida = corono > 0 && pierde >= 1;
       if (pierde >= 1)
-        cambio = { pierde,
+        /* `neto`: lo que se lleva el rival en el cambio, que es contra lo que
+           se compara otra pieza que el motor prefiere comer (revisor de
+           ajedrez, v1.7.1: con recaptura no es lo que vale la movida) */
+        cambio = { pierde, neto: ca.neto,
                    mias: ca.linea.filter((_, k) => k % 2 === 0)
                            .map((m, k) => k === 0 && corono ? "p" : m.captured),
                    suyas: [...(comio && comio.color !== mio ? [comio.type] : []),
