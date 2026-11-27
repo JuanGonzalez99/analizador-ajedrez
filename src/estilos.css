@@ -1028,9 +1028,9 @@
   #posJugadas .j { margin-right: var(--e-2); }
   .posAcciones { margin: var(--e-3) 0 0; gap: var(--e-3); }
   /* secundario con ícono y texto, 44 a la vista y 48 de toque (§1.7) */
-  #posDeshacer { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
+  #posDeshacer, #posAnalizar { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
                  padding: 0 var(--e-4) 0 var(--e-3); position: relative; }
-  #posDeshacer::before { content: ""; position: absolute; inset: -2px 0; }
+  #posDeshacer::before, #posAnalizar::before { content: ""; position: absolute; inset: -2px 0; }
   /* EL FINAL CON PESO: el título grande hace el peso, no el color (revisor:
      un rojo para la derrota grita, y la app no gira alrededor de los
      errores). Borde de acento solo cuando ganaste. "Otra vez" es el único

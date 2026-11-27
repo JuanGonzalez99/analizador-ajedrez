@@ -1941,8 +1941,36 @@ test("el JSON del mes viaja hasta la revisión (v0.63.1)", () => {
   assert.ok(html.includes("R.meta = ELEGIDA_META;"), "no se engancha al analizar");
   /* y se limpia en los dos lugares donde deja de haber partida elegida, o una
      partida pegada heredaría el motivo de la anterior */
-  assert.equal((html.match(/ELEGIDA_META = null;/g) || []).length, 3,
-               "la global, el reset de la lista y el PGN pegado");
+  assert.equal((html.match(/ELEGIDA_META = null;/g) || []).length, 4,
+               "la global, el reset de la lista, el PGN pegado y lo jugado en Posiciones (v1.5)");
+});
+
+
+/* LO JUGADO EN POSICIONES VA AL ANÁLISIS (v1.5): el arranque viaja en la
+   cabecera FEN, y el turno y el número salen del FEN, no de contar desde la
+   jugada 1 con blancas. Sin esto, una partida que arranca con negras salía
+   con los turnos cruzados: la precisión de cada lado era la del otro. */
+test("una partida desde una posición se analiza desde esa posición (v1.5)", () => {
+  const ini = "4k3/8/8/8/8/8/4P3/4K3 b - - 0 23";
+  const pgn = `[White "Vos"]\n[Black "Motor, nivel 4"]\n[Result "*"]\n[SetUp "1"]\n[FEN "${ini}"]\n\n23... Kd7 24. e4 Kc6 *`;
+  const { fens, jugadas } = A.prepararPartida(pgn);
+  assert.equal(fens[0], ini);
+  assert.equal(jugadas.length, 3);
+  const evs = fens.map(() => ({ cp: 0, mejor: null }));
+  const { filas } = A.derivarFilas(jugadas, fens, evs, { pos: new Set(), nombres: {} });
+  assert.deepEqual(filas.map(f => f.turno + f.n), ["b23", "w24", "b24"]);
+  assert.deepEqual(A.precisionesRapidas(fens, evs, { pos: new Set() }).map(f => f.turno), ["b", "w", "b"]);
+  /* un FEN de afuera con enroques que el tablero no sostiene se limpia:
+     "KQkq" sin torres cuelga a Stockfish (revisor de ajedrez, v1.5) */
+  assert.equal(A.prepararPartida('[SetUp "1"]\n[FEN "4k3/8/8/8/8/8/4P3/4K3 w KQkq - 0 1"]\n\n1. e4 Kd7 *').fens[0],
+               "4k3/8/8/8/8/8/4P3/4K3 w - - 0 1");
+  /* las comidas se cuentan contra el arranque, no contra el juego completo */
+  assert.deepEqual(A.piezasComidas(fens[3], fens[0]), { w: {}, b: {}, dif: 1 });
+  assert.deepEqual(A.piezasComidas("4k3/8/8/8/8/8/8/4K3 w - - 0 30", ini).w, { p: 1 });
+  /* y una partida normal sigue contando igual */
+  const n = A.prepararPartida("1. e4 e5 2. Nf3");
+  assert.deepEqual(A.derivarFilas(n.jugadas, n.fens, n.fens.map(() => ({ cp: 0 })), { pos: new Set(), nombres: {} })
+    .filas.map(f => f.turno + f.n), ["w1", "b1", "w2"]);
 });
 
 
@@ -4196,7 +4224,9 @@ test("a los 6 s sin módulo no hay cartel rojo si los archivos responden bien (v
    imposibles de contenido (que cuelgan a Stockfish), la triple repetición
    (que necesita la historia) y Deshacer con Juan del color que no mueve. */
 const posicion = (() => {
-  const src = fs.readFileSync(new URL("../src/posicion.js", import.meta.url), "utf8");
+  /* limpiarFen se mudó al bloque de análisis en la v1.5 */
+  const src = fs.readFileSync(new URL("../src/posicion.js", import.meta.url), "utf8") +
+    fs.readFileSync(new URL("../src/analisis-evaluacion.js", import.meta.url), "utf8");
   const tomar = n => { const i = src.indexOf(`function ${n}(`); return src.slice(i, src.indexOf("\n}\n", i) + 2); };
   return new Function("Chess", "let POS = null;\nconst fenPos = () => POS.fens[POS.fens.length - 1];\n" +
     ["fenDelLink", "problemaDelFen", "limpiarFen", "juegoPos", "hayJugadaMia", "estadoPos",

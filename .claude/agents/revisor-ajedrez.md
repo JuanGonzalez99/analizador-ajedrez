@@ -169,6 +169,8 @@ de memoria una posición de ajedrez").
   limpiar y un "KQkq" sin torres colgaba a Stockfish). Ante un cambio que
   arme posiciones desde afuera, grepeo `new Chess(` con argumento en el
   bloque de análisis y pruebo un FEN con enroques y al paso imposibles.
+  Y el arranque de una partida se toma de `R.fens[0]` (lo que cargó
+  chess.js), nunca de `R.cab.FEN`, que no ve un "[Fen" en minúsculas.
 
 **Lo que "el rival puede deshacer" se prueba con dos atacantes** (v1.4.1:
 "cada atacante se puede comer" callaba una trampa con dos peones, y

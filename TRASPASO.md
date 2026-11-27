@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.4.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.5**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -449,7 +449,7 @@ el orden en que se juntan:
 | `cuerpo-arriba.html` | cierra `<style>`, arranca el `<body>`, abre el `<script>` clásico |
 | `registro.js` | `<script>` clásico: **`window.VERSION`** (primer renglón), registro, captura de errores, `mostrarError`, el temporizador de 6 s, panel de diagnóstico |
 | `cuerpo.html` | el HTML de las tres pantallas, Posiciones, Armar posición (`zonaArmar`, v1.4), la barra de los módulos (`navMod`, v1.3), las hojas y el pie; abre `<script type="module">` |
-| `analisis-evaluacion.js` | bloque de análisis (desde su marcador): evaluación, geometría, `quedaComible`, `cambioEn`, categorías, `categorizar`, `derivarFilas`, `precisionesRapidas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), la curva |
+| `analisis-evaluacion.js` | bloque de análisis (desde su marcador): evaluación, geometría, `quedaComible`, `cambioEn`, categorías, `categorizar`, `derivarFilas`, `limpiarFen` (desde la v1.5), `prepararPartida`, `precisionesRapidas` (con `turnoDeFila`/`numeroDeFila`, v1.5), `repartir`, el reloj (`leerCadencia`, `segundosPensados`), la curva |
 | `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
 | `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`, `estaAtrapada` y `seComeAlQueAtrapa` (v1.4.1); y `aperturaEs`. Cierra el bloque de análisis |
 | `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, `mostrarVista` (con la barra de los módulos: `conBarra`, `barraA`, el scroll que la corre), la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
@@ -460,7 +460,7 @@ el orden en que se juntan:
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
-| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), armar una posición a mano (v1.4: `casillasDe`, `colocacionDe`, `fenArmado`, `problemaArmado`, `abrirArmar`, `pintarArmar`, `ARM`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
+| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), Analizar lo jugado (v1.5: `pgnDePos`), armar una posición a mano (v1.4: `casillasDe`, `colocacionDe`, `fenArmado`, `problemaArmado`, `abrirArmar`, `pintarArmar`, `ARM`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
 | `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
@@ -4988,6 +4988,37 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.5, analizar lo jugado en Posiciones** (etapa 4, Juan 26-nov). Un
+botón **Analizar** al lado de Deshacer (misma forma: secundario con ícono,
+el de la barra de Análisis), prendido desde la primera jugada de Juan, en
+cualquier momento y al terminar. `pgnDePos` arma un PGN con `White`/`Black`
+"Vos" y "Motor, nivel N", `Result` (`*` si sigue) y, si no es la inicial,
+`SetUp`/`FEN`; va por `analizarElegida` como un PGN pegado, con
+`ELEGIDA_YO` (global nueva) que termina en `R.yo`: `ladoDelUsuario` lo mira
+primero, así la tarjeta habla de "tu" pieza y el tablero sale del lado de
+Juan sin usuario de chess.com. Se entra a la Partida igual que desde el
+inicio (a los 300 ms o al toque si está en caché) y el "‹" dice "Volver a
+la posición" (`volverAQue` con `de === "posicion"`) y vuelve a la partida
+como estaba. **Lo que hubo que tocar del análisis:** `prepararPartida`
+rejuega desde la cabecera `FEN`, y el turno y el número de cada fila salen
+del FEN de antes (`turnoDeFila`, `numeroDeFila`) y no de contar desde la 1
+con blancas: con negras primero los turnos salían cruzados. La tira dice
+"23…" si la primera es de negras. `npm run frases`: 0 de 4.624 cambian
+(las partidas de siempre cuentan igual); prueba de unidad con una que
+arranca con negras en la 23. Celu byte a byte: cambian las de Posiciones
+(el botón) y el número de versión al pie; además dos rayas de 2 px en el
+borde de `encadenadas` (el borde de la barra de evaluación) y `mes-varias`,
+que son del momento de la foto y no de esto. **De la revisión:** en la
+compu las comidas se contaban contra el juego completo y K+P contra K "había
+comido" todo (revisor de UX): `piezasComidas(fen, desde)` cuenta contra
+`R.fens[0]`, el arranque de verdad (no `R.cab.FEN`, que no ve un "[Fen"), y `mirar` suma al final "partida desde
+una posición" a 1280 (comidas 0 y 0). Y un PGN pegado con `[FEN]` de
+enroques imposibles colgaba a Stockfish (revisor de ajedrez): `limpiarFen`
+se mudó de `posicion.js` al bloque de análisis y `prepararPartida` saca el
+arranque de lo que cargó chess.js (solo si el PGN trae `[FEN`, con
+cualquier mayúscula), lo limpia, y si una jugada no entra tira "no pude
+leer ese PGN". Las Chess960 quedan en Arreglos.
 
 **v1.4.1, atrapar con una pieza que se comen no es atrapar** (revisor de
 ajedrez, 22-nov, Arreglos). Bg5 en

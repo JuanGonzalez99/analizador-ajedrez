@@ -6,6 +6,9 @@ let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJ
    elige en la lista y se necesita mucho después, en la revisión, así que tiene
    que viajar. Es null con un PGN pegado, y ahí el motivo no se muestra. */
 let ELEGIDA_META = null;
+/* De qué lado jugó Juan una partida de Posiciones (v1.5): no hay usuario de
+   chess.com en la cabecera, así que el lado viaja aparte. null en las demás. */
+let ELEGIDA_YO = null;
 /* Cadencia elegida, por clave exacta ("300+0"). null = todavía no se eligió y
    manda la que más partidas tiene. Es una PREFERENCIA y no una orden: si el mes
    que se abre no tiene esa cadencia, se cae a la dominante (elegirCadencia). */

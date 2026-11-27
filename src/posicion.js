@@ -51,26 +51,8 @@ function problemaDelFen(fen) {
   return null;
 }
 
-/* LO QUE EL FEN DICE Y EL TABLERO NO SOSTIENE, se limpia en silencio
-   (revisor de ajedrez, v1.1): un editor deja "KQkq" por defecto, y un
-   enroque sin su torre o sin el rey en su casilla CUELGA a Stockfish (no
-   contesta nunca) y chess.js lo ofrece igual. El al paso sin el peón que
-   acaba de avanzar, lo mismo: chess.js lo juega y Stockfish no. */
-function limpiarFen(fen) {
-  const p = fen.split(" ");
-  const c = new Chess();
-  if (!c.load(fen)) return fen;
-  const hay = (sq, t) => { const x = c.get(sq); return !!x && x.type + x.color === t; };
-  const ok = { K: hay("e1", "kw") && hay("h1", "rw"), Q: hay("e1", "kw") && hay("a1", "rw"),
-               k: hay("e8", "kb") && hay("h8", "rb"), q: hay("e8", "kb") && hay("a8", "rb") };
-  p[2] = [...p[2]].filter(x => ok[x]).join("") || "-";
-  if (p[3] !== "-") {
-    const col = p[3][0], fila = p[3][1];
-    const peon = p[1] === "w" ? col + "5" : col + "4", tipo = p[1] === "w" ? "pb" : "pw";
-    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]))) p[3] = "-";
-  }
-  return p.join(" ");
-}
+/* `limpiarFen` vive en el bloque de análisis desde la v1.5 (`analisis-evaluacion.js`):
+   también limpia el FEN que trae la cabecera de un PGN. */
 
 /* ARMAR UNA POSICIÓN A MANO (v1.4). El tablero del editor es un mapa
    casilla → pieza ("e1" → "wk"); de ahí sale la colocación del FEN. Los
@@ -258,6 +240,7 @@ function pintarPosicion() {
   $("posColor").value = POS.yo;
   $("posDeshacer").disabled = !hayJugadaMia();
   $("posReiniciar").disabled = !hayJugadaMia();
+  $("posAnalizar").disabled = !hayJugadaMia();
   /* si la posición llegó ya terminada, "Otra vez" volvería a lo mismo: un
      principal apagado se ve roto, así que no se muestra (revisor de UX) */
   ver("posOtraVez", hayJugadaMia());
@@ -353,6 +336,27 @@ function deNuevoPos() {
   pintarPosicion();
   turnoDelMotor();
 }
+/* ANALIZAR LO JUGADO (v1.5): la partida, con su arranque en la cabecera FEN,
+   va al análisis de siempre —tarjeta, curva, cuadritos—, como un PGN pegado
+   pero sabiendo de qué lado jugó Juan. El "‹" de la Partida vuelve acá. Con
+   la partida sin terminar el resultado va en "*". */
+function pgnDePos() {
+  const c = juegoPos();
+  const res = c.in_checkmate() ? (c.turn() === "w" ? "0-1" : "1-0") : c.game_over() ? "1/2-1/2" : "*";
+  const motor = "Motor, nivel " + NIVEL_POS;
+  const cab = [["Event", "Posición"], ["White", POS.yo === "w" ? "Vos" : motor],
+    ["Black", POS.yo === "b" ? "Vos" : motor], ["Result", res]];
+  if (POS.inicial !== FEN_INICIAL) cab.push(["SetUp", "1"], ["FEN", POS.inicial]);
+  return cab.map(([k, v]) => `[${k} "${v}"]`).join("\n") + "\n\n" + c.pgn({ max_width: 0 }).split("\n\n").pop();
+}
+$("posAnalizar").onclick = seguro("posición: analizar", () => {
+  if (!POS || POS.error || !hayJugadaMia()) return;
+  if (TRABAJANDO) return avisar(QUE_CORRE === "mes" ? "Esperá que termine el mes" : "Esperá que termine el análisis");
+  cancelarMotorPos();
+  ELEGIDA = pgnDePos(); ELEGIDA_ID = idPartida({ pgn: ELEGIDA });
+  ELEGIDA_META = null; ELEGIDA_YO = POS.yo;
+  return analizarElegida();
+});
 /* desde la hoja se cierra, así se ve la posición de vuelta */
 $("posReiniciar").onclick = seguro("posición: de nuevo", () => { verHojaPos(false); deNuevoPos(); });
 $("posOtraVez").onclick = seguro("posición: otra vez", deNuevoPos);

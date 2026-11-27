@@ -1645,6 +1645,30 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   if (Object.values(barra).some(b => b.fila < 8 || b.version < 8) || enPartida !== "none")
     console.log("OJO: la barra de los módulos tapa o pega lo último del inicio, o aparece en la Partida");
 }
+/* LO JUGADO EN POSICIONES, ANALIZADO (v1.5; prevención del revisor de UX,
+   causas A y C): las comidas de la compu se contaban contra el juego
+   completo y K+P contra K "había comido" todo, y el arnés no llevaba esta
+   Partida a la compu. Un final sin capturas: arriba y abajo, cero piezas.
+   Va al final para no cambiar ninguna captura de arriba. */
+{
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  await pg.evaluate(() => { location.hash = "fen=4k3/8/8/8/8/8/4P3/4K3_w_-_-_0_23&color=w"; });
+  await pg.waitForSelector("#zonaPosicion:not(.oculto)", { timeout: 10000 });
+  await pg.waitForTimeout(300);
+  await pg.click(`#posTablero [data-sq="e2"]`); await pg.click(`#posTablero [data-sq="e4"]`);
+  await pg.waitForTimeout(300);
+  await pg.click("#posAnalizar");
+  await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 30000 });
+  await pg.waitForFunction(() => !document.getElementById("revEstado").textContent, null, { timeout: 30000 });
+  await pg.setViewportSize({ width: 1280, height: 800 }); await pg.waitForTimeout(300);
+  const desdePos = await pg.evaluate(() => ({
+    comidas: ["cArriba", "cAbajo"].map(id => document.querySelectorAll(`#${id} use`).length),
+    volver: document.getElementById("volverDeLaPartida").title,
+    tira: document.getElementById("tiraSc").textContent.replace(/\s+/g, " ").trim().slice(0, 40) }));
+  console.log("partida desde una posición:", JSON.stringify(desdePos), "(comidas 0 y 0; volver a la posición; tira desde 23.)");
+  if (desdePos.comidas.some(n => n > 0) || !/posición/.test(desdePos.volver)) console.log("OJO: la Partida desde una posición");
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+}
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");
 /* y no queda en un número que hay que acordarse de leer: si a un mismo ancho

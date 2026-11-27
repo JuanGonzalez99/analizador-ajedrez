@@ -239,6 +239,15 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       (caja oculta, sin `hubo-error`) y con chess.js en 404 (la caja sale y
       nombra el archivo). Pasa por el revisor de UX.
 
+- [ ] **Las partidas Chess960 se analizan como si fueran normales**
+      (revisor de ajedrez, v1.5). Desde la v1.5 el arranque sale de la
+      cabecera FEN, así que una `[Variant "Chess960"]` de chess.com se
+      analiza desde su posición, pero el motor contesta enroques de 960
+      (`bestmove f1g1` en `bqnbrkrn/…/BQNBRKRN w KQkq`) que chess.js no pasa
+      a notación: la tarjeta mostraría el UCI crudo. Decir "Chess960 no se
+      analiza" en la fila y al abrirla (lo honesto y chico), o usar
+      `UCI_Chess960`. Antes se analizaban desde la inicial, que era peor.
+
 ## Etapa 2 · Partir `index.html`
 
 El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
@@ -321,7 +330,7 @@ Práctica y Lecciones, que también son "jugar desde una posición".
       con el nivel elegible.~~ (hecho en la v1.1; se adelantó a la barra de
       abajo, que pide el segundo módulo ya hecho)
 - [x] ~~Armar una posición a mano en el tablero.~~ (hecho en la v1.4: el revisor eligió la A entre cuatro, la paleta en dos filas abajo)
-- [ ] **Analizar lo que jugaste contra el motor** (Juan, 26-nov): al
+- [x] ~~**Analizar lo que jugaste contra el motor**~~ (hecho en la v1.5: un botón Analizar al lado de Deshacer) (Juan, 26-nov): al
       terminar (o cuando quieras), pasar la partida jugada desde la
       posición al análisis de siempre, con la tarjeta y la curva.
 - [ ] **Que el motor no conteste al instante** (Juan, 26-nov: *"jugaba
@@ -742,6 +751,17 @@ Pendientes que estaban anotados solo en el traspaso.
       el arrastre (~768: no hay jugada `from`), así que nunca llegan al final
       del arnés. Que salteen lo que pide más jugadas de las que tienen.
       Interno.
+- [ ] **Posiciones: tres acciones en la fila cuando llegue "Pista"**
+      (revisor de UX, v1.5). Deshacer (130) y Analizar (119) ocupan 261 de
+      los 358 útiles a 386, y un tercero con ícono y texto no entra en un
+      renglón. ¿Cómo entran tres acciones de frecuencias distintas (Deshacer
+      seguido, Pista de vez en cuando, Analizar una vez por partida) sin
+      pasar a dos renglones? Con variantes, junto con el ítem de la Pista.
+- [ ] **Un PGN pegado con un arranque imposible** (revisor de ajedrez,
+      v1.5): peón en la octava, sin rey, el que no mueve en jaque.
+      `prepararPartida` lo acepta; Stockfish contesta `(none)` y no se
+      cuelga, pero el análisis no sirve. Pasarlo por `problemaDelFen` (hoy
+      en `posicion.js`) y decir "la posición de arranque no es válida".
 
 ### Ideas de los revisores para más adelante
 

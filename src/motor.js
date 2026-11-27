@@ -120,7 +120,7 @@ function mostrarVista(v, opc) {
   $("tarjetaMesSub").textContent = nAnal ? cuantas(nAnal, "partida analizada", "partidas analizadas") : "";
   /* "‹ Partidas" o "‹ Estadísticas": dice a dónde te lleva, que es de donde viniste */
   const de = history.state && history.state.de;
-  $("volverAQue").textContent = de === "mes" ? "Estadísticas" : "Partidas";
+  $("volverAQue").textContent = de === "mes" ? "Estadísticas" : de === "posicion" ? "la posición" : "Partidas";
   /* desde la v0.123 el volver es la flecha sola: el destino lo dicen la
      etiqueta y el globito */
   $("volverDeLaPartida").ariaLabel = $("volverDeLaPartida").title = "Volver a " + $("volverAQue").textContent;

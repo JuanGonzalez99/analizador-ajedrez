@@ -525,7 +525,8 @@ function pintarRevision() {
   const hasta = varEnTira ? PRUEBA.desde0 : R.filas.length;
   const selTira = varAbajo && PRUEBA.ver > 0 ? -1 : IDX;
   $("tiraSc").innerHTML = R.filas.slice(0, hasta).map((x, i) =>
-    (x.turno === "w" || i === 0 ? `<span class="np">${x.n}.</span>` : "") +
+    /* una partida desde una posición puede arrancar con negras: "23…" (v1.5) */
+    (x.turno === "w" || i === 0 ? `<span class="np">${x.n}${x.turno === "w" ? "." : "\u2026"}</span>` : "") +
     celda(x, i, selTira)).join("") +
     (varEnTira ? laVarianteEnLaTira() : varAbajo ? "" : cierreDeLaTira(fin, R.filas));
   $("tiraSc").querySelectorAll("span[data-i]").forEach(sp => {
@@ -601,7 +602,7 @@ function pintarRevision() {
          dos veces lo mismo. */
       lista.innerHTML = R.filas.map((x, i) =>
         `<div class="${i === selTira ? "aca" : ""}">` +
-        `<span class="np">${x.turno === "w" ? x.n + "." : ""}</span>` +
+        `<span class="np">${x.turno === "w" ? x.n + "." : i === 0 ? x.n + "\u2026" : ""}</span>` +
         celda(x, i, selTira) +
         `<span class="pe"${(!lado || VER_AMBOS || x.turno === lado) ? "" : ` style="opacity:.55"`}>` +
         `${typeof x.perdida === "number" ? x.perdida.toFixed(2) : ""}</span>` +

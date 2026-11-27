@@ -378,7 +378,7 @@ async function abrirPartida(g) {
                                : "Esperá que termine esta, o tocá Parar");
     return;
   }
-  ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g;
+  ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g; ELEGIDA_YO = null;
   await analizarElegida();
 }
 
@@ -386,7 +386,7 @@ $("usarPgn").onclick = seguro("pgn", () => {
   const t = $("pgn").value.trim();
   if (!t) return;
   /* un PGN pegado no trae el JSON del mes, así que no hay motivo que mostrar */
-  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t }); ELEGIDA_META = null;
+  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t }); ELEGIDA_META = null; ELEGIDA_YO = null;
   return analizarElegida();
 });
 
@@ -438,8 +438,10 @@ async function analizarElegida() {
     pintarCabPartida(rivalM || `${m.white.username} vs ${m.black.username}`, eloM, finM, "");
   } else pintarCabPartida("", "", "", "");
   const quien = rivalM ? `<span class="deQuien"> vs ${sinHtml(rivalM)} \u00b7</span>` : "";
+  /* desde Posiciones (v1.5) también se entra: el "‹" de la Partida vuelve
+     a la posición, que sigue como estaba */
   const tEntrar = setTimeout(() => {
-    if (VISTA === "inicio" && OCUPADO) { fui = true; irAPantalla("partida"); }
+    if ((VISTA === "inicio" || VISTA === "posicion") && OCUPADO) { fui = true; irAPantalla("partida"); }
   }, 300);
   try {
     const prof = +$("prof").value;
@@ -453,9 +455,10 @@ async function analizarElegida() {
        camino del mes lo pega igual pero por su cuenta (`r.meta = g`), y por eso
        el motivo salía ahí y no acá. */
     R.meta = ELEGIDA_META;
+    if (ELEGIDA_YO) R.yo = ELEGIDA_YO;
     progreso(1);
     IDX = -1;
-    GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
+    GIRADO = R.yo ? R.yo === "b" : !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
     clearTimeout(tEntrar);

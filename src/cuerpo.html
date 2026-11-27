@@ -352,8 +352,9 @@
          en texto, fundido a la izquierda cuando no entra -->
     <p id="posJugadas"></p>
     <!-- lo que se toca jugando: la fila no cambia en toda la partida, ni al
-         terminar (ahí "Pista" va a entrar al lado) -->
-    <div class="fila posAcciones"><button id="posDeshacer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Deshacer</button></div>
+         terminar (ahí "Pista" va a entrar al lado). Analizar (v1.5) lleva lo
+         jugado a la Partida, en cualquier momento -->
+    <div class="fila posAcciones"><button id="posDeshacer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Deshacer</button><button id="posAnalizar"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 20h18M4 16l5-5 4 3 7-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Analizar</button></div>
     <!-- el final, con peso, debajo de la fila: no la tapa ni la corre -->
     <div id="posFin" class="oculto" aria-live="polite">
       <div class="posFinTxt"><div id="posFinTit"></div><div id="posFinSub"></div></div>

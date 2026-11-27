@@ -72,19 +72,26 @@ const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
    número dice el estado. */
 const INICIALES = { q: 1, r: 2, b: 2, n: 2, p: 8 };
 const ORDEN_COMIDAS = ["q", "r", "b", "n", "p"];
-function piezasComidas(fen) {
+/* `desde` (v1.5): una partida jugada desde una posición no arranca con el
+   juego completo, y contra INICIALES K+P contra K "había comido" todo
+   (revisor de UX). Lo que falta se cuenta contra su arranque. */
+function contarPiezas(fen) {
   const hay = { w: { q: 0, r: 0, b: 0, n: 0, p: 0 }, b: { q: 0, r: 0, b: 0, n: 0, p: 0 } };
+  for (const fila of new Chess(fen).board()) for (const c of fila)
+    if (c && c.type !== "k") hay[c.color][c.type]++;
+  return hay;
+}
+function piezasComidas(fen, desde = null) {
+  const hay = contarPiezas(fen);
+  const base = desde ? contarPiezas(desde) : { w: INICIALES, b: INICIALES };
   let dif = 0;
-  for (const fila of new Chess(fen).board()) for (const c of fila) {
-    if (!c) continue;
-    if (c.type !== "k") hay[c.color][c.type]++;
-    dif += (c.color === "w" ? 1 : -1) * VALOR[c.type];
-  }
+  for (const col of ["w", "b"]) for (const t of ORDEN_COMIDAS)
+    dif += (col === "w" ? 1 : -1) * VALOR[t] * hay[col][t];
   /* `faltan.w` son piezas BLANCAS que ya no están, o sea lo que comió el negro */
   const faltan = col => {
     const o = {};
     for (const t of ORDEN_COMIDAS) {
-      const n = INICIALES[t] - hay[col][t];
+      const n = base[col][t] - hay[col][t];
       if (n > 0) o[t] = n;
     }
     return o;
@@ -634,6 +641,27 @@ function segundosPensados(base, jugadas, fens, cad) {
   });
 }
 
+/* LO QUE EL FEN DICE Y EL TABLERO NO SOSTIENE, se limpia en silencio
+   (revisor de ajedrez, v1.1): un editor deja "KQkq" por defecto, y un
+   enroque sin su torre o sin el rey en su casilla CUELGA a Stockfish (no
+   contesta nunca) y chess.js lo ofrece igual. El al paso sin el peón que
+   acaba de avanzar, lo mismo: chess.js lo juega y Stockfish no. */
+function limpiarFen(fen) {
+  const p = fen.split(" ");
+  const c = new Chess();
+  if (!c.load(fen)) return fen;
+  const hay = (sq, t) => { const x = c.get(sq); return !!x && x.type + x.color === t; };
+  const ok = { K: hay("e1", "kw") && hay("h1", "rw"), Q: hay("e1", "kw") && hay("a1", "rw"),
+               k: hay("e8", "kb") && hay("h8", "rb"), q: hay("e8", "kb") && hay("a8", "rb") };
+  p[2] = [...p[2]].filter(x => ok[x]).join("") || "-";
+  if (p[3] !== "-") {
+    const col = p[3][0], fila = p[3][1];
+    const peon = p[1] === "w" ? col + "5" : col + "4", tipo = p[1] === "w" ? "pb" : "pw";
+    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]))) p[3] = "-";
+  }
+  return p.join(" ");
+}
+
 function prepararPartida(pgn) {
   const base = new Chess();
   if (!base.load_pgn(normalizarPgn(pgn), { sloppy: true }))
@@ -641,10 +669,27 @@ function prepararPartida(pgn) {
                     "notación algebraica (e4, Nf3, O-O)");
   const jugadas = base.history({ verbose: true });
   if (!jugadas.length) throw new Error("el PGN no tiene jugadas");
-  const rep = new Chess();
-  const fens = [rep.fen()];
-  for (const j of jugadas) { rep.move(j); fens.push(rep.fen()); }
+  /* DESDE UNA POSICIÓN (v1.5): una partida jugada en Posiciones trae su
+     arranque en la cabecera FEN, como manda el PGN, y se rejuega desde ahí.
+     El arranque sale de lo que chess.js cargó (deshaciendo todo), no de
+     `cab.FEN`, que no ve un "[Fen" en minúsculas; y pasa por `limpiarFen`:
+     un PGN pegado con "KQkq" sin torres colgaba a Stockfish (revisor de
+     ajedrez). Si después alguna jugada no entra, el PGN no se puede leer. */
   const cab = base.header();
+  let rep = new Chess();
+  if (/\[\s*fen\s/i.test(pgn)) {
+    /* solo si trae FEN: las de chess.com no pagan una segunda lectura */
+    const arranque = new Chess();
+    arranque.load_pgn(normalizarPgn(pgn), { sloppy: true });
+    while (arranque.undo());
+    rep = new Chess(limpiarFen(arranque.fen()));
+  }
+  const fens = [rep.fen()];
+  for (const j of jugadas) {
+    if (!rep.move({ from: j.from, to: j.to, promotion: j.promotion }))
+      throw new Error("no pude leer ese PGN: la posición de arranque no deja jugar " + j.san);
+    fens.push(rep.fen());
+  }
   const cadencia = leerCadencia(cab);
   return { cab, jugadas, fens, cadencia,
            tiempos: segundosPensados(base, jugadas, fens, cadencia) };
@@ -670,10 +715,21 @@ function caidaDe(antes, despues, turno) {
    20-nov). Esto devuelve filas mínimas —turno, si es de libro y precisión—,
    que es todo lo que leen `precisionMedia` y `filasDelUsuario`; la cuenta es
    la misma de `derivarFilas`, y una prueba lo compara contra ella. */
+/* EL TURNO Y EL NÚMERO SALEN DEL FEN (v1.5), no de contar desde la jugada
+   1 con blancas: una partida jugada desde una posición puede arrancar con
+   negras o en la jugada 23. Sin FEN (alguna prueba), la cuenta de siempre. */
+function turnoDeFila(fen, k) {
+  const t = fen ? fen.split(" ")[1] : null;
+  return t === "w" || t === "b" ? t : k % 2 === 0 ? "w" : "b";
+}
+function numeroDeFila(fen, k) {
+  const n = fen ? +fen.split(" ")[5] : 0;
+  return n >= 1 ? n : Math.floor(k / 2) + 1;
+}
 function precisionesRapidas(fens, evs, libro, desde = 0) {
   const filas = [];
   for (let i = 0; i + 1 < fens.length; i++) {
-    const turno = (desde + i) % 2 === 0 ? "w" : "b";
+    const turno = turnoDeFila(fens[i], desde + i);
     const rival = turno === "w" ? "b" : "w";
     const caida = caidaDe(aBlancas(evs[i], turno), aBlancas(evs[i + 1], rival), turno);
     filas.push({ turno, cat: libro.pos.has(claveLibro(fens[i + 1])) ? "libro" : "",
@@ -689,7 +745,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
   for (let i = 0; i < jugadas.length; i++) {
     const j = jugadas[i];
     const k = desde + i;
-    const turno = k % 2 === 0 ? "w" : "b";
+    const turno = turnoDeFila(fens[i], k);
     const rival = turno === "w" ? "b" : "w";
     const antes = aBlancas(evs[i], turno);
     const despues = aBlancas(evs[i + 1], rival);
@@ -872,7 +928,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
                  : (mateDespues > 0 ? rival : (rival === "w" ? "b" : "w"));
 
     filas.push({
-      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, cats, perdida, precision, caida,
+      n: numeroDeFila(fens[i], k), turno, san: j.san, uci, cat, cats, perdida, precision, caida,
       /* con la partida terminada en el tablero, la barra muestra el RESULTADO y
          no la evaluación: no hay evaluación que perder, y "M0" o "+0.00" no es
          lo que uno quiere leer cuando la partida ya se terminó */

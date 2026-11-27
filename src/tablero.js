@@ -652,7 +652,8 @@ function svgComidas(color, faltan) {
     "</svg>";
 }
 function pintarComidas(fen) {
-  const c = piezasComidas(fen);
+  /* contra el arranque de la partida, que es la inicial salvo desde una posición */
+  const c = piezasComidas(fen, (R && R.fens && R.fens[0]) || null);
   /* arriba del tablero juega el negro, salvo que esté girado */
   const pintar = (id, come) => {
     /* lo que comió el blanco son piezas NEGRAS: por eso se cruza */

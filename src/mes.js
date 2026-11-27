@@ -486,6 +486,7 @@ function esAsistida(r) {
 }
 
 function ladoDelUsuario(r) {
+  if (r.yo) return r.yo;
   if (!USUARIO) return null;
   const b = (r.cab.White || "").toLowerCase(), n = (r.cab.Black || "").toLowerCase();
   return b === USUARIO ? "w" : n === USUARIO ? "b" : null;

@@ -1034,9 +1034,9 @@
   #posJugadas .j { margin-right: var(--e-2); }
   .posAcciones { margin: var(--e-3) 0 0; gap: var(--e-3); }
   /* secundario con ícono y texto, 44 a la vista y 48 de toque (§1.7) */
-  #posDeshacer { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
+  #posDeshacer, #posAnalizar { min-height: 44px; display: inline-flex; align-items: center; gap: var(--e-2);
                  padding: 0 var(--e-4) 0 var(--e-3); position: relative; }
-  #posDeshacer::before { content: ""; position: absolute; inset: -2px 0; }
+  #posDeshacer::before, #posAnalizar::before { content: ""; position: absolute; inset: -2px 0; }
   /* EL FINAL CON PESO: el título grande hace el peso, no el color (revisor:
      un rojo para la derrota grita, y la app no gira alrededor de los
      errores). Borde de acento solo cuando ganaste. "Otra vez" es el único
@@ -1729,7 +1729,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.4.1 · 27-11";
+  window.VERSION = "v1.5 · 27-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2296,8 +2296,9 @@
          en texto, fundido a la izquierda cuando no entra -->
     <p id="posJugadas"></p>
     <!-- lo que se toca jugando: la fila no cambia en toda la partida, ni al
-         terminar (ahí "Pista" va a entrar al lado) -->
-    <div class="fila posAcciones"><button id="posDeshacer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Deshacer</button></div>
+         terminar (ahí "Pista" va a entrar al lado). Analizar (v1.5) lleva lo
+         jugado a la Partida, en cualquier momento -->
+    <div class="fila posAcciones"><button id="posDeshacer"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 14L4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Deshacer</button><button id="posAnalizar"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 20h18M4 16l5-5 4 3 7-8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>Analizar</button></div>
     <!-- el final, con peso, debajo de la fila: no la tapa ni la corre -->
     <div id="posFin" class="oculto" aria-live="polite">
       <div class="posFinTxt"><div id="posFinTit"></div><div id="posFinSub"></div></div>
@@ -2508,19 +2509,26 @@ const VALOR = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
    número dice el estado. */
 const INICIALES = { q: 1, r: 2, b: 2, n: 2, p: 8 };
 const ORDEN_COMIDAS = ["q", "r", "b", "n", "p"];
-function piezasComidas(fen) {
+/* `desde` (v1.5): una partida jugada desde una posición no arranca con el
+   juego completo, y contra INICIALES K+P contra K "había comido" todo
+   (revisor de UX). Lo que falta se cuenta contra su arranque. */
+function contarPiezas(fen) {
   const hay = { w: { q: 0, r: 0, b: 0, n: 0, p: 0 }, b: { q: 0, r: 0, b: 0, n: 0, p: 0 } };
+  for (const fila of new Chess(fen).board()) for (const c of fila)
+    if (c && c.type !== "k") hay[c.color][c.type]++;
+  return hay;
+}
+function piezasComidas(fen, desde = null) {
+  const hay = contarPiezas(fen);
+  const base = desde ? contarPiezas(desde) : { w: INICIALES, b: INICIALES };
   let dif = 0;
-  for (const fila of new Chess(fen).board()) for (const c of fila) {
-    if (!c) continue;
-    if (c.type !== "k") hay[c.color][c.type]++;
-    dif += (c.color === "w" ? 1 : -1) * VALOR[c.type];
-  }
+  for (const col of ["w", "b"]) for (const t of ORDEN_COMIDAS)
+    dif += (col === "w" ? 1 : -1) * VALOR[t] * hay[col][t];
   /* `faltan.w` son piezas BLANCAS que ya no están, o sea lo que comió el negro */
   const faltan = col => {
     const o = {};
     for (const t of ORDEN_COMIDAS) {
-      const n = INICIALES[t] - hay[col][t];
+      const n = base[col][t] - hay[col][t];
       if (n > 0) o[t] = n;
     }
     return o;
@@ -3070,6 +3078,27 @@ function segundosPensados(base, jugadas, fens, cad) {
   });
 }
 
+/* LO QUE EL FEN DICE Y EL TABLERO NO SOSTIENE, se limpia en silencio
+   (revisor de ajedrez, v1.1): un editor deja "KQkq" por defecto, y un
+   enroque sin su torre o sin el rey en su casilla CUELGA a Stockfish (no
+   contesta nunca) y chess.js lo ofrece igual. El al paso sin el peón que
+   acaba de avanzar, lo mismo: chess.js lo juega y Stockfish no. */
+function limpiarFen(fen) {
+  const p = fen.split(" ");
+  const c = new Chess();
+  if (!c.load(fen)) return fen;
+  const hay = (sq, t) => { const x = c.get(sq); return !!x && x.type + x.color === t; };
+  const ok = { K: hay("e1", "kw") && hay("h1", "rw"), Q: hay("e1", "kw") && hay("a1", "rw"),
+               k: hay("e8", "kb") && hay("h8", "rb"), q: hay("e8", "kb") && hay("a8", "rb") };
+  p[2] = [...p[2]].filter(x => ok[x]).join("") || "-";
+  if (p[3] !== "-") {
+    const col = p[3][0], fila = p[3][1];
+    const peon = p[1] === "w" ? col + "5" : col + "4", tipo = p[1] === "w" ? "pb" : "pw";
+    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]))) p[3] = "-";
+  }
+  return p.join(" ");
+}
+
 function prepararPartida(pgn) {
   const base = new Chess();
   if (!base.load_pgn(normalizarPgn(pgn), { sloppy: true }))
@@ -3077,10 +3106,27 @@ function prepararPartida(pgn) {
                     "notación algebraica (e4, Nf3, O-O)");
   const jugadas = base.history({ verbose: true });
   if (!jugadas.length) throw new Error("el PGN no tiene jugadas");
-  const rep = new Chess();
-  const fens = [rep.fen()];
-  for (const j of jugadas) { rep.move(j); fens.push(rep.fen()); }
+  /* DESDE UNA POSICIÓN (v1.5): una partida jugada en Posiciones trae su
+     arranque en la cabecera FEN, como manda el PGN, y se rejuega desde ahí.
+     El arranque sale de lo que chess.js cargó (deshaciendo todo), no de
+     `cab.FEN`, que no ve un "[Fen" en minúsculas; y pasa por `limpiarFen`:
+     un PGN pegado con "KQkq" sin torres colgaba a Stockfish (revisor de
+     ajedrez). Si después alguna jugada no entra, el PGN no se puede leer. */
   const cab = base.header();
+  let rep = new Chess();
+  if (/\[\s*fen\s/i.test(pgn)) {
+    /* solo si trae FEN: las de chess.com no pagan una segunda lectura */
+    const arranque = new Chess();
+    arranque.load_pgn(normalizarPgn(pgn), { sloppy: true });
+    while (arranque.undo());
+    rep = new Chess(limpiarFen(arranque.fen()));
+  }
+  const fens = [rep.fen()];
+  for (const j of jugadas) {
+    if (!rep.move({ from: j.from, to: j.to, promotion: j.promotion }))
+      throw new Error("no pude leer ese PGN: la posición de arranque no deja jugar " + j.san);
+    fens.push(rep.fen());
+  }
   const cadencia = leerCadencia(cab);
   return { cab, jugadas, fens, cadencia,
            tiempos: segundosPensados(base, jugadas, fens, cadencia) };
@@ -3106,10 +3152,21 @@ function caidaDe(antes, despues, turno) {
    20-nov). Esto devuelve filas mínimas —turno, si es de libro y precisión—,
    que es todo lo que leen `precisionMedia` y `filasDelUsuario`; la cuenta es
    la misma de `derivarFilas`, y una prueba lo compara contra ella. */
+/* EL TURNO Y EL NÚMERO SALEN DEL FEN (v1.5), no de contar desde la jugada
+   1 con blancas: una partida jugada desde una posición puede arrancar con
+   negras o en la jugada 23. Sin FEN (alguna prueba), la cuenta de siempre. */
+function turnoDeFila(fen, k) {
+  const t = fen ? fen.split(" ")[1] : null;
+  return t === "w" || t === "b" ? t : k % 2 === 0 ? "w" : "b";
+}
+function numeroDeFila(fen, k) {
+  const n = fen ? +fen.split(" ")[5] : 0;
+  return n >= 1 ? n : Math.floor(k / 2) + 1;
+}
 function precisionesRapidas(fens, evs, libro, desde = 0) {
   const filas = [];
   for (let i = 0; i + 1 < fens.length; i++) {
-    const turno = (desde + i) % 2 === 0 ? "w" : "b";
+    const turno = turnoDeFila(fens[i], desde + i);
     const rival = turno === "w" ? "b" : "w";
     const caida = caidaDe(aBlancas(evs[i], turno), aBlancas(evs[i + 1], rival), turno);
     filas.push({ turno, cat: libro.pos.has(claveLibro(fens[i + 1])) ? "libro" : "",
@@ -3125,7 +3182,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
   for (let i = 0; i < jugadas.length; i++) {
     const j = jugadas[i];
     const k = desde + i;
-    const turno = k % 2 === 0 ? "w" : "b";
+    const turno = turnoDeFila(fens[i], k);
     const rival = turno === "w" ? "b" : "w";
     const antes = aBlancas(evs[i], turno);
     const despues = aBlancas(evs[i + 1], rival);
@@ -3308,7 +3365,7 @@ function derivarFilas(jugadas, fens, evs, libro, desde = 0, modo = "critico", ti
                  : (mateDespues > 0 ? rival : (rival === "w" ? "b" : "w"));
 
     filas.push({
-      n: Math.floor(k / 2) + 1, turno, san: j.san, uci, cat, cats, perdida, precision, caida,
+      n: numeroDeFila(fens[i], k), turno, san: j.san, uci, cat, cats, perdida, precision, caida,
       /* con la partida terminada en el tablero, la barra muestra el RESULTADO y
          no la evaluación: no hay evaluación que perder, y "M0" o "+0.00" no es
          lo que uno quiere leer cuando la partida ya se terminó */
@@ -5197,7 +5254,7 @@ function mostrarVista(v, opc) {
   $("tarjetaMesSub").textContent = nAnal ? cuantas(nAnal, "partida analizada", "partidas analizadas") : "";
   /* "‹ Partidas" o "‹ Estadísticas": dice a dónde te lleva, que es de donde viniste */
   const de = history.state && history.state.de;
-  $("volverAQue").textContent = de === "mes" ? "Estadísticas" : "Partidas";
+  $("volverAQue").textContent = de === "mes" ? "Estadísticas" : de === "posicion" ? "la posición" : "Partidas";
   /* desde la v0.123 el volver es la flecha sola: el destino lo dicen la
      etiqueta y el globito */
   $("volverDeLaPartida").ariaLabel = $("volverDeLaPartida").title = "Volver a " + $("volverAQue").textContent;
@@ -6350,7 +6407,8 @@ function svgComidas(color, faltan) {
     "</svg>";
 }
 function pintarComidas(fen) {
-  const c = piezasComidas(fen);
+  /* contra el arranque de la partida, que es la inicial salvo desde una posición */
+  const c = piezasComidas(fen, (R && R.fens && R.fens[0]) || null);
   /* arriba del tablero juega el negro, salvo que esté girado */
   const pintar = (id, come) => {
     /* lo que comió el blanco son piezas NEGRAS: por eso se cruza */
@@ -6573,6 +6631,9 @@ let PARTIDAS = [], ELEGIDA = null, ELEGIDA_ID = null, R = null, IDX = 0, VER_MEJ
    elige en la lista y se necesita mucho después, en la revisión, así que tiene
    que viajar. Es null con un PGN pegado, y ahí el motivo no se muestra. */
 let ELEGIDA_META = null;
+/* De qué lado jugó Juan una partida de Posiciones (v1.5): no hay usuario de
+   chess.com en la cabecera, así que el lado viaja aparte. null en las demás. */
+let ELEGIDA_YO = null;
 /* Cadencia elegida, por clave exacta ("300+0"). null = todavía no se eligió y
    manda la que más partidas tiene. Es una PREFERENCIA y no una orden: si el mes
    que se abre no tiene esa cadencia, se cae a la dominante (elegirCadencia). */
@@ -7452,7 +7513,7 @@ async function abrirPartida(g) {
                                : "Esperá que termine esta, o tocá Parar");
     return;
   }
-  ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g;
+  ELEGIDA = g.pgn; ELEGIDA_ID = idPartida(g); ELEGIDA_META = g; ELEGIDA_YO = null;
   await analizarElegida();
 }
 
@@ -7460,7 +7521,7 @@ $("usarPgn").onclick = seguro("pgn", () => {
   const t = $("pgn").value.trim();
   if (!t) return;
   /* un PGN pegado no trae el JSON del mes, así que no hay motivo que mostrar */
-  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t }); ELEGIDA_META = null;
+  ELEGIDA = t; ELEGIDA_ID = idPartida({ pgn: t }); ELEGIDA_META = null; ELEGIDA_YO = null;
   return analizarElegida();
 });
 
@@ -7512,8 +7573,10 @@ async function analizarElegida() {
     pintarCabPartida(rivalM || `${m.white.username} vs ${m.black.username}`, eloM, finM, "");
   } else pintarCabPartida("", "", "", "");
   const quien = rivalM ? `<span class="deQuien"> vs ${sinHtml(rivalM)} \u00b7</span>` : "";
+  /* desde Posiciones (v1.5) también se entra: el "‹" de la Partida vuelve
+     a la posición, que sigue como estaba */
   const tEntrar = setTimeout(() => {
-    if (VISTA === "inicio" && OCUPADO) { fui = true; irAPantalla("partida"); }
+    if ((VISTA === "inicio" || VISTA === "posicion") && OCUPADO) { fui = true; irAPantalla("partida"); }
   }, 300);
   try {
     const prof = +$("prof").value;
@@ -7527,9 +7590,10 @@ async function analizarElegida() {
        camino del mes lo pega igual pero por su cuenta (`r.meta = g`), y por eso
        el motivo salía ahí y no acá. */
     R.meta = ELEGIDA_META;
+    if (ELEGIDA_YO) R.yo = ELEGIDA_YO;
     progreso(1);
     IDX = -1;
-    GIRADO = !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
+    GIRADO = R.yo ? R.yo === "b" : !!USUARIO && (R.cab.Black || "").toLowerCase() === USUARIO;
     pintarResumen(prof);
     pintarRevision();
     clearTimeout(tEntrar);
@@ -8037,6 +8101,7 @@ function esAsistida(r) {
 }
 
 function ladoDelUsuario(r) {
+  if (r.yo) return r.yo;
   if (!USUARIO) return null;
   const b = (r.cab.White || "").toLowerCase(), n = (r.cab.Black || "").toLowerCase();
   return b === USUARIO ? "w" : n === USUARIO ? "b" : null;
@@ -9109,26 +9174,8 @@ function problemaDelFen(fen) {
   return null;
 }
 
-/* LO QUE EL FEN DICE Y EL TABLERO NO SOSTIENE, se limpia en silencio
-   (revisor de ajedrez, v1.1): un editor deja "KQkq" por defecto, y un
-   enroque sin su torre o sin el rey en su casilla CUELGA a Stockfish (no
-   contesta nunca) y chess.js lo ofrece igual. El al paso sin el peón que
-   acaba de avanzar, lo mismo: chess.js lo juega y Stockfish no. */
-function limpiarFen(fen) {
-  const p = fen.split(" ");
-  const c = new Chess();
-  if (!c.load(fen)) return fen;
-  const hay = (sq, t) => { const x = c.get(sq); return !!x && x.type + x.color === t; };
-  const ok = { K: hay("e1", "kw") && hay("h1", "rw"), Q: hay("e1", "kw") && hay("a1", "rw"),
-               k: hay("e8", "kb") && hay("h8", "rb"), q: hay("e8", "kb") && hay("a8", "rb") };
-  p[2] = [...p[2]].filter(x => ok[x]).join("") || "-";
-  if (p[3] !== "-") {
-    const col = p[3][0], fila = p[3][1];
-    const peon = p[1] === "w" ? col + "5" : col + "4", tipo = p[1] === "w" ? "pb" : "pw";
-    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]))) p[3] = "-";
-  }
-  return p.join(" ");
-}
+/* `limpiarFen` vive en el bloque de análisis desde la v1.5 (`analisis-evaluacion.js`):
+   también limpia el FEN que trae la cabecera de un PGN. */
 
 /* ARMAR UNA POSICIÓN A MANO (v1.4). El tablero del editor es un mapa
    casilla → pieza ("e1" → "wk"); de ahí sale la colocación del FEN. Los
@@ -9316,6 +9363,7 @@ function pintarPosicion() {
   $("posColor").value = POS.yo;
   $("posDeshacer").disabled = !hayJugadaMia();
   $("posReiniciar").disabled = !hayJugadaMia();
+  $("posAnalizar").disabled = !hayJugadaMia();
   /* si la posición llegó ya terminada, "Otra vez" volvería a lo mismo: un
      principal apagado se ve roto, así que no se muestra (revisor de UX) */
   ver("posOtraVez", hayJugadaMia());
@@ -9411,6 +9459,27 @@ function deNuevoPos() {
   pintarPosicion();
   turnoDelMotor();
 }
+/* ANALIZAR LO JUGADO (v1.5): la partida, con su arranque en la cabecera FEN,
+   va al análisis de siempre —tarjeta, curva, cuadritos—, como un PGN pegado
+   pero sabiendo de qué lado jugó Juan. El "‹" de la Partida vuelve acá. Con
+   la partida sin terminar el resultado va en "*". */
+function pgnDePos() {
+  const c = juegoPos();
+  const res = c.in_checkmate() ? (c.turn() === "w" ? "0-1" : "1-0") : c.game_over() ? "1/2-1/2" : "*";
+  const motor = "Motor, nivel " + NIVEL_POS;
+  const cab = [["Event", "Posición"], ["White", POS.yo === "w" ? "Vos" : motor],
+    ["Black", POS.yo === "b" ? "Vos" : motor], ["Result", res]];
+  if (POS.inicial !== FEN_INICIAL) cab.push(["SetUp", "1"], ["FEN", POS.inicial]);
+  return cab.map(([k, v]) => `[${k} "${v}"]`).join("\n") + "\n\n" + c.pgn({ max_width: 0 }).split("\n\n").pop();
+}
+$("posAnalizar").onclick = seguro("posición: analizar", () => {
+  if (!POS || POS.error || !hayJugadaMia()) return;
+  if (TRABAJANDO) return avisar(QUE_CORRE === "mes" ? "Esperá que termine el mes" : "Esperá que termine el análisis");
+  cancelarMotorPos();
+  ELEGIDA = pgnDePos(); ELEGIDA_ID = idPartida({ pgn: ELEGIDA });
+  ELEGIDA_META = null; ELEGIDA_YO = POS.yo;
+  return analizarElegida();
+});
 /* desde la hoja se cierra, así se ve la posición de vuelta */
 $("posReiniciar").onclick = seguro("posición: de nuevo", () => { verHojaPos(false); deNuevoPos(); });
 $("posOtraVez").onclick = seguro("posición: otra vez", deNuevoPos);
@@ -10070,7 +10139,8 @@ function pintarRevision() {
   const hasta = varEnTira ? PRUEBA.desde0 : R.filas.length;
   const selTira = varAbajo && PRUEBA.ver > 0 ? -1 : IDX;
   $("tiraSc").innerHTML = R.filas.slice(0, hasta).map((x, i) =>
-    (x.turno === "w" || i === 0 ? `<span class="np">${x.n}.</span>` : "") +
+    /* una partida desde una posición puede arrancar con negras: "23…" (v1.5) */
+    (x.turno === "w" || i === 0 ? `<span class="np">${x.n}${x.turno === "w" ? "." : "\u2026"}</span>` : "") +
     celda(x, i, selTira)).join("") +
     (varEnTira ? laVarianteEnLaTira() : varAbajo ? "" : cierreDeLaTira(fin, R.filas));
   $("tiraSc").querySelectorAll("span[data-i]").forEach(sp => {
@@ -10146,7 +10216,7 @@ function pintarRevision() {
          dos veces lo mismo. */
       lista.innerHTML = R.filas.map((x, i) =>
         `<div class="${i === selTira ? "aca" : ""}">` +
-        `<span class="np">${x.turno === "w" ? x.n + "." : ""}</span>` +
+        `<span class="np">${x.turno === "w" ? x.n + "." : i === 0 ? x.n + "\u2026" : ""}</span>` +
         celda(x, i, selTira) +
         `<span class="pe"${(!lado || VER_AMBOS || x.turno === lado) ? "" : ` style="opacity:.55"`}>` +
         `${typeof x.perdida === "number" ? x.perdida.toFixed(2) : ""}</span>` +
