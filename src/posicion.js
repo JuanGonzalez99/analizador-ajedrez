@@ -263,9 +263,21 @@ function verHojaPos(abrir, cual = "hojaPos") {
   $(cual).classList.toggle("oculto", !abrir);
   $(btn).setAttribute("aria-expanded", abrir ? "true" : "false");
   HOJA_POS = abrir ? cual : null;
+  /* [PC] EN LA COMPU, UN MENÚ COLGADO DEL BOTÓN (v1.6.1, revisor de UX): la
+     hoja que sube tapaba el tablero; acá cae debajo del redondo, alineada
+     al borde derecho de la columna */
+  const h = $(cual);
+  if (abrir && window.matchMedia("(min-width: 1000px)").matches) {
+    const r = $(btn).getBoundingClientRect(), col = $("posJugadas").getBoundingClientRect();
+    h.style.top = Math.round(r.bottom + 8) + "px";
+    h.style.left = Math.round(col.right - 336) + "px";
+  } else { h.style.top = ""; h.style.left = ""; }
   (abrir ? $(listo) : $(btn)).focus();
 }
 const hojaPosAbierta = () => !!HOJA_POS;
+/* [PC] el menú colgado no sigue a la columna si cambia la ventana: se
+   cierra (revisor, v1.6.1). La hoja del celu no tiene `top` y no se toca. */
+window.addEventListener("resize", () => { if (HOJA_POS && $(HOJA_POS).style.top) verHojaPos(false); });
 $("btnPosAjustes").onclick = seguro("posición: la hoja", () => verHojaPos(true));
 $("cerrarPos").onclick = seguro("posición: cerrar la hoja", () => verHojaPos(false));
 $("btnPosNueva").onclick = seguro("posición: nueva partida", () => verHojaPos(true, "hojaNueva"));

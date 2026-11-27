@@ -542,6 +542,45 @@
     #zonaPosicion svg.tab { max-width: var(--ladoTab); }
   }
 
+  /* [PC] POSICIONES A TODA LA PANTALLA (v1.6.1; Juan, 27-nov: "el tablero
+     ocupa muy poco espacio… podría ocupar toda la pantalla, ya que es lo
+     único que hay"). El revisor eligió la P2 entre cuatro: el tablero a la
+     izquierda tan alto como la ventana, y a la derecha una columna de 336
+     que arranca a su altura con la cabecera (título, estado y los dos
+     redondos), la tira, Deshacer/Analizar y el final. Sin el tope de 1110 del
+     body: el lado sale del alto (100vh − 64: los 8 de arriba, la versión y
+     su aire) o del ancho que queda después del riel (104), la columna, el
+     hueco de 32 y 24 de margen derecho, y el grupo se centra en lo que
+     sobra. Las hojas, acá, son menús colgados de su botón (`verHojaPos`). */
+  @media (min-width: 1000px) {
+    body.enPosicion { max-width: none; padding-right: 24px; padding-bottom: 8px; }
+    #zonaPosicion { --ladoTab: clamp(360px, min(100vh - 64px, 100vw - 14px - 24px - 368px), 1200px);
+                    max-width: calc(var(--ladoTab) + 368px); }
+    #zonaPosicion:not(.oculto) { display: grid; grid-template-columns: var(--ladoTab) 336px;
+                    column-gap: 32px; align-items: start; align-content: start; }
+    #zonaPosicion svg.tab { max-width: var(--ladoTab); }
+    /* con `body.enVista` adelante: la regla del celu que lo pone en 0 tiene
+       esa especificidad y le ganaba (revisor, v1.6.1). Los redondos, al ras
+       de arriba de la casilla a8 */
+    body.enVista #zonaPosicion .cabvista { grid-column: 2; grid-row: 1; margin-top: calc(var(--ladoTab) * 15 / 366); }
+    #posJuego { display: contents; }
+    #posTablero { grid-column: 1; grid-row: 1 / span 6; margin-top: 0; }
+    #posJugadas, .posAcciones, #posFin, #posError { grid-column: 2; }
+    body.enPosicion .pie { max-width: calc(clamp(360px, min(100vh - 64px, 100vw - 14px - 24px - 368px), 1200px) + 368px); }
+    /* el menú: del ancho de la columna, sin velo (el fondo sigue tomando el
+       clic que lo cierra), con la sombra de lo que flota (§1.6) */
+    #hojaPos, #hojaNueva { right: auto; bottom: auto; width: 336px; max-width: none; margin: 0;
+                           border: 1px solid var(--linea); border-radius: var(--r-tarjeta);
+                           padding-bottom: var(--e-4); }
+    #hojaPos .ajTirador, #hojaNueva .ajTirador { display: none; }
+    body.enPosicion #fondoAjustes { background: transparent; }
+  }
+  @media (pointer: fine) and (min-width: 1000px) {
+    body.enPosicion.conBarra { padding-left: 104px; padding-bottom: 8px; }
+    #zonaPosicion { --ladoTab: clamp(360px, min(100vh - 64px, 100vw - 104px - 24px - 368px), 1200px); }
+    body.enPosicion .pie { max-width: calc(clamp(360px, min(100vh - 64px, 100vw - 104px - 24px - 368px), 1200px) + 368px); }
+  }
+
   /* [PC] ARMAR UNA POSICIÓN (v1.4). Desde 1000 la paleta y los controles en
      una columna de 336 a la derecha del tablero, juntos arriba (24 entre
      bloques: un hueco en el medio de la columna se lee como algo que

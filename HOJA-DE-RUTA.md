@@ -573,7 +573,7 @@ archiva los que pierden sentido.
 
 - [ ] **Posiciones: elegir la pieza al coronar** (v1.1). Hoy va siempre a
       dama. Una fila de cuatro piezas sobre la casilla, como lichess.
-- [ ] **[PC] Posiciones en dos columnas** (revisor de UX, v1.1). A 1280 la
+- [x] ~~**[PC] Posiciones en dos columnas**~~ (hecho en la v1.6.1, pedido por Juan el 27-nov: el tablero a todo el alto) (revisor de UX, v1.1). A 1280 la
       columna mide 490 de 1280. De 1000 para arriba, como la Partida:
       tablero a la izquierda con su `--ladoTab` y un panel de ~320 con las
       jugadas en planilla, Deshacer / Empezar y Nivel / Jugás con. El revisor

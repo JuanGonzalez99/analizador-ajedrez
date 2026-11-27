@@ -1512,16 +1512,38 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await pg.waitForTimeout(300);
   await foto("ancho-posicion-final");
   const sobra = await pg.evaluate(() => document.documentElement.scrollHeight - innerHeight);
-  await pg.click("#btnPosAjustes"); await pg.waitForTimeout(250);
-  const aireHoja = await pg.evaluate(() => Math.round(document.getElementById("hojaPos").getBoundingClientRect().top -
-    document.querySelector("#posTablero svg").getBoundingClientRect().bottom));
-  await pg.keyboard.press("Escape"); await pg.waitForTimeout(150);
+  /* DESDE LA v1.6.1 el tablero toma el alto y las hojas son menús en la
+     columna: se mide que ninguno pise el tablero, el tablero que crece
+     (lado a 1280 × 800) y el margen derecho a 1000 (≥ 24) */
+  const lado = await pg.evaluate(() => Math.round(document.querySelector("#posTablero svg").getBoundingClientRect().width));
+  const pisa = {};
+  for (const [b, hj] of [["btnPosAjustes", "hojaPos"], ["btnPosNueva", "hojaNueva"]]) {
+    await pg.click("#" + b); await pg.waitForTimeout(200);
+    if (b === "btnPosNueva") await foto("ancho-posicion-menu");
+    pisa[hj] = await pg.evaluate(h => Math.round(document.querySelector("#posTablero svg").getBoundingClientRect().right -
+      document.getElementById(h).getBoundingClientRect().left), hj);
+    await pg.keyboard.press("Escape"); await pg.waitForTimeout(150);
+  }
+  await pg.setViewportSize({ width: 1000, height: 800 }); await pg.waitForTimeout(200);
+  const margenDer1000 = await pg.evaluate(() => Math.round(innerWidth - document.getElementById("btnPosAjustes").getBoundingClientRect().right));
+  /* la cabecera de la columna al ras de la casilla a8 (revisor, v1.6.1: el
+     margen no se aplicaba y nadie lo medía; causa B) */
+  const alineaCab = await pg.evaluate(() => Math.round(document.getElementById("btnPosAjustes").getBoundingClientRect().top -
+    document.querySelector('#posTablero [data-sq="a8"]').getBoundingClientRect().top));
+  /* y un menú abierto se cierra si cambia la ventana: no sigue a la columna */
+  await pg.click("#btnPosNueva"); await pg.waitForTimeout(150);
+  await pg.setViewportSize({ width: 1100, height: 800 }); await pg.waitForTimeout(250);
+  const menuTrasResize = await pg.evaluate(() => !document.getElementById("hojaNueva").classList.contains("oculto"));
+  const sobra1000 = await pg.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  await pg.setViewportSize({ width: 1280, height: 800 }); await pg.waitForTimeout(200);
   /* ← deshace (v1.2.1): la tarjeta del final se va */
   await pg.mouse.move(2, 2); await pg.keyboard.press("ArrowLeft"); await pg.waitForTimeout(200);
   const deshizo = await pg.evaluate(() => document.getElementById("posFin").classList.contains("oculto"));
-  console.log("posición en la compu:", JSON.stringify({ sobra, aireHoja, flechaDeshace: deshizo }),
-    "(sobra ≤ 0 con el final, aireHoja ≥ 8, flechaDeshace true)");
-  if (sobra > 0 || aireHoja < 8 || !deshizo) console.log("OJO: Posiciones en la compu");
+  console.log("posición en la compu:", JSON.stringify({ sobra, sobra1000, lado, pisa, margenDer1000, alineaCab, menuTrasResize, flechaDeshace: deshizo }),
+    "(sobra ≤ 0, lado ≥ 700, pisa < 0, margenDer1000 ≥ 24, |alineaCab| ≤ 2, menuTrasResize false, flechaDeshace true)");
+  if (sobra > 0 || sobra1000 > 0 || lado < 700 || Object.values(pisa).some(x => x >= 0) || margenDer1000 < 24 ||
+      Math.abs(alineaCab) > 2 || menuTrasResize || !deshizo)
+    console.log("OJO: Posiciones en la compu");
 }
 /* ARMAR UNA POSICIÓN (v1.4): se entra por la hoja, se vacía y se arma un
    final con el rey negro en jaque y mueven blancas, que es lo que más

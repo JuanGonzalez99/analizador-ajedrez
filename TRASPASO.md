@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.6**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.6.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4988,6 +4988,33 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.6.1, [PC] Posiciones a toda la pantalla** (Juan, 27-nov: *"el tablero
+ocupa muy poco espacio… podría ocupar toda la pantalla, ya que es lo único
+que hay"*). El revisor eligió la P2 entre cuatro (P1: columna al costado con
+la cabecera a todo el ancho; P3: una sola columna con el tablero más
+grande, que con el final hacía scroll) con tres ajustes. Desde 1000: el
+tablero a la izquierda a `min(100vh − 64, el ancho que queda)` y a la
+derecha una columna de 336 que arranca a su altura con la cabecera (título,
+estado, "+" y perillas), la tira, Deshacer/Analizar y el final;
+`#posJuego` pasa a `display: contents` dentro de la grilla de
+`#zonaPosicion`. Sin el tope de 1110 del body (`body.enPosicion`), con el
+riel 104 a la izquierda y 24 a la derecha, el grupo centrado en lo que
+sobra. Medido: 504 a 1000 × 800, 736 a 1280 × 800, 656 a 1280 × 720, 1016 a
+1920 × 1080, sin scroll en ninguno (antes 466 en todos); a 999 sigue la
+columna de antes. **Las hojas son menús en la compu**: `verHojaPos` las
+cuelga debajo de su redondo (`top`/`left` del botón y del borde de la
+columna), de 336, sin velo (el fondo sigue tomando el clic que cierra) y
+sin tirador; no pisan el tablero (32 de aire). `mirar` mide ahora en
+"posición en la compu" el lado, que no haya scroll a 1280 y a 1000, que
+ningún menú pise el tablero y el margen derecho a 1000 (24), y saca
+`ancho-posicion-menu`. Celu byte a byte: solo la versión al pie. De la
+revisión: el `margin-top` de la cabecera perdía contra la regla del celu
+`body.enVista #zonaPosicion .cabvista` (ahora con esa especificidad: los
+redondos a −1 de la casilla a8 en los cuatro tamaños, y `mirar` mide
+`alineaCab`), y un menú abierto quedaba afuera de la columna al achicar la
+ventana: se cierra en `resize` (solo el menú, que tiene `top`; la hoja del
+celu no).
 
 **v1.6, Nueva partida aparte de nivel y color** (Juan, 27-nov: Empezar de
 nuevo y Armar "dentro de un botón que parecen ajustes de la partida en
