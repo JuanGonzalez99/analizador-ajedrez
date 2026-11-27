@@ -409,6 +409,9 @@ hay. Las primeras salen del historial del traspaso.
   mandan capturas elige, pero *"no sé si vale la pena"*. **Excepción: una
   dicotomía**, algo que bifurque la identidad visual; eso sí va a Juan, con
   capturas (6-nov-2026).
+  **Desde el 27-nov-2026 la usa en la compu** (ver "una app de celu adaptada
+  a PC" en No le copa): lo de PC sigue sin esperar su ok, pero ya no vale el
+  "total no la usa" para dejar algo cómodo a medias.
 - **Las tablas del mes sueltas, con una sola raya entre secciones**, y **la
   flecha de la mejor en `#3a8f44`**: *"la tabla se siente bien"*, *"lo de la
   flecha quedó bien"* (6-nov-2026, v0.102).
@@ -594,6 +597,21 @@ hay. Las primeras salen del historial del traspaso.
 - **Que en la compu el tablero quede chico cuando es lo único que hay**
   (27-nov-2026, Posiciones a 1280: 466 de lado, con el resto vacío): *"podría
   ocupar toda la pantalla, ya que es lo único que hay"*.
+- **Una app de celu adaptada a PC** (27-nov-2026, usándola un día en la
+  compu): *"me dio mucho la sensación de que es una app de celu adaptada a PC,
+  y no una app hecha para PC… no resulta tan cómoda como podría serlo"*. No es
+  una pantalla: es la suma. Lo que se midió ese día (1920×1080 y 1366×768):
+  la página topada en 1110 de ancho con 800 vacíos a 1920; la Partida que no
+  entra a 1366×768 (400 de scroll, 7 jugadas a la vista); la disposición que
+  cambia según el alto de la ventana; Ajustes como hoja que sube desde abajo
+  con tirador y tapa el tablero; los ‹ › de 48 de alto cuando en la compu se
+  pasa con flechas y rueda —que andan, pero nada lo dice—; el riel que
+  desaparece en la Partida y deja un "‹" como única salida; la lista de
+  partidas con filas de celu estiradas, sin encabezados. *Lectura mía:* en la
+  compu no alcanza con que entre y no se rompa; cada pantalla se piensa con lo
+  que la compu tiene —ancho, alto, teclado, mouse, hover— y con los patrones
+  de una app de escritorio (menús anclados, tablas, navegación fija), no con
+  la columna del celu reacomodada.
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no
   entra en un renglón: *"es medio molesto"* (16-nov-2026, sobre la v0.148; a
   su ancho, 386, el tablero baja 19 px). Va con "que el tablero salte", de más

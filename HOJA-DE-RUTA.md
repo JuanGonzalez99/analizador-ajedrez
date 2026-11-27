@@ -301,6 +301,41 @@ limpieza: lo que está muerto no se parte.
       (hecho el 25-nov, sin versión: el `index.html` armado es idéntico al
       byte; 19 pedazos en `src/`, `npm run juntar`)
 
+## La compu, hecha para la compu (Juan, 27-nov) · antes de seguir con Posiciones
+
+Juan la usó un día en la compu: *"es una app de celu adaptada a PC… no
+resulta tan cómoda como podría serlo"* (diagnóstico en `DISENO.md`, No le
+copa). Va antes que lo que queda de Posiciones porque es lo que él siente al
+usarla, y Posiciones en la compu ya se rehizo en la v1.6.1. **Todo es solo de
+compu**: las capturas del celu tienen que salir idénticas byte a byte en cada
+ítem. Cada uno con variantes dibujadas a **1366×768 y 1920×1080**, además de
+1280×800, que hasta hoy era el único tamaño de compu que se miraba.
+
+- [ ] **La Partida a la medida de la ventana.** Sacar el tope de 1110 de
+      ancho; el tablero al alto de la ventana, como Posiciones (v1.6.1); que
+      entre sin scroll de 1366×768 a 1920×1080 con una sola disposición (hoy
+      a 1920×1080 la curva y las mejores se van abajo del tablero y a 1280 no);
+      el panel aprovecha el ancho que sobra (más jugadas a la vista, curva más
+      ancha) y el Resumen tiene lugar sin bajar.
+- [ ] **Ajustes como menú colgado de la tuerca** en la compu, no como hoja
+      que sube desde abajo con tirador y tapa el tablero: la regla de
+      `DISENO.md` §3 (Posiciones en la compu) aplicada a la otra hoja.
+- [ ] **Navegar como en una app de escritorio**: el riel a la vista también
+      en la Partida y en Estadísticas, con lo que hoy es el "‹" como camino
+      (Análisis › Octubre › vs MewoneX) y no como única salida.
+- [ ] **Pasar jugadas con lo que tiene la compu**: los ‹ › de 48 de alto
+      pasan a una barra de controles chica bajo el tablero (principio, ‹, ›,
+      final, girar), cada uno con su atajo en el título al pasar el mouse, y
+      una tecla `?` que muestra todos los atajos (←/→, Inicio/Fin, n, Esc ya
+      andan y no lo dice nada: hay 4 `title` en todo el HTML).
+- [ ] **El inicio como tabla**: la lista de partidas con columnas
+      (rival y elo, color, resultado, precisión, apertura, cadencia, fecha),
+      encabezados y la fila entera iluminada al pasar el mouse; el mes, el
+      botón de analizar y Estadísticas en una franja arriba, a todo el ancho.
+- [ ] **Hover y foco en todo lo que se clickea**, que es el estado que
+      `DISENO.md` §1.10 deja "para cuando se aplique": se escribe acá y se
+      pasa por todas las pantallas.
+
 ## Etapa 4 · Posiciones, y el puente con el profe — primer módulo nuevo
 
 **El primer módulo nuevo, después de partir `index.html`** (reordenamiento
