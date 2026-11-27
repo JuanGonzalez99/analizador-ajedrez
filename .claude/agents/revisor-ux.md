@@ -260,7 +260,9 @@ LO GRANDE (si hay):
 POR QUÉ NO SE VIO (por cada cosa de arriba que ya estaba, o que quien
 programó tendría que haber visto antes de pasártela):
 - qué · causa (A–G de `APRENDIZAJES.md`) · prevención: qué archivo cambiar
-  y cómo (mejor una medida en `mirar.mjs` que una regla escrita). Si se te
+  y cómo (mejor una medida en `mirar.mjs` que una regla escrita) · **qué
+  otros casos atrapa**: contra la causa, no contra el caso; una medida que
+  nombra un id o una pantalla casi siempre está escrita contra el caso. Si se te
   escapó a vos en una revisión anterior, decilo igual: la regla va acá.
 
 MIRÉ: qué capturas y medidas usé, y en qué estados de la zona

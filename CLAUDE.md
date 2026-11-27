@@ -52,6 +52,10 @@ describe. §10 tiene las reglas de trabajo.
     se aplica esa misma noche —regla en el agente que no lo vio, o mejor una
     medida en `mirar.mjs`— y se anota en `APRENDIZAJES.md`. De día vale
     igual. Los domingos se mira si alguna causa se repitió.
+    **Una prevención se escribe contra la causa, no contra el caso que la
+    destapó** (Juan, 27-nov: *"fundamental"*): tiene que atrapar también los
+    casos que todavía no pasaron, en otras pantallas. Si solo atrapa el que
+    la destapó, no sirve (`APRENDIZAJES.md`, arriba de las causas).
   - **Lo que levantan los revisores no frena lo nuevo** (Juan, 20-nov-2026):
     los lavados de cara y retoques van a "Relleno" y los errores a
     "Arreglos" de `HOJA-DE-RUTA.md`, nunca a la etapa en curso. La regla

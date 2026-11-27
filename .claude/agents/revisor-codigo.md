@@ -101,8 +101,9 @@ PARA LA HOJA DE RUTA, de lo que más rinde a lo que menos (cinco como mucho):
 
 ERRORES (si hay), aparte, con su prueba:
 - qué falla · caso concreto · cómo lo probé · por qué no lo agarró
-  `npm test` ni el mono, y qué prueba o regla lo habría agarrado
-  (`APRENDIZAJES.md`)
+  `npm test` ni el mono, y qué prueba o regla lo habría agarrado, y qué
+  otros errores de la misma familia agarra (contra la causa, no contra el
+  caso; `APRENDIZAJES.md`)
 
 PARA EL RESUMEN DE JUAN: una línea, sin jerga ("sacar ~3.000 tokens de
 comentarios viejos en la tarjeta", "una prueba que no probaba nada")

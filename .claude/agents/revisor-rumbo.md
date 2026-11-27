@@ -82,7 +82,9 @@ CAMBIOS A APLICAR (exactos, para copiar):
 - archivo · qué mover, tachar, borrar o reescribir · por qué en una línea
 
 APRENDIZAJES (de `APRENDIZAJES.md`): ¿alguna causa se repitió en la semana
-pese a su prevención? Cuál, y qué prevención más fuerte proponés. ¿Quedó
+pese a su prevención? Cuál, y qué prevención más fuerte proponés. ¿Alguna
+prevención de la semana quedó escrita contra el caso y no contra la causa
+(nombra un id, una pantalla, una jugada)? ¿Quedó
 algo **aceptado a sabiendas** (en el traspaso: "se acepta", "queda así") que
 con lo que la app es hoy ya no conviene? Va a Relleno.
 

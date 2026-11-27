@@ -29,7 +29,9 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    cuatro revisores: **una causa que se repitió pese a su prevención** pide
    una prevención más fuerte —casi siempre, de regla escrita a medida del
    arnés—, y los casos del registro se juntan en principios para que los
-   archivos no crezcan sin fin)
+   archivos no crezcan sin fin; **y busca las prevenciones escritas contra
+   el caso** —las que nombran un id, una pantalla o una jugada— para
+   reescribirlas contra la causa, 27-nov)
    qué reglas generales salen de los gustos y de los errores, cuáles del
    criterio actual sobran o se contradicen. Aplicá lo que proponga a
    `revisor-ux.md` en un commit propio, y en el resumen de la mañana va como
@@ -174,6 +176,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    "Prevenciones pendientes" de `APRENDIZAJES.md`, que la noche siguiente
    hace primero. No cuenta como ítem. Vale igual para el mono y para las
    pasadas de los domingos, miércoles y sábados.
+   **La prevención va contra la causa, no contra el caso** (Juan, 27-nov):
+   antes de aplicarla, decí qué otros casos atrapa, en otras pantallas o en
+   lo que todavía no existe. Una medida que nombra un id o una regla que
+   nombra una pantalla casi siempre está escrita contra el caso:
+   generalizala antes de commitearla.
 6. **Pushear a `main`.** Cada push es un deploy en vivo, así que solo con todo
    verde. Si el push falla, no insistas más de cuatro veces y ponelo primero en
    el resumen.

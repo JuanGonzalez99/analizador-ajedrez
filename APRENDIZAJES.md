@@ -31,6 +31,17 @@ solos, sin que él tenga que pedirlo.
    más fuerte (casi siempre: pasar de regla escrita a medida del arnés). Y
    junta los casos en principios para que los archivos no crezcan sin fin.
 
+**Una prevención se escribe contra la causa, no contra el caso que la
+destapó** (Juan, 27-nov-2026: *"creo que eso es fundamental"*). La prueba:
+**¿qué otros casos atrapa, en otras pantallas o en lo que todavía no
+existe?** Si solo atrapa el que la destapó, está escrita contra el caso y no
+sirve. Pasó ese día: por "es una app de celu adaptada a PC" se midieron
+cuatro síntomas de la Partida (los botones de pasar jugadas por su nombre,
+Ajustes por su id), Posiciones dio cero avisos, y Juan la seguía sintiendo
+de celu. La que vale mide "botones de dedo en cualquier pantalla de compu",
+no "`#ant` mide 44". Por eso en el registro cada prevención dice, además,
+qué otros casos cubre.
+
 ## Las causas
 
 - **A. Estado no mirado.** Se miró la zona en un solo estado: otro scroll,
