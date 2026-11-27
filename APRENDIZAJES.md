@@ -63,6 +63,20 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Empezar de nuevo y Armar adentro de las perillas de nivel y color** ·
+  v1.2 y v1.4, lo vio Juan el 27-nov (la v1.6 lo arregló) · D: el criterio
+  del revisor ubicaba los controles por frecuencia ("lo de una vez, a la
+  hoja") y no por alcance (ajustar la partida o tirarla) · regla en
+  `revisor-ux.md` y `DISENO.md` §3: un botón agrupa lo que tiene el mismo
+  alcance; el ícono promete uno solo.
+- **El tablero de Posiciones en la compu, chico con media pantalla vacía** ·
+  v1.1.1 y v1.2.1, lo vio Juan el 27-nov (la v1.6.1 lo arregló; además
+  estaba en Relleno desde la v1.1 sin tomarse) · D y E: se cuidó que
+  entrara sin scroll con el final, y nadie preguntó qué es lo único que hay
+  en la pantalla; la columna de dos quedó "para otra noche" · regla en
+  `revisor-ux.md`: en la compu, si el tablero es lo único que importa,
+  toma el alto entero y lo demás va al costado; y `mirar` mide el lado a
+  1280 × 800 (OJO por debajo de 700).
 - **La cabecera de la columna de Posiciones corrida 21–42 px del tablero**
   · v1.6.1 (revisor de UX, mismo día) · B: se dio por bueno el
   `margin-top` escrito sin medirlo, y una regla del celu más específica le

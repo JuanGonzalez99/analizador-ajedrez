@@ -40,6 +40,10 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
      ajustes de la partida en curso"): antes de juntar controles detrás de un
      mismo ícono, preguntate si ajustan lo que está pasando o lo reemplazan
      por otra cosa. El ícono promete uno solo.
+     **En la compu, preguntá qué es lo único que hay en la pantalla y dale el
+     lugar** (Juan, 27-nov: Posiciones a 466 con media pantalla vacía,
+     "podría ocupar toda la pantalla"): si es el tablero, toma el alto entero
+     y lo demás va en una columna al costado. Que entre sin scroll no alcanza.
      **En la compu, lo que en el celu es una hoja que sube pasa a ser un menú
      colgado de su botón**, adentro de su columna: nada que se abre tapa el
      tablero si hay lugar al costado (v1.6).
