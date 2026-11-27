@@ -1730,7 +1730,19 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
      ventana menos 130 (cabecera, coordenadas y comidas) es tablero chico.
    - lo que se abre no sube desde abajo como una hoja de celu (`hoja`).
    - los botones de pasar jugadas no son de dedo: con mouse, 44 de alto o
-     más es un área de toque que en la compu no hace falta (`ant`). */
+     más es un área de toque que en la compu no hace falta (`ant`).
+   SEGUNDA VUELTA, EL MISMO DÍA (Juan: "Posiciones se sigue sintiendo como
+   una adaptación del celu", y el arnés la daba por buena; causa D otra vez:
+   las cuatro medidas eran los síntomas de la Partida, no el criterio). Cuatro
+   más, en TODA pantalla de compu y no en un botón con nombre:
+   - `dedo`: cualquier botón de 44 de alto o más, salvo el riel y los campos.
+   - `icono`: botones con solo un ícono que no es universal (tuerca, girar,
+     volver, cerrar, flechas): con lugar al costado, el botón dice qué hace.
+   - `listo`: un botón "Listo" a la vista, que es el cierre de una hoja.
+   - `columna`: qué parte del alto del tablero ocupa lo que está a su lado;
+     menos de la mitad es una columna con cuatro cosas arriba y el resto
+     vacío, en vez de un panel a la altura del tablero.
+   Y el recorrido suma el menú de Nueva partida y Armar, que no estaban. */
 {
   const MONITORES = [[1366, 768], [1920, 1080]];
   const fotoM = async n => {
@@ -1744,15 +1756,43 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
       .map(e => e.getBoundingClientRect())
       .filter(r => r.width > 0 && r.height > 0 && r.width < innerWidth * .95 && r.right > 0);
     const usa = rs.length ? Math.max(...rs.map(r => r.right)) - Math.min(...rs.map(r => r.left)) : 0;
+    const vis = e => { const r = e.getBoundingClientRect();
+      return e.offsetParent !== null && r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight &&
+        getComputedStyle(e).visibility !== "hidden"; };
+    const nombre = e => e.id || (e.getAttribute("aria-label") || e.textContent).trim().slice(0, 18);
+    const bots = [...document.querySelectorAll("button")].filter(vis)
+      .filter(e => !e.closest("#navMod, svg, [data-sq], #armPaleta"));
+    const dedo = bots.filter(e => e.getBoundingClientRect().height >= 43.5)
+      .map(e => `${nombre(e)} ${Math.round(e.getBoundingClientRect().height)}`);
+    const UNIVERSAL = /ajustes|girar|volver|cerrar|anterior|siguiente|borrar|goma/i;
+    const icono = bots.filter(e => !e.textContent.trim() && e.querySelector("svg") &&
+      !UNIVERSAL.test((e.getAttribute("aria-label") || "") + " " + (e.title || ""))).map(nombre);
+    /* un menú de compu se cierra eligiendo, con Esc o tocando afuera: un
+       "Listo" adentro es el cierre de una hoja de celu */
+    const listo = bots.filter(e => /^listo$/i.test(e.textContent.trim())).map(nombre);
+    let columna = null;
+    if (tab) {
+      const b = tab.getBoundingClientRect();
+      const lado = [...document.querySelectorAll("body *")].filter(vis)
+        .filter(e => getComputedStyle(e).position !== "fixed" && !e.closest("#navMod"))
+        .map(e => e.getBoundingClientRect())
+        .filter(r => r.left >= b.right && r.top < b.bottom && r.bottom > b.top && r.width < innerWidth * .95);
+      columna = lado.length ? +((Math.min(b.bottom, Math.max(...lado.map(r => r.bottom))) -
+        Math.max(b.top, Math.min(...lado.map(r => r.top)))) / b.height).toFixed(2) : 0;
+    }
     return { sobra: document.documentElement.scrollHeight - innerHeight,
              tablero: tab ? Math.round(tab.getBoundingClientRect().width) : null,
-             usa: Math.round(usa) };
+             usa: Math.round(usa), dedo, icono, columna, listo };
   }, [tab, zona]);
   const MON = {};
-  const cadaMonitor = async (nombre, tab, zona, extra) => {
+  /* `antes` corre después de cada cambio de tamaño: un menú abierto se
+     cierra al cambiar la ventana (a propósito, v1.6.1), así que se abre de
+     nuevo en cada monitor */
+  const cadaMonitor = async (nombre, tab, zona, extra, antes) => {
     for (const [w, h] of MONITORES) {
       await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(400);
       await pg.evaluate(() => scrollTo(0, 0));
+      if (antes) await antes();
       await fotoM(`ancho-${w}-${nombre}`);
       MON[`${nombre} ${w}`] = await medidaM(tab, zona);
       if (extra) await extra(w);
@@ -1794,9 +1834,19 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await pg.waitForSelector("#zonaPosicion:not(.oculto)", { timeout: 10000 });
   await pg.waitForTimeout(300);
   await cadaMonitor("posicion", "#posTablero svg", "#zonaPosicion");
+  /* el menú de Nueva partida abierto, y Armar: lo que de Posiciones no se
+     veía en ningún monitor */
+  await cadaMonitor("posicion-menu", "#posTablero svg", "#zonaPosicion", null, async () => {
+    await pg.click("#btnPosNueva"); await pg.waitForTimeout(300);
+  });
+  await pg.click("#posArmar");
+  await pg.waitForSelector("#zonaArmar:not(.oculto)", { timeout: 10000 });
+  await pg.waitForTimeout(300);
+  await cadaMonitor("armar", "#armTablero svg", "#zonaArmar");
+  await pg.click("#volverDeArmar"); await pg.waitForTimeout(300);
   await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
   console.log("monitores:", JSON.stringify(MON),
-    "(sobra: px que hay que bajar, 0 = entra; tablero: lado; usa: ancho dibujado; hoja y ant, §1.12; capturas ancho-1366-* y ancho-1920-*)");
+    "(sobra: px que hay que bajar, 0 = entra; tablero: lado; usa: ancho dibujado; hoja, ant, dedo, icono y columna, §1.12; capturas ancho-1366-* y ancho-1920-*)");
   for (const [k, v] of Object.entries(MON)) {
     const [w, h] = MONITORES.find(m => k.endsWith(" " + m[0]));
     if (/partida|posicion/.test(k) && v.sobra > 0) console.log(`OJO: a ${k} hay que bajar ${v.sobra} px para ver la pantalla entera`);
@@ -1808,6 +1858,10 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
     if (w === 1920 && !/^mes/.test(k) && !llena && v.usa < w * .75) console.log(`OJO: a ${k} lo dibujado ocupa ${v.usa} de ${w} (columna centrada, §1.12)`);
     if (v.hoja === "sube desde abajo") console.log(`OJO: a ${k} Ajustes sube desde abajo como hoja de celu (§1.12)`);
     if (v.ant >= 44) console.log(`OJO: a ${k} los botones de pasar jugadas miden ${v.ant} de alto: son de dedo (§1.12)`);
+    if (v.dedo.length) console.log(`OJO: a ${k}, botones de dedo (44 o más de alto, §1.12): ${v.dedo.join(", ")}`);
+    if (v.icono.length) console.log(`OJO: a ${k}, botones de solo ícono no universal (§1.12): ${v.icono.join(", ")}`);
+    if (v.listo.length) console.log(`OJO: a ${k}, un "Listo" de hoja de celu adentro de lo que se abre (§1.12): ${v.listo.join(", ")}`);
+    if (v.columna !== null && v.columna < .5) console.log(`OJO: a ${k} lo del costado ocupa ${Math.round(v.columna * 100)} % del alto del tablero (columna vacía, §1.12)`);
   }
 }
 console.log("bordes en la compu:", JSON.stringify(BORDES),

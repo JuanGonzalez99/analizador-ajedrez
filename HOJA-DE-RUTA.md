@@ -333,6 +333,16 @@ mirar` ya los saca (`ancho-1366-*`, `ancho-1920-*`, y la línea `monitores:`).
       (rival y elo, color, resultado, precisión, apertura, cadencia, fecha),
       encabezados y la fila entera iluminada al pasar el mouse; el mes, el
       botón de analizar y Estadísticas en una franja arriba, a todo el ancho.
+- [ ] **Posiciones y Armar, de escritorio** (Juan, 27-nov: *"se sigue
+      sintiendo como una adaptación del celu"*, después de la v1.6.1). Lo que
+      `mirar` marca a 1366 y 1920: botones de dedo (Deshacer, Analizar, las
+      opciones del menú, blancas/negras, Jugar), el "+" y el de nivel y color
+      solo con ícono, el menú de Nueva partida con "Listo" y botones
+      apilados, la columna del costado con cuatro cosas arriba (13–19 % del
+      alto del tablero) y, en Armar, el tablero en 640 a 1920×1080. La
+      columna pasa a ser un panel a la altura del tablero (quién juega, la
+      planilla de lo jugado, los controles abajo), como lichess. Criterio
+      entero en `DISENO.md` §1.12, no solo los botones.
 - [ ] **Hover y foco en todo lo que se clickea**, que es el estado que
       `DISENO.md` §1.10 deja "para cuando se aplique": se escribe acá y se
       pasa por todas las pantallas.

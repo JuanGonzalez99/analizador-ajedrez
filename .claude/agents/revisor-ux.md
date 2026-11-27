@@ -100,6 +100,11 @@ aunque vengan de antes. Y **una regla de compu nueva se barre por todas las
 pantallas** el mismo día, no solo donde nació: "lo que en el celu es una hoja,
 en la compu es un menú" se aplicó a Posiciones en la v1.6.1 y Ajustes siguió
 siendo hoja.
+**Cero OJO en `monitores:` no es aprobado** (Juan, 27-nov: Posiciones no daba
+ninguno y la sentía de celu): las medidas atrapan lo conocido. Recorré la
+tabla de §1.12 fila por fila sobre la captura, y si encontrás una forma nueva
+de "celu en la compu", proponé la medida que la atrape, contra la causa y no
+contra el caso.
 
 ## Cómo mirás
 

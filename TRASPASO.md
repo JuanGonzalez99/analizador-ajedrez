@@ -262,6 +262,14 @@ el Mes y donde el tablero ya toma el alto), el tablero mide menos que el alto
 menos 130, Ajustes sube desde abajo, y los botones de pasar jugadas tienen 44
 o más de alto. El 27-nov saltan nueve, uno o más por cada ítem de "La compu,
 hecha para la compu" de la hoja de ruta: se apagan a medida que se hacen.
+**Ese mismo día se generalizaron** (Juan: Posiciones no daba ningún OJO y se
+seguía sintiendo de celu): en toda pantalla de compu, `dedo` (botones de 44
+o más, sin el riel ni los campos), `icono` (solo ícono y no universal),
+`listo` (un "Listo" a la vista) y `columna` (qué parte del alto del tablero
+ocupa lo del costado; menos de la mitad es OJO). El recorrido suma el menú de
+Nueva partida, que se abre de nuevo después de cada cambio de tamaño porque
+el resize lo cierra, y Armar. Capturas `ancho-1366-posicion-menu`,
+`ancho-1366-armar` y sus pares de 1920.
 
 **Entra por la lista del mes, no pegando el PGN, y eso es una regla que costó un
 bug.** Desde la v0.63.1 el arnés **falsea también la API de chess.com** —el

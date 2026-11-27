@@ -382,11 +382,19 @@ toda pantalla nueva desde que se diseña, no como adaptación después:
 | hover | todo lo clickeable responde al pasar el mouse (fila entera en listas y tablas) | es lo que dice "esto se toca" en la compu |
 | navegación | fija y a la vista (el riel), con el camino de dónde estás; el "‹" solo no alcanza | en escritorio uno espera saltar de una sección a otra sin volver |
 | listas | con columnas y encabezados, no filas de celu estiradas | el ancho sobrante entre los datos es la marca del celu estirado |
+| botones con ícono | con lugar al costado, el botón dice qué hace (ícono y texto). Solo ícono, lo universal: tuerca, girar, volver, cerrar, flechas | el "+" y el de nivel y color de Posiciones: en el celu el ícono ahorra lugar; en la compu sobra lugar y hay que adivinar |
+| menús | se cierran eligiendo, con Esc o clic afuera; las opciones son filas con hover, no botones apilados de 44 con un "Listo" | eso es el contenido de una hoja de celu metido en un menú |
+| al lado del tablero | un panel a la altura del tablero, con sus partes repartidas en ese alto (quién juega arriba y abajo, la planilla en el medio, los controles abajo), no cuatro cosas arriba y el resto vacío | lichess y chess.com: lo del costado mide lo que mide el tablero |
 
 **La referencia es lichess y chess.com de escritorio**: ante cada pantalla de
-compu, preguntarse si existiría así ahí. `npm run mirar` mide cuatro de estas
-reglas en las capturas de monitor y las marca con OJO (`TRASPASO.md`, el
-tercer chequeo): el ancho, el tablero, las hojas y los botones de dedo.
+compu, preguntarse si existiría así ahí. `npm run mirar` mide estas reglas en
+las capturas de monitor y las marca con OJO (`TRASPASO.md`, el tercer
+chequeo): el ancho, el tablero, las hojas, los botones de dedo en cualquier
+pantalla, los de solo ícono, el "Listo" en lo que se abre y la columna vacía
+al lado del tablero. **Que no salte ningún OJO no quiere decir que esté bien**:
+el mismo día, Posiciones no tenía ninguno de los primeros cuatro y Juan la
+seguía sintiendo de celu. Las medidas atrapan lo conocido; la pregunta de
+lichess, lo que falta medir.
 
 ### 1.11 Cómo se usa esto
 
@@ -636,6 +644,16 @@ hay. Las primeras salen del historial del traspaso.
   que la compu tiene —ancho, alto, teclado, mouse, hover— y con los patrones
   de una app de escritorio (menús anclados, tablas, navegación fija), no con
   la columna del celu reacomodada.
+  **Y por qué importa aunque casi no la use** (el mismo día): *"no quiero que
+  se descuide la versión de PC… si la quiero compartir a alguien que lo usa en
+  PC, no quiero que se lleve un disgusto"*. **Posiciones en la compu, después
+  de la v1.6.1:** *"se sigue sintiendo como una adaptación del celu. Creo que
+  principalmente por los botones"*, y pidió que no se lo tome al pie de la
+  letra sino como criterio general. Medido: Deshacer, Analizar y las opciones
+  del menú de 44 (de dedo), el "+" y el de nivel y color solo con ícono, el
+  menú de Nueva partida con "Listo" y botones apilados, y la columna del
+  costado ocupando el 13–19 % del alto del tablero. Armar, igual, y con el
+  tablero en 640 a 1920×1080.
 - **Que la tarjeta cambie de alto y mueva el tablero** cuando la frase no
   entra en un renglón: *"es medio molesto"* (16-nov-2026, sobre la v0.148; a
   su ancho, 386, el tablero baja 19 px). Va con "que el tablero salte", de más

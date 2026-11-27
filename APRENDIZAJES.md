@@ -334,3 +334,13 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   la compu, y el revisor de UX juzga contra eso, se pregunta si existiría así
   en lichess de escritorio y barre cada regla de compu nueva por todas las
   pantallas.
+- **Posiciones sin OJO y todavía de celu** · Juan, 27-nov, el mismo día de la
+  prevención de arriba · D otra vez: las cuatro medidas nuevas eran los
+  síntomas de la Partida (un botón con nombre, Ajustes), no el criterio, y
+  Posiciones y Armar no estaban en el recorrido de monitores (C) · `mirar`
+  mide en toda pantalla de compu los botones de dedo, los de solo ícono no
+  universal, el "Listo" adentro de lo que se abre y la columna vacía al lado
+  del tablero, y recorre el menú de Nueva partida y Armar; `DISENO.md` §1.12
+  suma las filas de botones con ícono, menús y panel, y dice que cero OJO no
+  es aprobado. *Regla general*: una prevención se escribe contra la causa,
+  no contra el caso que la destapó.

@@ -41,7 +41,7 @@ La UX es lo que más le importa a Juan, y hoy la app se ve "medio baqueteada, me
 - **Mira de verdad:** revisa las capturas del arnés (npm run mirar), no sólo el código.
 - **Identidad visual primero:** el revisor audita toda la app, trae dos o tres direcciones visuales como maquetas, Juan elige una y queda como sistema de diseño (colores, tipografía, espacios, botones). Después, las decisiones chicas se toman contra ese sistema, y a Juan sólo le llegan las grandes.
 - **Que se sienta bien, no sólo que se vea bien:** el primer caso son las animaciones del tablero. Sus decisiones chicas (cuánto duran, qué pasa si se pasan jugadas rápido, movimiento reducido) las toma el revisor contra el sistema de diseño.
-- **Celu primero, PC aprovechada:** se diseña pensando en el celu, y en PC se aprovecha el espacio y el mouse sin romper nada del celu. El revisor mira capturas de los dos tamaños.
+- **Celu primero en prioridad, pero cada pantalla se diseña para las dos desde el día uno** (Juan, 27-nov-2026): la versión de compu se dibuja junto con la del celu, no después como adaptación, y sin romper nada del celu. Aunque Juan casi no la use en la compu, si mañana la comparte con alguien que la usa ahí, no se tiene que llevar un disgusto. Qué es "hecha para la compu" está en `DISENO.md` §1.12. El revisor mira capturas de los dos tamaños.
 
 ## Cómo trabajamos
 
