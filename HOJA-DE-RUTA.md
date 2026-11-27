@@ -320,7 +320,7 @@ Práctica y Lecciones, que también son "jugar desde una posición".
 - [x] ~~Abrir una posición desde un link (`…/#fen=…`) y jugarla contra el motor,
       con el nivel elegible.~~ (hecho en la v1.1; se adelantó a la barra de
       abajo, que pide el segundo módulo ya hecho)
-- [ ] Armar una posición a mano en el tablero.
+- [x] ~~Armar una posición a mano en el tablero.~~ (hecho en la v1.4: el revisor eligió la A entre cuatro, la paleta en dos filas abajo)
 - [ ] **Analizar lo que jugaste contra el motor** (Juan, 26-nov): al
       terminar (o cuando quieras), pasar la partida jugada desde la
       posición al análisis de siempre, con la tarjeta y la curva.
@@ -583,6 +583,15 @@ archiva los que pierden sentido.
       impresión del módulo. ¿Qué ve Juan la primera vez que entra sin link?
       (la última posición, un "pegá un link o armala a mano", o lo que traiga
       "Armar una posición a mano", que es el ítem que sigue en la etapa 4).
+      Desde la v1.4 "Armar" existe, pero solo se llega por la hoja: el
+      revisor pidió que el estado vacío tenga también un acceso directo. Y
+      la hoja se titula "La partida", y armar una posición no es un ajuste
+      de la partida: decidir por dónde se llega (revisor de UX, v1.4).
+- [ ] **Arrastrar piezas al armar una posición** (revisor de UX, v1.4),
+      como en lichess: arrastrar para mover, soltar afuera para sacar, y de
+      la paleta al tablero. Hoy mover una pieza son tres toques. Juan quiso
+      el arrastre en la Partida porque "se siente como un tablero de
+      verdad".
 
 ### Limpieza de código
 

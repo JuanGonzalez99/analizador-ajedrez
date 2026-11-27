@@ -4183,8 +4183,10 @@ const posicion = (() => {
   const src = fs.readFileSync(new URL("../src/posicion.js", import.meta.url), "utf8");
   const tomar = n => { const i = src.indexOf(`function ${n}(`); return src.slice(i, src.indexOf("\n}\n", i) + 2); };
   return new Function("Chess", "let POS = null;\nconst fenPos = () => POS.fens[POS.fens.length - 1];\n" +
-    ["fenDelLink", "problemaDelFen", "limpiarFen", "juegoPos", "hayJugadaMia", "estadoPos"].map(tomar).join("\n") +
-    "\nreturn { fenDelLink, problemaDelFen, limpiarFen, juegoPos, hayJugadaMia, estadoPos, poner: p => { POS = p; } };")(Chess);
+    ["fenDelLink", "problemaDelFen", "limpiarFen", "juegoPos", "hayJugadaMia", "estadoPos",
+     "casillasDe", "colocacionDe", "problemaArmado"].map(tomar).join("\n") +
+    "\nconst fenArmado = (cas, turno) => limpiarFen(colocacionDe(cas) + \" \" + turno + \" KQkq - 0 1\");" +
+    "\nreturn { fenDelLink, problemaDelFen, limpiarFen, juegoPos, hayJugadaMia, estadoPos, casillasDe, colocacionDe, problemaArmado, fenArmado, poner: p => { POS = p; } };")(Chess);
 })();
 
 test("Posiciones: el link de lichess y el FEN sin campos (v1.1)", () => {
@@ -4204,6 +4206,22 @@ test("Posiciones: los FEN que no se pueden jugar se rechazan, y los enroques y e
   assert.equal(posicion.limpiarFen("r3k2r/8/8/8/8/8/8/R3K1R1 w KQkq - 0 1"), "r3k2r/8/8/8/8/8/8/R3K1R1 w Qkq - 0 1");
   assert.equal(posicion.limpiarFen("4k3/8/8/3P4/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/3P4/8/8/8/4K3 w - - 0 1");
   assert.equal(posicion.limpiarFen("4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 1");
+});
+
+test("Posiciones: armar a mano, el FEN de ida y vuelta y lo que falta (v1.4)", () => {
+  const ini = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+  assert.equal(posicion.colocacionDe(posicion.casillasDe(ini + " w KQkq - 0 1")), ini);
+  assert.equal(posicion.fenArmado(posicion.casillasDe(ini), "w"), ini + " w KQkq - 0 1");
+  /* los enroques salen del tablero: sin la torre de h1 no hay corto blanco */
+  const cas = posicion.casillasDe("r3k2r/8/8/8/8/8/8/R3K3");
+  assert.equal(posicion.fenArmado(cas, "b"), "r3k2r/8/8/8/8/8/8/R3K3 b Qkq - 0 1");
+  assert.equal(posicion.problemaArmado({}, "w"), "Falta el rey blanco");
+  assert.equal(posicion.problemaArmado({ e1: "wk" }, "w"), "Falta el rey negro");
+  assert.equal(posicion.problemaArmado({ e1: "wk", e8: "bk", d8: "bk" }, "w"), "Hay más de un rey negro");
+  assert.equal(posicion.problemaArmado({ e1: "wk", e8: "bk", a8: "wp" }, "w"), "Hay un peón en la octava fila");
+  assert.equal(posicion.problemaArmado({ e1: "wk", e8: "bk", e2: "wr" }, "w"), "El rey negro está en jaque y mueven blancas");
+  assert.equal(posicion.problemaArmado({ e1: "wk", e8: "bk", e2: "wr" }, "b"), null);
+  assert.equal(posicion.problemaArmado(posicion.casillasDe(ini), "w"), null);
 });
 
 test("Posiciones: la triple repetición se ve con la historia, y Deshacer pide una jugada de Juan (v1.1)", () => {

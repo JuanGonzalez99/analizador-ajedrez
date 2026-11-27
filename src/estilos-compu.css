@@ -542,6 +542,34 @@
     #zonaPosicion svg.tab { max-width: var(--ladoTab); }
   }
 
+  /* [PC] ARMAR UNA POSICIÓN (v1.4). Desde 1000 la paleta y los controles en
+     una columna de 336 a la derecha del tablero, juntos arriba (24 entre
+     bloques: un hueco en el medio de la columna se lee como algo que
+     falta) y la paleta a la altura de la primera fila de casillas (el SVG
+     tiene 15 de margen en 366). Acá abajo del tablero no hay nada, así que
+     el tablero toma el alto (100vh − 120) hasta lo que deja el ancho del
+     body (1110 como mucho, con 14 de cada lado, menos 336 + 32). Antes de
+     1000 el body mide 700 como mucho y al costado no entra (con el corte en
+     768 se salía de la pantalla hasta 999; revisor de UX). Al pasar de Posiciones a Armar el tablero cambia
+     de tamaño y de lugar: **se acepta**, es otra pantalla y al costado no
+     entraba en el mismo lugar. De 700 a 999, apilado como en el celu, con el
+     tablero a 100vh − 400 para que entre sin scroll. */
+  @media (min-width: 700px) {
+    #zonaArmar { --ladoTab: clamp(360px, calc(100vh - 400px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
+    #zonaArmar svg.tab { max-width: var(--ladoTab); }
+    body.enArmar { padding-top: 8px; }
+    body.enArmar .pie { max-width: clamp(360px, calc(100vh - 400px), 640px); margin-left: auto; margin-right: auto; }
+  }
+  @media (min-width: 1000px) {
+    #zonaArmar { --ladoTab: clamp(360px, min(100vh - 120px, min(100vw, 1110px) - 400px), 640px);
+                 max-width: calc(var(--ladoTab) + 32px + 336px); }
+    #zonaArmar .armGrid { display: grid; grid-template-columns: var(--ladoTab) 336px; gap: 32px; align-items: start; }
+    #zonaArmar .armLado { padding-top: calc(var(--e-2) + var(--ladoTab) * 15 / 366); }
+    #zonaArmar #armPaleta { margin-top: 0; }
+    #zonaArmar .armMueven, #zonaArmar .armAcciones { margin-top: var(--e-6); }
+    body.enArmar .pie { max-width: calc(clamp(360px, min(100vh - 120px, min(100vw, 1110px) - 400px), 640px) + 368px); }
+  }
+
   /* [PC] LA BARRA DE LOS MÓDULOS ES UN RIEL (v1.3.1, revisor de UX). Abajo,
      a 1280, eran dos botones a 640 px uno del otro, lejos de todo. Con mouse
      y desde 1000, un riel de 80 a la izquierda (Material para pantallas

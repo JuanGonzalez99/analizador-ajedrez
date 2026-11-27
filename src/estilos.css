@@ -377,7 +377,7 @@
      arriba del body. */
   body.enPartida #zonaEstado .barra { top: -8px; }
   /* el volver es la flecha sola: el ::before la lleva a 48 x 48 (revisor), sin pasar del x 4 de antes */
-  #volverDeLaPartida::before { inset: -13px -22px -13px -4px; }
+  #volverDeLaPartida::before, #volverDeArmar::before { inset: -13px -22px -13px -4px; }
   /* EL VOLVER NO AGRANDA EL RENGLÓN: lo visible mide lo que medía el h2
      "Revisión", y el área de 48 de §1.7 la pone un ::before invisible. */
   .volver { background: none; border: 0; padding: 0; margin: 0 0 0 -6px; font: inherit;
@@ -1051,4 +1051,50 @@
   #hojaPos .ajCab { margin-bottom: var(--e-2); }
   .posHojaBtn { display: block; width: 100%; min-height: 44px; margin: var(--e-4) 0 0; position: relative; }
   .posHojaBtn::before { content: ""; position: absolute; inset: -2px 0; }
+  .posHojaFila { display: flex; gap: var(--e-3); margin: var(--e-4) 0 0; }
+  .posHojaFila .posHojaBtn { flex: 1; min-width: 0; margin: 0; padding-left: var(--e-2); padding-right: var(--e-2); }
   #posError { margin: var(--e-4) 0 0; }
+  /* ARMAR UNA POSICIÓN (v1.4; el revisor eligió la A entre cuatro). El
+     tablero como el de Posiciones; debajo la paleta en dos filas de seis
+     (blancas, negras) y la goma alta en la séptima columna, "Mueven", y
+     Vaciar · Inicial · Jugar. Las piezas van sobre la casilla clara, como
+     las comidas (§1.9): la negra de Cburnett sobre `--elevada` da 1,6:1. */
+  body.enVista #zonaArmar .cabvista { margin-top: 0; }
+  body.enArmar #zonaEstado { display: none; }
+  #armTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
+  #armTablero svg.tab { margin: 0 auto; }
+  #armPaleta { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+               gap: var(--e-2);
+               margin: var(--e-3) 0 0; }
+  #armPaleta button { padding: 0; aspect-ratio: 1; min-height: 0; display: grid; place-items: center;
+                      background: var(--casilla-clara); border: 0; border-radius: var(--r-chico); position: relative; }
+  /* 48 de toque también a 386, donde miden 44 (con 8 entre ellas no se pisan) */
+  #armPaleta button::before { content: ""; position: absolute; inset: -2px; }
+  #armPaleta button:nth-child(-n+6) { grid-row: 1; }
+  #armPaleta button:nth-child(n+7):nth-child(-n+12) { grid-row: 2; }
+  #armPaleta button svg { width: 86%; height: 86%; }
+  /* la elegida, con fondo de acento (lo elegido es el acento, §1.1); el
+     anillo es del foco de teclado (§1.7) y no se pueden confundir (revisor,
+     v1.4: con el anillo en las dos no se distinguían). La negra de Cburnett
+     sobre el acento da 9,7:1 */
+  #armPaleta button[aria-pressed="true"] { background: var(--acento); }
+  #armPaleta .armGoma { grid-row: 1 / span 2; grid-column: 7; aspect-ratio: auto;
+                        background: var(--elevada); color: var(--texto); }
+  #armPaleta .armGoma svg { width: 24px; height: 24px; }
+  .armMueven { margin: var(--e-3) 0 0; gap: var(--e-3); align-items: center; }
+  #armMuevenRot { color: var(--tenue); font-size: var(--t-secundario); }
+  .armSeg { display: inline-flex; border: 1px solid var(--borde-campo); border-radius: var(--r-control); overflow: hidden; }
+  .armSeg button { border-radius: 0; min-height: 44px; background: transparent; padding: 0 var(--e-4); color: var(--tenue); }
+  .armSeg button[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 14%, var(--superficie));
+                                        color: var(--texto); font-weight: 600; }
+  .armSeg button { position: relative; }
+  .armSeg button::before { content: ""; position: absolute; inset: -2px 0; }
+  .armAcciones { margin: var(--e-3) 0 0; gap: var(--e-3); align-items: center; }
+  /* los chicos, 48 de toque (§1.7) */
+  .armAcciones .chico { position: relative; }
+  .armAcciones .chico::before { content: ""; position: absolute; inset: -6px 0; }
+  #armJugar { margin-left: auto; background: var(--acento); color: var(--sobre-acento); font-weight: 600;
+              min-height: 44px; padding: 0 var(--e-6); position: relative; }
+  #armJugar::before { content: ""; position: absolute; inset: -2px 0; }
+  /* lo que frena, en texto y no en tenue: se lee sin gritar (revisor) */
+  #armEstado.frena { color: var(--texto); }

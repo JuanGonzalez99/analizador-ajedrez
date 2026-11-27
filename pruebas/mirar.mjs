@@ -79,8 +79,14 @@ const toques = () => pg.evaluate(() => {
   const px = v => (v && v.endsWith("px")) ? parseFloat(v) : 0;
   const els = [...document.querySelectorAll("button, select")].filter(el => {
     const r = el.getBoundingClientRect();
-    return r.width > 0 && r.height > 0 && el.offsetParent !== null &&
-      getComputedStyle(el).visibility !== "hidden" && r.bottom > 0 && r.top < innerHeight;
+    if (!(r.width > 0 && r.height > 0 && el.offsetParent !== null &&
+      getComputedStyle(el).visibility !== "hidden" && r.bottom > 0 && r.top < innerHeight)) return false;
+    /* LO QUE TAPA EL VELO DE UNA HOJA NO SE TOCA (v1.4): la barra de los
+       módulos queda debajo, y con dos botones lado a lado en la hoja de
+       Posiciones salía "pegada" a ellos */
+    const arriba = document.elementFromPoint((r.left + r.right) / 2, Math.min(innerHeight - 1, (r.top + r.bottom) / 2));
+    return !(arriba && !el.contains(arriba) && (arriba.id === "fondoAjustes" ||
+      (arriba.closest("#hojaPos, #hojaAjustes") && !el.closest("#hojaPos, #hojaAjustes"))));
   }).map(el => {
     const r = el.getBoundingClientRect();
     let l = r.left, t = r.top, d = r.right, b = r.bottom;
@@ -91,14 +97,16 @@ const toques = () => pg.evaluate(() => {
       d = Math.max(d, r.right - px(a.right)); b = Math.max(b, r.bottom - px(a.bottom));
     }
     const nombre = el.id || (el.getAttribute("aria-label") || el.textContent || el.tagName).trim().slice(0, 18);
-    return { nombre, l, t, d, b, r, nav: el.closest("nav") };
+    return { nombre, l, t, d, b, r, nav: el.closest("nav, [role=group]") };
   });
   const chicos = els.filter(e => e.d - e.l < 47.5 || e.b - e.t < 47.5)
     .map(e => `${e.nombre} ${Math.round(e.d - e.l)}×${Math.round(e.b - e.t)}`);
   const pegados = [];
   for (let i = 0; i < els.length; i++) for (let j = i + 1; j < els.length; j++) {
     /* los de una misma barra de navegación se reparten el ancho a propósito:
-       cada uno es su área de toque entera (v1.3) */
+       cada uno es su área de toque entera (v1.3). Lo mismo un grupo
+       (`role="group"`: la paleta de Armar, con paso de 52, y el conmutador
+       blancas/negras, que va pegado; v1.4) */
     if (els[i].nav && els[i].nav === els[j].nav) continue;
     const A = els[i].r, B = els[j].r;
     const vert = Math.min(A.bottom, B.bottom) - Math.max(A.top, B.top);
@@ -1497,6 +1505,85 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   console.log("posición en la compu:", JSON.stringify({ sobra, aireHoja, flechaDeshace: deshizo }),
     "(sobra ≤ 0 con el final, aireHoja ≥ 8, flechaDeshace true)");
   if (sobra > 0 || aireHoja < 8 || !deshizo) console.log("OJO: Posiciones en la compu");
+}
+/* ARMAR UNA POSICIÓN (v1.4): se entra por la hoja, se vacía y se arma un
+   final con el rey negro en jaque y mueven blancas, que es lo que más
+   escribe el subtítulo. Entra sin scroll a 386 × 745 y en la compu; la
+   paleta, a la altura de la primera fila de casillas en la compu; "Jugar"
+   apagado con el problema y prendido sin él. */
+{
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  await pg.click("#btnPosAjustes"); await pg.click("#posArmar"); await pg.waitForTimeout(250);
+  await pg.click("#armVaciar");
+  const poner = async (pz, sq) => { await pg.click(`#armPaleta [data-pz="${pz}"]`); await pg.click(`#armTablero [data-sq="${sq}"]`); };
+  await poner("wk", "e1"); await poner("bk", "d8"); await poner("wr", "d1"); await poner("bp", "c7");
+  const armar = { apagado: await pg.evaluate(() => document.getElementById("armJugar").disabled),
+                  dice: await pg.evaluate(() => document.getElementById("armEstado").textContent) };
+  await foto("armar");
+  armar.toque = await toques();
+  /* y a 386, donde las piezas miden 44 (revisor de UX, v1.4; causa A) */
+  await pg.setViewportSize({ width: 386, height: 745 }); await pg.waitForTimeout(150);
+  armar.toque386 = await toques();
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  /* LO ELEGIDO NO SE PARECE AL FOCO (revisor de UX, v1.4: la pieza elegida
+     llevaba el mismo anillo que el foco de teclado; causa D). Una pieza
+     elegida y otra con foco: el contorno y el fondo no pueden coincidir */
+  await pg.click('#armPaleta [data-pz="bn"]');
+  armar.elegidaNoEsFoco = await pg.evaluate(() => {
+    const e = document.querySelector('#armPaleta [data-pz="bn"]'), f = document.querySelector('#armPaleta [data-pz="wq"]');
+    f.focus({ focusVisible: true });
+    const a = getComputedStyle(e), b = getComputedStyle(f);
+    const r = [a.outlineStyle + a.outlineColor + a.backgroundColor, b.outlineStyle + b.outlineColor + b.backgroundColor];
+    f.blur();
+    return r[0] !== r[1];
+  });
+  await pg.click('#armPaleta [data-pz="bn"]');
+  /* PIEZAS QUE NO SE LEEN SOBRE SU FONDO (revisor de UX, v1.4: la negra de
+     Cburnett sobre --elevada da 1,6:1). El relleno de cada <use> negro
+     contra el fondo del botón que la lleva, ≥ 3:1 */
+  armar.contraste = await pg.evaluate(() => {
+    const lum = c => { const m = c.match(/[\d.]+/g).slice(0, 3).map(x => +x / 255)
+      .map(v => v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+    let peor = 99;
+    for (const b of document.querySelectorAll('#armPaleta [data-pz^="b"]')) {
+      const fondo = lum(getComputedStyle(b).backgroundColor), negro = lum("rgb(0,0,0)");
+      peor = Math.min(peor, (Math.max(fondo, negro) + .05) / (Math.min(fondo, negro) + .05));
+    }
+    return Math.round(peor * 10) / 10;
+  });
+  const entra = {};
+  /* cada corte con sus dos lados y un punto en el medio del tramo
+     (revisor de UX, v1.4: de 768 a 990 la columna se salía de la pantalla
+     y se miraba 999; causas A y C) */
+  for (const [w, h] of [[386, 745], [412, 760], [700, 800], [850, 800], [999, 800], [1000, 1000], [1140, 800],
+                        [1000, 800], [1280, 800], [1280, 1000]]) {
+    await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(150);
+    entra[w + "x" + h] = await pg.evaluate(() => {
+      const sobra = document.documentElement.scrollHeight - innerHeight, ancho = document.documentElement.scrollWidth > innerWidth;
+      const tab = document.querySelector("#armTablero svg").getBoundingClientRect();
+      const pal = document.getElementById("armPaleta").getBoundingClientRect();
+      /* la primera fila de casillas arranca 15/366 adentro del SVG */
+      const alLado = pal.left > tab.right ? Math.round(pal.top - (tab.top + tab.height * 15 / 366)) : null;
+      /* el margen derecho del último control, no solo el scrollWidth */
+      const der = Math.round(innerWidth - Math.max(...[...document.querySelectorAll("#zonaArmar button")].map(b => b.getBoundingClientRect().right)));
+      return { sobra, ancho, alLado, der };
+    });
+    if (w === 1280) await foto("ancho-armar");
+  }
+  armar.entra = entra;
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  await pg.click('#armPaleta [data-pz="goma"]'); await pg.click('#armTablero [data-sq="d1"]');
+  armar.prende = await pg.evaluate(() => !document.getElementById("armJugar").disabled);
+  await pg.keyboard.press("Escape"); await pg.waitForTimeout(200);
+  armar.escVuelve = await pg.evaluate(() => document.body.classList.contains("enPosicion"));
+  console.log("armar:", JSON.stringify(armar),
+    "(apagado, prende, elegidaNoEsFoco y escVuelve true; contraste ≥ 3; toques sin chicos ni pegados; sobra ≤ 0, sin ancho, der ≥ 14 y alLado 0 en la compu)");
+  /* un número del resumen que no está en el OJO no está aprobado (revisor,
+     v1.4: "chicos" se imprimía y no frenaba; causa C) */
+  if (!armar.apagado || !armar.prende || armar.contraste < 3 || !armar.escVuelve || !armar.elegidaNoEsFoco ||
+      Object.values(entra).some(e => e.sobra > 0 || e.ancho || e.der < 14 || (e.alLado !== null && Math.abs(e.alLado) > 1)) ||
+      armar.toque.pegados.length || armar.toque.chicos.length ||
+      armar.toque386.pegados.length || armar.toque386.chicos.length) console.log("OJO: Armar posición");
 }
 /* LA BARRA DE LOS MÓDULOS CON UN MES LARGO (prevención de la v1.3, causas A
    y C: las variantes se dibujaron con un mes de una partida, que no

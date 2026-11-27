@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.3.3**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.4**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -448,7 +448,7 @@ el orden en que se juntan:
 | `estilos-compu.css` | [PC] desde "EN PANTALLA ANCHA, DOS COLUMNAS": las media queries de 950/1000/1500, el Mes y el inicio en la compu, el hover, `prefers-reduced-motion` |
 | `cuerpo-arriba.html` | cierra `<style>`, arranca el `<body>`, abre el `<script>` clásico |
 | `registro.js` | `<script>` clásico: **`window.VERSION`** (primer renglón), registro, captura de errores, `mostrarError`, el temporizador de 6 s, panel de diagnóstico |
-| `cuerpo.html` | el HTML de las tres pantallas, Posiciones, la barra de los módulos (`navMod`, v1.3), las hojas y el pie; abre `<script type="module">` |
+| `cuerpo.html` | el HTML de las tres pantallas, Posiciones, Armar posición (`zonaArmar`, v1.4), la barra de los módulos (`navMod`, v1.3), las hojas y el pie; abre `<script type="module">` |
 | `analisis-evaluacion.js` | bloque de análisis (desde su marcador): evaluación, geometría, `quedaComible`, `cambioEn`, categorías, `categorizar`, `derivarFilas`, `precisionesRapidas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), la curva |
 | `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
 | `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`; y `aperturaEs`. Cierra el bloque de análisis |
@@ -460,7 +460,7 @@ el orden en que se juntan:
 | `mes.js` | `correrMes`, banco de pruebas, todo lo analizado (`barrerCache`, `reDerivar`, `filasDelUsuario`) |
 | `tablas.js` | bloque de tablas (entre sus marcadores): `textoPct`, `rangoWilson`, `tasa`, las que pintan tablas, `censoCadencias`, `desenlace`, `tiempoCorto` |
 | `mes-pintar.js` | `pintarDetalle`, de dónde salen los números, `pintarMes`, `pintarLista` |
-| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
+| `posicion.js` | Posiciones (v1.1): el link `#fen=` (`fenDelLink`, `mirarElLink`), `problemaDelFen`, `abrirPosicion`, `pintarPosicion`, tocar y mover (`moverPos`), el motor que contesta (`turnoDelMotor`, `NIVELES`), Deshacer y Empezar de nuevo, `finPos` (cómo terminó), la hoja (`verHojaPos`), armar una posición a mano (v1.4: `casillasDe`, `colocacionDe`, `fenArmado`, `problemaArmado`, `abrirArmar`, `pintarArmar`, `ARM`), los dos botones de la barra de los módulos (`FEN_INICIAL`) |
 | `revision.js` | la revisión de una partida: `ubicarCurva`/`ubicarAlts`/`ubicarGirar`, `pintarRevision`, `pintarResumen`, y los gestos: deslizar, agarrar y arrastrar la pieza, dibujar marcas, el teclado (`seguro("teclas"`). Cierra el `try` del arranque |
 | `pie.html` | cierra el módulo y el `</html>` |
 
@@ -4988,6 +4988,68 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.4, armar una posición a mano** (etapa 4). Pantalla nueva, hija de
+Posiciones (`VISTA = "armar"`, `#zonaArmar`, con "‹" y sin la barra de los
+módulos); se entra con "Armar una posición" de la hoja de Posiciones, al
+lado de "Empezar de nuevo" (uno debajo del otro la hoja crecía 60 y quedaba
+a 4 del tablero a 412 × 745). Variantes sobre la app con `pantallas()`: A la
+paleta en dos filas abajo, B negras arriba del tablero y blancas abajo (como
+lichess), C una fila con un botón de color, D la paleta sola y lo demás en
+la hoja. **El revisor eligió la A con ajustes**: B bajaba el tablero 56 y
+saltaba al entrar; C escondía el color en un modo; D escondía "Mueven", que
+es parte de cada posición. Cómo quedó:
+- **La paleta**: seis piezas por fila (blancas, negras) sobre la casilla
+  clara, radio 6 (la negra de Cburnett sobre `--elevada` da 1,6:1; la regla
+  de las comidas, §1.9 de DISENO), separación 8 (con 48 de toque también a
+  386, donde miden 44) y la goma alta en la séptima columna sobre
+  `--elevada`. **La elegida, con fondo de acento** (lo elegido es el
+  acento; el anillo es del foco y con teclado no se distinguían: revisor,
+  segunda vuelta). Tocar la elegida la desmarca; sin nada
+  elegido, tocar una pieza del tablero la elige.
+- **Tocar casillas**: pone la pieza elegida, la misma otra vez la saca, la
+  goma borra. **Un rey nuevo muda al otro del mismo color**: dos reyes no
+  se juegan y chess.js dibuja uno solo (su `put` rechaza el segundo).
+- **El subtítulo dice lo que falta**, dicho como se arregla
+  (`problemaArmado`): "Falta el rey negro", "Hay un peón en la octava
+  fila", "El rey negro está en jaque y mueven blancas"; si no, "Lista para
+  jugar" en tenue (lo que frena va en `--texto`, sin rojo). Mientras haya
+  algo, "Jugar" apagado.
+- **Los enroques no se eligen**: se ponen los cuatro y `limpiarFen` deja
+  los que el tablero sostiene. Sin al paso.
+- **"Mueven blancas / negras"**, un conmutador de dos (el primero de la
+  app: `.armSeg`, `aria-pressed`), y Vaciar · Inicial (chicos) · Jugar
+  (principal, a la derecha).
+- **Jugar** abre la posición con Juan del lado que mueve y la pone en el
+  link (`#fen=…_w_…`): recargar la vuelve a abrir. La entrada de "armar" se
+  saca del historial (`IGNORAR_POP` y `history.back()`, y la posición se
+  abre en el `popstate`), así atrás no pasa por la posición vieja. "‹",
+  Escape y el atrás del celu vuelven sin cambiar nada.
+- **[PC] desde 1000**, la paleta y los controles en una columna de 336 a
+  la derecha del tablero, juntos arriba con 24 entre bloques (un hueco en
+  el medio se lee como algo que falta) y la paleta a la altura de la
+  primera fila de casillas (el SVG tiene 15 de margen en 366). Como abajo
+  no hay nada, el tablero toma el alto: `min(100vh − 120, min(100vw, 1110)
+  − 400)`, hasta 640 (a 1280 × 800, 640). Antes de 1000 el body mide 700
+  como mucho y al costado no entra: un primer intento con el corte en 768
+  se salía de la pantalla hasta 999 (lo vio el revisor). De 700 a 999,
+  apilado con el tablero a 100vh − 400 (a 999 × 800 sin eso sobraban 74).
+  Al pasar de Posiciones a Armar el tablero cambia de tamaño y de lugar:
+  **se acepta**, es otra pantalla y al costado no entraba en el mismo
+  lugar.
+`mirar` suma la línea "armar:" (entra sin scroll ni se sale de costado a
+386 × 745, 412 × 760, 700, 850, 999, 1000, 1140 y 1280, con el último
+control a 14 o más del borde; la paleta al ras de las casillas; los toques
+a 412 y a 386, que frenan también con los chicos; la elegida distinta del
+foco; Jugar se apaga y se prende; Escape vuelve) y mide el **contraste de las piezas
+negras contra su fondo** (≥ 3:1; la prevención del revisor). Y `toques()`
+ya no cuenta lo que tapa el velo de una hoja (la barra de los módulos
+salía "pegada" a los dos botones de la hoja) ni separa los de un mismo
+`role="group"` (la paleta, con paso de 52, y el conmutador). Las capturas
+del celu, iguales al byte salvo la versión al pie, la hoja de Posiciones y
+`encadenadas` (una foto sacada mientras el motor piensa; las medidas, las
+mismas). Prueba de unidad: el FEN de ida y vuelta, los enroques deducidos y
+cada mensaje de lo que falta.
 
 **v1.3.3, [PC] la Partida y el Mes, otra vez sin correrse** (revisor de UX,
 v1.3.1). De 1000 a 1269 la Partida y el Mes se corrían 80 sin riel a la

@@ -63,6 +63,14 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
    300 ms y respetando `prefers-reduced-motion` (estar en rango no la
    aprueba: ver "Movimiento" en Cómo mirás).
 
+**Lo elegido no se parece al foco** (v1.4: pediste el anillo del foco para
+la pieza elegida de la paleta y con teclado no se distinguían). La marca de
+"esto está elegido" (`aria-pressed`, `.sel`, `.activo`) usa el acento de
+fondo o de borde, nunca el contorno de 2 separado 2 de §1.7, que es del
+foco. Y **un ajuste que traiga una regla de otro lugar** (el contraste de
+las comidas, el anillo del foco) se pregunta antes "¿choca con algo que ya
+significa eso?".
+
 **Celu primero, PC aprovechada.** El celu manda: un cambio de PC que rompe
 algo del celu está mal aunque en PC se vea perfecto. En PC se juzga si se
 aprovecha el espacio y el mouse.

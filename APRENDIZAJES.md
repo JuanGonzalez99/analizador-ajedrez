@@ -63,6 +63,17 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Armar posición: la columna de la compu fuera de la pantalla, el "‹" y
+  las piezas a 386 sin 48 de toque, y la pieza elegida igual al foco** ·
+  v1.4 (no salió) · A y C: el arnés miraba 999 y 1000, no el medio del
+  tramo nuevo (768–999, donde el body mide 700 como mucho), y `toques()`
+  corría solo a 412; C: "chicos" se imprimía y el OJO no lo miraba; D: el
+  revisor pidió para la elegida el anillo del foco · `mirar` mide Armar a
+  cada lado de cada corte y en el medio, el margen derecho del último
+  control, los toques también a 386, frena con los chicos, y compara la
+  elegida con el foco; regla en `revisor-ux.md` ("Lo elegido no se parece
+  al foco"). Para quien programa: un número del resumen que no está en la
+  condición del OJO no está aprobado.
 - **La Partida corrida sin riel en la compu, y el título de Posiciones 4 px
   adentro** · v1.3.1 y v1.3 (no salieron) · F: se miró la pantalla que
   tenía el riel y no las que se corrían sin tenerlo; C: "bordes en la

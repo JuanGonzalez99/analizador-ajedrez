@@ -58,7 +58,7 @@ function pintarExplicacion(id, partes, tocable = true) {
    análisis las prendía y apagaba por su cuenta, y eso se desincroniza al
    primer descuido. `VISTA` es la pantalla pedida; si no tiene contenido (y no
    hay nada corriendo que la vaya a llenar) se ve el inicio. */
-const HAY = { partida: false, mes: false, posicion: false };
+const HAY = { partida: false, mes: false, posicion: false, armar: false };
 let VISTA = "inicio", OCUPADO = false;
 const SCROLL = { inicio: 0, mes: 0 };
 /* LO ANALIZADO DEL MES QUE SE VE (v0.120): id de partida → tu precisión (o
@@ -93,6 +93,9 @@ function mostrarVista(v, opc) {
   document.body.classList.toggle("enPartida", actual === "partida");
   document.body.classList.toggle("enPosicion", actual === "posicion");
   ver("zonaPosicion", actual === "posicion");
+  /* armar una posición (v1.4): hija de Posiciones, con "‹" y sin la barra */
+  document.body.classList.toggle("enArmar", actual === "armar");
+  ver("zonaArmar", actual === "armar");
   /* la barra de los módulos, solo en las de primer nivel; llega entera */
   const conBarra = actual === "inicio" || actual === "posicion";
   document.body.classList.toggle("conBarra", conBarra);

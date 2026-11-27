@@ -1111,6 +1111,8 @@ document.addEventListener("keydown", seguro("teclas", ev => {
     if (!$("posDeshacer").disabled) $("posDeshacer").click();
     return;
   }
+  /* Escape sale de Armar posición sin cambiar nada, como "‹" (v1.4) */
+  if (tecla === "Escape" && VISTA === "armar") { ev.preventDefault(); volver(); return; }
   /* Escape sale de la variante: es el botón "volver", en el teclado */
   if (tecla === "Escape" && PRUEBA && !$("zonaRevision").classList.contains("oculto")) {
     ev.preventDefault(); salirDePrueba(); return;

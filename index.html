@@ -383,7 +383,7 @@
      arriba del body. */
   body.enPartida #zonaEstado .barra { top: -8px; }
   /* el volver es la flecha sola: el ::before la lleva a 48 x 48 (revisor), sin pasar del x 4 de antes */
-  #volverDeLaPartida::before { inset: -13px -22px -13px -4px; }
+  #volverDeLaPartida::before, #volverDeArmar::before { inset: -13px -22px -13px -4px; }
   /* EL VOLVER NO AGRANDA EL RENGLÓN: lo visible mide lo que medía el h2
      "Revisión", y el área de 48 de §1.7 la pone un ::before invisible. */
   .volver { background: none; border: 0; padding: 0; margin: 0 0 0 -6px; font: inherit;
@@ -1057,7 +1057,53 @@
   #hojaPos .ajCab { margin-bottom: var(--e-2); }
   .posHojaBtn { display: block; width: 100%; min-height: 44px; margin: var(--e-4) 0 0; position: relative; }
   .posHojaBtn::before { content: ""; position: absolute; inset: -2px 0; }
+  .posHojaFila { display: flex; gap: var(--e-3); margin: var(--e-4) 0 0; }
+  .posHojaFila .posHojaBtn { flex: 1; min-width: 0; margin: 0; padding-left: var(--e-2); padding-right: var(--e-2); }
   #posError { margin: var(--e-4) 0 0; }
+  /* ARMAR UNA POSICIÓN (v1.4; el revisor eligió la A entre cuatro). El
+     tablero como el de Posiciones; debajo la paleta en dos filas de seis
+     (blancas, negras) y la goma alta en la séptima columna, "Mueven", y
+     Vaciar · Inicial · Jugar. Las piezas van sobre la casilla clara, como
+     las comidas (§1.9): la negra de Cburnett sobre `--elevada` da 1,6:1. */
+  body.enVista #zonaArmar .cabvista { margin-top: 0; }
+  body.enArmar #zonaEstado { display: none; }
+  #armTablero { user-select: none; -webkit-user-select: none; margin: var(--e-2) 0 0; }
+  #armTablero svg.tab { margin: 0 auto; }
+  #armPaleta { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr));
+               gap: var(--e-2);
+               margin: var(--e-3) 0 0; }
+  #armPaleta button { padding: 0; aspect-ratio: 1; min-height: 0; display: grid; place-items: center;
+                      background: var(--casilla-clara); border: 0; border-radius: var(--r-chico); position: relative; }
+  /* 48 de toque también a 386, donde miden 44 (con 8 entre ellas no se pisan) */
+  #armPaleta button::before { content: ""; position: absolute; inset: -2px; }
+  #armPaleta button:nth-child(-n+6) { grid-row: 1; }
+  #armPaleta button:nth-child(n+7):nth-child(-n+12) { grid-row: 2; }
+  #armPaleta button svg { width: 86%; height: 86%; }
+  /* la elegida, con fondo de acento (lo elegido es el acento, §1.1); el
+     anillo es del foco de teclado (§1.7) y no se pueden confundir (revisor,
+     v1.4: con el anillo en las dos no se distinguían). La negra de Cburnett
+     sobre el acento da 9,7:1 */
+  #armPaleta button[aria-pressed="true"] { background: var(--acento); }
+  #armPaleta .armGoma { grid-row: 1 / span 2; grid-column: 7; aspect-ratio: auto;
+                        background: var(--elevada); color: var(--texto); }
+  #armPaleta .armGoma svg { width: 24px; height: 24px; }
+  .armMueven { margin: var(--e-3) 0 0; gap: var(--e-3); align-items: center; }
+  #armMuevenRot { color: var(--tenue); font-size: var(--t-secundario); }
+  .armSeg { display: inline-flex; border: 1px solid var(--borde-campo); border-radius: var(--r-control); overflow: hidden; }
+  .armSeg button { border-radius: 0; min-height: 44px; background: transparent; padding: 0 var(--e-4); color: var(--tenue); }
+  .armSeg button[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 14%, var(--superficie));
+                                        color: var(--texto); font-weight: 600; }
+  .armSeg button { position: relative; }
+  .armSeg button::before { content: ""; position: absolute; inset: -2px 0; }
+  .armAcciones { margin: var(--e-3) 0 0; gap: var(--e-3); align-items: center; }
+  /* los chicos, 48 de toque (§1.7) */
+  .armAcciones .chico { position: relative; }
+  .armAcciones .chico::before { content: ""; position: absolute; inset: -6px 0; }
+  #armJugar { margin-left: auto; background: var(--acento); color: var(--sobre-acento); font-weight: 600;
+              min-height: 44px; padding: 0 var(--e-6); position: relative; }
+  #armJugar::before { content: ""; position: absolute; inset: -2px 0; }
+  /* lo que frena, en texto y no en tenue: se lee sin gritar (revisor) */
+  #armEstado.frena { color: var(--texto); }
 
   /* EN PANTALLA ANCHA, DOS COLUMNAS (v0.80). Hasta acá el archivo entero tenía
      UNA media query y era la de claro contra oscuro: la app era la misma
@@ -1602,6 +1648,34 @@
     #zonaPosicion svg.tab { max-width: var(--ladoTab); }
   }
 
+  /* [PC] ARMAR UNA POSICIÓN (v1.4). Desde 1000 la paleta y los controles en
+     una columna de 336 a la derecha del tablero, juntos arriba (24 entre
+     bloques: un hueco en el medio de la columna se lee como algo que
+     falta) y la paleta a la altura de la primera fila de casillas (el SVG
+     tiene 15 de margen en 366). Acá abajo del tablero no hay nada, así que
+     el tablero toma el alto (100vh − 120) hasta lo que deja el ancho del
+     body (1110 como mucho, con 14 de cada lado, menos 336 + 32). Antes de
+     1000 el body mide 700 como mucho y al costado no entra (con el corte en
+     768 se salía de la pantalla hasta 999; revisor de UX). Al pasar de Posiciones a Armar el tablero cambia
+     de tamaño y de lugar: **se acepta**, es otra pantalla y al costado no
+     entraba en el mismo lugar. De 700 a 999, apilado como en el celu, con el
+     tablero a 100vh − 400 para que entre sin scroll. */
+  @media (min-width: 700px) {
+    #zonaArmar { --ladoTab: clamp(360px, calc(100vh - 400px), 640px); max-width: var(--ladoTab); margin: 0 auto; }
+    #zonaArmar svg.tab { max-width: var(--ladoTab); }
+    body.enArmar { padding-top: 8px; }
+    body.enArmar .pie { max-width: clamp(360px, calc(100vh - 400px), 640px); margin-left: auto; margin-right: auto; }
+  }
+  @media (min-width: 1000px) {
+    #zonaArmar { --ladoTab: clamp(360px, min(100vh - 120px, min(100vw, 1110px) - 400px), 640px);
+                 max-width: calc(var(--ladoTab) + 32px + 336px); }
+    #zonaArmar .armGrid { display: grid; grid-template-columns: var(--ladoTab) 336px; gap: 32px; align-items: start; }
+    #zonaArmar .armLado { padding-top: calc(var(--e-2) + var(--ladoTab) * 15 / 366); }
+    #zonaArmar #armPaleta { margin-top: 0; }
+    #zonaArmar .armMueven, #zonaArmar .armAcciones { margin-top: var(--e-6); }
+    body.enArmar .pie { max-width: calc(clamp(360px, min(100vh - 120px, min(100vw, 1110px) - 400px), 640px) + 368px); }
+  }
+
   /* [PC] LA BARRA DE LOS MÓDULOS ES UN RIEL (v1.3.1, revisor de UX). Abajo,
      a 1280, eran dos botones a 640 px uno del otro, lejos de todo. Con mouse
      y desde 1000, un riel de 80 a la izquierda (Material para pantallas
@@ -1655,7 +1729,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.3.3 · 26-11";
+  window.VERSION = "v1.4 · 27-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2232,6 +2306,26 @@
   </div>
 </div>
 
+<!-- ARMAR UNA POSICIÓN A MANO (v1.4, etapa 4). Pantalla hija de Posiciones
+     (con "‹", sin la barra de los módulos). El revisor eligió la A entre
+     cuatro: la paleta en dos filas debajo del tablero, con la goma alta en
+     su columna; "Mueven", y Vaciar · Inicial · Jugar. En la compu, la paleta
+     y los controles en una columna a la derecha del tablero. -->
+<div id="zonaArmar" class="oculto">
+  <div class="cabvista"><h2><button type="button" class="volver" id="volverDeArmar" aria-label="Volver sin cambiar la posición" title="Volver sin cambiar la posición"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button></h2>
+    <div class="cabTit"><div class="l1"><span class="rival">Armar posición</span></div>
+      <div class="l2"><span id="armEstado" aria-live="polite"></span></div></div></div>
+  <div class="armGrid">
+    <div id="armTablero"></div>
+    <div class="armLado">
+      <div id="armPaleta" role="group" aria-label="Piezas"></div>
+      <div class="fila armMueven"><span id="armMuevenRot">Mueven</span>
+        <span class="armSeg" role="group" aria-labelledby="armMuevenRot"><button type="button" id="armBlancas" aria-pressed="true">blancas</button><button type="button" id="armNegras" aria-pressed="false">negras</button></span></div>
+      <div class="fila armAcciones"><button type="button" class="chico" id="armVaciar">Vaciar</button><button type="button" class="chico" id="armInicial">Inicial</button><button type="button" id="armJugar">Jugar</button></div>
+    </div>
+  </div>
+</div>
+
 <!-- LA HOJA DE AJUSTES (v0.91). Vive al final del body y no adentro de la
      vista Partida a propósito: es `position: fixed` y así no depende de en qué
      columna de la grilla haya caído nada.
@@ -2260,7 +2354,10 @@
     <select id="posNivel" class="chico"><option value="1">1, el más fácil</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8, el más fuerte</option></select></label>
   <label class="ajFila"><span>Jugás con</span>
     <select id="posColor" class="chico"><option value="w">blancas</option><option value="b">negras</option></select></label>
-  <button id="posReiniciar" class="posHojaBtn">Empezar de nuevo</button>
+  <!-- lado a lado (v1.4): uno debajo del otro, la hoja crecía 60 y quedaba
+       a 4 del tablero a 745 de alto -->
+  <div class="posHojaFila"><button id="posReiniciar" class="posHojaBtn">Empezar de nuevo</button>
+    <button id="posArmar" class="posHojaBtn">Armar una posición</button></div>
 </div>
 <div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
      aria-labelledby="tituloAjustes">
@@ -5009,7 +5106,7 @@ function pintarExplicacion(id, partes, tocable = true) {
    análisis las prendía y apagaba por su cuenta, y eso se desincroniza al
    primer descuido. `VISTA` es la pantalla pedida; si no tiene contenido (y no
    hay nada corriendo que la vaya a llenar) se ve el inicio. */
-const HAY = { partida: false, mes: false, posicion: false };
+const HAY = { partida: false, mes: false, posicion: false, armar: false };
 let VISTA = "inicio", OCUPADO = false;
 const SCROLL = { inicio: 0, mes: 0 };
 /* LO ANALIZADO DEL MES QUE SE VE (v0.120): id de partida → tu precisión (o
@@ -5044,6 +5141,9 @@ function mostrarVista(v, opc) {
   document.body.classList.toggle("enPartida", actual === "partida");
   document.body.classList.toggle("enPosicion", actual === "posicion");
   ver("zonaPosicion", actual === "posicion");
+  /* armar una posición (v1.4): hija de Posiciones, con "‹" y sin la barra */
+  document.body.classList.toggle("enArmar", actual === "armar");
+  ver("zonaArmar", actual === "armar");
   /* la barra de los módulos, solo en las de primer nivel; llega entera */
   const conBarra = actual === "inicio" || actual === "posicion";
   document.body.classList.toggle("conBarra", conBarra);
@@ -9001,6 +9101,57 @@ function limpiarFen(fen) {
   return p.join(" ");
 }
 
+/* ARMAR UNA POSICIÓN A MANO (v1.4). El tablero del editor es un mapa
+   casilla → pieza ("e1" → "wk"); de ahí sale la colocación del FEN. Los
+   enroques no se eligen: se ponen los cuatro y `limpiarFen` deja los que el
+   tablero sostiene (rey y torre en su casilla), que es lo que haría
+   cualquiera. Sin al paso: una posición armada no viene de una jugada. */
+function casillasDe(fen) {
+  const cas = {};
+  fen.split(" ")[0].split("/").forEach((fila, r) => {
+    let f = 0;
+    for (const ch of fila) {
+      if (/\d/.test(ch)) { f += +ch; continue; }
+      cas["abcdefgh"[f] + (8 - r)] = (ch === ch.toUpperCase() ? "w" : "b") + ch.toLowerCase();
+      f++;
+    }
+  });
+  return cas;
+}
+function colocacionDe(cas) {
+  const filas = [];
+  for (let r = 8; r >= 1; r--) {
+    let s = "", vacias = 0;
+    for (const col of "abcdefgh") {
+      const p = cas[col + r];
+      if (!p) { vacias++; continue; }
+      if (vacias) { s += vacias; vacias = 0; }
+      s += p[0] === "w" ? p[1].toUpperCase() : p[1];
+    }
+    filas.push(s + (vacias || ""));
+  }
+  return filas.join("/");
+}
+const fenArmado = (cas, turno) => limpiarFen(colocacionDe(cas) + " " + turno + " KQkq - 0 1");
+/* QUÉ LE FALTA PARA PODER JUGARSE, dicho como se arregla: es el subtítulo
+   del editor, y mientras haya algo "Jugar" está apagado */
+function problemaArmado(cas, turno) {
+  const cuantos = t => Object.values(cas).filter(p => p === t).length;
+  for (const [t, quien] of [["wk", "blanco"], ["bk", "negro"]]) {
+    if (!cuantos(t)) return "Falta el rey " + quien;
+    if (cuantos(t) > 1) return "Hay más de un rey " + quien;
+  }
+  for (const [sq, p] of Object.entries(cas))
+    if (p[1] === "p" && (sq[1] === "1" || sq[1] === "8"))
+      return "Hay un peón en la " + (sq[1] === "1" ? "primera" : "octava") + " fila";
+  const fen = colocacionDe(cas) + " " + turno + " - - 0 1";
+  const otro = new Chess(colocacionDe(cas) + " " + (turno === "w" ? "b" : "w") + " - - 0 1");
+  if (otro.in_check())
+    return "El rey " + (turno === "w" ? "negro" : "blanco") + " está en jaque y mueven " + (turno === "w" ? "blancas" : "negras");
+  const p = problemaDelFen(fen);
+  return p ? p[0].toUpperCase() + p.slice(1) : null;
+}
+
 let NIVEL_POS = 4;
 try { NIVEL_POS = Math.min(8, Math.max(1, +localStorage.getItem("nivelPos") || 4)); } catch (e) { /* incógnito */ }
 
@@ -9248,6 +9399,92 @@ $("posColor").onchange = seguro("posición: color", () => {
   pintarPosicion();
   turnoDelMotor();
 });
+/* ARMAR UNA POSICIÓN A MANO (v1.4): una pantalla hija de Posiciones
+   (`VISTA = "armar"`), que arranca con la posición que estaba en el
+   tablero. Se toca una pieza de la paleta y después las casillas; la misma
+   pieza otra vez la saca, y la goma borra. Un rey nuevo muda al otro del
+   mismo color (dos reyes no se pueden jugar y chess.js dibuja uno solo).
+   Tocar una pieza del tablero sin nada elegido elige esa pieza. "‹",
+   Escape y el atrás del celu vuelven sin cambiar nada; "Jugar" abre la
+   posición armada, con Juan del lado que mueve, y la pone en el link. */
+let ARM = null;          /* { cas, turno, pieza } */
+const PALETA = ["wk", "wq", "wr", "wb", "wn", "wp", "bk", "bq", "br", "bb", "bn", "bp"];
+const NOMBRE_PZ = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
+$("armPaleta").innerHTML = PALETA.map(t =>
+  `<button type="button" data-pz="${t}" aria-pressed="false" aria-label="${NOMBRE_PZ[t[1]]} ${t[0] === "w" ? "blanco" : "negro"}">` +
+  `<svg viewBox="0 0 45 45" aria-hidden="true"><use href="#cb-${t}"/></svg></button>`).join("") +
+  `<button type="button" data-pz="goma" class="armGoma" aria-pressed="false" aria-label="Borrar">` +
+  `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 20h12M5 16l9-9 5 5-6 6H8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>`;
+
+function abrirArmar() {
+  const fen = POS && !POS.error ? fenPos() : FEN_INICIAL;
+  ARM = { cas: casillasDe(fen), turno: fen.split(" ")[1] === "b" ? "b" : "w", pieza: null };
+  HAY.armar = true;
+  irAPantalla("armar");
+  pintarArmar();
+}
+function pintarArmar() {
+  if (!ARM) return;
+  const prob = problemaArmado(ARM.cas, ARM.turno);
+  const est = $("armEstado");
+  est.textContent = prob || "Lista para jugar";
+  /* lo que frena se lee sin gritar: en texto, no en rojo (revisor) */
+  est.classList.toggle("frena", !!prob);
+  $("armJugar").disabled = !!prob;
+  /* las piezas del tablero no se dibujan con chess.js si falta un rey: el
+     FEN sin validar alcanza para `dibujar`, que solo lee la colocación */
+  const g = GIRADO;
+  GIRADO = false;
+  $("armTablero").innerHTML = dibujar(colocacionDe(ARM.cas) + " w - - 0 1", null, null,
+    { sinMarcas: true, sinAtras: true, sinAdelante: true });
+  GIRADO = g;
+  for (const b of $("armPaleta").children) b.setAttribute("aria-pressed", b.dataset.pz === ARM.pieza ? "true" : "false");
+  $("armBlancas").setAttribute("aria-pressed", ARM.turno === "w" ? "true" : "false");
+  $("armNegras").setAttribute("aria-pressed", ARM.turno === "b" ? "true" : "false");
+}
+$("armPaleta").addEventListener("click", seguro("armar: paleta", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-pz]");
+  if (!b || !ARM) return;
+  ARM.pieza = ARM.pieza === b.dataset.pz ? null : b.dataset.pz;
+  pintarArmar();
+}));
+$("armTablero").addEventListener("click", seguro("armar: tocar", ev => {
+  const r = ev.target.closest && ev.target.closest("[data-sq]");
+  if (!r || !ARM) return;
+  const sq = r.dataset.sq, aca = ARM.cas[sq];
+  if (!ARM.pieza) { if (aca) ARM.pieza = aca; }
+  else if (ARM.pieza === "goma" || aca === ARM.pieza) delete ARM.cas[sq];
+  else {
+    if (ARM.pieza[1] === "k")
+      for (const [q, t] of Object.entries(ARM.cas)) if (t === ARM.pieza) delete ARM.cas[q];
+    ARM.cas[sq] = ARM.pieza;
+  }
+  pintarArmar();
+}));
+$("armBlancas").onclick = seguro("armar: mueven blancas", () => { ARM.turno = "w"; pintarArmar(); });
+$("armNegras").onclick = seguro("armar: mueven negras", () => { ARM.turno = "b"; pintarArmar(); });
+$("armVaciar").onclick = seguro("armar: vaciar", () => { ARM.cas = {}; pintarArmar(); });
+$("armInicial").onclick = seguro("armar: inicial", () => { ARM.cas = casillasDe(FEN_INICIAL); ARM.turno = "w"; pintarArmar(); });
+$("volverDeArmar").onclick = seguro("armar: volver", () => volver());
+$("posArmar").onclick = seguro("posición: armar", () => { verHojaPos(false); abrirArmar(); });
+/* JUGAR: la entrada de "armar" se saca del historial (atrás vuelve a donde
+   estabas antes de Posiciones, no a la posición vieja) y la de Posiciones
+   queda con el link de la armada: recargar la vuelve a abrir */
+$("armJugar").onclick = seguro("armar: jugar", () => {
+  if (!ARM || problemaArmado(ARM.cas, ARM.turno)) return;
+  const fen = fenArmado(ARM.cas, ARM.turno);
+  const abrir = () => {
+    try { history.replaceState(history.state, "", location.pathname + location.search + "#fen=" + fen.replace(/ /g, "_")); }
+    catch (e) { /* nada */ }
+    abrirPosicion(fen, { color: ARM.turno });
+  };
+  if (history.state && history.state.vista === "armar") {
+    IGNORAR_POP = true;
+    window.addEventListener("popstate", seguro("armar: jugar", abrir), { once: true });
+    history.back();
+  } else abrir();
+});
+
 /* LA BARRA DE LOS MÓDULOS (v1.3). Posiciones sin link abre la que estabas
    jugando o, si no hay, la inicial con blancas (revisor de UX). Primero
    `irAPantalla`, que empuja la entrada (es el único que empuja), y después
@@ -10390,6 +10627,8 @@ document.addEventListener("keydown", seguro("teclas", ev => {
     if (!$("posDeshacer").disabled) $("posDeshacer").click();
     return;
   }
+  /* Escape sale de Armar posición sin cambiar nada, como "‹" (v1.4) */
+  if (tecla === "Escape" && VISTA === "armar") { ev.preventDefault(); volver(); return; }
   /* Escape sale de la variante: es el botón "volver", en el teclado */
   if (tecla === "Escape" && PRUEBA && !$("zonaRevision").classList.contains("oculto")) {
     ev.preventDefault(); salirDePrueba(); return;

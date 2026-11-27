@@ -72,6 +72,57 @@ function limpiarFen(fen) {
   return p.join(" ");
 }
 
+/* ARMAR UNA POSICIÓN A MANO (v1.4). El tablero del editor es un mapa
+   casilla → pieza ("e1" → "wk"); de ahí sale la colocación del FEN. Los
+   enroques no se eligen: se ponen los cuatro y `limpiarFen` deja los que el
+   tablero sostiene (rey y torre en su casilla), que es lo que haría
+   cualquiera. Sin al paso: una posición armada no viene de una jugada. */
+function casillasDe(fen) {
+  const cas = {};
+  fen.split(" ")[0].split("/").forEach((fila, r) => {
+    let f = 0;
+    for (const ch of fila) {
+      if (/\d/.test(ch)) { f += +ch; continue; }
+      cas["abcdefgh"[f] + (8 - r)] = (ch === ch.toUpperCase() ? "w" : "b") + ch.toLowerCase();
+      f++;
+    }
+  });
+  return cas;
+}
+function colocacionDe(cas) {
+  const filas = [];
+  for (let r = 8; r >= 1; r--) {
+    let s = "", vacias = 0;
+    for (const col of "abcdefgh") {
+      const p = cas[col + r];
+      if (!p) { vacias++; continue; }
+      if (vacias) { s += vacias; vacias = 0; }
+      s += p[0] === "w" ? p[1].toUpperCase() : p[1];
+    }
+    filas.push(s + (vacias || ""));
+  }
+  return filas.join("/");
+}
+const fenArmado = (cas, turno) => limpiarFen(colocacionDe(cas) + " " + turno + " KQkq - 0 1");
+/* QUÉ LE FALTA PARA PODER JUGARSE, dicho como se arregla: es el subtítulo
+   del editor, y mientras haya algo "Jugar" está apagado */
+function problemaArmado(cas, turno) {
+  const cuantos = t => Object.values(cas).filter(p => p === t).length;
+  for (const [t, quien] of [["wk", "blanco"], ["bk", "negro"]]) {
+    if (!cuantos(t)) return "Falta el rey " + quien;
+    if (cuantos(t) > 1) return "Hay más de un rey " + quien;
+  }
+  for (const [sq, p] of Object.entries(cas))
+    if (p[1] === "p" && (sq[1] === "1" || sq[1] === "8"))
+      return "Hay un peón en la " + (sq[1] === "1" ? "primera" : "octava") + " fila";
+  const fen = colocacionDe(cas) + " " + turno + " - - 0 1";
+  const otro = new Chess(colocacionDe(cas) + " " + (turno === "w" ? "b" : "w") + " - - 0 1");
+  if (otro.in_check())
+    return "El rey " + (turno === "w" ? "negro" : "blanco") + " está en jaque y mueven " + (turno === "w" ? "blancas" : "negras");
+  const p = problemaDelFen(fen);
+  return p ? p[0].toUpperCase() + p.slice(1) : null;
+}
+
 let NIVEL_POS = 4;
 try { NIVEL_POS = Math.min(8, Math.max(1, +localStorage.getItem("nivelPos") || 4)); } catch (e) { /* incógnito */ }
 
@@ -319,6 +370,92 @@ $("posColor").onchange = seguro("posición: color", () => {
   pintarPosicion();
   turnoDelMotor();
 });
+/* ARMAR UNA POSICIÓN A MANO (v1.4): una pantalla hija de Posiciones
+   (`VISTA = "armar"`), que arranca con la posición que estaba en el
+   tablero. Se toca una pieza de la paleta y después las casillas; la misma
+   pieza otra vez la saca, y la goma borra. Un rey nuevo muda al otro del
+   mismo color (dos reyes no se pueden jugar y chess.js dibuja uno solo).
+   Tocar una pieza del tablero sin nada elegido elige esa pieza. "‹",
+   Escape y el atrás del celu vuelven sin cambiar nada; "Jugar" abre la
+   posición armada, con Juan del lado que mueve, y la pone en el link. */
+let ARM = null;          /* { cas, turno, pieza } */
+const PALETA = ["wk", "wq", "wr", "wb", "wn", "wp", "bk", "bq", "br", "bb", "bn", "bp"];
+const NOMBRE_PZ = { k: "rey", q: "dama", r: "torre", b: "alfil", n: "caballo", p: "peón" };
+$("armPaleta").innerHTML = PALETA.map(t =>
+  `<button type="button" data-pz="${t}" aria-pressed="false" aria-label="${NOMBRE_PZ[t[1]]} ${t[0] === "w" ? "blanco" : "negro"}">` +
+  `<svg viewBox="0 0 45 45" aria-hidden="true"><use href="#cb-${t}"/></svg></button>`).join("") +
+  `<button type="button" data-pz="goma" class="armGoma" aria-pressed="false" aria-label="Borrar">` +
+  `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="M8 20h12M5 16l9-9 5 5-6 6H8z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>`;
+
+function abrirArmar() {
+  const fen = POS && !POS.error ? fenPos() : FEN_INICIAL;
+  ARM = { cas: casillasDe(fen), turno: fen.split(" ")[1] === "b" ? "b" : "w", pieza: null };
+  HAY.armar = true;
+  irAPantalla("armar");
+  pintarArmar();
+}
+function pintarArmar() {
+  if (!ARM) return;
+  const prob = problemaArmado(ARM.cas, ARM.turno);
+  const est = $("armEstado");
+  est.textContent = prob || "Lista para jugar";
+  /* lo que frena se lee sin gritar: en texto, no en rojo (revisor) */
+  est.classList.toggle("frena", !!prob);
+  $("armJugar").disabled = !!prob;
+  /* las piezas del tablero no se dibujan con chess.js si falta un rey: el
+     FEN sin validar alcanza para `dibujar`, que solo lee la colocación */
+  const g = GIRADO;
+  GIRADO = false;
+  $("armTablero").innerHTML = dibujar(colocacionDe(ARM.cas) + " w - - 0 1", null, null,
+    { sinMarcas: true, sinAtras: true, sinAdelante: true });
+  GIRADO = g;
+  for (const b of $("armPaleta").children) b.setAttribute("aria-pressed", b.dataset.pz === ARM.pieza ? "true" : "false");
+  $("armBlancas").setAttribute("aria-pressed", ARM.turno === "w" ? "true" : "false");
+  $("armNegras").setAttribute("aria-pressed", ARM.turno === "b" ? "true" : "false");
+}
+$("armPaleta").addEventListener("click", seguro("armar: paleta", ev => {
+  const b = ev.target.closest && ev.target.closest("[data-pz]");
+  if (!b || !ARM) return;
+  ARM.pieza = ARM.pieza === b.dataset.pz ? null : b.dataset.pz;
+  pintarArmar();
+}));
+$("armTablero").addEventListener("click", seguro("armar: tocar", ev => {
+  const r = ev.target.closest && ev.target.closest("[data-sq]");
+  if (!r || !ARM) return;
+  const sq = r.dataset.sq, aca = ARM.cas[sq];
+  if (!ARM.pieza) { if (aca) ARM.pieza = aca; }
+  else if (ARM.pieza === "goma" || aca === ARM.pieza) delete ARM.cas[sq];
+  else {
+    if (ARM.pieza[1] === "k")
+      for (const [q, t] of Object.entries(ARM.cas)) if (t === ARM.pieza) delete ARM.cas[q];
+    ARM.cas[sq] = ARM.pieza;
+  }
+  pintarArmar();
+}));
+$("armBlancas").onclick = seguro("armar: mueven blancas", () => { ARM.turno = "w"; pintarArmar(); });
+$("armNegras").onclick = seguro("armar: mueven negras", () => { ARM.turno = "b"; pintarArmar(); });
+$("armVaciar").onclick = seguro("armar: vaciar", () => { ARM.cas = {}; pintarArmar(); });
+$("armInicial").onclick = seguro("armar: inicial", () => { ARM.cas = casillasDe(FEN_INICIAL); ARM.turno = "w"; pintarArmar(); });
+$("volverDeArmar").onclick = seguro("armar: volver", () => volver());
+$("posArmar").onclick = seguro("posición: armar", () => { verHojaPos(false); abrirArmar(); });
+/* JUGAR: la entrada de "armar" se saca del historial (atrás vuelve a donde
+   estabas antes de Posiciones, no a la posición vieja) y la de Posiciones
+   queda con el link de la armada: recargar la vuelve a abrir */
+$("armJugar").onclick = seguro("armar: jugar", () => {
+  if (!ARM || problemaArmado(ARM.cas, ARM.turno)) return;
+  const fen = fenArmado(ARM.cas, ARM.turno);
+  const abrir = () => {
+    try { history.replaceState(history.state, "", location.pathname + location.search + "#fen=" + fen.replace(/ /g, "_")); }
+    catch (e) { /* nada */ }
+    abrirPosicion(fen, { color: ARM.turno });
+  };
+  if (history.state && history.state.vista === "armar") {
+    IGNORAR_POP = true;
+    window.addEventListener("popstate", seguro("armar: jugar", abrir), { once: true });
+    history.back();
+  } else abrir();
+});
+
 /* LA BARRA DE LOS MÓDULOS (v1.3). Posiciones sin link abre la que estabas
    jugando o, si no hay, la inicial con blancas (revisor de UX). Primero
    `irAPantalla`, que empuja la entrada (es el único que empuja), y después
