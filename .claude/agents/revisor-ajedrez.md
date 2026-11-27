@@ -161,6 +161,13 @@ de memoria una posición de ajedrez").
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
 
+**Lo que "el rival puede deshacer" se prueba con dos atacantes** (v1.4.1:
+"cada atacante se puede comer" callaba una trampa con dos peones, y
+comido uno el otro se llevaba la pieza). Todo criterio que diga que una
+jugada se contesta o se deshace se verifica jugando la respuesta y
+mirando la posición que queda, no contando piezas, y se prueba con más
+de una pieza haciendo lo mismo.
+
 ## Qué decidís vos y qué no
 
 - **Lo chico lo decidís vos**: la redacción de una frase, el orden de dos

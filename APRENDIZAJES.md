@@ -63,6 +63,13 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **"Atrapa…" callado con dos atacantes comibles por separado** · v1.4.1
+  (no salió) · D: "con dos atacantes y uno solo comible, la trampa sigue"
+  se escribió como "si todos son comibles, se calla"; C: ninguna partida de
+  prueba tiene una trampa con dos atacantes · la prueba de unidad suma
+  Bd8 en `8/7k/8/1p1n1p2/2P1P2B/P5P1/1P3P2/6K1 w`, y regla en
+  `revisor-ajedrez.md`: lo que "el rival puede deshacer" se verifica
+  jugando la respuesta y con dos atacantes.
 - **Armar posición: la columna de la compu fuera de la pantalla, el "‹" y
   las piezas a 386 sin 48 de toque, y la pieza elegida igual al foco** ·
   v1.4 (no salió) · A y C: el arnés miraba 999 y 1000, no el medio del

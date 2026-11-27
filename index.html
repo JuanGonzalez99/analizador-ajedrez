@@ -1729,7 +1729,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.4 · 27-11";
+  window.VERSION = "v1.4.1 · 27-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -4278,6 +4278,35 @@ function estaAtrapada(fen, sq) {
   return true;
 }
 
+/* ATRAPAR CON UNA PIEZA QUE SE COMEN NO ES ATRAPAR (revisor de ajedrez,
+   22-nov). Bg5 en `r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w`
+   decía "Atrapa la dama de d8" y sigue Nxg5; Qxd8+ en
+   `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w` "atrapaba" el alfil de
+   c8 y Kxd8 es forzada. Si el dueño de la pieza tiene UNA captura de una de
+   las que la atacan, sin perder en el cambio, después de la cual la pieza
+   ya no corre peligro, la trampa se deshace con una jugada y la frase no
+   va. No alcanza con que cada atacante se pueda comer por separado
+   (revisor de ajedrez, v1.4.1): en `8/7k/8/1p1n1p2/2P1P2B/P5P1/1P3P2/6K1 w`,
+   Bd8 atrapa el caballo de d5 entre dos peones, y comido uno el otro se lo
+   lleva igual. En `fen` mueve el dueño de la pieza atrapada. */
+function seComeAlQueAtrapa(fen, sq) {
+  const j = new Chess(fen);
+  const p = j.get(sq);
+  if (!p) return false;
+  const atk = atacantesDe(j.board(), sq, p.color === "w" ? "b" : "w");
+  if (!atk.length) return false;
+  const movs = j.moves({ verbose: true });
+  const casillas = new Set(atk.map(a => a.sq));
+  return movs.some(m => {
+    if (!casillas.has(m.to) || !m.captured || entregaLaDama(fen, m)) return false;
+    const j2 = new Chess(fen);
+    j2.move(m);
+    if ((VALOR[m.captured] || 0) - cambioEn(j2.fen(), m.to, 1, false).neto < 0) return false;
+    /* si la que come es la atrapada, se mira adónde fue */
+    return !enPeligro(j2.board(), m.from === sq ? m.to : sq);
+  });
+}
+
 /* Cuántos peones de un color hay en una columna. Lo usan las tres frases de
    estructura —aislado, doblados y semiabierta—, que preguntan lo mismo con
    distintos argumentos. */
@@ -4725,7 +4754,7 @@ function observarJugada(f, fenAntes = null) {
         try { yaEstaba = estaAtrapada(conElTurnoDadoVuelta(fenAntes), candidata.sq); }
         catch (e) { yaEstaba = false; }
       }
-      if (!yaEstaba) atrapada = candidata;
+      if (!yaEstaba && !seComeAlQueAtrapa(f.fen, candidata.sq)) atrapada = candidata;
     }
 
     /* JAQUE DESCUBIERTO: hay jaque y NO lo da la pieza que se movió. En `f.fen`

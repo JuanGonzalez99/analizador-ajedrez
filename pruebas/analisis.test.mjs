@@ -3270,6 +3270,22 @@ test("atrapada: solo si la atrapó ESTA jugada", () => {
   assert.equal(mirar("n3k3/1P6/8/8/8/8/8/1RR1K3 w - - 0 1", "e1f1").atrapada, null);
 });
 
+test("atrapar con una pieza que se comen no es atrapar (arreglo, v1.4.1)", () => {
+  /* Bg5 Nxg5 (Nxg5): el cambio es parejo y la dama sale */
+  const f1 = "r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9";
+  assert.equal(mirar(f1, "c1g5").atrapada, null);
+  /* Qxd8+ Kxd8: el rey se come a la dama que "atrapaba" el alfil */
+  const f2 = "1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5";
+  assert.equal(mirar(f2, "c7d8").atrapada, null);
+  /* dos atacantes, cada uno comible por separado: comido uno, el otro se
+     lo lleva igual, y la trampa sigue (revisor de ajedrez, v1.4.1) */
+  const f3 = "8/7k/8/1p1n1p2/2P1P2B/P5P1/1P3P2/6K1 w - - 0 1";
+  assert.equal(mirar(f3, "h4d8").atrapada.sq, "d5");
+  /* y la que atrapa sin que la puedan comer sigue */
+  assert.deepEqual(mirar("n3k3/1P6/8/8/8/6K1/8/1R5R w - - 0 1", "h1c1").atrapada,
+                   { sq: "a8", pieza: "n", motivo: "menor", por: "p" });
+});
+
 test("una pieza CLAVADA no está atrapada, está clavada", () => {
   /* Lo vio la pantalla: "Atrapa el caballo de e4" cuando estaba clavado. Una
      clavada no tiene salidas legales, así que cumplía la definición por el

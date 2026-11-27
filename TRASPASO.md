@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.4**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.4.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -451,7 +451,7 @@ el orden en que se juntan:
 | `cuerpo.html` | el HTML de las tres pantallas, Posiciones, Armar posición (`zonaArmar`, v1.4), la barra de los módulos (`navMod`, v1.3), las hojas y el pie; abre `<script type="module">` |
 | `analisis-evaluacion.js` | bloque de análisis (desde su marcador): evaluación, geometría, `quedaComible`, `cambioEn`, categorías, `categorizar`, `derivarFilas`, `precisionesRapidas`, `repartir`, el reloj (`leerCadencia`, `segundosPensados`), la curva |
 | `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
-| `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`; y `aperturaEs`. Cierra el bloque de análisis |
+| `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`, `estaAtrapada` y `seComeAlQueAtrapa` (v1.4.1); y `aperturaEs`. Cierra el bloque de análisis |
 | `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, `mostrarVista` (con la barra de los módulos: `conBarra`, `barraA`, el scroll que la corre), la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
 | `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes`, la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas (`svgMarcas`), `dibujar` |
 | `interfaz.js` | el estado global (`PARTIDAS`, `R`, `IDX`…), la tira (`medirTira`, `centrarTira`), `irA` |
@@ -4988,6 +4988,23 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.4.1, atrapar con una pieza que se comen no es atrapar** (revisor de
+ajedrez, 22-nov, Arreglos). Bg5 en
+`r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w` decía "Atrapa la dama
+de d8: no tiene salida." y sigue Nxg5; Qxd8+ en
+`1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w` "atrapaba" el alfil de c8
+y Kxd8 es forzada. `seComeAlQueAtrapa` (en `analisis-posicion.js`, al lado
+de `estaAtrapada`): si el dueño de la pieza atrapada tiene una captura de
+una de las que la atacan, sin perder en el cambio (lo comido menos
+`cambioEn` de la devolución ≥ 0), después de la cual la pieza ya no está
+en peligro (`enPeligro`), `atrapada` queda en null. La primera vuelta pedía
+que cada atacante se pudiera comer, y el revisor la frenó: en
+`8/7k/8/1p1n1p2/2P1P2B/P5P1/1P3P2/6K1 w`, Bd8 atrapa el caballo de d5 entre
+dos peones, y comido uno el otro se lo lleva (Stockfish, −5,6). `npm run frases`: cambian 10
+de 4.624, todas el "Atrapa…" que se calla (Qxd8+ Kxd8, Bg5 Nxg5 y Ng3
+hxg3, en las dos pasadas), verificadas con chess.js. Prueba de unidad con
+los dos casos del ítem y uno que sigue diciéndose.
 
 **v1.4, armar una posición a mano** (etapa 4). Pantalla nueva, hija de
 Posiciones (`VISTA = "armar"`, `#zonaArmar`, con "‹" y sin la barra de los

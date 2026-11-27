@@ -181,7 +181,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       Nxf6: un cambio de damas. `colgada` (`quedaComible`) no descuenta lo
       que la jugada comió: que exija que el cambio menos lo comido sea ≥ 1,
       con su prueba. Revisor de ajedrez sí.
-- [ ] **"Atrapa la dama" con la pieza que atrapa comible** (revisor de
+- [x] ~~**"Atrapa la dama" con la pieza que atrapa comible**~~ (hecho en la v1.4.1) (revisor de
       ajedrez, 22-nov, ya estaba). En `r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9`,
       Bg5 dice "Atrapa la dama de d8: no tiene salida.", y Nxg5 se come el
       alfil. Que no se diga si se puede comer la pieza que atrapa (sin
