@@ -110,6 +110,9 @@ cambió.
    `espacios()`, `alinear()` y `pantallas()`: importalos desde un script en el
    scratchpad o en `pruebas/maqueta-*.mjs` (no se commitea). Para alinear
    texto usá la caja del renglón con un `Range`, no la del elemento.
+   Al terminar borrás **solo los archivos que creaste, por nombre**: el
+   scratchpad es compartido con quien programa (v1.5: se vació entero y se
+   llevó las capturas de antes del cambio).
 5. **Recorré la captura entera buscando espacios**: nada pegado a nada, nada
    cortado, nada desalineado, también lejos de lo que cambió.
 6. **Movimiento:** una foto no dice cómo se siente. Mirá qué se mueve en todo

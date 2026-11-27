@@ -160,6 +160,15 @@ de memoria una posición de ajedrez").
   hasta la v1.2.3 no tenía `colgada` (causa C).
 - Los scripts que armes son andamio: van en tu carpeta de trabajo o como
   `pruebas/maqueta-*.mjs` (no se commitea) y los borrás al terminar.
+  **Borrás solo los archivos que creaste vos, por nombre**: nunca la
+  carpeta entera ni un comodín sobre ella. El scratchpad es compartido con
+  quien programa (v1.5: se vació y se llevó las capturas de antes del
+  cambio, que hubo que volver a sacar).
+- **Todo camino nuevo por el que un FEN llega al motor pasa por
+  `limpiarFen`** (v1.5, causa B: la cabecera FEN de un PGN entraba sin
+  limpiar y un "KQkq" sin torres colgaba a Stockfish). Ante un cambio que
+  arme posiciones desde afuera, grepeo `new Chess(` con argumento en el
+  bloque de análisis y pruebo un FEN con enroques y al paso imposibles.
 
 **Lo que "el rival puede deshacer" se prueba con dos atacantes** (v1.4.1:
 "cada atacante se puede comer" callaba una trampa con dos peones, y

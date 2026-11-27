@@ -63,6 +63,23 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Las comidas de la compu contadas contra el juego completo en una
+  partida desde una posición** · v1.5 (revisor de UX, misma noche) · A y C:
+  la Partida nueva se miró solo en el celu, donde las comidas no se ven, y
+  `mirar` no llevaba esa Partida a la compu · `mirar.mjs` suma "partida
+  desde una posición" a 1280 contando las piezas de #cArriba/#cAbajo (OJO si
+  no dan 0), y regla: una partida que entra a la Partida por un camino nuevo
+  se mira también en la compu.
+- **El FEN de la cabecera de un PGN llegaba al motor sin limpiar** · v1.5
+  (revisor de ajedrez, misma noche) · B: la limpieza de la v1.1 vivía en
+  Posiciones y el FEN de afuera entró por un camino nuevo; C: todas las
+  partidas de prueba arrancan de la inicial · `limpiarFen` pasa al bloque de
+  análisis y `prepararPartida` la usa; prueba de unidad con "KQkq" sin
+  torres; regla en `revisor-ajedrez.md` (todo FEN nuevo hacia el motor, por
+  `limpiarFen`).
+- **Un revisor vació el scratchpad compartido** · v1.5 · D: la regla decía
+  "borrá tus andamios" sin decir cuáles · regla en `revisor-ux.md` y
+  `revisor-ajedrez.md`: se borra por nombre, nunca la carpeta.
 - **"Atrapa…" callado con dos atacantes comibles por separado** · v1.4.1
   (no salió) · D: "con dos atacantes y uno solo comible, la trampa sigue"
   se escribió como "si todos son comibles, se calla"; C: ninguna partida de
