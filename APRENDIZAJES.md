@@ -65,7 +65,29 @@ Las que todavía no se aplicaron. **La tarea de la noche las hace primero**,
 antes de los ítems, y no cuentan como ítem. Al hacerlas se borran de acá y
 quedan en el registro.
 
-(Ninguna por ahora.)
+**Repaso de las prevenciones viejas, contra la causa** (Juan, 27-nov: lo
+anotado antes de esa regla probablemente esté escrito contra el caso). Una
+tanda por noche, en este orden, y cada una se borra de acá al terminarla.
+En cada prevención se contesta "¿qué otros casos atrapa?"; si solo atrapa
+el suyo, se generaliza (la medida a toda pantalla o todo estado, la regla a
+principio) o se junta con otra que ya lo cubra. Lo que cambió va al registro
+en una línea por tanda y al resumen de la mañana. **Nada de esto cambia la
+app**: las capturas del celu tienen que salir idénticas y `npm test` verde.
+
+- [ ] **Tanda 1 · el registro y `revisor-ux.md`**: los 42 casos del
+      registro de abajo y las reglas del revisor de UX que salieron de ellos.
+- [ ] **Tanda 2 · los otros tres revisores y `TAREA-NOCTURNA.md`**: las
+      reglas de ajedrez, código y rumbo, y los pasos de la noche que nacieron
+      de un caso.
+- [ ] **Tanda 3 · `pruebas/mirar.mjs`**: cada medida con OJO. La señal es
+      que mida un elemento con nombre, una sola pantalla o un solo tamaño
+      donde la regla vale para todos.
+- [ ] **Tanda 4 · el mono y `npm test`** (`pruebas/mono.mjs`,
+      `pruebas/estaticos.mjs`, `pruebas/analisis.test.mjs`): las reglas y
+      pruebas que nacieron de un error, con la misma pregunta.
+
+Después de la cuarta, lo mantiene la revisión del domingo (`TAREA-NOCTURNA.md`,
+paso 0).
 
 ## Registro
 
