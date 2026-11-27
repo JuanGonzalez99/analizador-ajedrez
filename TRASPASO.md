@@ -246,6 +246,17 @@ mantiene apuntando a la versión que trae; las rutas con número
 (`chromium-1194`) envejecieron, y `mirar` explotaba pidiendo
 `playwright install`, que no hay que correr. Si vuelve a pasar, la ruta está ahí.
 
+**Saca también los monitores de verdad, 1366×768 y 1920×1080** (27-nov-2026,
+Juan: *"es una app de celu adaptada a PC"*). Hasta ahí la compu se miraba solo a
+1280×800 (y a 1000 en algunos chequeos), y por eso nadie vio que a 1920 la
+página quedaba topada en 1110 ni que a 1366×768 la Partida no entraba. Al final
+de `mirar.mjs` recorre inicio, Partida (en la 15, el ??), Ajustes, Mes y
+Posiciones a los dos tamaños, **a escala CSS** (un monitor a 100 % es 1x; la de
+1920 son ~2.800 tokens si se mira, ~1.400 la de 1366), en `ancho-1366-*` y
+`ancho-1920-*` —el prefijo las saca de la comparación byte a byte del celu—, e
+imprime `monitores:` con lo que hay que bajar para ver cada pantalla entera y
+el lado del tablero. Un OJO si la Partida o Posiciones no entran.
+
 **Entra por la lista del mes, no pegando el PGN, y eso es una regla que costó un
 bug.** Desde la v0.63.1 el arnés **falsea también la API de chess.com** —el
 listado de meses y el JSON del mes, armados a partir del propio PGN de prueba— y

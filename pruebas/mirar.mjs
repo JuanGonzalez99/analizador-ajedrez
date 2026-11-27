@@ -1708,6 +1708,75 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   if (desdePos.comidas.some(n => n > 0) || !/posición/.test(desdePos.volver)) console.log("OJO: la Partida desde una posición");
   await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
 }
+/* MONITORES DE VERDAD (27-nov-2026; Juan: "es una app de celu adaptada a
+   PC"). Hasta acá la compu se miraba solo a 1280×800, y ahí no se veía que a
+   1920×1080 la página quedaba topada en 1110 con 800 vacíos, ni que a
+   1366×768 —la notebook más común— la Partida no entraba. Las cuatro
+   pantallas a los dos tamaños, A ESCALA CSS (un monitor a 100 % es 1x: así
+   las ve quien las usa, y la de 1920 a 2x serían ~11.000 tokens si se mira).
+   Empiezan con `ancho-` para que la comparación byte a byte del celu las
+   saltee. Va al final para no cambiar ninguna captura de arriba.
+   `sobra` es lo que hay que bajar para ver la pantalla entera (0 = entra), y
+   `tablero`, su lado. Cuánto del ancho se usa no se mide: las barras de
+   ancho entero lo ensucian, y la captura lo dice de un vistazo. */
+{
+  const MONITORES = [[1366, 768], [1920, 1080]];
+  const fotoM = async n => {
+    await pg.mouse.move(2, 2); await pg.waitForTimeout(300);
+    await pg.screenshot({ path: path.join(SALIDA, n + SUFIJO + ".png"), scale: "css" });
+  };
+  const medidaM = (tab) => pg.evaluate(t => {
+    const tab = t && document.querySelector(t);
+    return { sobra: document.documentElement.scrollHeight - innerHeight,
+             tablero: tab ? Math.round(tab.getBoundingClientRect().width) : null };
+  }, tab);
+  const MON = {};
+  const cadaMonitor = async (nombre, tab, extra) => {
+    for (const [w, h] of MONITORES) {
+      await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(400);
+      await pg.evaluate(() => scrollTo(0, 0));
+      await fotoM(`ancho-${w}-${nombre}`);
+      MON[`${nombre} ${w}`] = await medidaM(tab);
+      if (extra) await extra(w);
+    }
+  };
+  /* a la Partida de la partida de prueba, que es la que tiene de todo */
+  await pg.click("#volverDeLaPartida");
+  await pg.waitForSelector("#zonaPosicion:not(.oculto)", { timeout: 10000 });
+  await pg.click("#navAnalisis");
+  await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+  await pg.waitForTimeout(300);
+  await cadaMonitor("inicio", null);
+  await pg.click("#partidas div[data-i]");
+  await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
+  await pg.waitForFunction(() => !document.getElementById("revEstado").textContent, null, { timeout: 45000 });
+  await pg.waitForTimeout(400);
+  /* a una jugada del medio, con flecha y categoría: la 15, el ?? */
+  await pg.keyboard.press("Home");
+  for (let i = 0; i < 29; i++) await pg.keyboard.press("ArrowRight");
+  await cadaMonitor("partida", "#tablero", async w => {
+    await pg.click("#btnAjustes"); await pg.waitForTimeout(400);
+    await fotoM(`ancho-${w}-ajustes`);
+    await pg.keyboard.press("Escape"); await pg.waitForTimeout(300);
+  });
+  await pg.click("#volverDeLaPartida");
+  await pg.waitForSelector("#partidas div[data-i]", { timeout: 20000 });
+  await pg.evaluate(() => document.getElementById("tarjetaMes").click());
+  await pg.waitForSelector("#zonaMes:not(.oculto)", { timeout: 30000 });
+  await pg.waitForTimeout(400);
+  await cadaMonitor("mes", null);
+  await pg.click("#volverDelMes");
+  await pg.waitForTimeout(300);
+  await pg.click("#navPosiciones");
+  await pg.waitForSelector("#zonaPosicion:not(.oculto)", { timeout: 10000 });
+  await pg.waitForTimeout(300);
+  await cadaMonitor("posicion", "#posTablero svg");
+  await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  console.log("monitores:", JSON.stringify(MON),
+    "(sobra: px que hay que bajar, 0 = entra; tablero: lado; capturas ancho-1366-* y ancho-1920-*)");
+  for (const [k, v] of Object.entries(MON))
+    if (/partida|posicion/.test(k) && v.sobra > 0) console.log(`OJO: a ${k} hay que bajar ${v.sobra} px para ver la pantalla entera`);
+}
 console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");
 /* y no queda en un número que hay que acordarse de leer: si a un mismo ancho

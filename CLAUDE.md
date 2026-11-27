@@ -137,8 +137,10 @@ Son los dos más grandes del repo y los dos se pagan en contexto:
 - Las **capturas** de `npm run mirar` **ya no son todas del mismo tamaño**, y la
   diferencia importa: las del celular salen a 824×1520 (**~1.670 tokens** cada
   una si se las mira), las de la pasada ancha a 2560×1600 (**~5.500**) y las de
-  tres columnas a 3000×1600 (**~6.400**). Son **48** y mirarlas todas serían
-  ~116.000 tokens, o sea más que el archivo entero. Se miran una o dos, las que
+  tres columnas a 3000×1600 (**~6.400**). Desde el 27-nov hay además diez de
+  monitor de verdad, a escala CSS: `ancho-1366-*` (**~1.400**) y `ancho-1920-*`
+  (**~2.800**). Son **58** y mirarlas todas serían ~135.000 tokens, o sea más
+  que el archivo entero. Se miran una o dos, las que
   contestan la pregunta; el resumen de texto que imprime el arnés son 400 tokens
   y suele alcanzar.
 

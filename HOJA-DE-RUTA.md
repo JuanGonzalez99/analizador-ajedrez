@@ -309,7 +309,8 @@ copa). Va antes que lo que queda de Posiciones porque es lo que él siente al
 usarla, y Posiciones en la compu ya se rehizo en la v1.6.1. **Todo es solo de
 compu**: las capturas del celu tienen que salir idénticas byte a byte en cada
 ítem. Cada uno con variantes dibujadas a **1366×768 y 1920×1080**, además de
-1280×800, que hasta hoy era el único tamaño de compu que se miraba.
+1280×800, que hasta hoy era el único tamaño de compu que se miraba. `npm run
+mirar` ya los saca (`ancho-1366-*`, `ancho-1920-*`, y la línea `monitores:`).
 
 - [ ] **La Partida a la medida de la ventana.** Sacar el tope de 1110 de
       ancho; el tablero al alto de la ventana, como Posiciones (v1.6.1); que
