@@ -35,22 +35,18 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
      luminoso, lo más grande o lo que va a todo el ancho tiene que ser lo más
      importante de la pantalla, no un detalle ("Siempre la mejor" a todo el
      ancho, la barra de progreso casi blanca, un título que compite con el mes).
-     **Y un botón agrupa lo que tiene el mismo alcance** (Juan, 27-nov, v1.6:
-     Empezar de nuevo y Armar adentro de las perillas de nivel y color "parecen
-     ajustes de la partida en curso"): antes de juntar controles detrás de un
-     mismo ícono, preguntate si ajustan lo que está pasando o lo reemplazan
-     por otra cosa. El ícono promete uno solo.
-     **En la compu, preguntá qué es lo único que hay en la pantalla y dale el
-     lugar** (Juan, 27-nov: Posiciones a 466 con media pantalla vacía,
-     "podría ocupar toda la pantalla"): si es el tablero, toma el alto entero
-     y lo demás va en una columna al costado. Que entre sin scroll no alcanza.
-     **En la compu, lo que en el celu es una hoja que sube pasa a ser un menú
-     colgado de su botón**, adentro de su columna: nada que se abre tapa el
-     tablero si hay lugar al costado (v1.6).
-     **El rótulo de un botón se coteja con lo que hace la función que
-     llama**, y una hoja de opciones se mira en el estado en que todas están
-     prendidas (v1.6: "Desde esta posición" volvía al arranque y repetía a
-     "Desde la inicial"; se miró con la posición terminada, el botón apagado).
+     **Un grupo junta lo que tiene el mismo alcance, no la misma
+     frecuencia** (v1.6: Empezar de nuevo y Armar adentro de las perillas de
+     nivel y color): antes de juntar controles detrás de un ícono, un menú o
+     una hoja, preguntate si ajustan lo que está pasando o lo reemplazan por
+     otra cosa. El ícono promete uno solo.
+     **Lo principal de cada pantalla se lleva el lugar que sobra** (v1.1.1:
+     Posiciones a 466 con media pantalla vacía en la compu): preguntá qué es
+     lo único que importa ahí y si ocupa lo que hay; que entre sin scroll no
+     alcanza. Vale en todo ancho y en toda pantalla, también las que vengan.
+     **Todo texto que promete algo se coteja con lo que pasa al tocarlo**
+     (v1.6: "Desde esta posición" volvía al arranque): rótulos, títulos de
+     hoja, avisos y ayudas, leyendo la función que llaman, no el nombre.
    - **Lo mínimo que hace el trabajo, pero que se entienda sin aprenderlo.**
      Una raya y no dos, tarjeta solo para lo que es tarjeta, color que se lea
      sin gritar. Entender le gana a limpiar: un número dice qué es (por forma
@@ -79,13 +75,13 @@ de lo que se hizo: mirá la pantalla y juzgá lo que ves. Si la descripción dic
    300 ms y respetando `prefers-reduced-motion` (estar en rango no la
    aprueba: ver "Movimiento" en Cómo mirás).
 
-**Lo elegido no se parece al foco** (v1.4: pediste el anillo del foco para
-la pieza elegida de la paleta y con teclado no se distinguían). La marca de
-"esto está elegido" (`aria-pressed`, `.sel`, `.activo`) usa el acento de
-fondo o de borde, nunca el contorno de 2 separado 2 de §1.7, que es del
-foco. Y **un ajuste que traiga una regla de otro lugar** (el contraste de
-las comidas, el anillo del foco) se pregunta antes "¿choca con algo que ya
-significa eso?".
+**Una marca, un significado en toda la app** (v1.4: pediste el anillo del
+foco para la pieza elegida y con teclado no se distinguían). Antes de
+proponer o aprobar una marca —un contorno, un acento, un color, un peso, un
+ícono— preguntá qué significa ya en otro lado. Lo elegido (`aria-pressed`,
+`.sel`, `.activo`) usa el acento de fondo o de borde, nunca el contorno de 2
+separado 2 de §1.7, que es del foco; y lo mismo con cualquier regla traída
+de otro lugar.
 
 **Celu primero, PC aprovechada.** El celu manda: un cambio de PC que rompe
 algo del celu está mal aunque en PC se vea perfecto. En PC se juzga si se
@@ -96,15 +92,19 @@ juzga a **1366×768 y 1920×1080** (`capturas/ancho-1366-*`, `ancho-1920-*`, y
 la línea `monitores:` con sus OJO), y con una pregunta: **¿existiría así en
 lichess o chess.com de escritorio?** Una hoja que sube, un botón de dedo, una
 columna centrada o una lista de celu estirada en la compu son hallazgos
-aunque vengan de antes. Y **una regla de compu nueva se barre por todas las
-pantallas** el mismo día, no solo donde nació: "lo que en el celu es una hoja,
-en la compu es un menú" se aplicó a Posiciones en la v1.6.1 y Ajustes siguió
-siendo hoja.
-**Cero OJO en `monitores:` no es aprobado** (Juan, 27-nov: Posiciones no daba
-ninguno y la sentía de celu): las medidas atrapan lo conocido. Recorré la
-tabla de §1.12 fila por fila sobre la captura, y si encontrás una forma nueva
-de "celu en la compu", proponé la medida que la atrape, contra la causa y no
-contra el caso.
+aunque vengan de antes. En la compu, lo que en el celu se abre desde abajo
+(hoja, panel) cuelga de su botón, adentro de su columna, y no tapa el
+tablero si hay lugar al costado.
+**Toda regla nueva se barre por todas las pantallas el mismo día**, no solo
+donde nació, y la de compu también por los dos monitores (v1.6.1: "en la
+compu, menú y no hoja" se aplicó a Posiciones y Ajustes siguió siendo hoja;
+lo mismo pasó con el fundido, la precisión y las tasas).
+**Lo que mide el arnés atrapa lo conocido; cero OJO no es aprobado**
+(27-nov: Posiciones no daba ninguno y Juan la sentía de celu; v1.4: "chicos"
+se imprimía sin OJO y nadie lo leyó). Dos cosas: un número del resumen que
+rompe una regla es hallazgo aunque no lleve OJO; y recorré la tabla de §1.12
+y §1.7 sobre la captura. Si encontrás una forma nueva del problema, proponé
+la medida que la atrape en toda pantalla, contra la causa y no contra el caso.
 
 ## Cómo mirás
 
@@ -120,15 +120,24 @@ cambió.
    posición inicial) y el ancho de 386. Si el arnés no trae el caso, armalo con
    `pruebas/falso.mjs`.
    **Y en cada estado que tenga la zona que se construyó o se tocó**, no
-   solo en el que trae el arnés (`APRENDIZAJES.md`: 5 de 15 lavados se
-   escaparon por mirar un solo estado). Antes de aprobar: con el scroll
-   arriba de todo y abajo de todo; abierta y cerrada; con el mouse encima y
-   con el foco; con cada opción de Ajustes o del dial que la cambia, no solo
-   la de fábrica; a 386 y a los dos lados de cada corte de ancho (999 y
-   1000, 1109 y 1110). Si el ítem habla de un borde, mirá también el otro.
+   solo en el que trae el arnés (es la causa A, la más repetida del
+   registro). Antes de aprobar: con el scroll arriba de todo y abajo de
+   todo; abierta y cerrada; con el mouse encima y con el foco; con cada
+   opción de Ajustes o del dial que la cambia, no solo la de fábrica; una
+   hoja o menú de opciones con todas prendidas y con todas apagadas; con
+   cero, pocas y muchas cosas adentro; al empezar, a mitad y terminada; a
+   386, a los dos lados de **cada** corte de ancho del CSS (grepeá los
+   `@media`, no te fíes de una lista) y en el medio de cada tramo, y a cada
+   alto de ventana que cambie qué entra. Si el ítem habla de un borde, mirá
+   también el otro. **Un estado nuevo se mira en la zona, con lo que ya
+   estaba**, no dibujado aparte (26-nov: el final de Posiciones dibujado
+   solo tapaba Deshacer).
    **Y preguntate "¿dónde más vive esto?"**: la misma fila en otra pantalla,
    el rótulo de un número que cambió, una regla nueva que vale en otros
-   lugares. Lo que se usa en dos pantallas se mira en las dos.
+   lugares, y **un camino nuevo hacia una pantalla vieja** (v1.5: la Partida
+   desde una posición, mirada solo en el celu): la pantalla con los datos de
+   ese camino, en celu y en compu. Lo que se usa en dos pantallas se mira en
+   las dos.
 3. Las capturas quedan en `capturas/`. Las del celu salen a 824×1520 (412×760
    CSS a 2x); las de PC empiezan con `ancho` y `tres`. **No las mires a 2x**:
    bajalas a escala CSS (la mitad) con Python/PIL. **Esa es la escala para
@@ -151,10 +160,10 @@ cambió.
    (`document.getAnimations()` antes, durante y después), y probá con
    `page.emulateMedia({ reducedMotion: "reduce" })`. En duda, sin movimiento.
 
-- **El resultado de algo que se juega pesa** (v1.1, Posiciones): cuando
-  termina —un mate, unas tablas, un ejercicio resuelto— es lo más importante
-  de esa pantalla. Se juzga cuánto pesa, no solo que esté dicho en algún
-  lado.
+- **El desenlace pesa** (v1.1, Posiciones): cuando algo termina —un mate,
+  unas tablas, un ejercicio resuelto, una carga que falló, un análisis
+  listo— es lo más importante de esa pantalla en ese momento. Se juzga
+  cuánto pesa, no solo que esté dicho en algún lado.
 
 ## Además de lo que cambió: ¿algo pide un lavado de cara?
 
@@ -213,6 +222,10 @@ peor" es caer en lo mismo de antes. Tu respuesta es una de estas tres:
 - **X con este ajuste**: qué cambiar, con precisión;
 - **ninguna**: qué tienen mal todas, y qué dirección probar en la vuelta
   siguiente.
+
+**Las variantes se juzgan con la configuración de fábrica de cada ancho**
+(v1.3.1: una maqueta se probó con la evaluación horizontal del celu y en la
+compu la de fábrica es la barra), en celu y compu, y con los datos difíciles.
 
 Ninguna medida sola elige: el tablero más grande, más filas a la vista o el
 toque de 48 son condiciones, no el objetivo. Gana la que se lee como un todo

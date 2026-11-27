@@ -74,8 +74,6 @@ principio) o se junta con otra que ya lo cubra. Lo que cambió va al registro
 en una línea por tanda y al resumen de la mañana. **Nada de esto cambia la
 app**: las capturas del celu tienen que salir idénticas y `npm test` verde.
 
-- [ ] **Tanda 1 · el registro y `revisor-ux.md`**: los 42 casos del
-      registro de abajo y las reglas del revisor de UX que salieron de ellos.
 - [ ] **Tanda 2 · los otros tres revisores y `TAREA-NOCTURNA.md`**: las
       reglas de ajedrez, código y rumbo, y los pasos de la noche que nacieron
       de un caso.
@@ -90,6 +88,20 @@ Después de la cuarta, lo mantiene la revisión del domingo (`TAREA-NOCTURNA.md`
 paso 0).
 
 ## Registro
+
+**Los casos juntos, en principios** (tanda 1 del repaso, 27-nov). Las
+reglas de `revisor-ux.md` ya no nombran el caso, salvo como ejemplo:
+(1) un grupo junta lo de igual alcance; (2) lo principal de cada pantalla se
+lleva el lugar que sobra; (3) todo texto que promete algo se coteja con lo
+que hace; (4) una marca, un significado en toda la app; (5) toda regla nueva
+se barre por todas las pantallas, y la de compu por los dos monitores; (6)
+lo que mide el arnés atrapa lo conocido: un número que rompe una regla es
+hallazgo sin OJO; (7) la zona en todos sus estados, incluidos todo
+prendido/apagado, cero/pocas/muchas, empezar/mitad/terminada, cada corte
+del CSS y el medio de cada tramo, y un estado nuevo con lo que ya estaba;
+(8) un camino nuevo hacia una pantalla vieja se mira en celu y compu; (9) el
+desenlace de cualquier cosa pesa; (10) las variantes con la configuración de
+fábrica de cada ancho.
 
 Una línea por caso: qué se escapó, en qué versión se hizo y en cuál se vio,
 la causa y qué se cambió. Los catorce primeros salieron del análisis del
@@ -367,6 +379,15 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   la compu, y el revisor de UX juzga contra eso, se pregunta si existiría así
   en lichess de escritorio y barre cada regla de compu nueva por todas las
   pantallas.
+- **Repaso contra la causa, tanda 1 (el registro y `revisor-ux.md`)** ·
+  27-nov · siete reglas escritas contra su caso pasan a principio (arriba,
+  "Los casos juntos"): el rótulo de un botón → todo texto que promete algo;
+  lo elegido y el foco → una marca, un significado; Posiciones en la compu →
+  lo principal de cada pantalla; "999 y 1000, 1109 y 1110" → cada corte del
+  `@media` y el medio del tramo; el resultado de Posiciones → todo
+  desenlace; la hoja de opciones apagada → todo prendido y todo apagado; y
+  se suman tres que el registro tenía solo para quien programa (el número
+  sin OJO, el camino nuevo, las variantes con la de fábrica de cada ancho).
 - **Posiciones sin OJO y todavía de celu** · Juan, 27-nov, el mismo día de la
   prevención de arriba · D otra vez: las cuatro medidas nuevas eran los
   síntomas de la Partida (un botón con nombre, Ajustes), no el criterio, y
