@@ -63,6 +63,13 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **"Se planta" callado también en el puesto de manual** · v1.5.1 (revisor
+  de ajedrez, misma noche) · C: en las partidas de prueba ninguna jugada
+  tranquila de caballo llega a un puesto con cambio parejo, así que
+  `frases` daba las mismas 11 con los dos criterios · la prueba de unidad
+  fija la frontera (Nd5 apoyado en e4 contra un Nf6 se planta; Nxd7 Nfxd7
+  no). Cuando `frases` no distingue dos criterios, se arma la posición de
+  la frontera a mano.
 - **Las comidas de la compu contadas contra el juego completo en una
   partida desde una posición** · v1.5 (revisor de UX, misma noche) · A y C:
   la Partida nueva se miró solo en el celu, donde las comidas no se ven, y
