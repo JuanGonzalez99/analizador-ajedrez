@@ -3226,6 +3226,16 @@ test("plantado: ningún peón rival puede llegar a echarlo", () => {
   assert.equal(A.estaPlantado(tabl("4k3/8/8/8/8/3N4/8/4K3 w - - 0 1"), "d3", "w"), false);
 });
 
+test("el caballo no se planta a mitad de un cambio (v1.5.1)", () => {
+  /* revisor de ajedrez, v1.0.6: Nxd7 decía "El caballo de d7 se planta" y
+     sigue Nfxd7. Como la pareja, `seLaLlevan` */
+  assert.equal(mirar("r4rk1/pppbbppp/q4n2/4N3/8/3B4/PP3PPP/RNB1K2R w KQ - 0 1", "e5d7").plantado, null);
+  /* tranquila a un puesto donde el rival solo cambia parejo (Nxd5 exd5): sí */
+  assert.equal(mirar("6k1/pp3ppp/3p1n2/8/4P3/2N5/PP3PPP/6K1 w - - 0 1", "c3d5").plantado, "d5");
+  /* sin nadie que lo tome, sí */
+  assert.equal(mirar("4k3/8/8/8/8/5N2/8/4K3 w - - 0 1", "f3e5").plantado, "e5");
+});
+
 test("la pareja de alfiles es tener dos cuando el rival ya no", () => {
   assert.equal(A.hayPareja(tabl("4k3/8/8/8/8/8/8/2B1KB2 w - - 0 1"), "w"), true);
   assert.equal(A.hayPareja(tabl("2b1kb2/8/8/8/8/8/8/2B1KB2 w - - 0 1"), "w"), false);

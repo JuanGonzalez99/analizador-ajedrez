@@ -189,7 +189,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       en `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5`, Qxd8+
       dice "Atrapa el alfil de c8: no tiene salida." y Kxd8 es forzada: la
       dama que atrapa se la come el rey. Revisor de ajedrez sí.
-- [ ] **"Se planta" a mitad de un cambio** (revisor de ajedrez, v1.0.6; ya
+- [x] ~~**"Se planta" a mitad de un cambio**~~ (hecho en la v1.5.1) (revisor de ajedrez, v1.0.6; ya
       estaba). En `r4rk1/pppbbppp/q4n2/4N3/8/3B4/PP3PPP/RNB1K2R w KQ - 0 1`,
       Nxd7 dice "El caballo de d7 se planta" y sigue Nfxd7. El `cuelga` de la
       tarjeta solo calla lo logrado si la pieza queda comible o pierde en el

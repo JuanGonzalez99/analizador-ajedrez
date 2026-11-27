@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.5**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.5.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -4988,6 +4988,22 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.5.1, el caballo no "se planta" a mitad de un cambio** (revisor de
+ajedrez, v1.0.6; Arreglos). Nxd7 en
+`r4rk1/pppbbppp/q4n2/4N3/8/3B4/PP3PPP/RNB1K2R w KQ` decía "El caballo de d7
+se planta" y sigue Nfxd7. `plantado` (en `observarJugada`) pide además
+`!seLaLlevan(f.fen, donde, !comió)`: si la jugada comió, alcanza con que
+el rival no pierda en el cambio (Nxd7 Nfxd7 es terminar el cambio); si fue
+tranquila, solo se calla cuando el rival gana material: Nd5 apoyado en e4
+contra un Nf6 es el puesto de manual, y el cambio parejo le cuesta una
+pieza al rival (revisor de ajedrez, segunda vuelta: la primera, sin
+`estricto`, callaba también ese). `npm run frases`:
+cambian 11 de 4.624, todas un "se planta" que se calla (Nxd4, Nxf2, Nd2,
+Nd4, Nxf7, Nxh7), y en las 11 chess.js confirma que el rival tiene con qué
+llevárselo; con `--frase planta` la frase ya no sale en las partidas de
+prueba (estaba siempre mal ahí). Prueba de unidad con el caso del ítem y uno
+que sí se planta (Ne5 sin nadie que lo tome).
 
 **v1.5, analizar lo jugado en Posiciones** (etapa 4, Juan 26-nov). Un
 botón **Analizar** al lado de Deshacer (misma forma: secundario con ícono,

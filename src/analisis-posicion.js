@@ -665,8 +665,14 @@ function observarJugada(f, fenAntes = null) {
     const sinDamas = !hayDamas(tablero) && !!(tAntes && hayDamas(tAntes));
     const conectadas = tAntes && torresConectadas(tAntes, mio)
                      ? null : torresConectadas(tablero, mio);
+    /* y no si el rival se lo lleva (`seLaLlevan`, como la pareja): si
+       comió, alcanza un cambio parejo —Nxd7 Nfxd7 es terminar el cambio,
+       no plantarse (revisor de ajedrez, v1.0.6)—; si fue tranquila, solo
+       si el rival gana: Nd5 apoyado en e4 contra un Nf6 es el puesto de
+       manual, y cambiarlo le cuesta una pieza (revisor, v1.5.1) */
     const plantado = f.pieza === "n" && estaPlantado(tablero, donde, mio) &&
-      !(tAntes && estaPlantado(tAntes, deDonde, mio)) ? donde : null;
+      !(tAntes && estaPlantado(tAntes, deDonde, mio)) &&
+      !seLaLlevan(f.fen, donde, !/x/.test(f.san || "")) ? donde : null;
 
     /* estas tres las contesta el SAN y el propio FEN, sin mirar el tablero */
     const corona = /=/.test(f.san || "");
