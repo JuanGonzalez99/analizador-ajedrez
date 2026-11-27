@@ -63,6 +63,15 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **El "+" de Posiciones con 34 de toque** · v1.6 (revisor de UX, mismo
+  día) · C y E: `mirar` imprimía "chicos btnPosNueva 34×34" sin OJO y no
+  se leyó · "toque, posición" avisa con OJO si hay chicos o pegados.
+- **"Desde esta posición" no hacía lo que decía** · v1.6 (revisor de UX,
+  mismo día; se le había escapado también al elegir la C) · D y B: el
+  rótulo de la variante se copió sin mirar `deNuevoPos`, y la hoja se miró
+  con la posición terminada (el botón apagado) · regla en `revisor-ux.md`:
+  el rótulo se coteja con la función que llama y una hoja de opciones se
+  mira con todas prendidas.
 - **"Se planta" callado también en el puesto de manual** · v1.5.1 (revisor
   de ajedrez, misma noche) · C: en las partidas de prueba ninguna jugada
   tranquila de caballo llega a un puesto con cambio parejo, así que
