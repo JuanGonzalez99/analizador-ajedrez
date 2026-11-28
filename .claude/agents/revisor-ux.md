@@ -227,6 +227,13 @@ peor" es caer en lo mismo de antes. Tu respuesta es una de estas tres:
 (v1.3.1: una maqueta se probó con la evaluación horizontal del celu y en la
 compu la de fábrica es la barra), en celu y compu, y con los datos difíciles.
 
+**Si todas las variantes reubican los componentes del celu, falta una que
+los rediseñe** (Juan, 28-nov, sobre la v1.7: *"se trató de amontonar
+todo"*): en la compu la pregunta no es dónde va cada pieza sino cómo sería
+si hubiera nacido ahí. Sin esa variante, tu respuesta es "ninguna". **Y no
+se sacan datos para que algo entre** (los ceros del Resumen): si no entra,
+se cambia la forma.
+
 Ninguna medida sola elige: el tablero más grande, más filas a la vista o el
 toque de 48 son condiciones, no el objetivo. Gana la que se lee como un todo
 y pone cada cosa donde se usa (la v0.113 se eligió por lugar y toque; la

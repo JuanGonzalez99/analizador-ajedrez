@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.7.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.7.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -5013,6 +5013,13 @@ estático nuevo, el **6bis**: toda función de nivel superior de `index.html`
 tiene que aparecer al menos una vez más fuera de los comentarios (llamada o
 pasada como valor). Nació en rojo con las dos adentro y quedó verde sin
 ellas. Interno: nada que se vea.
+
+**v1.7.2, los ceros del Resumen de vuelta** (Juan, 28-nov: *"no me gusta
+que se oculten los 0"*). La tabla de la pestaña Resumen muestra las diez
+categorías otra vez; lo que no entra a 1366 lo dice el fundido. Y la v1.7
+entera no le copó (*"se trató de amontonar todo"*): queda como está hasta
+el ítem nuevo de la hoja, "La Partida de la compu, con componentes de
+compu", que va primero en la etapa (`DISENO.md` §2 y §3).
 
 **v1.7.1, lo que come el motor dice qué se pierde, también en `nuevas`**
 (Arreglos; revisor de ajedrez, v1.2.3). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`,

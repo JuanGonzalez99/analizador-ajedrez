@@ -1338,13 +1338,13 @@ function pintarResumen(prof) {
      las dos tarjetas; los ceros, tenues */
   const cuenta = (fs, k) => { const n = fs.filter(f => f.cat === k).length; return `<td${n ? "" : ' class="cero"'}>${n}</td>`; };
   const celdaPrec = fs => `<td><span class="gr">${prec(fs)}</span><span class="pe">${pie(fs)}</span></td>`;
-  /* sin las categorías que dan 0 para los dos (revisor de UX, v1.7: a
-     1366 entraban 4 de 10 y se cortaban justo los errores). El Resumen es
-     de la partida entera: la tabla no cambia de forma al pasar jugadas */
+  /* con las diez categorías, también las que dan 0 para los dos (Juan, sobre
+     la v1.7: "no me gusta que se oculten los 0"); lo que no entra lo dice el
+     fundido */
   $("resumenAncho").innerHTML = `
     <thead><tr><th></th><th>${cab.White || "Blancas"}</th><th>${cab.Black || "Negras"}</th></tr></thead>
     <tbody><tr class="prec"><td>Precisi\u00f3n</td>${celdaPrec(B)}${celdaPrec(N)}</tr>` +
-    ORDEN.filter(k => filas.some(f => f.cat === k)).map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
+    ORDEN.map(k => `<tr><td><span style="color:var(--c-${k})">${CATEGORIAS[k].icono}</span> ${CATEGORIAS[k].nombre}</td>` +
       cuenta(B, k) + cuenta(N, k) + "</tr>").join("") + `</tbody>`;
   $("resumenAncho").title = $("capResumen").textContent;
   marcarMas($("resAncho"));

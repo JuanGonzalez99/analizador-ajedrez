@@ -318,6 +318,18 @@ mirar` ya los saca (`ancho-1366-*`, `ancho-1920-*`, y la línea `monitores:`).
       a 1920×1080 la curva y las mejores se van abajo del tablero y a 1280 no);
       el panel aprovecha el ancho que sobra (más jugadas a la vista, curva más
       ancha) y el Resumen tiene lugar sin bajar.
+- [ ] **La Partida de la compu, con componentes de compu** (Juan, 28-nov,
+      sobre la v1.7: *"no me gusta ninguna. siento que se trató de amontonar
+      todo… la idea de las pestañas es buena, pero no es suficiente"*). La
+      v1.7 dejó el tablero al alto y el Resumen en una pestaña, pero el panel
+      sigue siendo los componentes del celu apilados (tarjeta, cuatro
+      cuadritos, curva, caja de las mejores, planilla). Rediseñarlos para la
+      compu, no reubicarlos: ¿cómo serían la tarjeta y los cuadritos si
+      fueran una sola cabecera de la jugada?, ¿la curva, una línea de tiempo
+      bajo el tablero o en el panel?, ¿las mejores, una pestaña más?, ¿la
+      planilla, con columnas de compu (el lavado de Relleno se suma acá)?
+      Variantes que cambien los componentes, no solo dónde van, a 1366 y
+      1920. Ceros siempre a la vista en el Resumen.
 - [ ] **Ajustes como menú colgado de la tuerca** en la compu, no como hoja
       que sube desde abajo con tirador y tapa el tablero: la regla de
       `DISENO.md` §3 (Posiciones en la compu) aplicada a la otra hoja.

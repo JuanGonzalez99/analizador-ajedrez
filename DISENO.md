@@ -604,6 +604,16 @@ hay. Las primeras salen del historial del traspaso.
   elige.
 
 ### No le copa
+- **Que en la compu se amontone todo lo del celu en un panel** (28-nov-2026,
+  sobre la v1.7 y las cuatro variantes A–D): *"no me gusta ninguna. siento
+  que se trató de amontonar todo. capaz hay que rediseñar algunos componentes
+  para PC. la idea de las pestañas es buena, pero no es suficiente"*. Las
+  cuatro tomaban los componentes del celu (tarjeta, cuadritos, curva, caja de
+  las mejores, planilla, tabla del Resumen) tal cual y solo les cambiaban el
+  lugar. En la compu se rediseña el componente, no solo dónde va.
+- **Que se escondan los ceros del Resumen** (28-nov-2026, v1.7): *"no me gusta
+  que se oculten los 0"*. Que una categoría dé 0 también es un dato ("0
+  errores"); la tabla muestra las diez siempre.
 - **Que una zona cambie de forma según el tipo de jugada**: en las de libro,
   la fila de cuadritos con una leyenda en lugar de Pérdida y Caída (v0.172).
   *"No es un dato que use nunca, honestamente, pero me parece una banda
@@ -721,6 +731,15 @@ Se anota cada vez que Juan rechaza algo que pasó por el revisor (decisión de
 Juan, 7-nov-2026). Las reglas que salen de acá las destila la revisión del
 criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
 
+- **La Partida de la compu, las cuatro variantes y la elegida** (v1.7). El
+  revisor midió bien —tablero al alto, entra sin bajar, botones fijos— y
+  eligió las pestañas. *Se le pasó*: las cuatro eran la misma pantalla con
+  los mismos componentes del celu cambiados de lugar; ninguna se preguntó
+  cómo sería cada componente si hubiera nacido en la compu. Y escondió los
+  ceros para que entrara la tabla: sacar un dato para que entre es achicar
+  la información, no diseñar. *Regla*: cuando las variantes solo reubican
+  componentes del celu, falta una que los rediseñe, y el revisor contesta
+  "ninguna" hasta que la haya; y no se sacan datos para que algo entre.
 - **Empezar de nuevo y Armar adentro de la hoja de nivel y color** (v1.2 y
   v1.4, Posiciones). El revisor juntó "todo lo de una vez" en una hoja.
   *Se le pasó*: el alcance. Nivel y color ajustan la partida que está;
