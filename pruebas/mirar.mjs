@@ -26,7 +26,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Chess } from "../chess.js";
 import { partidaFalsa } from "./falso.mjs";
-import { abrirApp, alinear, espacios } from "./tira.mjs";
+import { abrirApp, alinear, espacios, COMPU } from "./tira.mjs";
 
 /* EL ARRANQUE SALIÓ A DOS MÓDULOS (v0.92) y acá quedan tres líneas. Eran ~250:
    la partida de prueba y el motor de mentira viven en `falso.mjs`, y levantar
@@ -1747,7 +1747,7 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
      vacío, en vez de un panel a la altura del tablero.
    Y el recorrido suma el menú de Nueva partida y Armar, que no estaban. */
 {
-  const MONITORES = [[1366, 768], [1920, 1080]];
+  const MONITORES = COMPU.filter(([w]) => w > 1280);   // los de verdad, de tira.mjs
   const fotoM = async n => {
     /* sin el foco que dejó el último clic (el anillo salía en la tuerca) */
     await pg.evaluate(() => document.activeElement && document.activeElement.blur());

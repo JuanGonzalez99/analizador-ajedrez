@@ -96,8 +96,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    sobre la app de verdad con `pruebas/tira.mjs` (`tira()` para un pedazo,
    `pantallas()` para la pantalla entera), con al menos una que cambie la
    estructura y no solo tamaños. **Y en PC también**: `pantallas()` saca
-   cada variante a 1000 y 1280 sola; una lista se dibuja larga, con scroll
-   (26-nov, la barra de módulos). El revisor elige una, la elige con un
+   cada variante sola en todos los tamaños de compu (`COMPU` de
+   `tira.mjs`: los cortes de 1000 y 1280 y los monitores de 1366×768 y
+   1920×1080); una lista se dibuja larga, con scroll (26-nov, la barra de
+   módulos). Todo tamaño o estado que se sume a lo que mira la app se suma
+   ahí, en un solo lugar, no en la maqueta de la noche. El revisor elige una, la elige con un
    ajuste, o dice **ninguna** y qué probar: en ese caso, otra tanda con esa
    dirección. Como mucho dos tandas; si sigue en "ninguna", no se aplica nada
    y se cuenta en el resumen, con las tiras. Lo que se aplica va igual al

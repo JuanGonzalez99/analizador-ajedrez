@@ -121,12 +121,15 @@ de memoria una posición de ajedrez").
   posiciones de `pruebas/*.pgn` comparando la tarjeta de antes con la de
   ahora: así salieron los casos de la v1.0.2. Desde la v1.0.4 eso es
   `npm run frases` (`-- ref` para comparar contra otro commit).
-- **Todo criterio que dependa de que una pieza "siga atacada" (o no) se
-  prueba con cada motivo de peligro** ("sinDefensa" y "menor") y con un
-  atacante comido mientras queda otro, verificando con chess.js qué ataca y
-  qué defiende después de la jugada (v1.0.4, causa B: el arreglo que propuse
-  en la primera vuelta dejaba "Defiende… a tiro de un peón" en cxd4, y las
-  partidas del repo no tienen ningún caso así).
+- **Todo criterio se prueba en cada rama que el código distingue y con más
+  de una pieza haciendo lo mismo**: cada motivo de peligro ("sinDefensa",
+  "menor"), dos atacantes, uno comido mientras queda otro, dos defensores.
+  Lo que dice que una jugada se contesta, se deshace o deja de estar en
+  peligro se verifica jugando la respuesta y mirando la posición que queda,
+  no contando piezas. Las partidas del repo casi nunca traen el caso con dos:
+  se arma con chess.js (v1.0.4: "Defiende… a tiro de un peón" en cxd4;
+  v1.4.1: "cada atacante se puede comer" callaba una trampa con dos peones;
+  causa B en los dos).
 - **Una frase de estado que dura** ("te quedás con", "se planta", "toma la
   columna") **se prueba contra todas las piezas que la sostienen**, no solo
   contra la que se movió (v1.0.6, causa B: en el ítem de la pareja de alfiles
@@ -140,24 +143,24 @@ de memoria una posición de ajedrez").
   también cuando la jugada desclavaba al atacante). Y `npm run frases` dice
   cada jugada dos veces, como buena y como error con un peón de pérdida:
   hasta la v1.0.7 iba sin pérdida y no veía ninguna frase de la jugada mala.
-- **Lo que el motor come dice qué se pierde** (v1.2.2, causas B+C: el ítem
-  de la dama que sigue colgada lo encuadré sobre h4, donde no había otro
-  mecanismo, y g4 en la misma posición decía "Tu peón queda comible en g4"
-  con la dama colgada; el motor falso de `npm run frases` nunca come una
-  pieza que ya venía colgada, así que el barrido no lo ve). Cuando la
-  tarjeta nombra una pieza que se pierde, comparo su casilla con adónde va
-  `mejorRival`: si el motor come otra cosa que vale más, la tarjeta nombra
-  lo que no se pierde. Y lo pruebo en las jugadas que además cuelgan algo
-  chico (la pieza movida, una de `nuevas`), no solo en las que no cuelgan
-  nada, con el Stockfish del repo para saber qué come de verdad. **Vale
-  para toda pieza que come `mejorRival`**, esté en `siguen` o en `nuevas`
-  (v1.2.3: Bxa7 nombraba el alfil con la dama de e2 destapada; causa B).
+- **La pieza que nombra la frase se coteja con lo que come el motor**
+  (`mejorRival`), venga de donde venga (`siguen`, `nuevas` o lo que se
+  sume): si el motor come otra cosa que vale más, la tarjeta nombra lo que
+  no se pierde. Y **todo desempate se prueba en el caso donde los atajos
+  difieren**: el valor del mecanismo es lo que el rival se lleva en el
+  cambio (`cambio.neto`), no lo que vale la pieza; en una pieza sin defensa
+  los dos coinciden y el caso fácil no distingue el criterio bueno del malo.
+  Se prueba con un cambio con recaptura, con jugadas que además cuelgan
+  algo chico, y con el Stockfish del repo para saber qué come de verdad: el
+  motor falso de `npm run frases` nunca come una pieza que ya venía colgada
+  (v1.2.2, v1.2.3 y v1.7.1, causas B y C).
 - **Un descuento de material se copia de `cambio`** (v1.2.3, causa B): lo
   comido más lo ganado al coronar, como `observarJugada`. Si un arreglo
   resta material en otro lado, pruebo coronación con captura y sin ella.
-  Y antes de leer "0 diferencias" de `npm run frases`, miro si la fila que
-  arma (`decir` en `pruebas/frases.mjs`) tiene el campo que el arreglo toca:
-  hasta la v1.2.3 no tenía `colgada` (causa C).
+  **Un barrido que da "0 diferencias" solo prueba lo que mira**: antes de
+  creerle, confirmo que lo que compara incluye lo que el arreglo toca (la
+  fila de `decir` en `pruebas/frases.mjs`, la prueba de unidad, la medida
+  de `mirar`). Hasta la v1.2.3 la fila no tenía `colgada` (causa C).
 - **Todo desempate entre lo que nombra la frase y lo que come el motor se
   prueba con un cambio con recaptura** (v1.7.1, causas B y C): el valor del
   mecanismo es lo que el rival se lleva en el cambio (`cambio.neto`), no lo
@@ -170,20 +173,14 @@ de memoria una posición de ajedrez").
   carpeta entera ni un comodín sobre ella. El scratchpad es compartido con
   quien programa (v1.5: se vació y se llevó las capturas de antes del
   cambio, que hubo que volver a sacar).
-- **Todo camino nuevo por el que un FEN llega al motor pasa por
-  `limpiarFen`** (v1.5, causa B: la cabecera FEN de un PGN entraba sin
-  limpiar y un "KQkq" sin torres colgaba a Stockfish). Ante un cambio que
-  arme posiciones desde afuera, grepeo `new Chess(` con argumento en el
-  bloque de análisis y pruebo un FEN con enroques y al paso imposibles.
-  Y el arranque de una partida se toma de `R.fens[0]` (lo que cargó
-  chess.js), nunca de `R.cab.FEN`, que no ve un "[Fen" en minúsculas.
-
-**Lo que "el rival puede deshacer" se prueba con dos atacantes** (v1.4.1:
-"cada atacante se puede comer" callaba una trampa con dos peones, y
-comido uno el otro se llevaba la pieza). Todo criterio que diga que una
-jugada se contesta o se deshace se verifica jugando la respuesta y
-mirando la posición que queda, no contando piezas, y se prueba con más
-de una pieza haciendo lo mismo.
+- **Toda entrada de afuera pasa por la misma limpieza que las demás**: un
+  FEN de link, la cabecera de un PGN, una posición armada a mano o lo que
+  venga (v1.5, causa B: la cabecera FEN entraba sin `limpiarFen` y un
+  "KQkq" sin torres colgaba a Stockfish). Ante un cambio que arme
+  posiciones desde afuera, grepeo `new Chess(` con argumento en el bloque
+  de análisis, pruebo un FEN con enroques y al paso imposibles, y miro que
+  el arranque salga de lo que cargó chess.js (`R.fens[0]`) y no del texto
+  crudo (`R.cab.FEN` no ve un "[Fen" en minúsculas).
 
 ## Qué decidís vos y qué no
 

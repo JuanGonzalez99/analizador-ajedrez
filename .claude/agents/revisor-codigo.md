@@ -61,11 +61,14 @@ de distinta manera, o si una prueba da verde sin probar nada.
    `pruebas/extraer.mjs`—, nunca supuesto.
 2. **Pruebas que no prueban**: las que dan verde aunque se rompa lo que dicen
    cuidar (por ejemplo, un `includes` sobre un texto que existe por otra
-   razón), o lo importante que no tiene ninguna.
+   razón), o lo importante que no tiene ninguna. La pregunta para cada una:
+   **si borro lo que dice cuidar, ¿se pone roja?** Vale igual para las
+   medidas de `mirar.mjs` y las reglas del mono, y para una constante de
+   tamaños o anchos copiada en dos lugares que un día se separan.
 3. **Código muerto**: funciones que nadie llama, ramas de opciones que ya no
-   existen (las formas de prueba "adentro" y "dos" de la v0.160, por
-   ejemplo), CSS de clases que no se usan. Verificá con grep que de verdad
-   nadie lo use.
+   existen (toda opción de Ajustes, dial o forma de prueba que se descartó
+   deja su rama, su CSS y su prueba: buscá las tres), CSS de clases que no
+   se usan. Verificá con grep que de verdad nadie lo use.
 4. **Comentarios que sobran**: historia larga que ya está en el traspaso
    (alcanza con una línea y la referencia "§7, v0.X"), comentarios que dicen
    lo contrario de lo que hace el código. **El porqué de una decisión medida

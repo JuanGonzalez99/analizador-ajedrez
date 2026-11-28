@@ -74,9 +74,6 @@ principio) o se junta con otra que ya lo cubra. Lo que cambió va al registro
 en una línea por tanda y al resumen de la mañana. **Nada de esto cambia la
 app**: las capturas del celu tienen que salir idénticas y `npm test` verde.
 
-- [ ] **Tanda 2 · los otros tres revisores y `TAREA-NOCTURNA.md`**: las
-      reglas de ajedrez, código y rumbo, y los pasos de la noche que nacieron
-      de un caso.
 - [ ] **Tanda 3 · `pruebas/mirar.mjs`**: cada medida con OJO. La señal es
       que mida un elemento con nombre, una sola pantalla o un solo tamaño
       donde la regla vale para todos.
@@ -102,6 +99,19 @@ del CSS y el medio de cada tramo, y un estado nuevo con lo que ya estaba;
 (8) un camino nuevo hacia una pantalla vieja se mira en celu y compu; (9) el
 desenlace de cualquier cosa pesa; (10) las variantes con la configuración de
 fábrica de cada ancho.
+
+**Tanda 2 del repaso** (28-nov): en `revisor-ajedrez.md`, siete reglas
+pasan a cuatro principios —todo criterio en cada rama y con dos piezas
+haciendo lo mismo; la pieza que nombra la frase contra lo que come el
+motor, probada donde los atajos difieren; un barrido en cero solo prueba
+lo que mira; toda entrada de afuera por la misma limpieza—; en
+`revisor-codigo.md`, "¿si borro lo que cuida, se pone roja?" para toda
+prueba, medida o regla del mono, y el código muerto de cualquier opción
+descartada (no solo la de la v0.160); `revisor-rumbo.md` ya estaba escrito
+contra la causa. En `TAREA-NOCTURNA.md` y `pruebas/tira.mjs`, la que estaba
+contra el caso: las variantes de compu salían a 1000 y 1280, y desde el
+27-nov se miran también los monitores de 1366 y 1920; ahora `pantallas()`
+y `mirar` toman los tamaños de un solo lugar (`COMPU`).
 
 Una línea por caso: qué se escapó, en qué versión se hizo y en cuál se vio,
 la causa y qué se cambió. Los catorce primeros salieron del análisis del

@@ -409,9 +409,14 @@ async function medirPantalla(pg, medir) {
    SE COMPONE EN EL NAVEGADOR, sin librerías de imagen: el contenedor no tiene
    ni PIL ni ImageMagick. Las capturas vuelven a entrar como <img> en una página
    aparte y se fotografía esa página. */
+/* Los tamaños de compu en que se mira toda pantalla: los dos cortes de la
+   app y los dos monitores de verdad (DISENO.md §1.12). Uno solo para
+   `pantallas()` y `mirar.mjs`: si se suma un tamaño, se suma acá. */
+export const COMPU = [[1000, 800], [1280, 800], [1366, 768], [1920, 1080]];
+
 export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, salida,
                                       medir = null, espera = 250, navegador = null,
-                                      scrollY = 0, anchos = [1000, 1280] }) {
+                                      scrollY = 0, anchos = COMPU }) {
   const fs = await import("node:fs");
   const sueltas = [], medidas = [];
 
@@ -448,11 +453,16 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
     sueltas.push(base + "-css.png");
     /* Y EN PC, SIN QUE SE LO PIDAN (revisor de UX, barra de módulos del
        26-nov: la tanda vino solo de celu y la barra abajo no servía a 1280;
-       causas B y F de APRENDIZAJES.md). `anchos: []` lo apaga. */
+       causas B y F de APRENDIZAJES.md). `anchos: []` lo apaga. Son todos
+       los tamaños de compu que mide `mirar` (COMPU, arriba), no dos: hasta
+       el 28-nov eran 1000 y 1280 a 800 de alto, y la regla del 27-nov pide
+       los monitores de verdad (repaso contra la causa, tanda 2). Un número
+       suelto es ancho a 800 de alto; un par, [ancho, alto]. */
     if (anchos.length) {
       const vp = pg.viewportSize();
-      for (const w of anchos) {
-        await pg.setViewportSize({ width: w, height: 800 });
+      for (const t of anchos) {
+        const [w, h] = Array.isArray(t) ? t : [t, 800];
+        await pg.setViewportSize({ width: w, height: h });
         await pg.waitForTimeout(espera);
         await pg.screenshot({ path: `${base}-${w}-css.png`, scale: "css" });
       }
