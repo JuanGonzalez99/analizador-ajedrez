@@ -527,11 +527,28 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
         const [w, h] = Array.isArray(t) ? t : [t, 800];
         await pg.setViewportSize({ width: w, height: h });
         await pg.waitForTimeout(espera);
+        /* SE VUELVE A APLICAR EN CADA TAMAÑO (28-nov): lo que se abre (un
+           menú) se cierra al cambiar la ventana, y lo que se ubica con la
+           medida del momento queda donde estaba; las fotos de compu salían
+           con el menú cerrado. Deshacer y aplicar de nuevo es como llega
+           el usuario a ese tamaño. */
+        if (deshacer) {
+          await pg.evaluate(({ fn, v }) => new Function("v", fn)(v), { fn: `(${deshacer})(v)`, v });
+          await pg.waitForTimeout(80);
+          await pg.evaluate(({ fn, v }) => new Function("v", fn)(v), { fn: `(${aplicar})(v)`, v });
+          await pg.waitForTimeout(espera);
+        }
         await pg.screenshot({ path: `${base}-${w}-css.png`, scale: "css" });
         cortes[w] = await recortados(pg, cortesOk);
       }
       await pg.setViewportSize(vp);
       await pg.waitForTimeout(espera);
+      if (deshacer) {
+        await pg.evaluate(({ fn, v }) => new Function("v", fn)(v), { fn: `(${deshacer})(v)`, v });
+        await pg.waitForTimeout(80);
+        await pg.evaluate(({ fn, v }) => new Function("v", fn)(v), { fn: `(${aplicar})(v)`, v });
+        await pg.waitForTimeout(espera);
+      }
     }
     /* CUÁNTO EMPUJA, que en una pantalla de 760 px es la mitad de la decisión:
        algo que se ve lindo pero baja el tablero 44 px puede dejar la navegación
@@ -565,21 +582,38 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
      página de la app nace de `browser.newPage()`, que se queda con su contexto
      en exclusiva y rechaza una segunda. Por eso `abrirApp` devuelve el
      navegador y se lo pasa acá. */
-  const hoja = await (navegador || pg.context().browser()).newPage();
-  const imgs = sueltas.map((f, i) => ({
-    rot: variantes[i].nombre || variantes[i].clave,
-    b64: fs.readFileSync(f).toString("base64"),
-  }));
-  await hoja.setContent(`<body style="margin:0;background:#f6f6f6;
-    font:12px system-ui,sans-serif"><div style="display:flex;gap:10px;padding:10px">` +
-    imgs.map(x => `<div><div style="padding:4px 2px;color:#555">${x.rot}</div>` +
-      `<img src="data:image/png;base64,${x.b64}" style="width:412px;display:block;` +
-      `border:1px solid #ccc"></div>`).join("") + `</div></body>`);
-  await hoja.waitForTimeout(300);
+  /* A TAMAÑO DE LECTURA, NO ACHICADAS (Juan, 28-nov, dos veces: "la
+     captura de las variantes tiene baja calidad, no se ve nada"). Hasta acá
+     cada captura entraba a 412 de ancho, el del celu, y una pantalla de
+     compu de 1366 quedaba a un tercio: ilegible. Ahora cada una va a su
+     ancho CSS de verdad, de a dos por fila si es de compu (de a varias si
+     es de celu), y la de mandar sale a 2x de las capturas a 2x. Y una
+     comparación por cada tamaño de compu (`-juntas-1366`, …), que es donde
+     se decide un ítem de compu. */
+  const vpBase = pg.viewportSize();
+  const componer = async (lista, ancho, dsf, destino) => {
+    const hoja = await (navegador || pg.context().browser()).newPage({ deviceScaleFactor: dsf });
+    const cols = ancho > 600 ? 2 : Math.max(1, lista.length);
+    await hoja.setViewportSize({ width: cols * (ancho + 12) + 12, height: 400 });
+    await hoja.setContent(`<body style="margin:0;background:#f6f6f6;font:15px system-ui,sans-serif">` +
+      `<div style="display:grid;grid-template-columns:repeat(${cols}, ${ancho}px);gap:12px;padding:12px">` +
+      lista.map(x => `<div><div style="padding:4px 2px 6px;color:#333;font-weight:600">${x.rot}</div>` +
+        `<img src="data:image/png;base64,${x.b64}" style="width:${ancho}px;display:block;` +
+        `outline:1px solid #ccc"></div>`).join("") + `</div></body>`);
+    await hoja.waitForTimeout(300);
+    await hoja.screenshot({ path: destino + "-css.png", fullPage: true, scale: "css" });
+    if (dsf > 1) await hoja.screenshot({ path: destino + ".png", fullPage: true });
+    await hoja.close();
+  };
+  const rot = i => variantes[i].nombre || variantes[i].clave;
   const juntas = `${salida}/${nombre}-juntas`;
-  await hoja.screenshot({ path: juntas + "-css.png", fullPage: true, scale: "css" });
-  await hoja.screenshot({ path: juntas + ".png", fullPage: true });
-  await hoja.close();
+  await componer(sueltas.map((f, i) => ({ rot: rot(i),
+    b64: fs.readFileSync(f.replace(/-css\.png$/, ".png")).toString("base64") })), vpBase.width, 2, juntas);
+  for (const t of anchos) {
+    const [w] = Array.isArray(t) ? t : [t];
+    await componer(sueltas.map((f, i) => ({ rot: `${rot(i)} · ${w}`,
+      b64: fs.readFileSync(f.replace(/-css\.png$/, `-${w}-css.png`)).toString("base64") })), w, 1, `${juntas}-${w}`);
+  }
 
   return { sueltas, juntas: juntas + ".png", mirar: juntas + "-css.png", medidas };
 }

@@ -529,3 +529,13 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   `juegoPos` contra una cuenta independiente por jugadas legales en 600
   partidas al azar, que atrapa cualquier diferencia futura con el
   reglamento y no solo estas posiciones.
+- **La tira de variantes de compu, ilegible otra vez** · Juan, 28-nov
+  (segunda vez) · `pantallas()` componía toda captura a 412 de ancho, el
+  del celu, así que una pantalla de 1366 quedaba a un tercio; y las fotos
+  de cada tamaño de compu salían con el menú cerrado, porque la app lo
+  cierra al cambiar la ventana (C: el andamio nació para el celu y nadie
+  miró la tira que se manda) · cada captura va a su ancho CSS de verdad,
+  de a dos por fila en compu, a 2x la que se manda, más una comparación
+  por cada tamaño de compu (`-juntas-1366`, …), y la variante se vuelve a
+  aplicar después de cada cambio de tamaño. Atrapa toda maqueta de compu
+  y todo estado abierto, no solo Ajustes.
