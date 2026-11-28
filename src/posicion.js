@@ -140,9 +140,36 @@ function abrirPosicion(fen, opc) {
 const fenPos = () => POS.fens[POS.fens.length - 1];
 /* LA PARTIDA CON SU HISTORIA: la triple repetición no se ve desde un FEN
    suelto (revisor de ajedrez, v1.1). Son pocas jugadas: se rejuegan. */
+/* LA REPETICIÓN QUE CHESS.JS NO CUENTA (revisor de ajedrez, v1.1.2;
+   Arreglos, v1.9.1): chess.js compara también la casilla de al paso que
+   deja todo doble paso, aunque nadie pueda comer, y entonces la posición
+   de después de e5 no le es igual a la misma más tarde. El reglamento
+   (art. 9.2.3) cuenta las jugadas posibles, o sea las LEGALES, y Stockfish
+   igual en `do_move`: la casilla cuenta solo si hay una captura al paso
+   legal (no basta un peón al lado: clavado, o con un jaque que la captura
+   no saca, no come). Ojo, no es la condición de `limpiarFen`, que copia la
+   de `Position::set` para cargar un FEN y ahí Stockfish es más laxo; de
+   `limpiarFen` se toman los enroques. El juego que devuelve dice esa
+   repetición en `in_threefold_repetition`, `in_draw` y `game_over`, que es
+   donde la miran los que lo usan. */
 function juegoPos() {
   const c = new Chess(POS.inicial);
-  for (const u of POS.ucis) c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
+  const clave = () => {
+    const p = limpiarFen(c.fen()).split(" ");
+    const ap = c.moves({ verbose: true }).find(m => m.flags.includes("e"));
+    return [p[0], p[1], p[2], ap ? ap.to : "-"].join(" ");
+  };
+  const vistas = [clave()];
+  for (const u of POS.ucis) {
+    c.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: u[4] });
+    vistas.push(clave());
+  }
+  const tres = c.in_threefold_repetition() || vistas.filter(v => v === vistas[vistas.length - 1]).length >= 3;
+  if (tres) {
+    c.in_threefold_repetition = () => true;
+    c.in_draw = () => true;
+    c.game_over = () => true;
+  }
   return c;
 }
 /* hubo alguna jugada de Juan: si no, Deshacer y Empezar de nuevo no tienen

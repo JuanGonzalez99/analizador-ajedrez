@@ -4332,6 +4332,65 @@ test("Posiciones: la triple repetición se ve con la historia, y Deshacer pide u
   assert.equal(posicion.hayJugadaMia(), true);
 });
 
+test("Posiciones: la repetición cuenta la posición, no la casilla de al paso que nadie puede usar (v1.9.1)", () => {
+  const juega = (inicial, sans, yo) => {
+    const c = new Chess(inicial), fens = [inicial], ucis = [];
+    for (const s of sans) { const m = c.move(s); ucis.push(m.from + m.to); fens.push(c.fen()); }
+    posicion.poner({ inicial, fens, ucis, sans, yo });
+    return posicion.estadoPos();
+  };
+  /* el caso del revisor: e5 deja e6 sin nadie que coma */
+  const ida = ["e5", "Nf3", "Kd8", "Ng1", "Ke8", "Nf3", "Kd8", "Ng1", "Ke8"];
+  assert.equal(juega("4k3/4p3/8/8/8/8/8/4K1N1 b - - 0 1", ida, "w"), "Tablas: tres veces la misma posición");
+  /* otra columna, otras piezas, y Juan del otro color */
+  assert.equal(juega("4k3/3p4/8/8/8/8/8/4K1N1 b - - 0 1",
+    ["d5", "Nf3", "Ke7", "Ng1", "Ke8", "Nf3", "Ke7", "Ng1", "Ke8"], "b"), "Tablas: tres veces la misma posición");
+  /* y con un peón que SÍ puede comer al paso la primera es otra posición:
+     dos veces no son tres */
+  assert.notEqual(juega("4k3/3p4/8/4P3/8/8/8/4K1N1 b - - 0 1",
+    ["d5", "Nf3", "Ke7", "Ng1", "Ke8", "Nf3", "Ke7", "Ng1", "Ke8"], "w"), "Tablas: tres veces la misma posición");
+  /* el que puede comer pero no es legal (revisor de ajedrez, v1.9.1): la
+     casilla no cuenta. Clavado en la fila, clavado en diagonal, y un jaque
+     que la captura no saca */
+  const vuelta = ["Nf3", "Kd8", "Ng1", "Ke8", "Nf3", "Kd8", "Ng1", "Ke8"];
+  assert.equal(juega("4k3/2p5/8/KP5r/8/8/8/6N1 b - - 0 1", ["c5", ...vuelta], "w"), "Tablas: tres veces la misma posición");
+  assert.equal(juega("4k3/3p2b1/8/4P3/8/2K5/8/6N1 b - - 0 1", ["d5", ...vuelta], "w"), "Tablas: tres veces la misma posición");
+  assert.equal(juega("2b1k3/3p4/8/4P3/6K1/8/8/8 b - - 0 1",
+    ["d5+", "Kh4", "Bb7", "Kg4", "Bc8+", "Kh4", "Bb7", "Kg4", "Bc8+"], "w"), "Tablas: tres veces la misma posición");
+});
+
+/* LA CUENTA CONTRA EL REGLAMENTO, no contra posiciones elegidas (revisor
+   de ajedrez, v1.9.1: el primer arreglo calzó con los casos fáciles y no
+   con la rama "puede comer pero es ilegal"; causa B). Partidas al azar
+   desde posiciones con enroques, al paso y coronaciones: `juegoPos` tiene
+   que decir repetición exactamente cuando una cuenta independiente por
+   jugadas legales (tablero, turno, enroques posibles y capturas al paso
+   legales) da tres. Atrapa cualquier diferencia futura con el reglamento. */
+test("Posiciones: la repetición de juegoPos es la del reglamento, en partidas al azar (v1.9.1)", () => {
+  let semilla = 7;
+  const azar = n => { semilla = (semilla * 1103515245 + 12345) % 2147483648; return semilla % n; };
+  const fide = c => {
+    const p = c.fen().split(" ");
+    const mov = c.moves({ verbose: true });
+    const ap = mov.filter(m => m.flags.includes("e")).map(m => m.to)[0] || "-";
+    return [p[0], p[1], posicion.limpiarFen(c.fen()).split(" ")[2], ap].join(" ");
+  };
+  const desde = ["4k3/2p5/8/KP5r/8/8/8/6N1 b - - 0 1", "4k3/3p2b1/8/4P3/8/2K5/8/6N1 b - - 0 1",
+                 "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "4k3/3p4/8/4P3/8/8/8/4K1N1 b - - 0 1"];
+  for (const inicial of desde) for (let k = 0; k < 150; k++) {
+    const c = new Chess(inicial), ucis = [], vistas = [fide(c)];
+    for (let i = 0; i < 40 && !c.game_over(); i++) {
+      const ms = c.moves({ verbose: true }), m = ms[azar(ms.length)];
+      c.move(m); ucis.push(m.from + m.to + (m.promotion || "")); vistas.push(fide(c));
+      posicion.poner({ inicial, fens: [], ucis, sans: [], yo: "w" });
+      const tres = vistas.filter(v => v === vistas[vistas.length - 1]).length >= 3;
+      assert.equal(posicion.juegoPos().in_threefold_repetition(), tres || c.in_threefold_repetition(),
+        `${inicial} ${ucis.join(" ")}`);
+      if (tres) break;
+    }
+  }
+});
+
 /* revisor de ajedrez, 22-nov: Qxf6 Nxf6 es un cambio de damas, y decía "Tu
    dama queda comible en f6". `quedaComible` resta lo que la jugada comió. */
 test("un cambio parejo no es 'queda comible' (arreglo, v1.2.3)", () => {

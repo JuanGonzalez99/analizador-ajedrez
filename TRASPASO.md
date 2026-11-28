@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.9**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.9.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -5087,6 +5087,24 @@ de `mirar` sigue para toda tabla con thead y toda grilla con
 `data-encabeza`. Anotados en Relleno, para más adelante: el tiempo por
 jugada como gráfico y el reloj chiquito al lado de las comidas en la
 compu (`DISENO.md` §2).
+
+**v1.9.1, la triple repetición que chess.js no contaba** (Arreglos;
+revisor de ajedrez, v1.1.2). En Posiciones, desde
+`4k3/4p3/8/8/8/8/8/4K1N1 b`, e5 Nf3 Kd8 Ng1 Ke8 Nf3 Kd8 Ng1 Ke8 no decía
+"Tablas": chess.js compara también la casilla de al paso que deja e5
+aunque nadie pueda comer, y Stockfish no. `juegoPos` cuenta las
+posiciones por tablero, turno, enroques (de `limpiarFen`) y la casilla de
+al paso **solo si hay una captura al paso legal** (reglamento, art. 9.2.3,
+y `do_move` de Stockfish; la condición de `limpiarFen` es la de cargar un
+FEN, más laxa: un peón clavado o un jaque que la captura no saca dejan la
+casilla ahí y no en la repetición —lo encontró el revisor de ajedrez en la
+primera vuelta—), y si van tres, el juego que devuelve dice
+repetición en `in_threefold_repetition`, `in_draw` y `game_over`, que son
+los que miran `estadoPos`, `finPos`, el turno del motor y el PGN. Probado
+también en otra columna con Juan del otro color, y con un peón que sí
+puede comer al paso, donde la primera es otra posición y dos no son tres,
+con los tres casos del que puede comer pero no es legal, y contra una
+cuenta independiente por jugadas legales en 600 partidas al azar.
 
 **v1.9 [PC], Ajustes como menú colgado de la tuerca** (etapa "La compu,
 hecha para la compu"; la B del revisor de UX entre tres: A, el mismo menú

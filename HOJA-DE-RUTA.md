@@ -79,7 +79,7 @@ Errores verificados de lo que la app dice o hace. Como mucho uno por noche
       `limpiarFen` deja e6 aunque e7 está ocupada; chess.js ofrece dxe6 y
       Stockfish no. Pedir también la casilla de origen del doble paso vacía,
       con el FEN sumado a la prueba de `limpiarFen`.
-- [ ] **Posiciones: una triple repetición que chess.js no cuenta** (revisor
+- [x] ~~**Posiciones: una triple repetición que chess.js no cuenta**~~ (hecho en la v1.9.1) (revisor
       de ajedrez, v1.1.2; leve, nunca dice algo falso: falta el "Tablas").
       Desde `4k3/4p3/8/8/8/8/8/4K1N1 b - - 0 1`, e5 Nf3 Kd8 Ng1 Ke8 Nf3 Kd8
       Ng1 Ke8: chess.js compara la casilla de al paso que dejó e5 aunque
