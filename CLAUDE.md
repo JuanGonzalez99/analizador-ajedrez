@@ -143,7 +143,7 @@ Son los dos más grandes del repo y los dos se pagan en contexto:
   una si se las mira), las de la pasada ancha a 2560×1600 (**~5.500**) y las de
   tres columnas a 3000×1600 (**~6.400**). Desde el 27-nov hay además diez de
   monitor de verdad, a escala CSS: `ancho-1366-*` (**~1.400**) y `ancho-1920-*`
-  (**~2.800**). Son **58** y mirarlas todas serían ~135.000 tokens, o sea más
+  (**~2.800**). Son **88** (desde la v1.8 también cada botón prendible de la compu) y mirarlas todas serían ~200.000 tokens, o sea más
   que el archivo entero. Se miran una o dos, las que
   contestan la pregunta; el resumen de texto que imprime el arnés son 400 tokens
   y suele alcanzar.

@@ -82,6 +82,15 @@ app**: las capturas del celu tienen que salir idénticas y `npm test` verde.
       `pruebas/estaticos.mjs`, `pruebas/analisis.test.mjs`): las reglas y
       pruebas que nacieron de un error, con la misma pregunta.
 
+- [ ] **`pantallas()` avisa del texto recortado** en lo que la variante
+      cambia (`scrollWidth > clientWidth` o texto truncado) (revisor de UX,
+      v1.8: la variante B se pasó con su fila de datos rota; causa F).
+      Atrapa toda maqueta, no solo esa.
+- [ ] **`mirar` avisa del anillo de foco con mouse**: después de cada clic
+      simulado, si el elemento activo dibuja `outline` sin tecla antes, OJO
+      (revisor de UX, v1.8; causas A y C). Atrapa todo botón que se
+      esconda y deje el foco suelto.
+
 Después de la cuarta, lo mantiene la revisión del domingo (`TAREA-NOCTURNA.md`,
 paso 0).
 
@@ -119,6 +128,19 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Los encabezados de la planilla corridos hasta 100 px, y una columna
+  entera de "·"** · maqueta de la v1.8 (revisor de UX, mismo día) · B y C:
+  se miró que el encabezado existiera, no que cayera sobre lo suyo, y la
+  partida de prueba no traía reloj · `mirar` mide en toda tabla con thead
+  y toda grilla con `data-encabeza` que cada encabezado caiga a 4 px de un
+  texto de su celda, y avisa de columnas de puro relleno. Atrapa las
+  tablas del Mes, el Resumen, Estadísticas y las que vengan.
+- **La cabecera partida en dos con las tres mejores abiertas** · v1.8
+  (revisor de UX, mismo día) · A: se midió el alto en tres estados, todos
+  con las mejores cerradas · `mirar` avisa de toda pieza partida (mismo
+  borde de color, hueco o radio en la unión) y prende, fotografía y apaga
+  todo `[aria-pressed]` a la vista, como con las pestañas. Atrapa la
+  tarjeta de la variante, Posiciones y todo botón que se prenda.
 - **Las citas de renglón de la hoja de ruta, apuntando a nada** · la
   partición del 25-nov, lo vio el revisor de rumbo el 28-nov · G: la
   partición corrió toda la numeración y nadie revisó las referencias ·
