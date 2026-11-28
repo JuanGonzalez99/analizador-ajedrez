@@ -1812,7 +1812,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.8 · 28-11";
+  window.VERSION = "v1.8.1 · 28-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -3202,7 +3202,15 @@ function limpiarFen(fen) {
   if (p[3] !== "-") {
     const col = p[3][0], fila = p[3][1];
     const peon = p[1] === "w" ? col + "5" : col + "4", tipo = p[1] === "w" ? "pb" : "pw";
-    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]))) p[3] = "-";
+    /* la condición de Stockfish (`Position::set`): la casilla y la de
+       origen del doble paso vacías, el peón que avanzó en su lugar y un peón
+       del que mueve que pueda comer (v1.8.1, revisor de ajedrez: con e7
+       ocupada chess.js ofrecía dxe6 y Stockfish no) */
+    const origen = col + (p[1] === "w" ? "7" : "2"), mio = p[1] === "w" ? "pw" : "pb";
+    const cols = "abcdefgh", k = cols.indexOf(col), filaPeon = peon[1];
+    const comedor = [k - 1, k + 1].some(j => j >= 0 && j < 8 && hay(cols[j] + filaPeon, mio));
+    if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]) &&
+          !c.get(origen) && comedor)) p[3] = "-";
   }
   return p.join(" ");
 }

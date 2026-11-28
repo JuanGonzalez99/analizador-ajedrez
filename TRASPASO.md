@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8.1**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -5066,6 +5066,16 @@ renglón de texto cuesta más encontrarlo que en su celda. Lo que quedó:
 - En las capturas, 15...Kg8 (forzada) muestra Pérdida 5.33: es el motor de
   mentira de las pruebas, que arma la curva jugada por jugada; con
   Stockfish una forzada no pierde.
+
+**v1.8.1, el al paso que Stockfish no cuenta** (revisor de ajedrez, v1.1.2;
+Arreglos). `limpiarFen` deja la casilla de al paso solo con la condición de
+`Position::set` de Stockfish: la casilla y la de origen del doble paso
+vacías, el peón que avanzó en su lugar y un peón del que mueve que pueda
+comer. En `4k3/4p3/8/3Pp3/8/8/8/4K3 w - e6`, con e7 ocupada, chess.js
+ofrecía dxe6 y Stockfish no. Verificado contra el `d` del Stockfish del repo
+en cinco FEN (blancas y negras, con y sin comedor, con el origen ocupado):
+dan lo mismo. Ojo: Stockfish 18 deja la casilla aunque comer al paso deje
+al rey en jaque (`8/8/8/K2Pp2r/8/8/8/4k3 w - e6`), y `limpiarFen` también.
 
 **v1.7.1, lo que come el motor dice qué se pierde, también en `nuevas`**
 (Arreglos; revisor de ajedrez, v1.2.3). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`,

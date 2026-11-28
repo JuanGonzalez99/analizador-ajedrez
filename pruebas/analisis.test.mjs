@@ -4293,6 +4293,12 @@ test("Posiciones: los FEN que no se pueden jugar se rechazan, y los enroques y e
   assert.equal(posicion.limpiarFen("r3k2r/8/8/8/8/8/8/R3K1R1 w KQkq - 0 1"), "r3k2r/8/8/8/8/8/8/R3K1R1 w Qkq - 0 1");
   assert.equal(posicion.limpiarFen("4k3/8/8/3P4/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/3P4/8/8/8/4K3 w - - 0 1");
   assert.equal(posicion.limpiarFen("4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/3Pp3/8/8/8/4K3 w - e6 0 1");
+  /* v1.8.1: con la casilla de origen ocupada, o sin un peón que pueda comer,
+     Stockfish no lo cuenta (la condición de su `Position::set`) */
+  assert.equal(posicion.limpiarFen("4k3/4p3/8/3Pp3/8/8/8/4K3 w - e6 0 1"), "4k3/4p3/8/3Pp3/8/8/8/4K3 w - - 0 1");
+  assert.equal(posicion.limpiarFen("4k3/8/8/4p3/8/8/8/4K3 w - e6 0 1"), "4k3/8/8/4p3/8/8/8/4K3 w - - 0 1");
+  assert.equal(posicion.limpiarFen("4k3/8/8/8/3pP3/8/4P3/4K3 b - e3 0 1"), "4k3/8/8/8/3pP3/8/4P3/4K3 b - - 0 1");
+  assert.equal(posicion.limpiarFen("4k3/8/8/8/3pP3/8/8/4K3 b - e3 0 1"), "4k3/8/8/8/3pP3/8/8/4K3 b - e3 0 1");
 });
 
 test("Posiciones: armar a mano, el FEN de ida y vuelta y lo que falta (v1.4)", () => {

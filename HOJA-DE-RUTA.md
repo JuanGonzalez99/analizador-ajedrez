@@ -74,7 +74,7 @@ avanzamos más, nos quedamos en correcciones de lo hecho"*. La regla:
 Errores verificados de lo que la app dice o hace. Como mucho uno por noche
 (perilla "Por noche"), el primero de la lista.
 
-- [ ] **Posiciones: el al paso con la casilla de origen ocupada** (revisor
+- [x] ~~**Posiciones: el al paso con la casilla de origen ocupada**~~ (hecho en la v1.8.1, con la condición entera de Stockfish) (revisor
       de ajedrez, v1.1.2; leve). `4k3/4p3/8/3Pp3/8/8/8/4K3 w - e6 0 1`:
       `limpiarFen` deja e6 aunque e7 está ocupada; chess.js ofrece dxe6 y
       Stockfish no. Pedir también la casilla de origen del doble paso vacía,
