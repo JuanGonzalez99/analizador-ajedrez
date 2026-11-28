@@ -520,3 +520,12 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   proximidad (renglones de una fila tan separados como las filas, D) →
   regla en `revisor-ux.md`, y la medida queda pendiente. Se propone a Juan
   sumarla a `DISENO.md` §1.5 (no se cambia el sistema de noche).
+- **La repetición con el al paso clavado** · 28-nov, noche, primera vuelta
+  de la v1.9.1 · el arreglo copió la condición de Stockfish de donde carga
+  un FEN (`set`) y no de donde juega (`do_move`), y se probó solo sin
+  comedor y con un comedor libre, no la rama "puede comer pero es ilegal"
+  (B) · regla en `revisor-ajedrez.md` (la condición del lugar donde se usa,
+  comparada contra `d` después de jugar) y una prueba que compara
+  `juegoPos` contra una cuenta independiente por jugadas legales en 600
+  partidas al azar, que atrapa cualquier diferencia futura con el
+  reglamento y no solo estas posiciones.

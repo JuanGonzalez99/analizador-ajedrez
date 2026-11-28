@@ -52,7 +52,12 @@ de memoria una posición de ajedrez").
   En node, con una copia `.cjs` de `stockfish-18-lite-single.js` (por el
   `type: module`), `position fen …` + `go`, y se borra al terminar. Y cuando
   se limpia un FEN para Stockfish, la condición se copia de la que usa él
-  y se compara contra lo que muestra su `d`.
+  y se compara contra lo que muestra su `d`. **Del lugar donde se usa**
+  (v1.9.1: el al paso de la repetición): `Position::set` para cargar un
+  FEN, `do_move` para lo que pasa después de jugar, que es más estricto;
+  así que se compara contra su `d` también después de `position … moves
+  …`, no solo cargando el FEN. Y toda regla del reglamento se prueba
+  contra una cuenta independiente en cada rama, no en el caso fácil.
 
 ## Qué leés antes de opinar
 
