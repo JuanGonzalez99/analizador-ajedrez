@@ -139,7 +139,7 @@ Cuenta estimada: 4 a 6 noches.
       paso; si no, quedan como en la v1.7 y lo que falte va a Relleno. Lo
       que se ve con una variante abierta queda como hoy (espera a Juan, "La
       variante como modo").
-- [ ] **Ajustes como menú colgado de la tuerca** en la compu, no como hoja
+- [x] ~~**Ajustes como menú colgado de la tuerca**~~ (hecho en la v1.9: la B del revisor entre tres, con las opciones como pastillas a la vista) en la compu, no como hoja
       que sube desde abajo con tirador y tapa el tablero: la regla de
       `DISENO.md` §3 (Posiciones en la compu) aplicada a la otra hoja.
 - [ ] **Navegar como en una app de escritorio**: el riel a la vista también
@@ -605,3 +605,15 @@ Pendientes que estaban anotados solo en el traspaso.
       Vale para toda hoja que mueva el foco al abrir (`verAjustes`, en
       `tablero.js`). La línea `anillo de foco con mouse` de `mirar` tiene
       que quedar en [].
+
+- [ ] **[PC] La Partida y Armar no entran en la notebook de verdad** (lo
+      midió `mirar` la primera noche, 28-nov). A 1366×657, que es lo que
+      deja el navegador en una pantalla de 1366×768, la Partida pide bajar
+      103 px y Armar 38 (línea `monitores:`, `sobra657`). El tablero toma
+      el alto de la ventana, pero lo de abajo (los botones de pasar
+      jugadas, la planilla) no. Va con "Pasar jugadas con lo que tiene la
+      compu", que achica los botones de abajo.
+- [ ] **[PC] El tema como muestras en el menú de Ajustes** (revisor de UX,
+      v1.9): casillas de dos colores en vez de "Torneo" o "Nogal", que hay
+      que conocer. No frena: con el menú al costado el tablero ya hace de
+      muestra. Va con los grupos de Ajustes (⏸, el dial).

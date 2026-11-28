@@ -565,6 +565,50 @@
     #hojaPos .ajTirador, #hojaNueva .ajTirador { display: none; }
     body.enPosicion #fondoAjustes { background: transparent; }
   }
+  /* [PC] AJUSTES COMO MENÚ COLGADO DE LA TUERCA (v1.9; `colgarAjustes`, en
+     tablero.js, pone el ancho, el left y el top). Sin velo (el fondo sigue
+     tomando el clic que lo cierra), sin tirador ni "Listo", seco: aparece y
+     se va sin la subida de la hoja. El alto, el de la ventana menos 16, con
+     scroll adentro: a 1366 con el navegador quedan ~657. */
+  .ajSeg { display: none; }
+  @media (min-width: 1000px) {
+    #hojaAjustes.colgado { right: auto; bottom: auto; max-width: none; margin: 0;
+                           border: 1px solid var(--linea); border-radius: var(--r-tarjeta);
+                           padding: var(--e-3) var(--e-4) 10px;
+                           max-height: calc(100vh - var(--topAj, 64px) - 16px); transition: none; animation: none; }
+    #hojaAjustes.colgado .ajTirador, #hojaAjustes.colgado #cerrarAjustes { display: none; }
+    #hojaAjustes.colgado:focus { outline: none; }
+    #hojaAjustes.colgado .ajCab h2 { font-size: var(--t-secundario); }
+    /* el área grande de los enlaces del crédito es de dedo, y en el menú se
+       salía del borde: 1 px de scroll y una barra en todos los tamaños */
+    #hojaAjustes.colgado .ajCredito a::before { inset: -4px -2px; }
+    body:has(#hojaAjustes.colgado:not(.oculto)) #fondoAjustes { background: transparent; }
+    /* UNA SOLA COLUMNA DE ETIQUETAS para todo el menú, del ancho de la más
+       larga y en un renglón: con una grilla por fila cada una arrancaba sus
+       pastillas en otro x. Las filas se disuelven en la grilla del menú
+       (`display: contents`) y lo demás va de punta a punta. La etiqueta,
+       alineada al primer renglón de pastillas */
+    #hojaAjustes.colgado { display: grid; grid-template-columns: max-content 1fr; column-gap: var(--e-3);
+                           align-items: start; }
+    #hojaAjustes.colgado > :not(.ajFila) { grid-column: 1 / -1; }
+    #hojaAjustes.colgado .ajFila { display: contents; }
+    /* más aire entre filas (8) que entre los renglones de una misma fila
+       (4): con el mismo paso, a la derecha se leía una sola columna de
+       pastillas (revisor, v1.9) */
+    #hojaAjustes.colgado .ajFila > span { white-space: nowrap; padding-top: 10px; line-height: 20px;
+                                          font-size: var(--t-secundario); }
+    #hojaAjustes.colgado .ajSeg { padding: 4px 0; }
+    #hojaAjustes.colgado .ajFila select { display: none; }
+    #hojaAjustes.colgado .ajSeg { display: flex; flex-wrap: wrap; gap: 4px; }
+    /* la marca de lo elegido es la de la app (la de Armar y la barra de
+       módulos): acento al 14 %, texto y 600. Las otras, borde y tenue */
+    .ajSeg button { min-height: 32px; padding: 0 8px; border-radius: 16px;
+                    border: 1px solid var(--linea); background: transparent;
+                    color: var(--tenue); font-size: var(--t-secundario); font-weight: 400; }
+    .ajSeg button:hover { background: var(--elevada); color: var(--texto); }
+    .ajSeg button[aria-checked="true"] { border-color: transparent; color: var(--texto); font-weight: 600;
+                                         background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  }
   @media (pointer: fine) and (min-width: 1000px) {
     body.enPosicion.conBarra { padding-left: 104px; padding-bottom: 8px; }
     #zonaPosicion { --ladoTab: clamp(360px, min(100vh - 64px, 100vw - 104px - 24px - 368px), 1200px); }

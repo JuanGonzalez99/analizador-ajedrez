@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8.3**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.9**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -478,7 +478,7 @@ el orden en que se juntan:
 | `analisis-explicacion.js` | la explicación de la jugada: `partesDeLaExplicacion` y sus frases |
 | `analisis-posicion.js` | lo que se ve mirando la posición: `observarJugada`, `enPeligro`, `atacantesDe`, `estaAtrapada` y `seComeAlQueAtrapa` (v1.4.1); y `aperturaEs`. Cierra el bloque de análisis |
 | `motor.js` | el arranque (`MODULO_OK`, abre el `try`), `irAPantalla`, `mostrarVista` (con la barra de los módulos: `conBarra`, `barraA`, el scroll que la corre), la barra, caché (IndexedDB), clase `Motor`, `evaluarPosiciones`, aperturas, `analizarPartida` |
-| `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes`, la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas (`svgMarcas`), `dibujar` |
+| `tablero.js` | `dibujarCurva`, temas y modos de Ajustes, `verAjustes` (y en la compu `pastillasAjustes` y `colgarAjustes`, v1.9), la previa, las tres mejores (`pintarAlternativas`), comidas, flechas y marcas (`svgMarcas`), `dibujar` |
 | `interfaz.js` | el estado global (`PARTIDAS`, `R`, `IDX`…), la tira (`medirTira`, `centrarTira`), `irA` |
 | `variante.js` | probar jugadas: `abrirPrueba`, `probarJugada`, la tira y la planilla de la variante |
 | `inicio.js` | preferencias guardadas, cuántos motores, el usuario y "cambiar", `cargarMes`, el recuento, `filaDePartida`, `pintarFilas`, `abrirPartida`, `analizarElegida` |
@@ -5087,6 +5087,47 @@ de `mirar` sigue para toda tabla con thead y toda grilla con
 `data-encabeza`. Anotados en Relleno, para más adelante: el tiempo por
 jugada como gráfico y el reloj chiquito al lado de las comidas en la
 compu (`DISENO.md` §2).
+
+**v1.9 [PC], Ajustes como menú colgado de la tuerca** (etapa "La compu,
+hecha para la compu"; la B del revisor de UX entre tres: A, el mismo menú
+con selects; C, dos columnas de 680 que tapaban medio tablero a 1366).
+Desde 1000, la hoja que subía desde abajo con tirador pasa a un menú
+colgado de la tuerca que lo abrió, alineado a su borde derecho, del ancho
+de la columna del costado (440 a 480) y sin pasar del riel (si colgado de
+la tuerca no entra, se achica hasta 440 antes de correrse: desde la del
+inicio, corrido, pisaba la lista); sin velo, sin
+tirador ni "Listo" (Esc, clic afuera o la tuerca), seco. Cada select se
+dibuja como una fila de pastillas con todas las opciones a la vista (un
+clic por cambio, y como no tapa el tablero el tema y la evaluación se ven
+cambiar al lado): `pastillasAjustes` las arma de las `option` y al tocar
+pone `select.value` y dispara `change`, así el select sigue siendo la
+única verdad y el celu queda igual (las pastillas no se ven ahí). Lo
+elegido lleva la marca de la app (acento al 14 %, texto y 600, la de Armar
+y la barra de módulos), pastillas de 32 de alto, una sola columna de
+etiquetas para todo el menú (las filas se disuelven en su grilla) con la
+etiqueta en un renglón y alineada al primero de pastillas, y más aire
+entre filas (8) que entre los renglones de una fila (4). Flechas eligen
+adentro de la fila (`role="radiogroup"`, tabindex itinerante); abierto
+con teclado el foco va a la elegida de Tema, **con el mouse al menú
+mismo**: después de un Esc la tuerca queda con foco de teclado y Chrome se
+lo pasaba a la pastilla con anillo (`ENTRADA` recuerda si lo último fue
+mouse o tecla). Alto: el de la ventana menos 16, con scroll adentro (a
+1366×657, el viewport real de la notebook, sobran 76 px y se baja).
+Cambiar la ventana lo cierra, como el de Posiciones. Sigue siendo
+`aria-modal` con el Tab adentro (el revisor lo pedía no modal; con el
+fondo tomando el clic, dejar que el Tab se vaya atrás llevaba el foco a lo
+que el menú tapa). **Se acepta**: de 1000 a 1365 el menú mide 440 y "Mate
+a la vista" ocupa tres renglones de pastillas (el revisor pedía dos):
+entra sin scroll a 800 de alto, y para dos hacía falta más ancho, que a
+1280 tapaba el tablero. A 1000 tapa 90 px del tablero (no hay columna de
+440; §1.12 lo admite, "si hay lugar"). **Se acepta** también que desde
+la tuerca del inicio, a 1366×768, la versión y el crédito queden 40 px
+abajo del scroll del menú: el menú arranca más abajo que en la Partida y a
+657 de alto (la notebook real) el scroll está en todas partes igual.
+`mirar` suma tres medidas para toda pantalla de monitor: cuánto hay que
+bajar a 1366×657 (`sobra657`; la Partida da 103 y Armar 38, a Relleno),
+lo que cuelga que pisa o pega a un vecino (`pisa`, también desde la tuerca
+del inicio) y los fondos de lo elegido (más de dos es OJO).
 
 **v1.8.3, dos pruebas rojas y dos prevenciones del arnés** (28-nov,
 noche; nada que se vea). `npm test` estaba rojo desde la v1.8.1 por dos

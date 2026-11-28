@@ -311,13 +311,107 @@ if (!window.DEV) {
 /* Dos tuercas, la del inicio y la de la Partida (v0.120), y una sola hoja: el
    foco vuelve a la que la abrió. */
 let TUERCA = "btnAjustes";
+/* [PC] EN LA COMPU, UN MENÚ COLGADO DE LA TUERCA CON LAS OPCIONES A LA VISTA
+   (v1.9, la B del revisor de UX entre tres): la hoja que sube desde abajo
+   con tirador es de dedo y tapaba el tablero, y un select adentro de un
+   menú colgado es un menú dentro de otro (dos clics por cambio). Cada
+   select se dibuja como una fila de pastillas; el select sigue siendo la
+   única verdad —la pastilla le pone el valor y dispara `change`—, así los
+   que escuchan no se enteran y el celu queda igual, con sus selects. Sin
+   "Listo" (se cierra con Esc, clic afuera o la tuerca) y elegir no cierra:
+   son ocho ajustes, no un menú de una elección. */
+const AJ_COMPU = () => window.matchMedia("(min-width: 1000px)").matches;
+function pastillasAjustes() {
+  for (const s of $("hojaAjustes").querySelectorAll(".ajFila select")) {
+    let g = s.nextElementSibling;
+    if (!g || !g.classList.contains("ajSeg")) {
+      g = document.createElement("div");
+      g.className = "ajSeg"; g.setAttribute("role", "radiogroup");
+      g.setAttribute("aria-label", s.previousElementSibling ? s.previousElementSibling.textContent : s.id);
+      s.after(g);
+      g.addEventListener("click", seguro("ajuste con pastilla", ev => {
+        const b = ev.target.closest("button");
+        if (!b || s.value === b.dataset.v) return;
+        s.value = b.dataset.v;
+        s.dispatchEvent(new Event("change"));
+        pastillasAjustes(); colgarAjustes();
+        if (document.activeElement !== b) b.focus();
+      }));
+      /* las flechas eligen adentro de la fila; Tab salta de fila en fila */
+      g.addEventListener("keydown", seguro("ajuste con flechas", ev => {
+        const paso = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+        if (!paso) return;
+        ev.preventDefault(); ev.stopPropagation();
+        const bs = [...g.children], i = bs.indexOf(document.activeElement);
+        bs[(i + paso + bs.length) % bs.length].click();
+      }));
+    }
+    /* si las opciones son las mismas se marcan en el lugar, sin rearmar:
+       el botón que se tocó no se reemplaza y se queda con el foco (rearmado,
+       Chrome dibujaba el anillo de teclado en el nuevo tras un clic) */
+    const ops = [...s.options];
+    if (g.children.length === ops.length && ops.every((o, i) => g.children[i].dataset.v === o.value)) {
+      for (const b of g.children) {
+        const si = b.dataset.v === s.value;
+        b.setAttribute("aria-checked", si); b.tabIndex = si ? 0 : -1;
+      }
+      continue;
+    }
+    g.innerHTML = ops.map(o => {
+      const si = o.value === s.value;
+      return `<button type="button" role="radio" data-v="${sinHtml(o.value)}" aria-checked="${si}" tabindex="${si ? 0 : -1}">${sinHtml(o.textContent)}</button>`;
+    }).join("");
+  }
+}
+/* colgado de la tuerca que lo abrió, alineado a su borde derecho, del ancho
+   de la columna del costado (de 440 a 480) y sin pasar a la izquierda del
+   riel. Se vuelve a colgar al elegir: la Evaluación rearma la pantalla. */
+function colgarAjustes() {
+  const h = $("hojaAjustes");
+  if (!h.classList.contains("colgado")) return;
+  const g = $(TUERCA).getBoundingClientRect();
+  const lat = $("lateral").getBoundingClientRect();
+  const nav = $("navMod").getBoundingClientRect();
+  const piso = (nav.width && nav.width < innerWidth / 2 ? nav.right : 0) + 16;
+  /* si colgado de la tuerca no entra antes del riel, se achica hasta 440
+     antes de correrse: corrido, pisaba la lista del inicio (revisor, v1.9) */
+  let ancho = Math.round(Math.min(480, Math.max(440, TUERCA === "btnAjustes" && lat.width ? lat.width : 480)));
+  if (g.right - ancho < piso) ancho = Math.max(440, Math.round(g.right - piso));
+  const der = Math.max(piso + ancho, Math.round(g.right));
+  h.style.width = ancho + "px";
+  h.style.left = (der - ancho) + "px";
+  h.style.top = Math.round(g.bottom + 8) + "px";
+  h.style.setProperty("--topAj", Math.round(g.bottom + 8) + "px");
+}
 const verAjustes = (abrir, desde) => {
   if (abrir && desde) TUERCA = desde;
+  const h = $("hojaAjustes"), colgado = abrir && AJ_COMPU();
+  h.classList.toggle("colgado", colgado);
+  if (!colgado) { h.style.width = h.style.left = h.style.top = ""; h.style.removeProperty("--topAj"); }
+  if (colgado) pastillasAjustes();
   $("fondoAjustes").classList.toggle("oculto", !abrir);
-  $("hojaAjustes").classList.toggle("oculto", !abrir);
+  h.classList.toggle("oculto", !abrir);
+  colgarAjustes();
   $(TUERCA).setAttribute("aria-expanded", abrir ? "true" : "false");
-  (abrir ? $("cerrarAjustes") : $(TUERCA)).focus();
+  /* con el menú, el foco a la opción elegida de la primera fila: el primer
+     Tab ya cae en algo útil, y puesto por código tras un clic Chrome no
+     dibuja anillo */
+  /* abierto con el mouse, el foco va al menú mismo y no a una pastilla:
+     después de un Esc la tuerca queda con el foco de teclado, y Chrome se
+     lo pasaba a la pastilla con anillo aunque el clic fuera de mouse (lo
+     midió `mirar`, 28-nov). Tab desde ahí cae en la primera fila. */
+  const conMouse = abrir && colgado && ENTRADA === "mouse";
+  (abrir ? (colgado ? (conMouse ? h : h.querySelector(".ajSeg [aria-checked=true]")) : $("cerrarAjustes")) : $(TUERCA)).focus();
 };
+/* con qué se tocó lo último: el mouse o el teclado */
+let ENTRADA = "";
+document.addEventListener("pointerdown", () => { ENTRADA = "mouse"; }, true);
+document.addEventListener("keydown", () => { ENTRADA = "tecla"; }, true);
+/* [PC] el menú no sigue a la tuerca si cambia la ventana: se cierra, como
+   el de Posiciones (v1.6.1) */
+window.addEventListener("resize", () => {
+  if ($("hojaAjustes").classList.contains("colgado") && !$("hojaAjustes").classList.contains("oculto")) verAjustes(false);
+});
 $("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustes"));
 $("btnAjustesInicio").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustesInicio"));
 $("cerrarAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));

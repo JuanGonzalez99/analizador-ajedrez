@@ -136,8 +136,16 @@ const elegir = async (sel, valor) => {
   const y = await pg.evaluate(() => window.scrollY);
   await pg.click("#btnAjustes");
   await pg.waitForSelector("#hojaAjustes:not(.oculto)");
-  await pg.selectOption(sel, valor);
-  await pg.click("#cerrarAjustes");
+  /* [PC] desde la v1.9 en la compu es un menú con pastillas y sin "Listo":
+     se toca la pastilla y se cierra con Esc, que es lo que hace el usuario */
+  const pastilla = `${sel} + .ajSeg [data-v="${valor}"]`;
+  if (await pg.locator(pastilla).isVisible()) {
+    await pg.click(pastilla);
+    await pg.keyboard.press("Escape");
+  } else {
+    await pg.selectOption(sel, valor);
+    await pg.click("#cerrarAjustes");
+  }
   await pg.evaluate(y => window.scrollTo(0, y), y);
   await pg.waitForTimeout(120);
 };
@@ -1937,6 +1945,48 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
      tanda 3, 28-nov): hasta acá se medía solo Ajustes, con su id, y las
      hojas de Posiciones o cualquier diálogo nuevo pasaban sin medir. Todo
      `[role=dialog]` a la vista, pegado al fondo y más ancho que un tercio */
+  /* LA MARCA DE LO ELEGIDO, UNA SOLA (revisor de UX, v1.9: la maqueta de
+     Ajustes inventó un 18 % sin peso cuando la app ya tenía el 14 % y 600;
+     causa D, "una marca, un significado" estaba escrita y nadie la medía).
+     Se junta el fondo de todo lo que dice "elegido" (aria-pressed,
+     aria-checked, aria-current, aria-selected) en cada pantalla de monitor
+     y con Ajustes abierto; más de dos fondos distintos es OJO al final. */
+  const ELEGIDOS = new Map();
+  const juntarElegidos = async donde => {
+    const l = await pg.evaluate(() => [...document.querySelectorAll(
+      "[aria-pressed=true], [aria-checked=true], [aria-current]:not([aria-current=false]), [aria-selected=true]")]
+      .filter(e => e.getClientRects().length && e.closest("[role=dialog]:not(.oculto), main, body"))
+      .map(e => [getComputedStyle(e).backgroundColor, e.id || e.getAttribute("role") || e.tagName.toLowerCase()])
+      .filter(([bg]) => !/rgba\(0, 0, 0, 0\)|transparent/.test(bg)));
+    for (const [bg, quien] of l) if (!ELEGIDOS.has(bg)) ELEGIDOS.set(bg, `${quien} (${donde})`);
+  };
+  /* LO QUE CUELGA NO CAE SOBRE EL BORDE DE UN VECINO (revisor de UX, v1.9:
+     el menú de Ajustes, abierto desde la tuerca del inicio, pisaba 1 px la
+     tarjeta de la lista; se había medido contra el tablero y no contra los
+     vecinos de la otra tuerca; causa F). Todo `[role=dialog]` abierto que no
+     sea una hoja de abajo, contra todo lo visible con borde o fondo que no
+     tapa entero: si lo pisa o queda a menos de 8 de costado, OJO. El
+     tablero tiene su medida propia y no cuenta. */
+  const colgadoPisa = () => pg.evaluate(() => {
+    const out = [];
+    for (const d of document.querySelectorAll("[role=dialog]")) {
+      if (d.classList.contains("oculto") || !d.getClientRects().length) continue;
+      const m = d.getBoundingClientRect();
+      if (Math.abs(m.bottom - innerHeight) < 2) continue;
+      for (const e of document.querySelectorAll("body *")) {
+        if (d.contains(e) || e.contains(d) || e.closest("svg, #tablero, [id^=fondo], #navMod")) continue;
+        const cs = getComputedStyle(e);
+        if (cs.borderLeftStyle === "none" && /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor)) continue;
+        const r = e.getBoundingClientRect();
+        if (!r.width || !r.height || r.bottom <= m.top || r.top >= m.bottom) continue;
+        if (r.left >= m.left - 1.5 && r.right <= m.right + 1.5) continue;   // tapado entero
+        const sep = Math.max(r.left - m.right, m.left - r.right);           // > 0 aire, < 0 pisa
+        if (sep < 8 && (sep > -8 || r.left > m.left && r.left < m.right || r.right > m.left && r.right < m.right))
+          out.push(`#${d.id} y ${e.id ? "#" + e.id : "." + (e.classList[0] || e.tagName.toLowerCase())} (${Math.round(sep)})`);
+      }
+    }
+    return [...new Set(out)];
+  });
   const hojasAbajo = () => pg.evaluate(() => [...document.querySelectorAll("[role=dialog]")]
     .filter(d => d.getClientRects().length && !d.classList.contains("oculto")).filter(d => {
       const r = d.getBoundingClientRect();
@@ -1963,6 +2013,8 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
       MON[`${nombre} ${w}`].cortado = await cortados(zona);
       MON[`${nombre} ${w}`].fuera = await fueraDeVista(zona);
       MON[`${nombre} ${w}`].hojas = await hojasAbajo();
+      MON[`${nombre} ${w}`].pisa = await colgadoPisa();
+      await juntarElegidos(`${nombre} ${w}`);
       const tabs = await pg.evaluate(z => [...document.querySelectorAll(z)]
         .flatMap(e => [...e.querySelectorAll("[role=tab]")])
         .filter(t => t.offsetParent !== null).map(t => [t.id, t.getAttribute("aria-selected") === "true"]), zona);
@@ -2002,6 +2054,18 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
         await pg.click("#" + id); await pg.waitForTimeout(300);
       }
       if (extra) await extra(w);
+      /* LA NOTEBOOK DE VERDAD (revisor de UX, v1.9; causa C): 1366×768 es la
+         pantalla, pero con la barra del navegador quedan ~657 de alto. Lo que
+         entra a 768 y no a 657 se corta en la notebook común. Toda pantalla
+         de monitor, no una: cuánto hay que bajar a ese alto. Al final de cada
+         tamaño, después de todas sus capturas, para no cambiarlas. */
+      if (w === 1366) {
+        await pg.setViewportSize({ width: w, height: 657 }); await pg.waitForTimeout(300);
+        MON[`${nombre} ${w}`].sobra657 = await pg.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+        await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(300);
+        await pg.evaluate(() => scrollTo(0, 0));
+      }
+
     }
   };
   /* a la Partida de la partida de prueba, que es la que tiene de todo */
@@ -2022,7 +2086,19 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
     MON[`partida ${w}`].ant = await pg.evaluate(() => Math.round(document.getElementById("ant").getBoundingClientRect().height));
     await pg.click("#btnAjustes"); await pg.waitForTimeout(400);
     MON[`partida ${w}`].hojas.push(...await hojasAbajo());
+    MON[`partida ${w}`].pisa.push(...await colgadoPisa());
     await fotoM(`ancho-${w}-ajustes`);
+    /* y desde la otra tuerca, la del inicio (el caso que se escapó) */
+    await pg.keyboard.press("Escape"); await pg.waitForTimeout(200);
+    await pg.click("#volverDeLaPartida"); await pg.waitForTimeout(400);
+    await pg.click("#btnAjustesInicio"); await pg.waitForTimeout(300);
+    MON[`partida ${w}`].pisa.push(...await colgadoPisa());
+    await pg.keyboard.press("Escape"); await pg.waitForTimeout(200);
+    await pg.click("#partidas div[data-i]");
+    await pg.waitForSelector("#zonaRevision:not(.oculto)", { timeout: 45000 });
+    await pg.waitForTimeout(400);
+    await pg.click("#btnAjustes"); await pg.waitForTimeout(400);
+    await juntarElegidos(`ajustes ${w}`);
     await pg.keyboard.press("Escape"); await pg.waitForTimeout(300);
   });
   await pg.click("#volverDeLaPartida");
@@ -2048,17 +2124,21 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await cadaMonitor("armar", "#armTablero svg", "#zonaArmar");
   await pg.click("#volverDeArmar"); await pg.waitForTimeout(300);
   await pg.setViewportSize({ width: 412, height: 760 }); await pg.waitForTimeout(150);
+  console.log("marcas de lo elegido:", JSON.stringify([...ELEGIDOS]), "(dos fondos como mucho)");
+  if (ELEGIDOS.size > 2) console.log(`OJO: lo elegido se marca con ${ELEGIDOS.size} fondos distintos: ${[...ELEGIDOS.values()].join(", ")}`);
   console.log("monitores:", JSON.stringify(MON),
     "(sobra: px que hay que bajar, 0 = entra; tablero: lado; usa: ancho dibujado; hoja, ant, dedo, icono y columna, §1.12; capturas ancho-1366-* y ancho-1920-*)");
   for (const [k, v] of Object.entries(MON)) {
     const [w, h] = MONITORES.find(m => k.endsWith(" " + m[0]));
     if (/partida|posicion/.test(k) && v.sobra > 0) console.log(`OJO: a ${k} hay que bajar ${v.sobra} px para ver la pantalla entera`);
+    if (/partida|posicion|armar/.test(k) && v.sobra657 > 0) console.log(`OJO: a ${k}×657 (la notebook con el navegador) hay que bajar ${v.sobra657} px`);
     if (v.tablero && v.tablero < h - 130) console.log(`OJO: a ${k} el tablero mide ${v.tablero} con ${h} de alto (tablero chico, §1.12)`);
     /* el Mes no: es texto y tablas, y eso tiene un ancho de lectura (se
        juzga a ojo). Ni donde el tablero ya toma el alto: ahí el ancho lo
        pone el alto de la ventana, no una columna (Posiciones, v1.6.1) */
     const llena = v.tablero && v.tablero >= h - 130;
     if (w === 1920 && !/^mes/.test(k) && !llena && v.usa < w * .75) console.log(`OJO: a ${k} lo dibujado ocupa ${v.usa} de ${w} (columna centrada, §1.12)`);
+    if (v.pisa && v.pisa.length) console.log(`OJO: a ${k} lo que cuelga pisa o pega a un vecino (menos de 8): ${v.pisa.join(", ")}`);
     if (v.hojas && v.hojas.length) console.log(`OJO: a ${k} ${v.hojas.join(", ")} sube desde abajo como hoja de celu (§1.12)`);
     if (v.ant >= 44) console.log(`OJO: a ${k} los botones de pasar jugadas miden ${v.ant} de alto: son de dedo (§1.12)`);
     if (v.dedo.length) console.log(`OJO: a ${k}, botones de dedo (44 o más de alto, §1.12): ${v.dedo.join(", ")}`);

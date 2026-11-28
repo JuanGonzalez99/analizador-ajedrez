@@ -1674,6 +1674,50 @@
     #hojaPos .ajTirador, #hojaNueva .ajTirador { display: none; }
     body.enPosicion #fondoAjustes { background: transparent; }
   }
+  /* [PC] AJUSTES COMO MENÚ COLGADO DE LA TUERCA (v1.9; `colgarAjustes`, en
+     tablero.js, pone el ancho, el left y el top). Sin velo (el fondo sigue
+     tomando el clic que lo cierra), sin tirador ni "Listo", seco: aparece y
+     se va sin la subida de la hoja. El alto, el de la ventana menos 16, con
+     scroll adentro: a 1366 con el navegador quedan ~657. */
+  .ajSeg { display: none; }
+  @media (min-width: 1000px) {
+    #hojaAjustes.colgado { right: auto; bottom: auto; max-width: none; margin: 0;
+                           border: 1px solid var(--linea); border-radius: var(--r-tarjeta);
+                           padding: var(--e-3) var(--e-4) 10px;
+                           max-height: calc(100vh - var(--topAj, 64px) - 16px); transition: none; animation: none; }
+    #hojaAjustes.colgado .ajTirador, #hojaAjustes.colgado #cerrarAjustes { display: none; }
+    #hojaAjustes.colgado:focus { outline: none; }
+    #hojaAjustes.colgado .ajCab h2 { font-size: var(--t-secundario); }
+    /* el área grande de los enlaces del crédito es de dedo, y en el menú se
+       salía del borde: 1 px de scroll y una barra en todos los tamaños */
+    #hojaAjustes.colgado .ajCredito a::before { inset: -4px -2px; }
+    body:has(#hojaAjustes.colgado:not(.oculto)) #fondoAjustes { background: transparent; }
+    /* UNA SOLA COLUMNA DE ETIQUETAS para todo el menú, del ancho de la más
+       larga y en un renglón: con una grilla por fila cada una arrancaba sus
+       pastillas en otro x. Las filas se disuelven en la grilla del menú
+       (`display: contents`) y lo demás va de punta a punta. La etiqueta,
+       alineada al primer renglón de pastillas */
+    #hojaAjustes.colgado { display: grid; grid-template-columns: max-content 1fr; column-gap: var(--e-3);
+                           align-items: start; }
+    #hojaAjustes.colgado > :not(.ajFila) { grid-column: 1 / -1; }
+    #hojaAjustes.colgado .ajFila { display: contents; }
+    /* más aire entre filas (8) que entre los renglones de una misma fila
+       (4): con el mismo paso, a la derecha se leía una sola columna de
+       pastillas (revisor, v1.9) */
+    #hojaAjustes.colgado .ajFila > span { white-space: nowrap; padding-top: 10px; line-height: 20px;
+                                          font-size: var(--t-secundario); }
+    #hojaAjustes.colgado .ajSeg { padding: 4px 0; }
+    #hojaAjustes.colgado .ajFila select { display: none; }
+    #hojaAjustes.colgado .ajSeg { display: flex; flex-wrap: wrap; gap: 4px; }
+    /* la marca de lo elegido es la de la app (la de Armar y la barra de
+       módulos): acento al 14 %, texto y 600. Las otras, borde y tenue */
+    .ajSeg button { min-height: 32px; padding: 0 8px; border-radius: 16px;
+                    border: 1px solid var(--linea); background: transparent;
+                    color: var(--tenue); font-size: var(--t-secundario); font-weight: 400; }
+    .ajSeg button:hover { background: var(--elevada); color: var(--texto); }
+    .ajSeg button[aria-checked="true"] { border-color: transparent; color: var(--texto); font-weight: 600;
+                                         background: color-mix(in srgb, var(--acento) 14%, var(--superficie)); }
+  }
   @media (pointer: fine) and (min-width: 1000px) {
     body.enPosicion.conBarra { padding-left: 104px; padding-bottom: 8px; }
     #zonaPosicion { --ladoTab: clamp(360px, min(100vh - 64px, 100vw - 104px - 24px - 368px), 1200px); }
@@ -1806,7 +1850,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.8.3 · 28-11";
+  window.VERSION = "v1.9 · 28-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2459,7 +2503,7 @@
   <button id="posArmar" class="posHojaBtn">Armar una posición</button>
   <button id="posInicial" class="posHojaBtn">Desde la inicial</button>
 </div>
-<div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true"
+<div id="hojaAjustes" class="oculto" role="dialog" aria-modal="true" tabindex="-1"
      aria-labelledby="tituloAjustes">
   <div class="ajTirador"></div>
   <div class="ajCab"><h2 id="tituloAjustes">Ajustes</h2>
@@ -6209,13 +6253,107 @@ if (!window.DEV) {
 /* Dos tuercas, la del inicio y la de la Partida (v0.120), y una sola hoja: el
    foco vuelve a la que la abrió. */
 let TUERCA = "btnAjustes";
+/* [PC] EN LA COMPU, UN MENÚ COLGADO DE LA TUERCA CON LAS OPCIONES A LA VISTA
+   (v1.9, la B del revisor de UX entre tres): la hoja que sube desde abajo
+   con tirador es de dedo y tapaba el tablero, y un select adentro de un
+   menú colgado es un menú dentro de otro (dos clics por cambio). Cada
+   select se dibuja como una fila de pastillas; el select sigue siendo la
+   única verdad —la pastilla le pone el valor y dispara `change`—, así los
+   que escuchan no se enteran y el celu queda igual, con sus selects. Sin
+   "Listo" (se cierra con Esc, clic afuera o la tuerca) y elegir no cierra:
+   son ocho ajustes, no un menú de una elección. */
+const AJ_COMPU = () => window.matchMedia("(min-width: 1000px)").matches;
+function pastillasAjustes() {
+  for (const s of $("hojaAjustes").querySelectorAll(".ajFila select")) {
+    let g = s.nextElementSibling;
+    if (!g || !g.classList.contains("ajSeg")) {
+      g = document.createElement("div");
+      g.className = "ajSeg"; g.setAttribute("role", "radiogroup");
+      g.setAttribute("aria-label", s.previousElementSibling ? s.previousElementSibling.textContent : s.id);
+      s.after(g);
+      g.addEventListener("click", seguro("ajuste con pastilla", ev => {
+        const b = ev.target.closest("button");
+        if (!b || s.value === b.dataset.v) return;
+        s.value = b.dataset.v;
+        s.dispatchEvent(new Event("change"));
+        pastillasAjustes(); colgarAjustes();
+        if (document.activeElement !== b) b.focus();
+      }));
+      /* las flechas eligen adentro de la fila; Tab salta de fila en fila */
+      g.addEventListener("keydown", seguro("ajuste con flechas", ev => {
+        const paso = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[ev.key];
+        if (!paso) return;
+        ev.preventDefault(); ev.stopPropagation();
+        const bs = [...g.children], i = bs.indexOf(document.activeElement);
+        bs[(i + paso + bs.length) % bs.length].click();
+      }));
+    }
+    /* si las opciones son las mismas se marcan en el lugar, sin rearmar:
+       el botón que se tocó no se reemplaza y se queda con el foco (rearmado,
+       Chrome dibujaba el anillo de teclado en el nuevo tras un clic) */
+    const ops = [...s.options];
+    if (g.children.length === ops.length && ops.every((o, i) => g.children[i].dataset.v === o.value)) {
+      for (const b of g.children) {
+        const si = b.dataset.v === s.value;
+        b.setAttribute("aria-checked", si); b.tabIndex = si ? 0 : -1;
+      }
+      continue;
+    }
+    g.innerHTML = ops.map(o => {
+      const si = o.value === s.value;
+      return `<button type="button" role="radio" data-v="${sinHtml(o.value)}" aria-checked="${si}" tabindex="${si ? 0 : -1}">${sinHtml(o.textContent)}</button>`;
+    }).join("");
+  }
+}
+/* colgado de la tuerca que lo abrió, alineado a su borde derecho, del ancho
+   de la columna del costado (de 440 a 480) y sin pasar a la izquierda del
+   riel. Se vuelve a colgar al elegir: la Evaluación rearma la pantalla. */
+function colgarAjustes() {
+  const h = $("hojaAjustes");
+  if (!h.classList.contains("colgado")) return;
+  const g = $(TUERCA).getBoundingClientRect();
+  const lat = $("lateral").getBoundingClientRect();
+  const nav = $("navMod").getBoundingClientRect();
+  const piso = (nav.width && nav.width < innerWidth / 2 ? nav.right : 0) + 16;
+  /* si colgado de la tuerca no entra antes del riel, se achica hasta 440
+     antes de correrse: corrido, pisaba la lista del inicio (revisor, v1.9) */
+  let ancho = Math.round(Math.min(480, Math.max(440, TUERCA === "btnAjustes" && lat.width ? lat.width : 480)));
+  if (g.right - ancho < piso) ancho = Math.max(440, Math.round(g.right - piso));
+  const der = Math.max(piso + ancho, Math.round(g.right));
+  h.style.width = ancho + "px";
+  h.style.left = (der - ancho) + "px";
+  h.style.top = Math.round(g.bottom + 8) + "px";
+  h.style.setProperty("--topAj", Math.round(g.bottom + 8) + "px");
+}
 const verAjustes = (abrir, desde) => {
   if (abrir && desde) TUERCA = desde;
+  const h = $("hojaAjustes"), colgado = abrir && AJ_COMPU();
+  h.classList.toggle("colgado", colgado);
+  if (!colgado) { h.style.width = h.style.left = h.style.top = ""; h.style.removeProperty("--topAj"); }
+  if (colgado) pastillasAjustes();
   $("fondoAjustes").classList.toggle("oculto", !abrir);
-  $("hojaAjustes").classList.toggle("oculto", !abrir);
+  h.classList.toggle("oculto", !abrir);
+  colgarAjustes();
   $(TUERCA).setAttribute("aria-expanded", abrir ? "true" : "false");
-  (abrir ? $("cerrarAjustes") : $(TUERCA)).focus();
+  /* con el menú, el foco a la opción elegida de la primera fila: el primer
+     Tab ya cae en algo útil, y puesto por código tras un clic Chrome no
+     dibuja anillo */
+  /* abierto con el mouse, el foco va al menú mismo y no a una pastilla:
+     después de un Esc la tuerca queda con el foco de teclado, y Chrome se
+     lo pasaba a la pastilla con anillo aunque el clic fuera de mouse (lo
+     midió `mirar`, 28-nov). Tab desde ahí cae en la primera fila. */
+  const conMouse = abrir && colgado && ENTRADA === "mouse";
+  (abrir ? (colgado ? (conMouse ? h : h.querySelector(".ajSeg [aria-checked=true]")) : $("cerrarAjustes")) : $(TUERCA)).focus();
 };
+/* con qué se tocó lo último: el mouse o el teclado */
+let ENTRADA = "";
+document.addEventListener("pointerdown", () => { ENTRADA = "mouse"; }, true);
+document.addEventListener("keydown", () => { ENTRADA = "tecla"; }, true);
+/* [PC] el menú no sigue a la tuerca si cambia la ventana: se cierra, como
+   el de Posiciones (v1.6.1) */
+window.addEventListener("resize", () => {
+  if ($("hojaAjustes").classList.contains("colgado") && !$("hojaAjustes").classList.contains("oculto")) verAjustes(false);
+});
 $("btnAjustes").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustes"));
 $("btnAjustesInicio").onclick = seguro("abrir los ajustes", () => verAjustes(true, "btnAjustesInicio"));
 $("cerrarAjustes").onclick = seguro("cerrar los ajustes", () => verAjustes(false));
