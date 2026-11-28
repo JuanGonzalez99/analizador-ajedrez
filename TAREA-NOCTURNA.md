@@ -100,7 +100,13 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    `tira.mjs`: los cortes de 1000 y 1280 y los monitores de 1366×768 y
    1920×1080); una lista se dibuja larga, con scroll (26-nov, la barra de
    módulos). Todo tamaño o estado que se sume a lo que mira la app se suma
-   ahí, en un solo lugar, no en la maqueta de la noche. El revisor elige una, la elige con un
+   ahí, en un solo lugar, no en la maqueta de la noche.
+   **En un ítem de compu, antes de dibujar**, escribí en una línea cómo
+   resuelve esa pantalla una referencia de escritorio (el análisis de
+   lichess o de chess.com en la PC), y una de las variantes sale de ahí:
+   componentes nuevos, no los del celu en otro lugar. Sin esa variante no
+   se pasa al revisor (28-nov: la causa D se repitió tres veces en dos días
+   en la compu porque la regla la veía solo quien juzga). El revisor elige una, la elige con un
    ajuste, o dice **ninguna** y qué probar: en ese caso, otra tanda con esa
    dirección. Como mucho dos tandas; si sigue en "ninguna", no se aplica nada
    y se cuenta en el resumen, con las tiras. Lo que se aplica va igual al
@@ -136,6 +142,11 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    no, y cada una se mira contra todas las piezas que la sostienen (v1.0.6:
    la pareja de alfiles con el otro alfil colgado decía lo mismo antes y
    después, y la lista de diferencias no podía mostrarla).
+   **Un arreglo de lo que dice la tarjeta se prueba también en una posición
+   que no sea la del ítem y con otro mecanismo** (recaptura, pieza
+   defendida, coronación, clavada), con su prueba de unidad, antes de
+   pasarlo al revisor de ajedrez (v1.2.2 y v1.7.1: las dos veces el arreglo
+   calzó con la posición del ítem y falló en otra).
    **Si el cambio agrega una regla a `DISENO.md`**, en la misma versión se
    busca en toda la app dónde más vale; lo que aparezca va a Relleno (causa
    B de `APRENDIZAJES.md`: las reglas se aplicaban solo donde nacían).

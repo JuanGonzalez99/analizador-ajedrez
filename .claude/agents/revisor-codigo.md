@@ -99,7 +99,7 @@ Corto y en este formato:
 ZONA REVISADA: cuál · SIGUE: cuál
 
 PARA LA HOJA DE RUTA, de lo que más rinde a lo que menos (cinco como mucho):
-- qué · dónde (función o zona) · por qué (cuánto ahorra, qué riesgo saca) ·
+- qué · dónde (pedazo y función, nunca un número de renglón: se corre) · por qué (cuánto ahorra, qué riesgo saca) ·
   cómo se verifica que no rompe nada · [toca lo que se ve | toca lo que dice | interno]
 
 ERRORES (si hay), aparte, con su prueba:

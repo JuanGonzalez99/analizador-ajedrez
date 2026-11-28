@@ -312,6 +312,19 @@ chequear("los cuadritos y la explicación siguen a la variante", [
       decir lo mismo. Se compara contra HEAD y no contra una lista, para que no
       haya nada que mantener a mano. Si index.html no cambió no se pide nada:
       el archivo servido es idéntico y no hay reporte que ubicar. */
+/* LA HOJA DE RUTA NO CITA RENGLONES (revisor de rumbo, 28-nov, causa G): la
+   partición del 25-nov corrió toda la numeración y varios ítems quedaron
+   apuntando a nada ("index.html ~8470"). Cualquier cambio corre renglones,
+   así que un ítem cita pedazo y función. Solo los ítems abiertos: lo tachado
+   es historia. */
+{
+  const hoja = fs.readFileSync(new URL("../HOJA-DE-RUTA.md", import.meta.url), "utf8");
+  const abiertos = hoja.split(/\n(?=- \[)/).filter(b => b.startsWith("- [ ]"));
+  const malos = abiertos.filter(b => /index\.html ~\d|~\d{3,}(?![\d.,]*\s*(tokens|KB|px|ms|s\b))|\(~?\d{3,}[–-]~?\d{3,}\)/.test(b))
+    .map(b => b.slice(0, 70).replace(/\s+/g, " ") + "…");
+  chequear("la hoja de ruta cita pedazo y función, no renglones", malos);
+}
+
 const previo = spawnSync("git", ["show", "HEAD:index.html"],
                          { encoding: "utf8", maxBuffer: 1 << 28 });
 if (previo.status !== 0) {

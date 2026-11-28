@@ -5082,9 +5082,8 @@ mismos nombres, en vez de las dos tarjetas del celu.
   salió a `acomodarLista(lista)`, que no toca una lista escondida y vuelve a
   correr cuando la caja cambia de alto (ResizeObserver). (2) A 1366 la tabla
   mostraba 4 de 10 categorías y se cortaban los errores: filas de 24 y **sin
-  las categorías que dan 0 para los dos** (se acepta, v1.7: el Resumen es de
-  la partida entera y no cambia al pasar jugadas; se pierde el "0 errores"
-  explícito, que Juan puede pedir de vuelta). Y la prevención: `mirar` mide
+  las categorías que dan 0 para los dos** (se aceptó en la v1.7; **revertido
+  en la v1.7.2**: Juan quiere los ceros a la vista, ver arriba). Y la prevención: `mirar` mide
   en cada captura de monitor que lo elegido (`.sel`, `aria-selected`,
   `aria-current`) adentro de algo con scroll propio quede a la vista, y pasa
   jugadas con la otra pestaña puesta antes de volver. Probada al revés: con

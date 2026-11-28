@@ -8,7 +8,8 @@ solos, sin que él tenga que pedirlo.
 ## El circuito
 
 1. **Todo hallazgo trae su porqué.** Cualquier revisor (UX, ajedrez, código,
-   rumbo) o el mono, cuando encuentra algo que **ya estaba** o que quien
+   rumbo), el mono **o Juan** (un "no me copa" sobre algo ya hecho también
+   es un hallazgo), cuando encuentra algo que **ya estaba** o que quien
    programó no vio antes de la revisión, dice además **por qué no se vio**:
    una causa de la lista de abajo y **qué cambiar para que no vuelva a
    pasar**, con el archivo y el texto exacto. Si se le escapó a un revisor en
@@ -118,6 +119,29 @@ la causa y qué se cambió. Los catorce primeros salieron del análisis del
 22-nov-2026 sobre los lavados de cara de la etapa 1 (9 de 14 son A, B o F: la
 zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
 
+- **Las citas de renglón de la hoja de ruta, apuntando a nada** · la
+  partición del 25-nov, lo vio el revisor de rumbo el 28-nov · G: la
+  partición corrió toda la numeración y nadie revisó las referencias ·
+  regla en "Cómo entra lo nuevo" (un ítem cita pedazo y función) y chequeo
+  en `npm test` sobre los ítems abiertos. Atrapa cualquier referencia que
+  corra un cambio futuro, no solo estas.
+- **La v1.7 amontonaba los componentes del celu, y escondía los ceros para
+  que entrara** · v1.7, lo vio Juan el 28-nov (*"no me gusta ninguna… se
+  trató de amontonar todo"*) · D por tercera vez en dos días sobre la
+  compu (la Partida y Posiciones el 27-nov) y B: las cuatro variantes
+  reubicaron piezas del celu sin que nadie preguntara cómo serían si
+  hubieran nacido en la compu; E: sacar los ceros se aceptó para que
+  entrara la tabla · la regla ya estaba en `revisor-ux.md` y `DISENO.md`
+  §3 (v1.7.2), pero la ve solo quien juzga; ahora también un paso en
+  `TAREA-NOCTURNA.md` (3) para quien dibuja: antes de dibujar, cómo lo
+  resuelve una referencia de escritorio, y una variante sale de ahí.
+  Atrapa Ajustes, el inicio, Posiciones y todo ítem de compu que venga.
+- **El arreglo de la tarjeta que calza con la posición del ítem y falla en
+  otra** · v1.2.2 (h4) y v1.7.1 (Bxa7), B repetida · la regla del revisor
+  de ajedrez nombraba el desempate; ahora un paso en `TAREA-NOCTURNA.md`
+  (4) para quien programa: todo arreglo de la tarjeta se prueba en otra
+  posición y con otro mecanismo antes del revisor. Atrapa toda frase que
+  se arregle, no solo los desempates.
 - **Empezar de nuevo y Armar adentro de las perillas de nivel y color** ·
   v1.2 y v1.4, lo vio Juan el 27-nov (la v1.6 lo arregló) · D: el criterio
   del revisor ubicaba los controles por frecuencia ("lo de una vez, a la

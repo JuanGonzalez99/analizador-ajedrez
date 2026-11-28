@@ -10,6 +10,282 @@ hace falta saber cómo se llegó a algo. Lo mudó acá el reordenamiento del
 
 Lo que el revisor de rumbo mudó los sábados, tal cual estaba en la hoja.
 
+### Mudado el 28-nov (revisor de rumbo)
+
+## Para cerrar la etapa 1 · v1.0
+
+La identidad visual está hecha y aplicada en toda la app (56 ítems, en
+`HOJA-DE-RUTA-HECHO.md`). Antes de cerrarla, Juan pidió terminar los errores
+de lo que dice la app y los retoques que quedaban (20-nov). Quedan tres ítems y el cierre (lo demás salió en la v0.177 y la v0.178);
+cuenta estimada: 2 o 3 noches. **Si un lavado de acá termina dos tandas con
+el revisor en "ninguna", se tacha "sin cambio, ver Relleno" y lo que se
+intentó va al final de Relleno: no frena la v1.0.** Lo que se levante mientras
+tanto va a Arreglos o a Relleno, **no acá**.
+
+- [x] ~~**[PC] Lavado de cara: cómo termina la lista de jugadas cuando no
+      entra entera**~~ (hecho en la v0.179: un fundido de 32 abajo) (revisor, v0.149; ya estaba). A 1600×900 la lista se
+      corta a mitad de una fila contra el borde de abajo (asoma la 14). Variantes:
+      cortar en una fila completa, un fundido, una sombra que diga "hay más".
+- [x] ~~**[PC] Lavado de cara: la caja vacía de las tres mejores debajo de la
+      curva**~~ (hecho en la v0.180: sin caja, el revisor eligió entre cuatro) (Juan, 17-nov, sobre la v0.150; revisor, v0.151). Sin pedirlas
+      son ~115 px de tarjeta con un rótulo y un botón suelto: se lee como un
+      hueco. **No se calculan solas** (Juan: *"dudo que uno quiera ver las 3
+      mejores de cada movimiento"*; lo tentaba solo el cuadro vacío).
+      Variantes: las tres filas en tenue en vez del botón suelto (la del
+      revisor), una caja que solo reserva el alto sin borde, y otra cosa de la
+      jugada mientras no se piden. Sin que la lista ni "‹ ›" salten. Con variantes.
+- [x] ~~**Tres retoques chicos, sin variantes**~~ (hechos en la v0.182, v0.182.1 y v0.182.2) (una versión para el celu y otra
+      para la compu, como siempre: PC en commits separados):
+  - [x] ~~**Retoque: cómo empieza y termina la tira de la variante en "la
+        lista abajo"**~~ (hecho en la v0.182) (revisor, v0.160; celu). Junto a "‹" asoma un pedazo
+        cortado de la jugada anterior y la elegida queda pegada a "›". Ya
+        estaba, pero ahora es la forma que Juan usa.
+  - [x] ~~**[PC] El orden de Tab en la Partida**~~ (hecho en la v0.182.1) (revisor, v0.153). Salta por
+        la pantalla: volver (arriba) → tuerca → Girar (abajo de todo) → "Ver
+        las tres mejores" → lista → "›" → cuadrito Mejor (arriba). Tendría que
+        seguir el de lectura: volver, tuerca, Mejor, las tres mejores, lista,
+        "‹ ›", Girar. Sin `tabindex` positivos; si hay que mover nodos que
+        comparte el celu, cuidar la comparación byte a byte.
+  - [x] ~~**[PC] El cuadrito "Mejor" corta "la juga…"**~~ (hecho en la v0.182.2) (revisor, v0.150; leve,
+        ya estaba). Cuando la jugada fue la mejor, a 1000 de ancho el valor del
+        cuadrito sale con puntos suspensivos. Una palabra cortada no se lee:
+        un texto más corto ("esta") o que entre entero. Arreglo chico, sin
+        variantes.
+- [x] ~~**Cierre: v1.0.**~~ (hecho el 22-nov: el revisor no marcó errores; cinco retoques a Relleno) Cuando lo de arriba esté tachado: una pasada del
+      revisor de UX sobre la app entera, celu y PC (como la de la v0.104),
+      y lo que marque va a Relleno salvo que sea un error. La versión que
+      sale esa noche es la **v1.0** (Juan lo decidió el 20-nov; es la única
+      vez que la tarea de la noche sube el número mayor). En el resumen, con
+      capturas de las cuatro pantallas.
+
+
+### Arreglos tachados
+- [x] ~~**La dama recién coronada que se pierde habla de un peón**~~ (hecho en
+      la v0.178.4, con la subcoronación y la defendida que igual se pierde) (Juan,
+      20-nov, sobre la v0.178). En `3r3k/2P5/8/8/8/8/8/6K1 w`, c8=Q (Rxc8 y
+      no hay recaptura) dice "Tu peón queda comible en c8. Coronás: el peón
+      vuelve como dama.": nombra un peón que ya no está y festeja una
+      coronación que se pierde. Juan propuso "tu peón coronado": **"Tu peón
+      coronado queda comible en c8."**, y sin la frase de "Coronás" cuando la
+      pieza coronada cuelga o se pierde en el cambio. Revisor de ajedrez sí.
+- [x] ~~**El cambio no ve las clavadas contra la dama**~~ (hecho en la v0.180.1) (revisor de ajedrez,
+      v0.178; Juan lo pasó a Arreglos el 20-nov). `cambioEn` (y `quedaComible`,
+      de antes) cuenta como buena una recaptura con una pieza clavada contra
+      su propia dama: un peón de e6 que recaptura y deja la dama de e8 a tiro
+      de la torre de e1. Hoy lo frena el corte de pérdida ≥ 0,5 del motor;
+      primero buscar con chess.js un caso que llegue a la tarjeta, y que la
+      recaptura que entrega la dama no cuente como recaptura. Si no aparece
+      un caso que llegue a la tarjeta, se anota en §8 del traspaso y pasa a
+      Relleno. Si entran juntos, va en la misma versión que el de abajo (los
+      dos son `cambioEn`).
+- [x] ~~**La cuenta del cambio no ve lo que deja la pieza que recaptura**~~ (hecho en la v1.0.2)
+      (Juan, 20-nov, sobre la v0.178.1). `cambioEn` solo mira la casilla: en
+      `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`, Bh6 Nxh6 da "pierdo
+      el alfil", pero el caballo cuidaba la torre de h8 y sigue Qxh8+ (igual
+      Bxf7+ Qxf7 Qxh8+). Mirar, después de cada recaptura, si quedó colgado lo
+      que esa pieza defendía. Con esto hecho: volver a decir el caso sin nada
+      del rival ("queda comible", que la v0.178.1 calló) y bajar el corte de
+      dos peones a uno (medido en §6, v0.178.1: el corte casi no cambia nada).
+      Revisor de ajedrez sí.
+- [x] ~~**"Salva" exagera cuando la jugada solo defiende**~~ (hecho en la v1.0.4) (Juan, 20-nov,
+      sobre la v0.178.1). Hoy toda pieza que deja de estar en peligro sin
+      moverse sale "Salva tu X de Y, que estaba sin defender", aunque siga
+      atacada y el rival pueda cambiarla (Bh6 en
+      `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w`: el alfil cuida la
+      dama de g7, pero Qxg7 Bxg7 cambia damas). Distinguir por cómo se salva:
+      si la pieza movida ahora cuida esa casilla, **"Defiende tu dama de g7,
+      que estaba sola."**; si se interpuso, **"Tapa el ataque a tu dama de
+      g7."**; si la pieza se fue, "Saca…" como hoy. Con "a tiro de" (atacada
+      por algo que vale menos) la cola sigue siendo esa. Revisor de ajedrez sí.
+- [x] ~~**"Se queda con la pareja de alfiles" a mitad de un cambio**~~ (hecho en la v1.0.6, también con el otro alfil colgado) (revisor
+      de ajedrez, pasada del 22-nov sobre las partidas del repo). En
+      `r1bqk2r/ppp1nppp/3p1b2/3P2B1/2B1R3/5N2/PP3PPP/R2Q2K1 b kq - 1 12`,
+      Bxg5 lo dice, pero sigue Nxg5 y quedan uno y uno. `hayPareja` mira solo
+      la posición de después: que no lo diga si el alfil que comió puede ser
+      recapturado (o que mire después de `mejorRival`). Revisor de ajedrez sí.
+- [x] ~~**"Queda sin defender" cuando nunca tuvo defensa**~~ (hecho en la v1.0.7, también con la clavada que se suelta) (revisor de
+      ajedrez, 22-nov). En `r1bqk1nr/pppp1ppp/8/4n3/2BQP3/8/PPP2PPP/RNB1K2R b KQkq - 0 6`,
+      Nc6 da "El peón de g7 queda sin defender": no tenía defensores antes
+      ni después; lo nuevo es que el caballo destapó la dama (Qxg7). Si antes
+      no tenía defensores: "Destapa el peón de g7: queda a tiro de la dama."
+- [x] ~~**La grave que no nombra la dama que se pierde**~~ (hecho en la v1.2.2, también cuando la jugada cuelga algo más chico) (revisor de ajedrez,
+      22-nov). En `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5`,
+      h4 (pérdida 10,4) dice "Había Qxb8, que se llevaba el caballo." y nada
+      de la dama de c7, que sigue colgada (Qxc7). Si una pieza ya colgada
+      sigue colgada y la pérdida es grande: "Tu dama sigue comible en c7."
+      primero. Misma familia que el de la pareja: la tarjeta mira una sola
+      posición y no lo que sigue.
+- [x] ~~**"Queda comible" en un cambio parejo**~~ (hecho en la v1.2.3, también con la coronación que come) (revisor de ajedrez, 22-nov,
+      ya estaba). En `r1b1k1nr/pppp1pQp/2n2q2/8/2B1P3/8/PPP2PPP/RNB1K2R w KQkq - 0 1`,
+      Qxf6 (pérdida 0,81) dice "Tu dama queda comible en f6.", y es Qxf6
+      Nxf6: un cambio de damas. `colgada` (`quedaComible`) no descuenta lo
+      que la jugada comió: que exija que el cambio menos lo comido sea ≥ 1,
+      con su prueba. Revisor de ajedrez sí.
+- [x] ~~**"Atrapa la dama" con la pieza que atrapa comible**~~ (hecho en la v1.4.1) (revisor de
+      ajedrez, 22-nov, ya estaba). En `r1bqk2r/pppp1ppp/2n5/8/2BPn3/2b2N2/PP3PPP/R1BQ1RK1 w kq - 0 9`,
+      Bg5 dice "Atrapa la dama de d8: no tiene salida.", y Nxg5 se come el
+      alfil. Que no se diga si se puede comer la pieza que atrapa (sin
+      perder en el cambio), con su prueba. **Segundo caso** (revisor, v1.2.3):
+      en `1nbqkbnr/1pQpppp1/7r/7p/8/4P3/PPPP1PPP/RNB1KBNR w KQk - 1 5`, Qxd8+
+      dice "Atrapa el alfil de c8: no tiene salida." y Kxd8 es forzada: la
+      dama que atrapa se la come el rey. Revisor de ajedrez sí.
+- [x] ~~**"Se planta" a mitad de un cambio**~~ (hecho en la v1.5.1) (revisor de ajedrez, v1.0.6; ya
+      estaba). En `r4rk1/pppbbppp/q4n2/4N3/8/3B4/PP3PPP/RNB1K2R w KQ - 0 1`,
+      Nxd7 dice "El caballo de d7 se planta" y sigue Nfxd7. El `cuelga` de la
+      tarjeta solo calla lo logrado si la pieza queda comible o pierde en el
+      cambio, no en un cambio parejo. Mismo arreglo que la pareja
+      (`seLaLlevan`), y mirar con `npm run frases -- --frase planta`.
+      Revisor de ajedrez sí.
+- [x] ~~**Con señal mala, Buscar no responde y no avisa**~~ (hecho en la v1.0.10) (revisor de UX,
+      v1.0.9; ya estaba). Mientras el módulo carga (con mala señal, ~10 s) el
+      campo y "Buscar" se ven listos, pero el manejador se engancha recién al
+      arrancar: el toque no hace nada. Que el toque se guarde y corra al
+      arrancar, o que el botón diga que carga; no volver a mostrar `#diag` en
+      modo simple. Pasa por el revisor de UX.
+- [x] ~~**La pieza chica que cuelga le gana a la dama que destapa**~~ (hecho en la v1.7.1, también con el cambio con recaptura) (revisor
+      de ajedrez, v1.2.3; ya estaba). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w - - 0 1`,
+      Bxa7 (pierde 7,9) dice "Tu alfil queda comible en a7." y el motor
+      juega Rxe2: la dama no tiene recaptura. Tendría que decir "Tu dama de
+      e2 queda a tiro de una torre." Extender a `nuevas` el desempate que la
+      v1.2.2 hizo para `siguen`: si `mejorRival` come una pieza que vale más
+      que la que nombra la frase, va esa. Revisor de ajedrez sí.
+- [x] ~~**Con señal mala, un cartel rojo de "el módulo no arrancó" falso que
+      no se va**~~ (hecho en la v1.0.9; adelantado a los otros arreglos
+      porque la prevención del mono pedía hacerlo junto con su regla) (revisor de código, 25-nov; ya estaba). Script clásico, el
+      temporizador de 6 s (~1674–1686) y `mostrarError` (~1650). Si el módulo
+      tarda más de 6 s (medido con Playwright: a 200 kbps arranca a los
+      10,7 s), pide los tres archivos y llama a `mostrarError` aunque
+      respondan 200: aparece la caja `#errores` (también en modo simple), y
+      cuando el módulo arranca no se borra. Además baja `aperturas.json`
+      entero (942 KB) compitiéndole al módulo. Arreglo: la línea dice "el
+      módulo tarda…", los archivos se piden con `{ method: "HEAD" }`, y
+      `mostrarError` solo si `!r.ok` o el tipo no es javascript/json (si no,
+      `LOG.add("!", …)`). Verificar a 200 kbps o con chess.js demorado 7 s
+      (caja oculta, sin `hubo-error`) y con chess.js en 404 (la caja sale y
+      nombra el archivo). Pasa por el revisor de UX.
+
+## Etapa 2 · Partir `index.html`
+
+El motivo es **tokens y orden**, no algo que Juan vaya a notar (lo aclaró él).
+Las dos formas ahorran lo mismo: en las dos las sesiones leen archivos chicos
+de `src/` y nunca el `index.html` armado. Lo que las separa es solo la caché del
+celu, y por eso la recomendación es juntarlos al pushear.
+
+Hoy cada sesión paga ~103.000 tokens en leerlo por partes, y cada módulo nuevo
+lo agranda. Va **sola en su tanda**, como pide el traspaso (§2).
+
+**Recomendación:** fuentes partidas en `src/` (estilos, tablero, análisis,
+vistas…) y un paso que las **junta en el `index.html` de siempre** antes de
+pushear. Así las sesiones leen archivos chicos y el teléfono sigue recibiendo un
+solo archivo, que es lo que evita el problema de la caché de GitHub Pages con
+módulos de versiones distintas (§2). (La v1.0 pasó a ser el cierre de la etapa 1, 20-nov.)
+
+**Por qué va antes del primer módulo** (20-nov): cada módulo nuevo agranda el
+archivo, y partirlo después cuesta más y cada noche de módulo paga la lectura
+entera. Es una o dos noches y Juan no ve nada distinto. Antes, una noche de
+limpieza: lo que está muerto no se parte.
+
+- [x] ~~**Limpieza antes de partir, en una o dos versiones**~~ (hecha: v1.0.1, v1.0.3, v1.0.5 y las pruebas del 25-nov) (revisor de código,
+      18-nov; interno, sin cambios que se vean):
+  - [x] ~~**Sacar los restos de "la lista adentro" de la v0.160**~~ (hecho en la v1.0.1) (revisor de
+        código, 18-nov; interno). `tiraDeLaVariante()`, la rama
+        `fp.lista === "adentro"`, el `<div id="pLinea">`, el CSS `.vlinea` /
+        `.vj` / `#pLinea`, el campo `reemplaza` de `FORMAS_PRUEBA` (siempre
+        true) y `listaAdentro` en `mirar.mjs`: ninguna forma pide la lista
+        adentro desde la v0.160. ~1.200 tokens. Reescribir la prueba "con una
+        prueba abierta la tarjeta real se esconde" (protege el renglón muerto
+        palabra por palabra). Capturas de la variante byte a byte.
+  - [x] ~~**Sacar las marcas de la curva que ya no se usan ("punto" y "raya")**~~ (hecho en la v1.0.3)
+        (revisor de código, 18-nov; interno). `MARCAS_CURVA`, `MARGEN_MARCA`,
+        la rama `modo === "raya"` y el `aro` del punto grande en
+        `dibujarCurva`: Juan eligió "punto chico" en la v0.160. ~1.300 tokens.
+        Ojo: las pruebas de analisis.test.mjs ~1496, 1528 y 1542–1559 usan esa
+        rama como límite; se reescriben en el mismo cambio.
+  - [x] ~~**CSS muerto en la fila de Girar**~~ (hecho en la v1.0.5) (revisor de código, 18-nov;
+        interno). `.soloAncho` (nadie la lleva desde la v0.160),
+        `.acciones > button.prendido`, el `:not(.revcab)`, `.acciones`
+        declarada dos veces seguidas, y comentarios que hablan de "Siempre la
+        mejor", que ya no está. ~800 tokens. Las pruebas que buscan
+        `.colLista, .soloAncho { display: none; }` pasan a `.colLista`. La
+        regla de `max-width: 359px` que esconde el ícono NO se toca.
+  - [x] ~~**Dos pruebas que no prueban lo que dicen**~~ (hecho el 25-nov, sin versión: solo pruebas) (revisor de código,
+        18-nov; interno). La del Escape de Ajustes (analisis.test.mjs ~2632)
+        busca `tecla === "Escape"`, que está en tres lugares: tiene que buscar
+        el renglón entero de `verAjustes(false)`. La de `data-sq="` (~2162)
+        matchea también las marcas de la explicación: buscar la del tablero.
+- [x] ~~Partir y armar el paso que junta; `npm test` y `mirar` idénticos al byte.~~
+      (hecho el 25-nov, sin versión: el `index.html` armado es idéntico al
+      byte; 19 pedazos en `src/`, `npm run juntar`)
+
+
+### Otros tachados (compu, etapa 4, Relleno)
+- [x] ~~**La Partida a la medida de la ventana.**~~ (hecho en la v1.7: pestañas Jugadas | Resumen, la D del revisor entre cuatro) Sacar el tope de 1110 de
+      ancho; el tablero al alto de la ventana, como Posiciones (v1.6.1); que
+      entre sin scroll de 1366×768 a 1920×1080 con una sola disposición (hoy
+      a 1920×1080 la curva y las mejores se van abajo del tablero y a 1280 no);
+      el panel aprovecha el ancho que sobra (más jugadas a la vista, curva más
+      ancha) y el Resumen tiene lugar sin bajar.
+- [x] ~~**Lavado de cara de Posiciones, con variantes**~~ (hecho en la v1.2: el revisor eligió D, lo de una vez en una hoja) (Juan, 26-nov, sobre
+      la v1.1.2: *"los botones están raros"*; no quiso decir qué haría,
+      quiere ver el criterio). Hoy es tablero y debajo controles apilados
+      como un formulario. 3 o 4 disposiciones dibujadas sobre la app, al
+      menos una que cambie la estructura. Lo que se toca jugando (Deshacer)
+      separado de lo que se elige una vez (nivel, color, empezar de nuevo).
+      Emparentada con la Partida (la fila de botones bajo el tablero, los
+      chips). El resultado de la partida con peso. Sin texto suelto en
+      tenue. En el resumen, con la tira de todas y cuál ganó.
+- [x] ~~**La barra de navegación abajo, con los módulos**~~ (hecho en la v1.3 y la v1.3.1: el revisor eligió la C entre cuatro; en la compu, un riel a la izquierda) (Juan, 7-nov: eligió
+      esta opción). Cuando llegue el segundo módulo, una barra fija abajo con
+      ícono y texto (Análisis, Posiciones, y después Práctica y Lecciones), que
+      **se esconde al deslizar para arriba y vuelve al deslizar para abajo**,
+      así no tapa la fila de botones de la jugada. Adentro de Análisis sigue el
+      caminito de la v0.110 (Partidas → Partida → Mes, con "‹"). Es la variante
+      A de la estructura, que a Juan le encantó; se descartó para Partidas /
+      Partida / Mes porque esas no son pestañas independientes.
+- [x] ~~Abrir una posición desde un link (`…/#fen=…`) y jugarla contra el motor,
+      con el nivel elegible.~~ (hecho en la v1.1; se adelantó a la barra de
+      abajo, que pide el segundo módulo ya hecho)
+- [x] ~~Armar una posición a mano en el tablero.~~ (hecho en la v1.4: el revisor eligió la A entre cuatro, la paleta en dos filas abajo)
+- [x] ~~**Analizar lo que jugaste contra el motor**~~ (hecho en la v1.5: un botón Analizar al lado de Deshacer) (Juan, 26-nov): al
+      terminar (o cuando quieras), pasar la partida jugada desde la
+      posición al análisis de siempre, con la tarjeta y la curva.
+- [x] ~~**[PC] La Partida no abre en el borde del Mes y el inicio**~~ (sin objeto desde la v1.7: la Partida usa el ancho de la ventana, §1.12, y el Mes tiene ancho de lectura) (arnés,
+      22-nov: lo mostró el renglón nuevo "bordes en la compu"). A 1280 el Mes
+      y el inicio van de 99 a 1171; la Partida, de 88 a 1192 con la barra
+      vertical (la de fábrica) y de 108 a 1172 con la horizontal. Pasar de una
+      pantalla a otra corre el borde. ¿Mismo ancho total, o la Partida es otra
+      grilla a propósito? Que lo juzgue el revisor con las tres capturas.
+- [x] ~~**[PC] Posiciones en dos columnas**~~ (hecho en la v1.6.1, pedido por Juan el 27-nov: el tablero a todo el alto) (revisor de UX, v1.1). A 1280 la
+      columna mide 490 de 1280. De 1000 para arriba, como la Partida:
+      tablero a la izquierda con su `--ladoTab` y un panel de ~320 con las
+      jugadas en planilla, Deshacer / Empezar y Nivel / Jugás con. El revisor
+      ya lo decidió; quedó para otra noche.
+
+### Archivados de Relleno (28-nov, revisor de rumbo)
+
+- [ ] **El otro mate y la tabla de capturas** (revisor de ajedrez, v0.177;
+      casi no pasa). Con el motor eligiendo Rxa8# y jugada Rd8#
+      (`n5k1/5ppp/8/8/8/8/5PPP/R2R2K1 w`), cuenta como "La vi y la tomé"
+      sin capturar. Antes contaba una omisión falsa, que era peor.
+      *Archivado: casi no pasa y no dice nada falso.*
+- [ ] **"Tapa el ataque" sin decir de quién** (revisor de ajedrez, v1.0.4;
+      opcional). Con g6 en
+      `r1bqkbnr/pppp1ppp/2n5/4p2Q/2B1P3/8/PPPP1PPP/RNB1K1NR b KQkq - 3 3`
+      el peón de f7 lo atacan la dama y el alfil: "Tapa el ataque de la dama
+      a tu peón de f7" dice cuál se cortó.
+      *Archivado: el mismo revisor la marcó opcional.*
+- [ ] **Otros sets de piezas para elegir** (§4bis): la costura está
+      (`#cb-<color><tipo>`); falta elegir sets y verificarle la licencia a
+      cada uno, y el selector va en Ajustes.
+      *Archivado: nadie lo pidió desde §4bis; vuelve si Juan lo pide.*
+- [ ] **El cambio que entrega la dama no la resta** (revisor de ajedrez,
+      v0.180.1; borde). `entregaLaDama` deja pasar la captura que vale la
+      pena, pero `cambioEn` no descuenta la dama que destapa: en
+      `4qk2/8/4p3/3Q4/8/2N5/8/4R1K1 b`, d5 da neto 8 (exd5 Nxd5, "tu dama por
+      un peón") y en el tablero, con Rxe8+ Kxe8 Nxd5, es 4. No es falso en
+      d5, pero cuenta la mitad.
+      *Archivado: un borde que no llega a la tarjeta como algo falso.*
+
 ### Cierre de la etapa 1 (mudado el 21-nov)
 
 - [x] ~~**Dos frases y un veredicto, en una versión**~~ (hecho en la v0.177):
