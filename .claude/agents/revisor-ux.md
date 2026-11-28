@@ -83,6 +83,17 @@ proponer o aprobar una marca —un contorno, un acento, un color, un peso, un
 separado 2 de §1.7, que es del foco; y lo mismo con cualquier regla traída
 de otro lugar.
 
+**Lo que va junto se ve junto** (v1.9: los renglones de una fila de
+pastillas y la fila siguiente tenían el mismo paso y se leían como una sola
+columna). Entre partes de una misma cosa, menos aire que entre cosas
+distintas: renglones de un control que pasa de línea, filas de un grupo,
+grupos. Medilo en todo lo que pasa de renglón (chips, botones, cuadritos),
+no solo donde lo viste.
+**Lo que cuelga se mide contra sus vecinos, desde cada botón que lo abre**
+(v1.9: el menú de Ajustes se midió contra el tablero y desde la tuerca
+del inicio pisaba la lista). `mirar` lo dice (`pisa`); si una pantalla
+nueva abre algo desde otro lado, pedí que entre en ese recorrido.
+
 **Celu primero, PC aprovechada.** El celu manda: un cambio de PC que rompe
 algo del celu está mal aunque en PC se vea perfecto. En PC se juzga si se
 aprovecha el espacio y el mouse.

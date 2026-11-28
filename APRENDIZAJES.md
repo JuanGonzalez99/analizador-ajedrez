@@ -96,6 +96,13 @@ app**: las capturas del celu tienen que salir idénticas y `npm test` verde.
       de la sesión lo frena el permiso automático; se le pide en el resumen.
       Atrapa todo push rojo, de día y de noche, de cualquier cambio.
 
+- [ ] **`mirar` avisa de lo que pasa de renglón sin más aire afuera que
+      adentro**: en todo control con hijos en más de un renglón (chips,
+      pastillas, botones, cuadritos), OJO si el espacio entre sus renglones
+      es igual o mayor que el que lo separa del siguiente control (revisor
+      de UX, v1.9; causa D). Atrapa toda fila que pase de renglón, en
+      cualquier pantalla.
+
 Después de la cuarta, lo mantiene la revisión del domingo (`TAREA-NOCTURNA.md`,
 paso 0).
 
@@ -500,3 +507,16 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   todo elemento, para `mirar` y toda maqueta. Lo primero que atrapó es de
   verdad: Esc y volver a abrir con el mouse deja el anillo en "Listo"
   (a Relleno).
+- **Ajustes de la compu (v1.9), tres cosas que se escaparon** · 28-nov,
+  noche · (1) la maqueta inventó una segunda marca de lo elegido (18 % sin
+  peso) existiendo la de la app (D: la regla estaba y nadie la medía) →
+  `mirar` junta los fondos de todo lo elegido y avisa si hay más de dos;
+  (2) el menú se midió contra el tablero y no contra los vecinos de la otra
+  tuerca, y pisaba la lista del inicio (F) → `mirar` mide lo que cuelga
+  contra todo vecino, desde las dos tuercas, y `revisor-ux.md` lo pide para
+  todo botón que abra algo; (3) las alturas de compu se miraban a 768 y la
+  notebook real deja 657 (C) → `mirar` mide `sobra657` en toda pantalla de
+  monitor (lo primero que atrapó: la Partida y Armar, a Relleno); y la
+  proximidad (renglones de una fila tan separados como las filas, D) →
+  regla en `revisor-ux.md`, y la medida queda pendiente. Se propone a Juan
+  sumarla a `DISENO.md` §1.5 (no se cambia el sistema de noche).
