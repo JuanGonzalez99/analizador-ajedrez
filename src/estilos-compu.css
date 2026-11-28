@@ -637,9 +637,9 @@
      datos como una fila con divisores y, si se piden, las tres mejores, con el
      borde de la categoría corriendo por todo (`--colCat`, de `pintarRevision`),
      como la revisión de chess.com. Con una variante abierta queda como antes
-     (espera a Juan). La planilla, con encabezado y columnas de ancho fijo: lo
-     que sobra va al final, no entre la jugada y su reloj (§1.12). */
-  .cabPl { display: none; }
+     (espera a Juan). La planilla, con columnas de ancho fijo: lo que sobra va
+     al final, no entre la jugada y su reloj (§1.12). Sin encabezados desde la
+     v1.8.2 (Juan: "redundantes"; la planilla se entiende por su forma). */
   @media (min-width: 1000px) {
     #zonaRevision:has(#prueba.oculto) .tarjetas .veredicto { border-bottom: 0;
       border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0; }
@@ -671,14 +671,8 @@
     /* pedidas, el botón dice "Ocultar" con el fondo del acento: prendido */
     #btnAlts[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 22%, var(--superficie)); }
 
-    .lateral > .cabPl { display: grid; flex: none; padding: 8px 7px 4px; border: 1px solid transparent;
-      border-bottom: 0; font-size: var(--t-minimo); font-weight: 600; letter-spacing: .07em;
-      text-transform: uppercase; color: var(--tenue); }
-    .lateral.verRes > .cabPl, .lateral:has(> .jugadas:not(.planilla)) > .cabPl { display: none; }
-    .jugadas.planilla > div:not(.var), .lateral > .cabPl { grid-template-columns: 32px 96px 56px 112px 56px; gap: 0; }
-    .jugadas.planilla > div:not(.var) > :nth-child(4), .lateral > .cabPl > :nth-child(4) { margin-left: 16px; }
-    .lateral > .cabPl > :nth-child(2), .lateral > .cabPl > :nth-child(4) { padding-left: 28px; }
-    .lateral > .cabPl > .pe2 { text-align: right; padding-right: 3px; }
-    .lateral.sinReloj .jugadas.planilla > div:not(.var), .lateral.sinReloj > .cabPl { grid-template-columns: 32px 96px 112px; }
-    .lateral.sinReloj .jugadas.planilla .se, .lateral.sinReloj > .cabPl > .pe2 { display: none; }
+    .jugadas.planilla > div:not(.var) { grid-template-columns: 32px 96px 56px 112px 56px; gap: 0; }
+    .jugadas.planilla > div:not(.var) > :nth-child(4) { margin-left: 16px; }
+    .lateral.sinReloj .jugadas.planilla > div:not(.var) { grid-template-columns: 32px 96px 112px; }
+    .lateral.sinReloj .jugadas.planilla .se { display: none; }
   }

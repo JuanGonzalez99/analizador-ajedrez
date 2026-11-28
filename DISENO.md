@@ -415,6 +415,18 @@ Cada entrada: qué, si le copa o no, y el porqué con sus palabras cuando las
 hay. Las primeras salen del historial del traspaso.
 
 ### Le copa
+- **La A de la v1.8: la cabecera de la jugada en una sola pieza** (28-nov-2026):
+  *"la A quedó bien"*. Tarjeta, datos con divisores y las tres mejores en una
+  tarjeta, con el borde de la categoría de punta a punta.
+- **Dos cosas de lichess, para más adelante** (28-nov-2026, sobre capturas
+  del análisis de lichess en la compu): el **gráfico de tiempo por jugada**
+  (una barra por jugada, para arriba las blancas y para abajo las negras, con
+  la línea del reloj que queda) y **el reloj chiquito al lado de las piezas
+  comidas**, *"que no molesta ahí"*. No para ahora: anotado en la hoja de
+  ruta (Relleno). Ojo: el reloj alrededor del tablero se rechazó ocho veces
+  en el celu (v0.93, `TRASPASO.md` §4duotrigies) porque costaba alto o
+  tapaba piezas; en la compu, al lado de las comidas, no pasa ninguna de las
+  dos.
 - **Las filas fantasma mientras el motor piensa** (v0.181): sobre la variante
   A de la caja de las tres mejores, *"creo que la A quedaría bien para cuando
   está cargando"* (21-nov-2026). Tres filas tenues donde van a caer las
@@ -604,6 +616,18 @@ hay. Las primeras salen del historial del traspaso.
   elige.
 
 ### No le copa
+- **Los encabezados de la planilla** (28-nov-2026, v1.8): *"no me copan las
+  cabeceras en la lista de jugadas, creo que son redundantes"*. Se sacaron en
+  la v1.8.2. Una planilla de jugadas se entiende por su forma (número,
+  blancas, negras, como en papel): un rótulo que repite lo que la forma ya
+  dice es ruido. Las columnas fijas quedan.
+- **Lo sobrecargado de lichess** (28-nov-2026, con capturas de su análisis):
+  *"el problema que tiene es que está muy sobrecargado"* (la línea del
+  motor, las variantes en cada error, los rótulos en inglés, los dos
+  jugadores con todas sus cuentas). Una app de escritorio es la referencia
+  de cómo se usa la compu (mouse, teclado, el ancho), no un modelo para
+  copiar. Y **la C de la v1.8**, la explicación adentro de la planilla a lo
+  lichess: *"me parece espantosa"*.
 - **Que en la compu se amontone todo lo del celu en un panel** (28-nov-2026,
   sobre la v1.7 y las cuatro variantes A–D): *"no me gusta ninguna. siento
   que se trató de amontonar todo. capaz hay que rediseñar algunos componentes
@@ -731,6 +755,16 @@ Se anota cada vez que Juan rechaza algo que pasó por el revisor (decisión de
 Juan, 7-nov-2026). Las reglas que salen de acá las destila la revisión del
 criterio (`TAREA-NOCTURNA.md`) hacia `.claude/agents/revisor-ux.md`.
 
+- **Los encabezados de la planilla de la compu** (v1.8). El revisor los pidió
+  alineados a sus columnas y los midió al píxel. *Se le pasó*: preguntarse si
+  hacían falta; la planilla se entiende por su forma. Y la tanda vino atada:
+  la regla nueva pedía una variante sacada de lichess o chess.com, y salieron
+  la B y la C como copias literales, con lo que el revisor quedó casi
+  obligado a elegir la A (Juan: *"siento que el revisor estuvo prácticamente
+  obligado a elegir la A"*). *Regla*: antes de agregar un rótulo, preguntarse
+  si la forma ya lo dice; y una referencia aporta una idea a un componente,
+  no una pantalla para copiar: las variantes tienen que ser buenas de
+  verdad, no compañía de la que se va a elegir.
 - **La Partida de la compu, las cuatro variantes y la elegida** (v1.7). El
   revisor midió bien —tablero al alto, entra sin bajar, botones fijos— y
   eligió las pestañas. *Se le pasó*: las cuatro eran la misma pantalla con

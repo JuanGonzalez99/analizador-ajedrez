@@ -450,6 +450,18 @@ archiva los que pierden sentido.
       números. ¿Dos columnas de categorías, filas de 20, columnas de ancho
       fijo al lado del rótulo? Con los ceros a la vista.
 
+- [ ] **El tiempo por jugada como gráfico** (Juan, 28-nov, mirando lichess:
+      lo rescata; no para ahora). Una barra por jugada (blancas arriba,
+      negras abajo) con la línea del reloj que queda, como otra forma de la
+      curva (Evaluación | Tiempo) en la compu. Va con "El apuro" de
+      Estadísticas del Mes: es lo mismo mirado en una partida.
+- [ ] **[PC] El reloj chiquito al lado de las piezas comidas** (Juan,
+      28-nov, mirando lichess: *"no molesta ahí"*; no para ahora). Lo que
+      quedaba en el reloj en esa jugada, chico, en el renglón de las comidas
+      de cada lado. En el celu se rechazó ocho veces (v0.93, `TRASPASO.md`
+      §4duotrigies: costaba alto o tapaba piezas); en la compu ese renglón
+      ya existe y no tapa nada. Leer §4duotrigies antes de dibujar.
+
 ### Limpieza de código
 
 - [ ] **Recortar los comentarios de historia del CSS**, en tres noches por

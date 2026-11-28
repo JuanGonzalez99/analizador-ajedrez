@@ -101,12 +101,16 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    1920×1080); una lista se dibuja larga, con scroll (26-nov, la barra de
    módulos). Todo tamaño o estado que se sume a lo que mira la app se suma
    ahí, en un solo lugar, no en la maqueta de la noche.
-   **En un ítem de compu, antes de dibujar**, escribí en una línea cómo
-   resuelve esa pantalla una referencia de escritorio (el análisis de
-   lichess o de chess.com en la PC), y una de las variantes sale de ahí:
-   componentes nuevos, no los del celu en otro lugar. Sin esa variante no
-   se pasa al revisor (28-nov: la causa D se repitió tres veces en dos días
-   en la compu porque la regla la veía solo quien juzga). El revisor elige una, la elige con un
+   **En un ítem de compu, antes de dibujar**, preguntate cómo sería cada
+   componente si hubiera nacido en la compu (con mouse, teclado y ancho), y
+   al menos una variante tiene que rediseñar componentes, no reubicar los
+   del celu (28-nov: la causa D se repitió tres veces en dos días en la
+   compu porque la regla la veía solo quien juzga). lichess y chess.com
+   sirven para ver cómo se usa una pantalla de escritorio y para tomar una
+   idea puntual, **no para copiarlas**: Juan las encuentra sobrecargadas, y
+   las copias literales de la v1.8 (la B y la C) dejaron al revisor casi
+   obligado a elegir la otra (Juan, 28-nov). Cada variante tiene que poder
+   ganar: si una está de compañía, no cuenta. El revisor elige una, la elige con un
    ajuste, o dice **ninguna** y qué probar: en ese caso, otra tanda con esa
    dirección. Como mucho dos tandas; si sigue en "ninguna", no se aplica nada
    y se cuenta en el resumen, con las tiras. Lo que se aplica va igual al

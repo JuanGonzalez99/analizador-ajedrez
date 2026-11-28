@@ -1746,9 +1746,9 @@
      datos como una fila con divisores y, si se piden, las tres mejores, con el
      borde de la categoría corriendo por todo (`--colCat`, de `pintarRevision`),
      como la revisión de chess.com. Con una variante abierta queda como antes
-     (espera a Juan). La planilla, con encabezado y columnas de ancho fijo: lo
-     que sobra va al final, no entre la jugada y su reloj (§1.12). */
-  .cabPl { display: none; }
+     (espera a Juan). La planilla, con columnas de ancho fijo: lo que sobra va
+     al final, no entre la jugada y su reloj (§1.12). Sin encabezados desde la
+     v1.8.2 (Juan: "redundantes"; la planilla se entiende por su forma). */
   @media (min-width: 1000px) {
     #zonaRevision:has(#prueba.oculto) .tarjetas .veredicto { border-bottom: 0;
       border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0; }
@@ -1780,16 +1780,10 @@
     /* pedidas, el botón dice "Ocultar" con el fondo del acento: prendido */
     #btnAlts[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 22%, var(--superficie)); }
 
-    .lateral > .cabPl { display: grid; flex: none; padding: 8px 7px 4px; border: 1px solid transparent;
-      border-bottom: 0; font-size: var(--t-minimo); font-weight: 600; letter-spacing: .07em;
-      text-transform: uppercase; color: var(--tenue); }
-    .lateral.verRes > .cabPl, .lateral:has(> .jugadas:not(.planilla)) > .cabPl { display: none; }
-    .jugadas.planilla > div:not(.var), .lateral > .cabPl { grid-template-columns: 32px 96px 56px 112px 56px; gap: 0; }
-    .jugadas.planilla > div:not(.var) > :nth-child(4), .lateral > .cabPl > :nth-child(4) { margin-left: 16px; }
-    .lateral > .cabPl > :nth-child(2), .lateral > .cabPl > :nth-child(4) { padding-left: 28px; }
-    .lateral > .cabPl > .pe2 { text-align: right; padding-right: 3px; }
-    .lateral.sinReloj .jugadas.planilla > div:not(.var), .lateral.sinReloj > .cabPl { grid-template-columns: 32px 96px 112px; }
-    .lateral.sinReloj .jugadas.planilla .se, .lateral.sinReloj > .cabPl > .pe2 { display: none; }
+    .jugadas.planilla > div:not(.var) { grid-template-columns: 32px 96px 56px 112px 56px; gap: 0; }
+    .jugadas.planilla > div:not(.var) > :nth-child(4) { margin-left: 16px; }
+    .lateral.sinReloj .jugadas.planilla > div:not(.var) { grid-template-columns: 32px 96px 112px; }
+    .lateral.sinReloj .jugadas.planilla .se { display: none; }
   }
 </style>
 
@@ -1812,7 +1806,7 @@
 </div>
 
 <script>
-  window.VERSION = "v1.8.1 · 28-11";
+  window.VERSION = "v1.8.2 · 28-11";
 
   /* El modo se decide acá arriba, antes de que se dibuje nada, para que no se
      vea un parpadeo de las perillas.
@@ -2321,9 +2315,6 @@
       <button role="tab" id="tabJugadas" aria-selected="true" aria-controls="jugadas">Jugadas</button>
       <button role="tab" id="tabResumen" aria-selected="false" aria-controls="resAncho">Resumen</button>
     </div>
-    <!-- EL ENCABEZADO DE LA PLANILLA (v1.8): afuera de la lista que scrollea,
-         en la misma grilla que sus filas. Solo en la compu, como la lista. -->
-    <div class="cabPl" id="cabPl" aria-hidden="true" data-encabeza="#jugadas"><span></span><span>Blancas</span><span class="pe2">Pensó</span><span>Negras</span><span class="pe2">Pensó</span></div>
     <div class="jugadas" id="jugadas" tabindex="0" role="group" aria-label="Jugadas: ↑ ↓ para pasar, Inicio y Fin para ir a la punta"></div>
     <div class="resAncho" id="resAncho" role="tabpanel" aria-labelledby="tabResumen"><div class="tw"><table id="resumenAncho" data-traspuesta="resumen"></table></div></div>
   </aside>

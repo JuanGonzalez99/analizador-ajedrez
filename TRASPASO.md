@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8.1**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8.2**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -509,8 +509,8 @@ y altas) la curva baja debajo del tablero: `.curvaAbajo`, que pone
 mejores (`#alts`) se muda por DOM debajo de la curva: `.altsAbajo`, que pone
 `ubicarAlts()`; desde la v0.180 ahí va sin caja (sin fondo ni borde).
 Desde la v1.8, si no bajan, van adentro de la cabecera de la jugada
-(tarjeta, datos y las tres mejores en una pieza) y la planilla lleva
-encabezado (`#cabPl`); ver §7, v1.8.
+(tarjeta, datos y las tres mejores en una pieza) y la planilla va en
+columnas fijas (sin encabezado desde la v1.8.2); ver §7, v1.8.
 Lo que sigue en este párrafo es la historia.
 Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
 **de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
@@ -5076,6 +5076,17 @@ ofrecía dxe6 y Stockfish no. Verificado contra el `d` del Stockfish del repo
 en cinco FEN (blancas y negras, con y sin comedor, con el origen ocupado):
 dan lo mismo. Ojo: Stockfish 18 deja la casilla aunque comer al paso deje
 al rey en jaque (`8/8/8/K2Pp2r/8/8/8/4k3 w - e6`), y `limpiarFen` también.
+
+**v1.8.2, la planilla sin encabezados** (Juan, 28-nov: *"no me copan las
+cabeceras en la lista de jugadas, creo que son redundantes"*). Se fue
+`#cabPl`; las columnas fijas de la v1.8 quedan. La A le gustó, la C le
+pareció espantosa, y la regla de "una variante sale de lichess o
+chess.com" se aflojó en `TAREA-NOCTURNA.md` (paso 3): las copias literales
+dejaron al revisor casi obligado a elegir la A. La medida de encabezados
+de `mirar` sigue para toda tabla con thead y toda grilla con
+`data-encabeza`. Anotados en Relleno, para más adelante: el tiempo por
+jugada como gráfico y el reloj chiquito al lado de las comidas en la
+compu (`DISENO.md` §2).
 
 **v1.7.1, lo que come el motor dice qué se pierde, también en `nuevas`**
 (Arreglos; revisor de ajedrez, v1.2.3). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`,
