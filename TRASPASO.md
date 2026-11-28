@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8.3**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -5087,6 +5087,27 @@ de `mirar` sigue para toda tabla con thead y toda grilla con
 `data-encabeza`. Anotados en Relleno, para más adelante: el tiempo por
 jugada como gráfico y el reloj chiquito al lado de las comidas en la
 compu (`DISENO.md` §2).
+
+**v1.8.3, dos pruebas rojas y dos prevenciones del arnés** (28-nov,
+noche; nada que se vea). `npm test` estaba rojo desde la v1.8.1 por dos
+chequeos que saltaban sin error de verdad: "no queda rastro de `aPeon`"
+encontraba `filaPeon` (variable nueva de `limpiarFen`, renombrada a
+`filaDelPeon`; la prueba ahora busca la palabra entera) y "la hoja de ruta
+no cita renglones" tomaba "~240 vacíos" por un renglón (ahora busca la
+forma de una cita: un número pegado a un archivo o a "renglón"). Y del
+arnés: `tira.mjs` exporta `recortados()` —todo texto visible que no entra
+en su caja, con "…" o cortado por un `overflow`— que usan `pantallas()`
+(contra su línea base y en cada tamaño: "la variante X recorta texto") y
+`mirar` (ahora en los cinco tamaños, también en el Mes); y `abrirApp()`
+vigila toda la sesión el **anillo de foco que dibuja un clic** (un foco
+que llega con el mouse como última entrada y pinta contorno), que
+`anillosConMouse()` lee y `mirar` dice al final. Lo primero que atrapó es
+de verdad: cerrar el menú de Nueva partida con Esc y volver a abrirlo con
+el mouse deja el anillo en su "Listo" (Chrome hereda el foco visible del
+botón que ya lo tenía); va a Relleno. Además, `mirar` mide "sube desde
+abajo como hoja de celu" en todo `[role=dialog]` de cualquier monitor, no
+solo en Ajustes, y los bordes en los cuatro tamaños de compu (repaso contra
+la causa, tanda 3, primera parte).
 
 **v1.7.1, lo que come el motor dice qué se pierde, también en `nuevas`**
 (Arreglos; revisor de ajedrez, v1.2.3). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`,

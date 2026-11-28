@@ -662,8 +662,8 @@ function limpiarFen(fen) {
        del que mueve que pueda comer (v1.8.1, revisor de ajedrez: con e7
        ocupada chess.js ofrecía dxe6 y Stockfish no) */
     const origen = col + (p[1] === "w" ? "7" : "2"), mio = p[1] === "w" ? "pw" : "pb";
-    const cols = "abcdefgh", k = cols.indexOf(col), filaPeon = peon[1];
-    const comedor = [k - 1, k + 1].some(j => j >= 0 && j < 8 && hay(cols[j] + filaPeon, mio));
+    const cols = "abcdefgh", k = cols.indexOf(col), filaDelPeon = peon[1];
+    const comedor = [k - 1, k + 1].some(j => j >= 0 && j < 8 && hay(cols[j] + filaDelPeon, mio));
     if (!(fila === (p[1] === "w" ? "6" : "3") && hay(peon, tipo) && !c.get(p[3]) &&
           !c.get(origen) && comedor)) p[3] = "-";
   }

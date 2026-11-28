@@ -596,3 +596,12 @@ Pendientes que estaban anotados solo en el traspaso.
       (la dama a tiro de una torre) no. Bxa7 en
       `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w` es una descubierta de libro sobre
       la dama y la tarjeta dice "queda a tiro", que es cierto pero no dice cómo.
+
+- [ ] **El anillo de foco en "Listo" después de un Esc** (lo atrapó `mirar`
+      la primera noche que lo midió, 28-nov). Cerrar el menú de Nueva
+      partida con Esc y volver a abrirlo con el mouse deja el anillo de
+      teclado en "Listo": Chrome hereda el foco visible del botón que ya lo
+      tenía, y `verHojaPos` (en `posicion.js`) pasa el foco con `.focus()`.
+      Vale para toda hoja que mueva el foco al abrir (`verAjustes`, en
+      `tablero.js`). La línea `anillo de foco con mouse` de `mirar` tiene
+      que quedar en [].

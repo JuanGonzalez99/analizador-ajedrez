@@ -94,6 +94,30 @@ export async function abrirApp({ puerto = 8098, alto = 900, partida = null } = {
       r.fulfill({ status: 200, contentType: "application/json",
                   body: JSON.stringify(partida.API["/api/archives"]) }));
   }
+  /* EL ANILLO DE FOCO CON MOUSE (revisor de UX, v1.8; causas A y C): un
+     botón que se esconde al tocarlo deja el foco suelto, y si la app lo
+     pasa a otro con `.focus()` el anillo de teclado aparece sin que nadie
+     haya usado el teclado. Se vigila TODA la sesión y en todo elemento
+     —no un botón con nombre—: cada foco que llega con el mouse como última
+     entrada y dibuja contorno queda anotado, y `anillosConMouse()` lo lee.
+     Lo usan `mirar` y cualquier maqueta que levante la app con esto. Los
+     campos de texto no cuentan: ahí el anillo es lo correcto. */
+  await pg.addInitScript(() => {
+    let ultimo = "";
+    addEventListener("keydown", () => { ultimo = "tecla"; }, true);
+    addEventListener("pointerdown", () => { ultimo = "mouse"; }, true);
+    window.__anillos = [];
+    addEventListener("focusin", () => setTimeout(() => {
+      const el = document.activeElement;
+      if (ultimo !== "mouse" || !el || el === document.body || !el.getClientRects().length) return;
+      if (el.matches("input:not([type=button]):not([type=checkbox]):not([type=radio]), textarea, select, [contenteditable]")) return;
+      let fv = false; try { fv = el.matches(":focus-visible"); } catch (e) { /* navegador viejo */ }
+      const cs = getComputedStyle(el);
+      if (!fv || cs.outlineStyle === "none" || !(parseFloat(cs.outlineWidth) > 0)) return;
+      const n = el.id ? "#" + el.id : el.classList[0] ? "." + el.classList[0] : el.tagName.toLowerCase();
+      if (!window.__anillos.includes(n)) window.__anillos.push(n);
+    }, 40), true);
+  });
   await pg.goto(`http://localhost:${puerto}/index.html`);
   if (partida) {
     await pg.fill("#usuario", partida.cabPgn("White", "Blancas"));
@@ -117,6 +141,29 @@ export async function abrirApp({ puerto = 8098, alto = 900, partida = null } = {
 }
 
 /* --- MEDIR, que sale más barato que mirar -------------------------------- */
+
+/* Los focos que dibujaron anillo con el mouse como última entrada, desde que
+   se abrió la app (ver `abrirApp`). Tiene que ser []. */
+export const anillosConMouse = pg => pg.evaluate(() => window.__anillos || []);
+
+/* TODO TEXTO QUE NO ENTRA EN SU CAJA, en cualquier elemento visible: con
+   "…" o cortado por un `overflow` que no deja ver el resto (revisor de UX,
+   v1.8: la variante B de la Partida salió con su fila de datos rota y nadie
+   lo midió; causa F). No mide un id: barre la página entera, y por eso lo
+   usan `pantallas()` —contra su línea base, así que solo avisa lo que la
+   variante agrega— y `mirar`. `salvo`: lo que se corta a propósito
+   (nombres de rivales, aperturas). Un contenedor con scroll no cuenta: ahí
+   el resto se alcanza bajando. */
+export const recortados = (pg, salvo = "") => pg.evaluate(salvo => [...document.querySelectorAll("body *")].filter(e => {
+  if (!e.getClientRects().length || (salvo && e.closest(salvo))) return false;
+  if (e.scrollWidth <= e.clientWidth + 1) return false;
+  const cs = getComputedStyle(e);
+  if (cs.textOverflow === "ellipsis") return true;
+  if (!/hidden|clip/.test(cs.overflowX)) return false;
+  /* que tenga texto propio, no un envase de cosas que se corren a propósito */
+  return [...e.childNodes].some(n => n.nodeType === 3 && n.textContent.trim());
+}).map(e => (e.id ? "#" + e.id : e.classList[0] ? "." + e.classList[0] : e.tagName.toLowerCase()) +
+            " «" + e.textContent.trim().replace(/\s+/g, " ").slice(0, 24) + "»"), salvo);
 
 /* Distancia vertical entre el centro de la MAYÚSCULA de un texto y el centro de
    la tinta de otro elemento. Es la medición que faltó en la v0.91 y mandó
@@ -416,7 +463,8 @@ export const COMPU = [[1000, 800], [1280, 800], [1366, 768], [1920, 1080]];
 
 export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, salida,
                                       medir = null, espera = 250, navegador = null,
-                                      scrollY = 0, anchos = COMPU }) {
+                                      scrollY = 0, anchos = COMPU,
+                                      cortesOk = ".rival, .cabTit .l2, #yaUsuarioNombre, #partidas, #mesLista" }) {
   const fs = await import("node:fs");
   const sueltas = [], medidas = [];
 
@@ -427,7 +475,21 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
      importaba. Lo que se reporta es lo que la variante AGREGA. Y el alto de
      acá es contra el que se compara cuánto empuja cada una. */
   const foto0 = await medirPantalla(pg, medir);
+  /* el texto recortado, también contra la línea base y en cada tamaño */
+  const tamanos = anchos.map(t => Array.isArray(t) ? t : [t, 800]);
+  const corte0 = { celu: await recortados(pg, cortesOk) };
+  if (tamanos.length) {
+    const vp = pg.viewportSize();
+    for (const [w, h] of tamanos) {
+      await pg.setViewportSize({ width: w, height: h });
+      await pg.waitForTimeout(espera);
+      corte0[w] = await recortados(pg, cortesOk);
+    }
+    await pg.setViewportSize(vp);
+    await pg.waitForTimeout(espera);
+  }
   for (const v of variantes) {
+    const cortes = {};
     await pg.evaluate(({ fn, v }) => new Function("v", fn)(v),
                       { fn: `(${aplicar})(v)`, v });
     await pg.waitForTimeout(espera);
@@ -451,6 +513,7 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
     await pg.screenshot({ path: base + "-css.png", scale: "css" });
     await pg.screenshot({ path: base + ".png" });
     sueltas.push(base + "-css.png");
+    cortes.celu = await recortados(pg, cortesOk);
     /* Y EN PC, SIN QUE SE LO PIDAN (revisor de UX, barra de módulos del
        26-nov: la tanda vino solo de celu y la barra abajo no servía a 1280;
        causas B y F de APRENDIZAJES.md). `anchos: []` lo apaga. Son todos
@@ -465,6 +528,7 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
         await pg.setViewportSize({ width: w, height: h });
         await pg.waitForTimeout(espera);
         await pg.screenshot({ path: `${base}-${w}-css.png`, scale: "css" });
+        cortes[w] = await recortados(pg, cortesOk);
       }
       await pg.setViewportSize(vp);
       await pg.waitForTimeout(espera);
@@ -485,7 +549,11 @@ export async function pantallas(pg, { variantes, aplicar, deshacer, nombre, sali
       ladoDelTablero: m.ladoDelTablero,
       encimaNuevo: nuevos(m.encimados, foto0.encimados),
       pegaNuevo: nuevos(m.pegados, foto0.pegados),
+      recortaNuevo: Object.fromEntries(Object.entries(cortes)
+        .map(([k, l]) => [k, nuevos(l, corte0[k] || [])]).filter(([, l]) => l.length)),
     });
+    for (const [k, l] of Object.entries(medidas.at(-1).recortaNuevo))
+      console.log(`OJO: la variante ${v.clave} recorta texto (${k}): ${l.join(", ")}`);
     if (deshacer)
       await pg.evaluate(({ fn, v }) => new Function("v", fn)(v),
                         { fn: `(${deshacer})(v)`, v });

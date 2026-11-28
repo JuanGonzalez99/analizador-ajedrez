@@ -320,7 +320,11 @@ chequear("los cuadritos y la explicación siguen a la variante", [
 {
   const hoja = fs.readFileSync(new URL("../HOJA-DE-RUTA.md", import.meta.url), "utf8");
   const abiertos = hoja.split(/\n(?=- \[)/).filter(b => b.startsWith("- [ ]"));
-  const malos = abiertos.filter(b => /index\.html ~\d|~\d{3,}(?![\d.,]*\s*(tokens|KB|px|ms|s\b))|\(~?\d{3,}[–-]~?\d{3,}\)/.test(b))
+  /* el número pegado a un archivo o a "renglón", no cualquier "~240": la
+     primera versión saltó con "~240 vacíos a cada lado", que es una medida
+     (28-nov). Lo que se busca es la forma de una cita, sea del archivo que
+     sea; una medida suelta no apunta a nada que se corra */
+  const malos = abiertos.filter(b => /(index\.html|\.(m?js|css|html)\b|rengl[oó]n(es)?|l[ií]neas?)[\s:,]*~?\d{3,}|\(~?\d{3,}[–-]~?\d{3,}\)/.test(b))
     .map(b => b.slice(0, 70).replace(/\s+/g, " ") + "…");
   chequear("la hoja de ruta cita pedazo y función, no renglones", malos);
 }

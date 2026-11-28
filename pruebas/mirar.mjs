@@ -26,7 +26,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Chess } from "../chess.js";
 import { partidaFalsa } from "./falso.mjs";
-import { abrirApp, alinear, espacios, COMPU } from "./tira.mjs";
+import { abrirApp, alinear, espacios, COMPU, recortados, anillosConMouse } from "./tira.mjs";
 
 /* EL ARRANQUE SALIÓ A DOS MÓDULOS (v0.92) y acá quedan tres líneas. Eran ~250:
    la partida de prueba y el motor de mentira viven en `falso.mjs`, y levantar
@@ -1169,12 +1169,9 @@ if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").
      inicio (casos 2 y 10).
    El dial en "la lista abajo" (caso 7) ya tiene la suya: prueba-forma-abajo. */
 const NO_SE_CORTA = ".rival, .cabTit .l2, #yaUsuarioNombre, #partidas, #mesLista";
-const cortados = () => pg.evaluate(salvo => [...document.querySelectorAll("body *")].filter(e => {
-  if (!e.getClientRects().length || e.closest(salvo)) return false;
-  if (getComputedStyle(e).textOverflow !== "ellipsis") return false;
-  return e.scrollWidth > e.clientWidth + 1;
-}).map(e => (e.id ? "#" + e.id : e.classList[0] ? "." + e.classList[0] : e.tagName.toLowerCase()) +
-            " «" + e.textContent.trim().replace(/\s+/g, " ").slice(0, 24) + "»"), NO_SE_CORTA);
+/* desde el 28-nov el barrido vive en `tira.mjs` (`recortados`) y cuenta
+   también el texto que un `overflow` corta sin "…", y no solo el de "…" */
+const cortados = () => recortados(pg, NO_SE_CORTA);
 const BORDES = {};
 const bordesDe = (sels) => pg.evaluate(sels => {
   const rs = sels.map(s => [...document.querySelectorAll(s)]).flat()
@@ -1183,7 +1180,9 @@ const bordesDe = (sels) => pg.evaluate(sels => {
 }, sels);
 {
   const cortes = {};
-  for (const [w, h] of [[386, 760], [1000, 800], [1280, 800]]) {
+  /* en todos los tamaños de compu, no en dos: la regla vale para todos (el
+     de 1280 al final, que es donde siguen las capturas de abajo) */
+  for (const [w, h] of [[386, 760], [1000, 800], [1366, 768], [1920, 1080], [1280, 800]]) {
     await pg.setViewportSize({ width: w, height: h });
     await pg.waitForTimeout(250);
     cortes[w] = await cortados();
@@ -1292,7 +1291,7 @@ console.log("títulos, mes:".padEnd(16), JSON.stringify(await pesos()), "(22 px 
     await pg.mouse.move(2, 2);
   }
   const cortesMes = {};
-  for (const [w, h] of [[1000, 800], [1280, 900], [386, 760]]) {
+  for (const [w, h] of [[1000, 800], [1366, 768], [1920, 1080], [1280, 900], [386, 760]]) {
     await pg.setViewportSize({ width: w, height: h });
     await pg.waitForTimeout(250);
     cortesMes[w] = await cortados();
@@ -1934,6 +1933,15 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
      y estado, todo `.sel`, `[aria-selected=true]` o `[aria-current]` adentro
      de algo con scroll propio tiene que caer en su caja visible, descontado
      el fundido. */
+  /* LO ABIERTO QUE SUBE DESDE ABAJO, cualquiera sea (repaso contra la causa,
+     tanda 3, 28-nov): hasta acá se medía solo Ajustes, con su id, y las
+     hojas de Posiciones o cualquier diálogo nuevo pasaban sin medir. Todo
+     `[role=dialog]` a la vista, pegado al fondo y más ancho que un tercio */
+  const hojasAbajo = () => pg.evaluate(() => [...document.querySelectorAll("[role=dialog]")]
+    .filter(d => d.getClientRects().length && !d.classList.contains("oculto")).filter(d => {
+      const r = d.getBoundingClientRect();
+      return Math.abs(r.bottom - innerHeight) < 2 && r.width > innerWidth / 3;
+    }).map(d => "#" + d.id));
   const fueraDeVista = zona => pg.evaluate(z => [...document.querySelectorAll(z)]
     .flatMap(e => [...e.querySelectorAll(".sel, [aria-selected=true], [aria-current]:not([aria-current=false])")])
     .filter(e => e.offsetParent !== null && !e.matches("[role=tab]"))
@@ -1954,6 +1962,7 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
       MON[`${nombre} ${w}`] = await medidaM(tab, zona);
       MON[`${nombre} ${w}`].cortado = await cortados(zona);
       MON[`${nombre} ${w}`].fuera = await fueraDeVista(zona);
+      MON[`${nombre} ${w}`].hojas = await hojasAbajo();
       const tabs = await pg.evaluate(z => [...document.querySelectorAll(z)]
         .flatMap(e => [...e.querySelectorAll("[role=tab]")])
         .filter(t => t.offsetParent !== null).map(t => [t.id, t.getAttribute("aria-selected") === "true"]), zona);
@@ -2012,10 +2021,7 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
   await cadaMonitor("partida", "#tablero", "#zonaRevision", async w => {
     MON[`partida ${w}`].ant = await pg.evaluate(() => Math.round(document.getElementById("ant").getBoundingClientRect().height));
     await pg.click("#btnAjustes"); await pg.waitForTimeout(400);
-    MON[`partida ${w}`].hoja = await pg.evaluate(() => {
-      const r = document.getElementById("hojaAjustes").getBoundingClientRect();
-      return Math.abs(r.bottom - innerHeight) < 2 && r.width > innerWidth / 3 ? "sube desde abajo" : "menú";
-    });
+    MON[`partida ${w}`].hojas.push(...await hojasAbajo());
     await fotoM(`ancho-${w}-ajustes`);
     await pg.keyboard.press("Escape"); await pg.waitForTimeout(300);
   });
@@ -2053,7 +2059,7 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
        pone el alto de la ventana, no una columna (Posiciones, v1.6.1) */
     const llena = v.tablero && v.tablero >= h - 130;
     if (w === 1920 && !/^mes/.test(k) && !llena && v.usa < w * .75) console.log(`OJO: a ${k} lo dibujado ocupa ${v.usa} de ${w} (columna centrada, §1.12)`);
-    if (v.hoja === "sube desde abajo") console.log(`OJO: a ${k} Ajustes sube desde abajo como hoja de celu (§1.12)`);
+    if (v.hojas && v.hojas.length) console.log(`OJO: a ${k} ${v.hojas.join(", ")} sube desde abajo como hoja de celu (§1.12)`);
     if (v.ant >= 44) console.log(`OJO: a ${k} los botones de pasar jugadas miden ${v.ant} de alto: son de dedo (§1.12)`);
     if (v.dedo.length) console.log(`OJO: a ${k}, botones de dedo (44 o más de alto, §1.12): ${v.dedo.join(", ")}`);
     if (v.icono.length) console.log(`OJO: a ${k}, botones de solo ícono no universal (§1.12): ${v.icono.join(", ")}`);
@@ -2072,7 +2078,7 @@ console.log("bordes en la compu:", JSON.stringify(BORDES),
             "(a un mismo ancho, las tres pantallas abren y cierran en el mismo x)");
 /* y no queda en un número que hay que acordarse de leer: si a un mismo ancho
    las pantallas no coinciden (más de 2 px), lo dice con OJO, como el resto */
-for (const w of [1000, 1280]) {
+for (const [w] of COMPU) {
   /* el inicio no: desde la v1.3.3 se corre para dejarle lugar al riel, y
      el salto al ir a la Partida se acepta */
   /* la Partida tampoco desde la v1.7: usa el ancho de la ventana (§1.12) y
@@ -2081,6 +2087,12 @@ for (const w of [1000, 1280]) {
   const b = ["mes"].map(n => BORDES[n + " " + w]).filter(Boolean);
   const dif = Math.max(...[0, 1].map(k => Math.max(...b.map(x => x[k])) - Math.min(...b.map(x => x[k]))));
   if (dif > 2) console.log(`OJO: a ${w} las pantallas no abren y cierran en el mismo borde (${dif} px)`);
+}
+/* el anillo de foco que dibujó un clic, en toda la corrida (ver `abrirApp`) */
+{
+  const an = await anillosConMouse(pg);
+  console.log("anillo de foco con mouse:", JSON.stringify(an), "(tiene que ser [])");
+  if (an.length) console.log(`OJO: con el mouse quedó dibujado el anillo de foco en ${an.join(", ")}`);
 }
 console.log("listo: capturas/");
 await cerrar();

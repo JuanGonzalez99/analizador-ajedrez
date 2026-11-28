@@ -77,19 +77,24 @@ app**: las capturas del celu tienen que salir idénticas y `npm test` verde.
 
 - [ ] **Tanda 3 · `pruebas/mirar.mjs`**: cada medida con OJO. La señal es
       que mida un elemento con nombre, una sola pantalla o un solo tamaño
-      donde la regla vale para todos.
+      donde la regla vale para todos. *Hecha la primera parte* (28-nov): el
+      texto cortado y los bordes en todos los tamaños de compu, y "sube
+      desde abajo" en todo diálogo. Falta: las medidas de Posiciones con
+      nombre (la hoja que tapa o pega al tablero, Deshacer que se mueve) y
+      las de la barra de módulos.
 - [ ] **Tanda 4 · el mono y `npm test`** (`pruebas/mono.mjs`,
       `pruebas/estaticos.mjs`, `pruebas/analisis.test.mjs`): las reglas y
       pruebas que nacieron de un error, con la misma pregunta.
 
-- [ ] **`pantallas()` avisa del texto recortado** en lo que la variante
-      cambia (`scrollWidth > clientWidth` o texto truncado) (revisor de UX,
-      v1.8: la variante B se pasó con su fila de datos rota; causa F).
-      Atrapa toda maqueta, no solo esa.
-- [ ] **`mirar` avisa del anillo de foco con mouse**: después de cada clic
-      simulado, si el elemento activo dibuja `outline` sin tecla antes, OJO
-      (revisor de UX, v1.8; causas A y C). Atrapa todo botón que se
-      esconda y deje el foco suelto.
+- [ ] **Ningún push con `npm test` en rojo, sin depender de acordarse**
+      (28-nov: la v1.8.1 y el commit de aprendizajes de la v1.8 salieron con
+      dos pruebas rojas; causa C, el paso estaba escrito y nada lo
+      controlaba). Un gancho `pre-push` de git versionado en
+      `pruebas/ganchos/` que corra `npm test` (4 s), prendido por el hook
+      SessionStart de `.claude/settings.json` con `git config
+      core.hooksPath pruebas/ganchos`. **Espera a Juan**: tocar los hooks
+      de la sesión lo frena el permiso automático; se le pide en el resumen.
+      Atrapa todo push rojo, de día y de noche, de cualquier cambio.
 
 Después de la cuarta, lo mantiene la revisión del domingo (`TAREA-NOCTURNA.md`,
 paso 0).
@@ -480,3 +485,18 @@ zona se juzgaba en el único estado, ancho o pantalla que traía el arnés).
   suma las filas de botones con ícono, menús y panel, y dice que cero OJO no
   es aprobado. *Regla general*: una prevención se escribe contra la causa,
   no contra el caso que la destapó.
+- **`npm test` rojo en `main` desde la v1.8.1** · 28-nov, noche · dos
+  chequeos que saltaban sin error de verdad (`filaPeon` contenía el rastro
+  `aPeon`; "~240 vacíos" pasaba por cita de renglón) y nadie los vio
+  porque se pusheó sin correrlo (C: el paso estaba escrito, nada lo
+  controlaba) · las dos pruebas buscan la forma y no el pedazo de texto
+  (la palabra entera; un número pegado a un archivo o a "renglón"), lo que
+  atrapa también los nombres y medidas que vengan; y el gancho pre-push,
+  pendiente del permiso de Juan.
+- **Las dos prevenciones de la v1.8, hechas** · 28-nov, noche ·
+  `recortados()` en `tira.mjs` barre toda la página (no un id) y lo usan
+  `pantallas()` contra su línea base en cada tamaño y `mirar` en los cinco;
+  `abrirApp()` vigila toda la sesión el anillo de foco que deja un clic, en
+  todo elemento, para `mirar` y toda maqueta. Lo primero que atrapó es de
+  verdad: Esc y volver a abrir con el mouse deja el anillo en "Listo"
+  (a Relleno).

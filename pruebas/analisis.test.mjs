@@ -147,8 +147,10 @@ test('no queda rastro de la tabla "Por color"', () => {
 test('no queda rastro del mecanismo "casilla atacada por un peón"', () => {
   /* Era un caso particular de "dejé comible la pieza que moví" y no se sostiene
      solo. Se fue el campo, la señal, la tabla y el helper peonAtaca. */
+  /* con borde de palabra (28-nov): `filaPeon`, un nombre cualquiera de la
+     v1.8.1, contiene "aPeon" y la puso roja sin que el campo volviera */
   for (const rastro of ["aPeon", "peonAtaca", "atacada por un peón"])
-    assert.ok(!html.includes(rastro), `volvió "${rastro}"`);
+    assert.ok(!new RegExp(`(^|[^\\wáéíóúñ])${rastro}($|[^\\wáéíóúñ])`).test(html), `volvió "${rastro}"`);
 });
 
 test("derivarFilas ya no emite el campo aPeon", () => {
