@@ -616,6 +616,13 @@ hay. Las primeras salen del historial del traspaso.
   elige.
 
 ### No le copa
+- **Ajustes como menú colgado con pastillas, en la compu** (28-nov-2026,
+  v1.9; *duda, no rechazo*): *"no sé si me copa el menú así. Por ahora
+  dejalo, más adelante vemos qué hacemos"*. Queda como está y no se toca
+  de noche hasta que lo retome él (`HOJA-DE-RUTA.md`, Esperan a Juan). Lo
+  que tenía la B: las opciones a la vista, un clic por cambio y el tablero
+  al lado como muestra; lo que puede pesarle, que ocho filas de pastillas
+  son mucha cosa junta (lo sobrecargado, de abajo).
 - **Los encabezados de la planilla** (28-nov-2026, v1.8): *"no me copan las
   cabeceras en la lista de jugadas, creo que son redundantes"*. Se sacaron en
   la v1.8.2. Una planilla de jugadas se entiende por su forma (número,

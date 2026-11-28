@@ -115,7 +115,10 @@ Repo: `JuanGonzalez99/analizador-ajedrez`. Una vez por noche, por ejemplo a las
    dirección. Como mucho dos tandas; si sigue en "ninguna", no se aplica nada
    y se cuenta en el resumen, con las tiras. Lo que se aplica va igual al
    resumen **con la tira de todas y cuál ganó**, para que Juan pueda elegir
-   otra.
+   otra. **En un ítem de compu, a Juan se le manda solo la de 1366**
+   (`-juntas-1366`; Juan, 28-nov: "no hace falta que mandes las variantes en
+   cada resolución"); las de 1920 y los cortes las mira quien programa y el
+   revisor, y si en 1920 algo se ve mal se dice en el resumen.
    **Lo que no se aplica por respetar una decisión anterior de Juan** (el
    revisor propone algo que contradice algo que él eligió) va al resumen
    igual, **con una captura de cómo quedaba**: se le muestra para que decida,

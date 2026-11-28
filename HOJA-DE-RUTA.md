@@ -336,6 +336,14 @@ a Arreglos o a Relleno según lo que sea.
   motor; resumen de la variante contra la partida; aviso de confianza
   cuando la variante se alarga.
 
+### Ajustes en la compu (28-nov)
+
+- [ ] ⏸ espera a Juan · **El menú de Ajustes de la compu** (v1.9, la B con
+      pastillas). Juan: *"no sé si me copa el menú así. Por ahora dejalo, más
+      adelante vemos qué hacemos"*. Cuando lo retome, se le llevan variantes
+      a 1366 (las de la v1.9 están descritas en `TRASPASO.md`, v1.9). Va
+      junto con los grupos de Ajustes y el tema como muestras.
+
 ### La revisión de las evaluaciones (14 y 15-nov-2026)
 
 Lo que salió de la revisión de los veredictos y de las frases de la tarjeta
