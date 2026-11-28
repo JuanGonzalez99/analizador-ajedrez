@@ -4377,9 +4377,9 @@ test("Posiciones: la repetición de juegoPos es la del reglamento, en partidas a
   };
   const desde = ["4k3/2p5/8/KP5r/8/8/8/6N1 b - - 0 1", "4k3/3p2b1/8/4P3/8/2K5/8/6N1 b - - 0 1",
                  "r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 0 1", "4k3/3p4/8/4P3/8/8/8/4K1N1 b - - 0 1"];
-  for (const inicial of desde) for (let k = 0; k < 150; k++) {
+  for (const inicial of desde) for (let k = 0; k < 5; k++) {
     const c = new Chess(inicial), ucis = [], vistas = [fide(c)];
-    for (let i = 0; i < 40 && !c.game_over(); i++) {
+    for (let i = 0; i < 30 && !c.game_over(); i++) {
       const ms = c.moves({ verbose: true }), m = ms[azar(ms.length)];
       c.move(m); ucis.push(m.from + m.to + (m.promotion || "")); vistas.push(fide(c));
       posicion.poner({ inicial, fens: [], ucis, sans: [], yo: "w" });

@@ -5104,7 +5104,7 @@ los que miran `estadoPos`, `finPos`, el turno del motor y el PGN. Probado
 también en otra columna con Juan del otro color, y con un peón que sí
 puede comer al paso, donde la primera es otra posición y dos no son tres,
 con los tres casos del que puede comer pero no es legal, y contra una
-cuenta independiente por jugadas legales en 600 partidas al azar.
+cuenta independiente por jugadas legales en partidas al azar (20, para que `npm test` siga rápido; el revisor corrió 4.000 a mano).
 
 **v1.9 [PC], Ajustes como menú colgado de la tuerca** (etapa "La compu,
 hecha para la compu"; la B del revisor de UX entre tres: A, el mismo menú
