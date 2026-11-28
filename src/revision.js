@@ -36,11 +36,20 @@ function ubicarAlts() {
     if (!rc.height) return;
     abajo = window.innerHeight - 8 - (rc.bottom - rz.top) >= ALTS_ALTO + 32;
   }
-  if (abajo === z.classList.contains("altsAbajo")) return;
   z.classList.toggle("altsAbajo", abajo);
   /* abajo va detrás de Mejor y no de la curva: en la grilla tiene su lugar
-     fijo, y así el Tab la toma antes que la lista (v0.182) */
-  if (abajo) document.querySelector("#zonaRevision > .pabajo").after(a); else $("lateral").prepend(a);
+     fijo, y así el Tab la toma antes que la lista (v0.182). En la compu, si
+     no bajan, van ADENTRO de la cabecera de la jugada, debajo de los datos,
+     y su botón al renglón del título (v1.8, la A del revisor: tratan de la
+     misma jugada). En el celu no existen y vuelven a la lista. */
+  const enPieza = !abajo && window.matchMedia(CORTE_ANCHO).matches;
+  const pab = document.querySelector("#zonaRevision > .pabajo"), met = pab.querySelector(".metricas");
+  if (abajo) { if (a.previousElementSibling !== pab) pab.after(a); }
+  else if (enPieza) { if (a.previousElementSibling !== met) met.after(a); }
+  else if (a.parentElement !== $("lateral")) $("lateral").prepend(a);
+  const b = $("btnAlts");
+  if (enPieza) { if (b.parentElement !== $("veredicto")) $("vEv").before(b); }
+  else if (b.parentElement === $("veredicto")) a.querySelector(".altCab").append(b);
 }
 window.addEventListener("resize", ubicarCurva);
 /* EL RESUMEN, DE LA COLUMNA a AL BORDE DEL PANEL (v0.137). En píxeles de la
@@ -267,6 +276,9 @@ function pintarRevision() {
      de la línea y no de una categoría, y dice qué es y a quién le toca. */
   const color = enInicio ? "var(--linea)" : `var(--c-${c.clave})`;
   $("veredicto").style.borderLeftColor = color;
+  /* la cabecera de la compu es una sola pieza (v1.8): el borde de la
+     categoría corre por la tarjeta, los datos y las tres mejores */
+  $("zonaRevision").style.setProperty("--colCat", color);
   $("vIco").textContent = enInicio ? "" : c.icono;
   $("vIco").style.color = color;
   $("vIco").classList.toggle("oculto", enInicio);
@@ -407,6 +419,10 @@ function pintarRevision() {
   const sinReloj = !enInicio && !PRUEBA && f.seg == null;
   $("mPenso").textContent = enInicio || PRUEBA ? "\u2014" : sinReloj ? "sin reloj" : tiempoCorto(f.seg);
   $("mPenso").classList.toggle("sinDato", sinReloj);
+  /* la raya de lo que todavía no hay, tenue en la compu (v1.8: un dato que
+     falta no pesa como uno que está) */
+  for (const id of ["mPerdida", "mCaida", "mPenso"])
+    $(id).classList.toggle("vacio", $(id).textContent === "\u2014");
   /* En la inicial la fila es Mejor y una leyenda: no promete el tiempo si la
      partida no trae relojes, porque ese dato no va a llegar nunca. */
   const leyenda = enInicio && !fP;   /* con una probada en la inicial, los cuadritos */
@@ -609,6 +625,9 @@ function pintarRevision() {
     const lista = $("jugadas");
     lista.className = "jugadas " + fj.clase;
     if (fj.clase === "planilla") {
+      /* sin reloj en toda la partida, la planilla no tiene columnas de
+         tiempo (v1.8: una columna de "·" rellena un hueco con nada) */
+      $("lateral").classList.toggle("sinReloj", !R.filas.some(x => x.seg != null));
       /* se agrupa por número de jugada y NO de a dos por posición: si la
          partida arranca con negras —un PGN desde una posición— el par queda
          igual. Es la misma regla que tenía la lista de la v0.73. */

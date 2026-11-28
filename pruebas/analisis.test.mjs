@@ -1899,7 +1899,9 @@ test("en la compu el orden de Tab sigue al de lectura, sin tabindex positivos (v
   assert.ok(html.includes("function ordenDeTab(compu)"));
   assert.ok(html.includes("ordenDeTab(window.matchMedia(CORTE_ANCHO).matches);"));
   /* las tres mejores, debajo de la curva, van detrás de Mejor en el HTML */
-  assert.ok(html.includes('if (abajo) document.querySelector("#zonaRevision > .pabajo").after(a);'));
+  assert.ok(html.includes('if (abajo) { if (a.previousElementSibling !== pab) pab.after(a); }'));
+  /* y en la compu, sin bajar, adentro de la cabecera de la jugada (v1.8) */
+  assert.ok(html.includes('else if (enPieza) { if (a.previousElementSibling !== met) met.after(a); }'));
   assert.ok(!/tabindex="[1-9]/.test(html));
 });
 

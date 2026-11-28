@@ -502,6 +502,12 @@ function previaEn(sp, i) {
    panel diciendo "las otras dos", que no es una lista de las mejores. */
 const ALTERNATIVAS = new Map();
 let ALT_PIDIENDO = null;
+/* PEDIRLAS ES UN MODO (v1.8, revisor de UX): una vez pedidas siguen al pasar
+   jugadas —"calculando" con el mismo alto hasta que llega el motor— y el
+   botón pasa a "Ocultar". Si se cerraran solas en la jugada siguiente, la
+   cabecera de la compu crecería y achicaría según la jugada. No se calculan
+   solas: hasta que se piden, nada (Juan, 17-nov). */
+let ALT_MODO = false;
 const claveAlt = fen => fen + "|" + ((R && R.profBase) || +$("prof").value || 16);
 /* DE QUÉ POSICIÓN SALEN (v0.139): de la de ANTES de la última jugada que se ve,
    no de la que está dibujada. Parado en una jugada lo que uno pregunta es "¿qué
@@ -566,15 +572,19 @@ function pintarAlternativas() {
      sobre la variante A de la v0.180). Para la caja vacía se descartó (un
      esqueleto dice "ya viene algo" cuando no viene nada); mientras el motor
      piensa sí viene, y las filas entran en el mismo lugar, sin salto. */
-  ver("btnAlts", !ev && !pensando);
-  bot.disabled = TRABAJANDO;
-  if (pensando) {
+  bot.textContent = ALT_MODO ? "Ocultar" : "Tres mejores";
+  bot.setAttribute("aria-pressed", ALT_MODO ? "true" : "false");
+  bot.disabled = TRABAJANDO && !ALT_MODO;
+  if (!ALT_MODO) { lista.innerHTML = ""; return; }
+  /* en el modo, la que falta se pide sola; si el motor está con otra, se
+     pide cuando termine (`pedirAlternativas` vuelve a pintar) */
+  if (!ev && !pensando && !ALT_PIDIENDO && !TRABAJANDO) { pedirAlternativas(); return; }
+  if (!ev) {
     lista.innerHTML = `<div role="status" aria-label="Pensando…">` + [46, 38, 42].map((a, i) =>
       `<div class="alt fant" aria-hidden="true"><span class="an">${i + 1}</span>` +
       `<span><i style="width:${a}px"></i></span><span class="ae"><i style="width:34px"></i></span></div>`).join("") + `</div>`;
     return;
   }
-  if (!ev) { lista.innerHTML = ""; return; }
   if (ev.error) { lista.innerHTML = `<div class="altNota">No se pudo: ${ev.error}</div>`; return; }
   const turno = fen.split(" ")[1];
   /* la primera sale de `mejor`, que es la del `bestmove`; las otras dos de las
@@ -606,7 +616,7 @@ function pintarAlternativas() {
    variante reemplaza a la última probada, así que se pueden tocar las tres una
    atrás de la otra y la lista no cambia: siguen siendo alternativas entre sí.
    Tocar la que ya se jugó no hace nada: es lo que el tablero ya muestra. */
-$("btnAlts").onclick = seguro("alternativas", pedirAlternativas);
+$("btnAlts").onclick = seguro("alternativas", () => { ALT_MODO = !ALT_MODO; pintarAlternativas(); });
 function jugarAlternativa(uci) {
   const base = baseDeAlternativas();
   if (TRABAJANDO || !base || uci === base.uci) return;

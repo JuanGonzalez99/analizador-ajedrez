@@ -118,7 +118,7 @@ cambio, ver Relleno" y lo que se intentó va a Relleno: no frena Posiciones.
 Lo que se levante mientras tanto va a Arreglos o a Relleno, **no acá**.
 Cuenta estimada: 4 a 6 noches.
 
-- [ ] **La Partida de la compu, con componentes de compu** (Juan, 28-nov,
+- [x] ~~**La Partida de la compu, con componentes de compu**~~ (hecho en la v1.8: la A del revisor entre tres, cabecera de una pieza y planilla con encabezado; C, el comentario a lo lichess, descartada) (Juan, 28-nov,
       sobre la v1.7: *"no me gusta ninguna. siento que se trató de amontonar
       todo… la idea de las pestañas es buena, pero no es suficiente"*). La
       v1.7 dejó el tablero al alto y el Resumen en una pestaña, pero el panel
@@ -436,6 +436,19 @@ archiva los que pierden sentido.
       revisor pidió que el estado vacío tenga también un acceso directo. Y
       la hoja se titula "La partida", y armar una posición no es un ajuste
       de la partida: decidir por dónde se llega (revisor de UX, v1.4).
+
+- [ ] **[PC] La pantalla de la Partida a 1920** (revisor de UX, v1.8). Sigue
+      siendo un bloque centrado con ~240 vacíos a cada lado y ~50 sobrantes
+      abajo de los botones. ¿El tablero y el panel usan el ancho, o el panel
+      crece hasta un tope y el sobrante va al costado del tablero?
+- [ ] **[PC] La jugada elegida en la planilla lleva dos marcas** (revisor de
+      UX, v1.8; ya estaba): la caja de la categoría y el subrayado del
+      acento. ¿Cuál dice "elegida" y cuál "categoría", igual en toda la app?
+- [ ] **[PC] La tabla del Resumen no entra a 1366** (revisor de UX, v1.8;
+      ya estaba): se corta en "Omisión" y las columnas de los dos jugadores
+      quedan tiradas a los bordes, con el sobrante entre el rótulo y los
+      números. ¿Dos columnas de categorías, filas de 20, columnas de ancho
+      fijo al lado del rótulo? Con los ceros a la vista.
 
 ### Limpieza de código
 

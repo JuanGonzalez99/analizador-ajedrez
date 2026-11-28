@@ -631,3 +631,54 @@
     body.enPosicion { padding-top: 8px; }
     body.enPosicion .pie { max-width: clamp(360px, calc(100vh - 334px), 640px); margin-left: auto; margin-right: auto; }
   }
+
+  /* LA PARTIDA DE LA COMPU CON COMPONENTES DE COMPU (v1.8; la A del revisor
+     entre tres, §7). La cabecera de la jugada es UNA pieza: la tarjeta, los
+     datos como una fila con divisores y, si se piden, las tres mejores, con el
+     borde de la categoría corriendo por todo (`--colCat`, de `pintarRevision`),
+     como la revisión de chess.com. Con una variante abierta queda como antes
+     (espera a Juan). La planilla, con encabezado y columnas de ancho fijo: lo
+     que sobra va al final, no entre la jugada y su reloj (§1.12). */
+  .cabPl { display: none; }
+  @media (min-width: 1000px) {
+    #zonaRevision:has(#prueba.oculto) .tarjetas .veredicto { border-bottom: 0;
+      border-radius: var(--r-tarjeta) var(--r-tarjeta) 0 0; }
+    #zonaRevision:has(#prueba.oculto) > .pabajo > .metricas { margin-top: 0; gap: 0;
+      background: var(--superficie); border: 1px solid var(--linea);
+      border-left: 3px solid var(--colCat, var(--linea));
+      border-radius: 0 0 var(--r-tarjeta) var(--r-tarjeta); }
+    #zonaRevision:has(#prueba.oculto) > .pabajo > .metricas > div { background: none; border: 0; border-radius: 0; }
+    #zonaRevision:has(#prueba.oculto) > .pabajo > .metricas > div + div { border-left: 1px solid var(--linea); }
+    /* el mismo alto en toda la partida: en la inicial, las cuatro con raya */
+    #zonaRevision > .pabajo > .metricas.enInicio > div:not(.leyInicio) { display: block; }
+    #zonaRevision > .pabajo > .metricas.enInicio > .leyInicio { display: none; }
+    #zonaRevision .metricas .va.vacio, #zonaRevision .metricas .va.sinDato { color: var(--tenue); font-weight: 400; }
+    #zonaRevision > .pabajo > .alts { margin: 0; border-top: 0; padding: 2px 10px 8px;
+      border-left: 3px solid var(--colCat, var(--linea));
+      border-radius: 0 0 var(--r-tarjeta) var(--r-tarjeta); }
+    #zonaRevision > .pabajo > .alts .altCab { display: none; }
+    /* siempre el alto de tres filas (3 × 30.75 medidos): una jugada forzada
+       trae una sola y la pieza achicaba al pasar por ella */
+    #zonaRevision > .pabajo > .alts .altLista { min-height: 92.25px; }
+    #zonaRevision > .pabajo > .alts:has(.altLista:empty) { display: none; }
+    #zonaRevision:has(#prueba.oculto) > .pabajo:has(> .alts .altLista:not(:empty)) > .metricas { border-radius: 0; }
+    #veredicto:has(> #btnAlts) { grid-template-columns: auto 1fr auto auto;
+      grid-template-areas: "ico tit ev alts" "frase frase frase frase"; }
+    #veredicto.invertida:has(> #btnAlts) { grid-template-columns: auto auto 1fr auto;
+      grid-template-areas: "ev ico tit alts" "frase frase frase frase"; }
+    #veredicto > #btnAlts { grid-area: alts; align-self: center; margin-left: var(--e-2);
+      min-height: 32px; padding-top: 0; padding-bottom: 0; }
+    /* pedidas, el botón dice "Ocultar" con el fondo del acento: prendido */
+    #btnAlts[aria-pressed="true"] { background: color-mix(in srgb, var(--acento) 22%, var(--superficie)); }
+
+    .lateral > .cabPl { display: grid; flex: none; padding: 8px 7px 4px; border: 1px solid transparent;
+      border-bottom: 0; font-size: var(--t-minimo); font-weight: 600; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--tenue); }
+    .lateral.verRes > .cabPl, .lateral:has(> .jugadas:not(.planilla)) > .cabPl { display: none; }
+    .jugadas.planilla > div:not(.var), .lateral > .cabPl { grid-template-columns: 32px 96px 56px 112px 56px; gap: 0; }
+    .jugadas.planilla > div:not(.var) > :nth-child(4), .lateral > .cabPl > :nth-child(4) { margin-left: 16px; }
+    .lateral > .cabPl > :nth-child(2), .lateral > .cabPl > :nth-child(4) { padding-left: 28px; }
+    .lateral > .cabPl > .pe2 { text-align: right; padding-right: 3px; }
+    .lateral.sinReloj .jugadas.planilla > div:not(.var), .lateral.sinReloj > .cabPl { grid-template-columns: 32px 96px 112px; }
+    .lateral.sinReloj .jugadas.planilla .se, .lateral.sinReloj > .cabPl > .pe2 { display: none; }
+  }

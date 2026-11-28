@@ -665,7 +665,16 @@ await pg.locator("#jugadas .jg").nth(12).hover();
 await pg.waitForTimeout(150);
 /* v0.141: pararse en los segundos, entre las dos jugadas del renglón, no
    cierra la previa. Es lo que dejaba pasar a la de al lado sin que se fuera. */
-await pg.locator("#jugadas .se").nth(12).hover();
+/* sin reloj la planilla de la compu no tiene la columna (v1.8): el hueco
+   entre las dos mitades del renglón es lo que queda entre las jugadas */
+{
+  const se = pg.locator("#jugadas .se").nth(12);
+  if (await se.isVisible()) await se.hover();
+  else {
+    const b = await pg.locator("#jugadas .jg").nth(12).boundingBox();
+    await pg.mouse.move(b.x + b.width + 8, b.y + b.height / 2);
+  }
+}
 await pg.waitForTimeout(250);
 const tSegundos = await tablero();
 /* v0.142: pero si el mouse se QUEDA ahí, a los 500 ms se cierra */
@@ -1032,7 +1041,9 @@ alt.lasTres = await pg.evaluate(() =>
   [...document.querySelectorAll("#altLista .alt .as")].map(e => e.dataset.uci));
 alt.marcada = await pg.evaluate(() =>
   [...document.querySelectorAll("#altLista .alt.jugada .as")].map(e => e.textContent));
-alt.botonEscondido = await pg.locator("#btnAlts").isHidden();
+/* desde la v1.8 pedirlas es un modo: el botón no se va, dice "Ocultar" */
+alt.boton = { texto: (await pg.locator("#btnAlts").textContent()).trim(),
+  prendido: await pg.locator("#btnAlts").getAttribute("aria-pressed") };
 await foto("ancho-alternativas");
 /* tocar la segunda abre la variante CON ESA jugada */
 const san2 = await pg.locator("#altLista .alt").nth(1).locator(".as").textContent();
@@ -1050,6 +1061,29 @@ await foto("ancho-alternativas-probada");
 console.log("alternativas:  ", JSON.stringify(alt));
 if (await pg.locator("#prueba").isVisible()) await pg.locator("#prueba button").first().click();
 await pg.waitForTimeout(300);
+/* EL MODO SIGUE AL PASAR JUGADAS, y la pantalla no cambia de forma (v1.8,
+   revisor de UX: si se cerraran solas, la cabecera crecería y achicaría
+   según la jugada). Contra la causa: se mide el alto de toda la zona antes y
+   después de pasar, no solo el de las tres. Y se apaga, para que el resto
+   del arnés vea la pantalla de fábrica. */
+{
+  const altoZona = () => pg.evaluate(() => {
+    return { cab: Math.round(document.getElementById("alts").getBoundingClientRect().bottom),
+             filas: document.querySelectorAll("#altLista .alt").length };
+  });
+  const antes = await altoZona();
+  await pg.evaluate(() => document.getElementById("sig").click());
+  await pg.waitForTimeout(150);
+  const durante = await altoZona();
+  await pg.waitForFunction(() => document.querySelectorAll("#altLista .alt:not(.fant)").length > 0, null, { timeout: 30000 });
+  const despues = await altoZona();
+  await pg.click("#btnAlts"); await pg.waitForTimeout(150);
+  console.log("modo mejores:  ", JSON.stringify({ antes, durante, despues,
+    apagado: { filas: await pg.locator("#altLista .alt").count(),
+               texto: (await pg.locator("#btnAlts").textContent()).trim() } }));
+  if (antes.cab !== durante.cab || antes.cab !== despues.cab)
+    console.log("OJO: con las tres mejores pedidas, pasar de jugada cambia el alto de la zona");
+}
 
 /* LA TIRA DE PIEZAS COMIDAS (v0.87). Se va a una jugada donde ya se comieron
    cosas de los dos lados y se mide qué quedó dibujado, no que exista el div.
@@ -1797,9 +1831,71 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
       .filter(e => e.offsetParent !== null && getComputedStyle(e).position !== "fixed" && !recortado(e))
       .map(e => e.getBoundingClientRect()).filter(r => r.width > 0 && r.height > 0);
     const fondo = rf.length ? Math.max(...rf.map(r => r.bottom)) + scrollY : 0;
+    /* TODO ENCABEZADO SOBRE SU COLUMNA, y ninguna columna de puro relleno
+       (v1.8, revisor de UX: en la maqueta de la planilla los encabezados
+       caían hasta 100 px corridos y nadie lo midió, y una columna entera de
+       "·" sin reloj; causas B y C). Contra la causa: toda <table> con thead
+       a la vista, en cualquier pantalla, y toda grilla que declare su
+       encabezado con `data-encabeza="<selector de la lista>"`. Un encabezado
+       está bien si su borde izquierdo, derecho o su centro cae a 4 px de
+       algún texto de su celda en la primera fila (la celda puede traer un
+       símbolo antes de la jugada). */
+    const cajas = e => { const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), out = [];
+      for (let n; (n = w.nextNode());) if (n.textContent.trim()) {
+        const r = document.createRange(); r.selectNodeContents(n); out.push(r.getBoundingClientRect()); }
+      return out; };
+    const vis0 = e => e.offsetParent !== null && e.getBoundingClientRect().width > 0;
+    const pares = [];
+    for (const t of document.querySelectorAll("table")) {
+      const cab = t.querySelector("thead tr"), filas = [...t.querySelectorAll("tbody tr")].filter(vis0);
+      if (vis0(t) && cab && filas.length) pares.push([t.id || "tabla", cab, filas]);
+    }
+    for (const h of document.querySelectorAll("[data-encabeza]")) {
+      const l = document.querySelector(h.dataset.encabeza);
+      const filas = l ? [...l.children].filter(f => vis0(f) && getComputedStyle(f).display === "grid") : [];
+      if (vis0(h) && filas.length) pares.push([h.id || "encabezado", h, filas]);
+    }
+    const encab = [], relleno = [];
+    for (const [n, cab, filas] of pares) {
+      const celdas = r => [...r.children].filter(vis0);
+      const cs = celdas(cab), fs = celdas(filas[0]);
+      cs.forEach((c, i) => {
+        const a = cajas(c)[0], bs = fs[i] ? cajas(fs[i]) : [];
+        if (!a || !bs.length) return;
+        const d = Math.min(...bs.map(b => Math.min(Math.abs(a.left - b.left), Math.abs(a.right - b.right),
+          Math.abs((a.left + a.right) / 2 - (b.left + b.right) / 2))));
+        if (d > 4) encab.push(`${n} "${c.textContent.trim()}" ${Math.round(d)} px`);
+      });
+      if (filas.length >= 3) fs.forEach((_, i) => {
+        const vs = filas.map(r => celdas(r)[i]).filter(Boolean).map(e => e.textContent.trim());
+        if (vs.length >= 3 && vs.every(v => v === vs[0]) && /^[·—–-]{1,2}$/.test(vs[0]))
+          relleno.push(`${n} columna ${i + 1} ("${vs[0]}")`);
+      });
+    }
+    /* UNA PIEZA NO SE PARTE (v1.8, revisor de UX: con las tres mejores
+       abiertas la cabecera de la jugada se veía como dos tarjetas, con 4 px
+       de fondo y esquinas redondeadas en la unión; causa A). Contra la
+       causa: dos cajas vecinas, una debajo de la otra, con el mismo borde
+       izquierdo de color (2 px o más) son una pieza, en cualquier pantalla:
+       entre ellas no va hueco ni radio. */
+    const conBorde = [...document.querySelectorAll("body *")].filter(vis0).filter(e => {
+      const c = getComputedStyle(e);
+      return parseFloat(c.borderLeftWidth) >= 2 && c.borderLeftStyle !== "none" &&
+        !/rgba\(0, 0, 0, 0\)|transparent/.test(c.borderLeftColor); });
+    const partidas = [];
+    for (const a of conBorde) for (const b of conBorde) {
+      if (a === b || a.contains(b) || b.contains(a)) continue;
+      const ca = getComputedStyle(a), cb = getComputedStyle(b);
+      if (ca.borderLeftColor !== cb.borderLeftColor) continue;
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      const hueco = rb.top - ra.bottom;
+      if (Math.abs(ra.left - rb.left) > 1 || hueco < -0.5 || hueco > 16) continue;
+      if (hueco > 0.5 || parseFloat(ca.borderBottomLeftRadius) > 0 || parseFloat(cb.borderTopLeftRadius) > 0)
+        partidas.push(`${a.id || a.className} / ${b.id || b.className} (hueco ${Math.round(hueco)})`);
+    }
     return { sobra: Math.max(0, Math.round(fondo - innerHeight)),
              tablero: tab ? Math.round(tab.getBoundingClientRect().width) : null,
-             usa: Math.round(usa), dedo, icono, columna, listo };
+             usa: Math.round(usa), dedo, icono, columna, listo, encab, relleno, partidas };
   }, [tab, zona]);
   const MON = {};
   /* `antes` corre después de cada cambio de tamaño: un menú abierto se
@@ -1881,6 +1977,21 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
         if (elegida) { await pg.click("#" + elegida); await pg.waitForTimeout(300);
           MON[`${nombre} ${w}`].fueraVuelta = await fueraDeVista(zona); }
       }
+      /* Y CADA BOTÓN QUE SE PRENDE (v1.8, misma causa que las pestañas:
+         las tres mejores abiertas no las miraba nadie). Todo `[aria-pressed]`
+         a la vista en la zona se prende, se fotografía, se mide y se apaga. */
+      const prendibles = await pg.evaluate(z => [...document.querySelectorAll(z)]
+        .flatMap(e => [...e.querySelectorAll("[aria-pressed][id]")])
+        .filter(t => t.offsetParent !== null && t.getAttribute("aria-pressed") === "false").map(t => t.id), zona);
+      for (const id of prendibles) {
+        await pg.click("#" + id); await pg.waitForTimeout(1200);
+        await fotoM(`ancho-${w}-${nombre}-${id}`);
+        const m = await medidaM(tab, zona);
+        m.cortado = await cortados(zona);
+        m.fuera = await fueraDeVista(zona);
+        MON[`${nombre}-${id} ${w}`] = m;
+        await pg.click("#" + id); await pg.waitForTimeout(300);
+      }
       if (extra) await extra(w);
     }
   };
@@ -1946,6 +2057,9 @@ for (const [w, h] of [[1000, 700], [1280, 800]]) {
     if (v.ant >= 44) console.log(`OJO: a ${k} los botones de pasar jugadas miden ${v.ant} de alto: son de dedo (§1.12)`);
     if (v.dedo.length) console.log(`OJO: a ${k}, botones de dedo (44 o más de alto, §1.12): ${v.dedo.join(", ")}`);
     if (v.icono.length) console.log(`OJO: a ${k}, botones de solo ícono no universal (§1.12): ${v.icono.join(", ")}`);
+    if (v.encab && v.encab.length) console.log(`OJO: a ${k} hay encabezados corridos de su columna: ${v.encab.join(", ")}`);
+    if (v.relleno && v.relleno.length) console.log(`OJO: a ${k} hay columnas sin datos, todo relleno: ${v.relleno.join(", ")}`);
+    if (v.partidas && v.partidas.length) console.log(`OJO: a ${k} una pieza partida (mismo borde de color, con hueco o radio en la unión): ${v.partidas.join(", ")}`);
     if (v.listo.length) console.log(`OJO: a ${k}, un "Listo" de hoja de celu adentro de lo que se abre (§1.12): ${v.listo.join(", ")}`);
     if (v.pierde && v.pierde.length) console.log(`OJO: a ${k} dejan de verse ${v.pierde.join(", ")} al cambiar de pestaña (la zona cambia de forma)`);
     if (v.fuera && v.fuera.length) console.log(`OJO: a ${k} lo elegido quedó fuera de vista en una lista con scroll: ${v.fuera.join(", ")}`);

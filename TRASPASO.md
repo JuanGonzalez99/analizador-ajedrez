@@ -1,7 +1,7 @@
 # Analizador de partidas — traspaso
 
 Documento para retomar el proyecto. Vive en el repo: **se actualiza en el mismo
-commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.7.2**.
+commit que el cambio que describe.** Escrito sobre la v17, al día en la **v1.8**.
 
 **Hacia dónde va el proyecto ya no está acá: está en `NORTE.md`** (5-nov-2026),
 con el orden en `HOJA-DE-RUTA.md`, el sistema de diseño y los gustos de Juan en
@@ -508,6 +508,9 @@ y altas) la curva baja debajo del tablero: `.curvaAbajo`, que pone
 `ubicarCurva()`. Desde la v0.150, si además entra entera, la caja de las tres
 mejores (`#alts`) se muda por DOM debajo de la curva: `.altsAbajo`, que pone
 `ubicarAlts()`; desde la v0.180 ahí va sin caja (sin fondo ni borde).
+Desde la v1.8, si no bajan, van adentro de la cabecera de la jugada
+(tarjeta, datos y las tres mejores en una pieza) y la planilla lleva
+encabezado (`#cabPl`); ver §7, v1.8.
 Lo que sigue en este párrafo es la historia.
 Desde la v0.80 la vista Partida se parte en **dos columnas** (§4duovicies),
 **de 950 px para arriba desde la v0.118** (de 950 a 1109 la principal se achica
@@ -5020,6 +5023,49 @@ categorías otra vez; lo que no entra a 1366 lo dice el fundido. Y la v1.7
 entera no le copó (*"se trató de amontonar todo"*): queda como está hasta
 el ítem nuevo de la hoja, "La Partida de la compu, con componentes de
 compu", que va primero en la etapa (`DISENO.md` §2 y §3).
+
+**v1.8, la Partida de la compu con componentes de compu** (Juan, 28-nov,
+sobre la v1.7; la A del revisor entre tres, solo compu). Variantes a 1000,
+1280, 1366 y 1920: A "una pieza" (tarjeta y cuadritos fundidos), B "coach"
+(como la revisión de chess.com, los datos en un renglón de texto) y C
+"comentario" (como el análisis de lichess, la explicación adentro de la
+planilla bajo la jugada). **C se descartó** porque al pasar jugadas con ← →
+el comentario salta de fila y la planilla cambia de forma en cada jugada
+(§2, v0.172), se pisa con la variante adentro de la planilla (v0.171) y con
+la pestaña Resumen la explicación desaparece; B, porque un número en un
+renglón de texto cuesta más encontrarlo que en su celda. Lo que quedó:
+- **La cabecera de la jugada es una sola pieza**: `#veredicto`, la fila de
+  `.metricas` (sin cajas, con divisores) y, si se piden, las tres mejores
+  (`#alts`, que `ubicarAlts` muda adentro de `.pabajo` detrás de los datos;
+  abajo de la curva, si bajan, sigue como antes). El borde de la categoría
+  corre por todo con `--colCat`, que pone `pintarRevision`. "Tres mejores"
+  es un botón de 32 en el renglón del título (área `alts` de la grilla de
+  `#veredicto`). **Pedirlas es un modo** (`ALT_MODO`, `tablero.js`): el
+  botón pasa a "Ocultar" (`aria-pressed`, fondo del acento), al pasar
+  jugadas siguen abiertas y la que falta se pide sola, con las filas
+  fantasma mientras tanto; la lista mide siempre tres filas (92.25 px: una
+  jugada forzada trae una sola). Medido pasando seis jugadas: el pie no se
+  mueve. Antes se cerraban solas en la jugada siguiente. Mismo alto en error, libro e inicial (en la inicial
+  las cuatro celdas con "—"; los "—" y "sin reloj" en tenue, clase `vacio`).
+  Con una variante abierta todo queda como antes (`:has(#prueba.oculto)`).
+- **La planilla con encabezado** (`#cabPl`, afuera de la lista que
+  scrollea, en la misma grilla): 32 | 96 | 56 | 16 de aire | 96 | 56, y lo
+  que sobra a la derecha (§1.12). Sin reloj en toda la partida
+  (`.lateral.sinReloj`), sin columnas de tiempo ni "·". Medido con `Range`:
+  cada encabezado cae al píxel sobre su columna a 1366 y 1920.
+- `mirar` pasa por el hueco entre las dos mitades del renglón cuando no hay
+  columna de tiempo (la prueba de la previa sobre los segundos, v0.141).
+- `mirar` suma tres medidas contra la causa, en toda pantalla de monitor:
+  encabezados corridos de su columna (toda `<table>` con thead y toda
+  grilla con `data-encabeza`), columnas de puro relleno ("·", "—") y una
+  pieza partida (dos cajas vecinas con el mismo borde de color, con hueco
+  o radio en la unión); y prende, fotografía y apaga todo `[aria-pressed]`
+  a la vista, como ya hacía con las pestañas (capturas
+  `ancho-<w>-partida-btnAlts` y `-tileMejor`). Las tres probadas al revés.
+  El renglón "modo mejores" mide que el modo no cambie el alto.
+- En las capturas, 15...Kg8 (forzada) muestra Pérdida 5.33: es el motor de
+  mentira de las pruebas, que arma la curva jugada por jugada; con
+  Stockfish una forzada no pierde.
 
 **v1.7.1, lo que come el motor dice qué se pierde, también en `nuevas`**
 (Arreglos; revisor de ajedrez, v1.2.3). En `r3r1k1/p4ppp/8/8/8/4B3/4Q1PP/6K1 w`,
